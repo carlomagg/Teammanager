@@ -1,0 +1,163 @@
+{% load humanize %}
+{% load subscription_extras %}
+
+<div class="table-responsive">
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Subscriber</th>
+                <th>Type</th>
+                <th>Plan</th>
+                <th>Status</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+                <th>Amount</th>
+                <th>Promo</th>
+                {% if show_actions %}<th>Actions</th>{% endif %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for sub in subscriptions %}
+            <tr>
+                <td>#{{ sub.id }}</td>
+                <td>
+                    <strong>
+                        {% if sub.tenant %}
+                            {{ sub.tenant.name }}
+                        {% else %}
+                            {{ sub.user.get_full_name|default:sub.user.email }}
+                        {% endif %}
+                    </strong>
+                    <br>
+                    <small class="text-muted">
+                        {% if sub.tenant %}
+                            {{ sub.tenant.admin.email|default:"No email" }}
+                        {% else %}
+                            {{ sub.user.email }}
+                        {% endif %}
+                    </small>
+                </td>
+                <td>
+                    {% if sub.tenant %}
+                        <span class="badge bg-info">Tenant</span>
+                    {% else %}
+                        <span class="badge bg-success">User</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <span class="badge bg-primary">{{ sub.plan.name }}</span>
+                    {% if sub.plan.duration %}
+                        <br><small>{{ sub.plan.duration }} days</small>
+                    {% endif %}
+                </td>
+                <td>
+                    <span class="badge bg-{% if sub.status == 'active' %}success{% elif sub.status == 'pending' %}warning{% elif sub.status == 'expired' %}secondary{% elif sub.status == 'cancelled' %}danger{% else %}info{% endif %}">
+                        {{ sub.status|title }}
+                    </span>
+                    {% if sub.trial_end_date and sub.status == 'pending' %}
+                        <br><small class="text-info">Trial until {{ sub.trial_end_date|date:"Y-m-d" }}</small>
+                    {% endif %}
+                    {% if sub.status == 'active' and sub.end_date and sub.end_date < now %}
+                        <br><span class="badge bg-danger">Expired</span>
+                    {% endif %}
+                    {% if sub.is_trial and sub.status == 'active' %}
+                        <br><small class="text-info">Trial</small>
+                    {% endif %}
+                </td>
+                <td>{{ sub.start_date|date:"Y-m-d" }}</td>
+                <td>
+                    {{ sub.end_date|date:"Y-m-d" }}
+    {% if sub.end_date and sub.end_date > now and sub.end_date <= now|add_days:14 %}
+                        <br><span class="badge bg-warning">Expiring soon</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <strong>₦{{ sub.get_current_monthly_rate|floatformat:2 }}</strong>
+                    {% if sub.discount_applied %}
+                        <br><small class="text-success">{{ sub.discount_applied }}% off</small>
+                    {% endif %}
+                    {% if sub.tenant %}
+                        <br><small>{{ sub.current_user_count }} users</small>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if sub.promo_code %}
+                        <span class="badge bg-info">{{ sub.promo_code }}</span>
+                        {% if sub.promo_code_discount %}
+                            <br><small>{{ sub.promo_code_discount }}% off</small>
+                        {% endif %}
+                    {% else %}
+                        <span class="text-muted">—</span>
+                    {% endif %}
+                </td>
+                {% if show_actions %}
+                <td>
+                    <div class="btn-group" role="group">
+                        
+                        {% if sub.status == 'active' %}
+                        <button class="btn btn-sm btn-danger" onclick="revokeFree({{ sub.id }})" title="Revoke Access">
+                                                <i class="fas fa-ban"></i>
+                                            </button>
+                        {%comment%}
+                        <a href="{% url 'subscription_detail' sub.id %}" class="btn btn-sm btn-outline-primary" title="View">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                            <button class="btn btn-sm btn-outline-warning" onclick="sendReminder({{ sub.id }})" title="Send Reminder">
+                                <i class="fas fa-bell"></i>
+                            </button>
+                            
+                        {%endcomment%}
+                        {% endif %}
+                    </div>
+                </td>
+                {% endif %}
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="{% if show_actions %}10{% else %}9{% endif %}" class="text-center py-5">
+                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                    <h5>No subscriptions found</h5>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+
+    function revokeFree(subId) {
+    if (confirm('Are you sure you want to revoke free access for this subscription? This action cannot be undone.')) {
+        const $btn = $(event.target).closest('button');
+        const originalText = $btn.html();
+        $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+        
+        $.ajax({
+            url: "{% url 'revoke_free_access' %}",
+            method: 'POST',
+            data: {
+                subscription_id: subId,
+                csrfmiddlewaretoken: '{{ csrf_token }}'
+            },
+            success: function(response) {
+                if (response.success) {
+                    toastr.success('Free access revoked successfully');
+                    location.reload();
+                } else {
+                    toastr.error(response.error || 'Error revoking access');
+                    $btn.prop('disabled', false).html(originalText);
+                }
+            },
+            error: function(xhr) {
+                let errorMsg = 'Error revoking access';
+                if (xhr.responseJSON && xhr.responseJSON.error) {
+                    errorMsg = xhr.responseJSON.error;
+                }
+                toastr.error(errorMsg);
+                $btn.prop('disabled', false).html(originalText);
+            }
+        });
+    }
+}
+</script>

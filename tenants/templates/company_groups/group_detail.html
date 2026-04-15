@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1>{{ company_group.name }}</h1>
+            <p class="text-muted mb-0">
+                <code>{{ company_group.slug }}</code> • 
+                Created {{ company_group.created_at|date:"M d, Y" }} • 
+                {% if active_users_per_tenant > 0 %}
+                    <span class="badge bg-success">Active</span>
+                {% else %}
+                    <span class="badge bg-secondary">Inactive</span>
+                {% endif %}
+            </p>
+        </div>
+        <div class="btn-group">
+        {% if is_superuser%}
+            <a href="{% url 'edit_company_group_admin' company_group.id %}" class="btn btn-secondary">
+                <i class="bi bi-pencil"></i> Edit Group
+            </a>
+            <a href="{% url 'company_group_dashboard_admin' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Back to Groups
+            </a>
+        {% else %}
+        <a href="{% url 'edit_company_group' company_group.id %}" class="btn btn-secondary">
+                <i class="bi bi-pencil"></i> Edit Group
+            </a>
+            <a href="{% url 'company_group_dashboard' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Back to Groups
+            </a>
+        {% endif %}
+
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Group Information</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4">Total Members:</dt>
+                        <dd class="col-sm-8">{{ company_group.members.count }}</dd>
+                        
+                        <dt class="col-sm-4">Created By:</dt>
+                        <dd class="col-sm-8">{{ company_group.created_by|default:"System" }}</dd>
+                        
+                        <dt class="col-sm-4">Associated Tenant:</dt>
+                        <dd class="col-sm-8">{{ company_group.tenant.name }}</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Member Companies</h5>
+                    
+                    <form method="get" class="d-flex" style="width: 300px;">
+                        {{ search_form.search }}
+                        <button type="submit" class="btn btn-outline-secondary ms-2">
+                            <i class="bi bi-search"></i>
+                        </button>
+                        <a href="{% url 'company_group_detail' company_group.id %}" class="btn btn-outline-secondary ms-2">
+                            <i class="bi bi-x-circle"></i>
+                        </a>
+                    </form>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for tenant in members %}
+                                <tr>
+                                    <td>{{ tenant.name }}</td>
+                                    <td>
+                                        {% if active_users_per_tenant > 0 %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            {% if is_superuser%}
+                                            <div class="btn-group">
+                                                <a href="{% url 'edit_company_group_admin' company_group.id %}" class="btn btn-outline-secondary"> Edit Members</a>                    
+                                            </div>
+                                            {% else %}
+                                            <div class="btn-group">
+                                                <a href="{% url 'edit_company_group' company_group.id %}" class="btn btn-outline-secondary"> Edit Members</a>                    
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center">
+                                        No members found. 
+                                        {% if is_superuser%}
+                                        <a href="{% url 'edit_company_group_admin' company_group.id %}">Add a member</a>
+                                        {% else %}
+                                        <a href="{% url 'edit_company_group' company_group.id %}">Add a member</a>
+
+                                        {%endif%}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    {% if members.count > 10 %}
+                    <div class="mt-3 text-center">
+                        <p class="text-muted">Showing {{ members.count }} members</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,218 @@
+{% extends 'base.html' %}
+{% block title %}Settings - TeamManager{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-9 col-md-11">
+
+            <!-- Header -->
+            <div class="mb-4">
+                <h2 class="fw-semibold">
+                    <i class="fas fa-cog me-2 text-primary"></i> Settings
+                </h2>
+                <p class="text-muted mb-0">
+                    Manage your account preferences and security
+                </p>
+            </div>
+
+            <!-- Subscription Status Card -->
+            <div class="mb-4">
+                <div class="card subscription-card shadow-sm border-0">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="subscription-icon">
+                                <i class="fas fa-trophy"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h5 class="mb-1">Subscription Status</h5>
+                                <div class="d-flex align-items-center gap-2">
+                                    {% if subscription_status == 'active' or subscription_status == 'Active' or subscription_status == 'premium' %}
+                                        <span class="badge bg-success px-3 py-2">Active</span>
+                                        <span class="text-muted small">You have access to all premium features</span>
+                                    {% elif subscription_status == 'trial' %}
+                                        <span class="badge bg-warning px-3 py-2">Trial</span>
+                                        <span class="text-muted small">Your trial period is active</span>
+                                    {% elif subscription_status == 'expired'%}
+                                        <span class="badge bg-danger px-3 py-2">Expired</span>
+                                        <span class="text-muted small">Please renew your subscription</span>
+                                    {% elif subscription_status == 'inactive' %}
+                                        <span class="badge bg-danger px-3 py-2">Inactive</span>
+                                        <span class="text-muted small">Please activate your subscription</span>
+                                    {% elif subscription_status == 'pending' %}
+                                        <span class="badge bg-info px-3 py-2">Pending</span>
+                                        <span class="text-muted small">Your subscription is being processed</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary px-3 py-2">{{ subscription_status|default:"Free" }}</span>
+                                        <span class="text-muted small">Upgrade to access more features</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Cards -->
+            <div class="row g-4">
+
+                <!-- KYC/KYB Verification -->
+                <div class="col-md-6">
+                    <a href="{% url 'kyc_status' %}" class="settings-link">
+                        <div class="card settings-card shadow-sm border-0 h-100">
+                            <div class="card-body d-flex align-items-start gap-3">
+                                <div class="settings-icon" style="background: rgba(52, 211, 153, 0.15); color: #10b981;">
+                                    <i class="fas fa-id-card"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <h5 class="mb-1">KYC/KYB Verification</h5>
+                                        {% if kyc_status %}
+                                            {% if kyc_status == 'verified' %}
+                                                <span class="badge bg-success">Verified</span>
+                                            {% elif kyc_status == 'submitted' %}
+                                                <span class="badge bg-warning">Submitted</span>
+                                            {% elif kyc_status == 'rejected' %}
+                                                <span class="badge bg-danger">Rejected</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Pending</span>
+                                            {% endif %}
+                                        {% endif %}
+                                    </div>
+                                    <p class="text-muted small mb-0">
+                                        Complete your identity verification
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                <!-- Email Configuration -->
+                <div class="col-md-6">
+                    <a href="{% url 'email_config' %}" class="settings-link">
+                        <div class="card settings-card shadow-sm border-0 h-100">
+                            <div class="card-body d-flex align-items-start gap-3">
+                                <div class="settings-icon">
+                                    <i class="fas fa-envelope"></i>
+                                </div>
+                                <div>
+                                    <h5 class="mb-1">Email Configuration</h5>
+                                    <p class="text-muted small mb-0">
+                                        Configure SMTP settings for sending emails
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- Change Password -->
+                <div class="col-md-6">
+                    <a href="{% url 'change_password' %}" class="settings-link">
+                        <div class="card settings-card shadow-sm border-0 h-100">
+                            <div class="card-body d-flex align-items-start gap-3">
+                                <div class="settings-icon">
+                                    <i class="fas fa-key"></i>
+                                </div>
+                                <div>
+                                    <h5 class="mb-1">Change Password</h5>
+                                    <p class="text-muted small mb-0">
+                                        Update your account security credentials
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Subscription Card */
+    .subscription-card {
+        border-radius: 14px;
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        border-left: 4px solid #319795;
+    }
+    
+    body.dark-mode .subscription-card {
+        background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+    }
+    
+    .subscription-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        background: rgba(49, 151, 149, 0.15);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #319795;
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+    
+    body.dark-mode .subscription-icon {
+        background: rgba(49, 151, 149, 0.25);
+    }
+    
+    /* Settings cards */
+    .settings-link {
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .settings-card {
+        border-radius: 14px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        background: #ffffff;
+    }
+
+    .settings-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+    }
+
+    body.dark-mode .settings-card {
+        background: #2d3748;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+    }
+
+    /* Icon container */
+    .settings-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        background: rgba(49, 151, 149, 0.15);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #319795;
+        font-size: 1.25rem;
+        flex-shrink: 0;
+    }
+
+    body.dark-mode .settings-icon {
+        background: rgba(49, 151, 149, 0.25);
+    }
+
+    /* Headings */
+    .settings-card h5 {
+        font-weight: 600;
+        color: #2d3748;
+    }
+
+    body.dark-mode .settings-card h5 {
+        color: #e2e8f0;
+    }
+
+    /* Responsive tweaks */
+    @media (max-width: 576px) {
+        .settings-card {
+            padding: 0.25rem;
+        }
+    }
+</style>
+{% endblock %}

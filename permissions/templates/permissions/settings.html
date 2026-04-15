@@ -1,0 +1,186 @@
+{% extends 'base.html' %}
+
+{% block title %}Permission Settings{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4 permissions-settings-page">
+    <div class="row mb-4">
+        <div class="col-12 d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <h2 class="fw-semibold mb-1">
+                    <i class="fas fa-cog me-2 text-primary"></i>Permission Settings
+                </h2>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-0 small text-muted">
+                        <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'permissions:dashboard' %}">Permission</a></li>
+                        <li class="breadcrumb-item active">Settings</li>
+                    </ol>
+                </nav>
+            </div>
+            <a href="{% url 'permissions:dashboard' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Back to dashboard
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-tags me-2"></i>Permission Categories</h5>
+                    <a href="{% url 'permissions:category_create' %}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-plus me-1"></i> New Category
+                    </a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for cat in categories %}
+                                <tr>
+                                    <td>{{ cat.name }}</td>
+                                    <td>
+                                        <a href="{% url 'permissions:category_edit' cat.pk %}" class="btn btn-sm btn-outline-primary" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'permissions:category_delete' cat.pk %}" class="btn btn-sm btn-outline-danger" title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="2" class="text-center py-4 text-muted">
+                                        No categories yet. <a href="{% url 'permissions:category_create' %}">Create one</a>.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            {% if is_admin %}
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0">External Submission Settings</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {% csrf_token %}
+
+                        <div class="form-check form-switch mb-3">
+                            {{ form.notify_external_on_move }}
+                            <label class="form-check-label" for="id_notify_external_on_move">
+                                Notify external users by email when permissions moves
+                            </label>
+                        </div>
+
+                        <div class="form-check form-switch mb-3">
+                            {{ form.allow_external_escalation }}
+                            <label class="form-check-label" for="id_allow_external_escalation">
+                                Allow external users to escalate their permission requests
+                            </label>
+                        </div>
+
+                        <div class="form-check form-switch mb-3">
+                            {{ form.allow_external_completion }}
+                            <label class="form-check-label" for="id_allow_external_completion">
+                                Allow external users to mark permission requests as completed
+                            </label>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i> Save Settings</button>
+                    </form>
+                </div>
+            </div>
+            {% else %}
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0">External Submission Settings</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Only tenant administrators can modify external submission settings.
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0">Public Submission Link</h5>
+                </div>
+                <div class="card-body">
+                    {% if request.effective_tenant %}
+                    <p>Share this link publicly so external users can submit permission requests/requests to your organization:</p>
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control" id="publicLink" value="{{ request.scheme }}://{{ request.get_host }}" readonly>
+                        <button class="btn btn-outline-primary" onclick="navigator.clipboard.writeText(document.getElementById('publicLink').value); this.innerHTML='<i class=\'fas fa-check\'></i> Copied!'; setTimeout(() => this.innerHTML = '<i class=\'fas fa-copy\'></i> Copy', 2000);">
+                            <i class="fas fa-copy"></i> Copy
+                        </button>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">Public submission links are only available for organization accounts.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if request.effective_tenant and staff_members %}
+            <div class="card shadow-sm border-0 mt-4">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0">
+                        <i class="fas fa-user-link me-2"></i>
+                        {% if is_admin %}Personal Staff Links{% else %}My Personal Link{% endif %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if is_admin %}
+                    <p class="text-muted small mb-3">Share individual links to route permission requests directly to specific staff members:</p>
+                    {% else %}
+                    <p class="text-muted small mb-3">Share your personal link to receive permission requests directly:</p>
+                    {% endif %}
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead>
+                                <tr>
+                                    <th>{% if is_admin %}Staff Member{% else %}Name{% endif %}</th>
+                                    <th>Personal Link</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for staff in staff_members %}
+                                <tr>
+                                    <td>{{ staff.get_full_name|default:staff.username }}</td>
+                                    <td>
+                                        <code class="small">{{ request.scheme }}://{{ request.get_host }}/permissions/external/personal/{{ staff.personal_external_token }}/</code>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary" onclick="navigator.clipboard.writeText('{{ request.scheme }}://{{ request.get_host }}/permissions/external/personal/{{ staff.personal_external_token }}/'); this.innerHTML='<i class=\'fas fa-check\'></i>'; setTimeout(() => this.innerHTML = '<i class=\'fas fa-copy\'></i>', 2000);">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

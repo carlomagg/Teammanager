@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your Booking is Confirmed</title>
+</head>
+<body style="margin:0; padding:0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f4f7fa; color: #1f2937;">
+  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f4f7fa; padding: 30px 10px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="600" border="0" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.1); max-width: 600px;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 40px 30px; text-align: center; color: white;">
+              <h1 style="margin: 0; font-size: 28px; font-weight: 600;">Booking Confirmed!</h1>
+              <p style="margin: 12px 0 0; font-size: 16px; opacity: 0.95;">
+                You're all set — see you soon
+              </p>
+            </td>
+          </tr>
+
+          <!-- Content -->
+          <tr>
+            <td style="padding: 40px 48px 32px;">
+              <p style="font-size: 16px; line-height: 1.6; margin: 0 0 24px;">
+                Hi {{ booking.first_name|default:"there" }},
+              </p>
+
+              <p style="font-size: 16px; line-height: 1.6; margin: 0 0 28px;">
+                Your booking request for <strong>{{ booking.booking_type.name }}</strong> with 
+                <strong>{{ booking.booking_type.host_user.get_full_name|default:booking.booking_type.host_user.username }}</strong> 
+                has been <strong style="color: #059669;">confirmed</strong>.
+              </p>
+
+              <h2>Booking ID: #{booking.id}</h2>
+
+              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; margin: 24px 0; font-size: 15px;">
+                <tr>
+                  <td style="padding: 24px;">
+                    <strong style="color: #065f46;">Date & Time:</strong><br>
+                    {{ booking.event.start_time|date:"l, d F Y" }}<br>
+                    {{ booking.event.start_time|date:"H:i" }} – {{ booking.event.end_time|date:"H:i" }} 
+                    {% comment %} ({{ booking.event.start_time|timezone:"Africa/Lagos"|date:"T" }}) {% endcomment %}
+                    <br><br>
+
+                    <strong>Duration:</strong> {{ booking.booking_type.duration_minutes }} minutes<br>
+                    {% if booking.booking_type.is_hybrid %}
+                      {% if booking.attendance_mode == 'offline' and booking.booking_type.location %}
+                      <strong>Location:</strong> {{ booking.booking_type.location }}<br>
+                      {% elif booking.attendance_mode == 'online' and booking.booking_type.virtual_link %}
+                      <strong>Meeting Link:</strong> <a href="{{ booking.booking_type.virtual_link }}" style="color: #059669; text-decoration: underline;">Join Meeting</a><br>
+                      {% else %}
+                        Meeting Address/Virtual Link will be shared later.
+                      {% endif %}
+                    {% else %}
+                      {% if booking.booking_type.location %}
+                        <strong>Location:</strong> {{ booking.booking_type.location }}<br>
+                      {% elif booking.booking_type.virtual_link %}
+                        <strong>Meeting Link:</strong> <a href="{{ booking.booking_type.virtual_link }}" style="color: #059669; text-decoration: underline;">Join Meeting</a><br>
+                      {% else %}
+                        Meeting Address/Virtual Link will be shared later.
+                      {% endif %}
+                    {% endif %}
+                    {% if booking.booking_type.price > 0 %}
+                    <strong>Amount:</strong> {{ booking.booking_type.price }} {{ booking.booking_type.currency|default:"NGN" }} 
+                    {% if booking.payment_status == 'paid' %}(Paid){% else %}(to be paid){% endif %}<br>
+                    {% endif %}
+                  </td>
+                </tr>
+              </table>
+
+              <p style="font-size: 15px; color: #4b5563; line-height: 1.5; margin: 24px 0 32px;">
+                {% if booking.booking_type.virtual_link %}
+                The meeting link is above — we recommend adding this to your calendar.
+                {% else %}
+                Details have been saved. You'll receive a reminder closer to the date.
+                {% endif %}
+              </p>
+
+              <!-- CTA Buttons -->
+              <table role="presentation" border="0" cellspacing="0" cellpadding="0" style="margin: 0 auto 32px;">
+                <tr>
+                  {% comment %} <td style="border-radius: 8px; background-color: #10b981; text-align: center;">
+                    <a href="{{ booking_list_url }}" target="_blank" 
+                       style="display: inline-block; padding: 14px 36px; font-size: 16px; color: white; text-decoration: none; font-weight: 500;">
+                      View Booking Details
+                    </a>
+                  </td> {% endcomment %}
+                  {% if booking.booking_type.virtual_link %}
+                  <td width="20"></td>
+                  <td style="border-radius: 8px; background-color: #3b82f6;">
+                    <a href="{{ booking.booking_type.virtual_link }}" target="_blank" 
+                       style="display: inline-block; padding: 14px 36px; font-size: 16px; color: white; text-decoration: none; font-weight: 500;">
+                      Join Meeting
+                    </a>
+                  </td>
+                  {% endif %}
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background: #f8fafc; padding: 32px; text-align: center; font-size: 14px; color: #6b7280; border-top: 1px solid #e5e7eb;">
+              <p style="margin: 0 0 8px;">TeamManager – Scheduling made simple</p>
+              <p style="margin: 0;">© {{ 'now'|date:"Y" }} All rights reserved.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Request Submitted — {{ tenant.name }}</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e2e7ec 100%);
+            font-family: 'Candara', 'Calibri', 'Segoe', 'Segoe UI', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="card shadow text-center" style="max-width: 500px;">
+        <div class="card-body p-5">
+            <div class="mb-4">
+                <i class="fas fa-check-circle text-success" style="font-size: 4rem;"></i>
+            </div>
+            <h3>Request Submitted!</h3>
+            <p class="text-muted">Your request has been received by <strong>{{ tenant.name }}</strong>.</p>
+            <p>Reference: <code>{{ fund_request.reference_number }}</code></p>
+            <p class="text-muted small">You can track the status of your request using the link below:</p>
+            <a href="{% url 'fund_request:external_status' fund_request.external_token %}" class="btn btn-primary">
+                <i class="fas fa-eye me-1"></i> Track Status
+            </a>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

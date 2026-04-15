@@ -1,0 +1,244 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}KYC/KYB Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <h2 class="mb-4">
+                <i class="fas fa-shield-alt"></i> KYC/KYB Verification Dashboard
+            </h2>
+            
+            <!-- Statistics Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body">
+                            <h5 class="card-title">Total Pending</h5>
+                            <h2>{{ stats.total_pending }}</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <h5 class="card-title">User KYC Pending</h5>
+                            <h2>{{ stats.user_kyc_pending }}</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <h5 class="card-title">Staff KYC Pending</h5>
+                            <h2>{{ stats.staff_kyc_pending }}</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <h5 class="card-title">Company KYB Pending</h5>
+                            <h2>{{ stats.company_kyb_pending }}</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Filters -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Status</label>
+                            <select name="status" class="form-select">
+                                <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All</option>
+                                <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+                                <option value="submitted" {% if status_filter == 'submitted' %}selected{% endif %}>Submitted</option>
+                                <option value="verified" {% if status_filter == 'verified' %}selected{% endif %}>Verified</option>
+                                <option value="rejected" {% if status_filter == 'rejected' %}selected{% endif %}>Rejected</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Search</label>
+                            <input type="text" name="search" class="form-control" placeholder="Search by name, email, NIN, BVN..." value="{{ search_query }}">
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-search"></i> Filter
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- User KYC Table -->
+            {% if user_kycs %}
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-user"></i> User KYC Submissions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Email</th>
+                                    <th>NIN/BVN</th>
+                                    <th>Status</th>
+                                    <th>Submitted</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for kyc in user_kycs %}
+                                <tr>
+                                    <td>{{ kyc.user_profile.user.username }}</td>
+                                    <td>{{ kyc.user_profile.user.email }}</td>
+                                    <td>
+                                        {% if kyc.nin %}<span class="badge bg-secondary">NIN</span>{% endif %}
+                                        {% if kyc.bvn %}<span class="badge bg-secondary">BVN</span>{% endif %}
+                                    </td>
+                                    <td>
+                                        {% if kyc.kyc_status == 'submitted' %}
+                                            <span class="badge bg-warning">Submitted</span>
+                                        {% elif kyc.kyc_status == 'verified' %}
+                                            <span class="badge bg-success">Verified</span>
+                                        {% elif kyc.kyc_status == 'rejected' %}
+                                            <span class="badge bg-danger">Rejected</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Pending</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ kyc.created_at|date:"M d, Y" }}</td>
+                                    <td>
+                                        <a href="{% url 'review_user_kyc' kyc.id %}" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-eye"></i> Review
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Staff KYC Table -->
+            {% if staff_kycs %}
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-users"></i> Staff KYC Submissions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Staff</th>
+                                    <th>Tenant</th>
+                                    <th>Email</th>
+                                    <th>NIN/BVN</th>
+                                    <th>Status</th>
+                                    <th>Submitted</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for kyc in staff_kycs %}
+                                <tr>
+                                    <td>{{ kyc.staff_profile.get_full_name }}</td>
+                                    <td>{{ kyc.staff_profile.tenant.name }}</td>
+                                    <td>{{ kyc.staff_profile.user.email }}</td>
+                                    <td>
+                                        {% if kyc.nin %}<span class="badge bg-secondary">NIN</span>{% endif %}
+                                        {% if kyc.bvn %}<span class="badge bg-secondary">BVN</span>{% endif %}
+                                    </td>
+                                    <td>
+                                        {% if kyc.kyc_status == 'submitted' %}
+                                            <span class="badge bg-warning">Submitted</span>
+                                        {% elif kyc.kyc_status == 'verified' %}
+                                            <span class="badge bg-success">Verified</span>
+                                        {% elif kyc.kyc_status == 'rejected' %}
+                                            <span class="badge bg-danger">Rejected</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Pending</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ kyc.created_at|date:"M d, Y" }}</td>
+                                    <td>
+                                        <a href="{% url 'review_staff_kyc' kyc.id %}" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-eye"></i> Review
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Company KYB Table -->
+            {% if company_kybs %}
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-building"></i> Company KYB Submissions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Company</th>
+                                    <th>TIN</th>
+                                    <th>Status</th>
+                                    <th>Submitted</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for kyb in company_kybs %}
+                                <tr>
+                                    <td>{{ kyb.company_profile.company_name }}</td>
+                                    <td>{{ kyb.tin|default:"N/A" }}</td>
+                                    <td>
+                                        {% if kyb.kyb_status == 'submitted' %}
+                                            <span class="badge bg-warning">Submitted</span>
+                                        {% elif kyb.kyb_status == 'verified' %}
+                                            <span class="badge bg-success">Verified</span>
+                                        {% elif kyb.kyb_status == 'rejected' %}
+                                            <span class="badge bg-danger">Rejected</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Pending</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ kyb.created_at|date:"M d, Y" }}</td>
+                                    <td>
+                                        <a href="{% url 'review_company_kyb' kyb.id %}" class="btn btn-sm btn-success">
+                                            <i class="fas fa-eye"></i> Review
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if not user_kycs and not staff_kycs and not company_kybs %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> No KYC/KYB submissions found matching your criteria.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

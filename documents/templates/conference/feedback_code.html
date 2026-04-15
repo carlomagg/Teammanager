@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Submit Feedback — {{ conference.title }}{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+      <div class="card shadow-sm" id="printable-card">
+        <div class="card-body text-center">
+          <h4 class="card-title mb-1">{{ conference.title }}</h4>
+          <h5>Submit your Feedback</h5>
+          <p class="text-muted small mb-3">{{ conference.start_date|date:"SHORT_DATETIME_FORMAT" }} — {{ conference.end_date|date:"SHORT_DATETIME_FORMAT" }}</p>
+
+          <div class="mb-3">
+            {% comment %} {% if qr_data_uri %} {% endcomment %}
+              <img src="{{ qr_data_uri }}" alt="QR Code" class="img-fluid" style="max-width:240px;">
+            {% comment %} {% else %} {% endcomment %}
+              <div class="border rounded p-3">
+                <p class="mb-0"><strong>Feedback link:</strong></p>
+                <p class="small text-break"><a href="{{ feedback_url }}">{{ feedback_url }}</a></p>
+                <button 
+                  type="button"
+                  class="btn btn-sm btn-primary"
+                  onclick="copyConferenceLink(this)"
+                  data-url="{{feedback_url}}"
+                  title="Copy link to clipboard">
+                  <i class="fas fa-copy me-1"></i> Copy Link
+                </button>
+              </div>
+            {% comment %} {% endif %} {% endcomment %}
+          </div>
+
+        </div>
+      </div>
+      <p class="text-muted small mt-2">Tip: Scan QR Code to submit feedback.</p>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* Print styles: keep the card centered and remove extra chrome */
+  @media print {
+    body * { visibility: hidden; }
+    #printable-card, #printable-card * { visibility: visible; }
+    #printable-card { position: absolute; left: 0; right: 0; margin: 0 auto; top: 10mm; }
+  }
+</style>
+
+<script>
+    function copyConferenceLink(el) {
+        const path = el.dataset.url;
+        // const fullUrl = window.location.origin + path;
+
+        navigator.clipboard.writeText(path).then(() => {
+            const toastEl = document.getElementById('copyToast');
+            if (toastEl) {
+                new bootstrap.Toast(toastEl).show();
+            } else {
+                alert("Link copied!");
+            }
+        }).catch(() => {
+            prompt("Copy this link:", path);
+        });
+    }
+</script>
+{% endblock %}

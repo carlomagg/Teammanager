@@ -1,0 +1,409 @@
+{% extends 'base.html' %}
+
+{% block title %}HR Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-5">
+    <!-- Header Section -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                <div>
+                    <h1 class="h2 fw-bold mb-2">HR Dashboard</h1>
+                    <p class="text-muted">Manage vacancies, applications, interviews, and job offers</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{% url 'vacancy_list' %}" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-2">
+                        <i class="fas fa-briefcase"></i> Vacancies
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Action Cards Grid -->
+    <div class="row g-4 mb-5">
+        <!-- Card 1: Manage Vacancies -->
+        <div class="col-12 col-sm-6 col-lg-4">
+            <div class="card h-100 shadow-sm border-0 hr-dashboard-card position-relative overflow-hidden">
+                <div class="card-help position-absolute top-0 end-0 p-3" style="z-index: 10;">
+                    {% include 'partials/help_icon.html' with faq_key='manage_vacancies' placement='left' %}
+                </div>
+                <div class="card-body text-center d-flex flex-column justify-content-between pt-5">
+                    <div>
+                        <div class="icon-wrapper mb-4">
+                            <i class="fas fa-briefcase fa-3x"></i>
+                        </div>
+                        <h5 class="card-title fw-bold mb-2">Manage Vacancies</h5>
+                        <p class="card-text text-muted mb-0">Create, view, update, and delete job vacancies.</p>
+                    </div>
+                    <a href="{% url 'vacancy_list' %}" class="btn btn-primary mt-4 d-inline-flex align-items-center justify-content-center gap-2">
+                        <span>Go to Vacancies</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+                <div class="card-overlay"></div>
+            </div>
+        </div>
+
+        <!-- Card 2: All Applications -->
+        <div class="col-12 col-sm-6 col-lg-4">
+            <div class="card h-100 shadow-sm border-0 hr-dashboard-card position-relative overflow-hidden">
+                <div class="card-help position-absolute top-0 end-0 p-3" style="z-index: 10;">
+                    {% include 'partials/help_icon.html' with faq_key='all_applications' placement='left' %}
+                </div>
+                <div class="card-body text-center d-flex flex-column justify-content-between pt-5">
+                    <div>
+                        <div class="icon-wrapper mb-4">
+                            <i class="fas fa-file-alt fa-3x"></i>
+                        </div>
+                        <h5 class="card-title fw-bold mb-2">All Applications</h5>
+                        <p class="card-text text-muted mb-0">View and manage all vacancy applications across the system.</p>
+                    </div>
+                    <a href="{% url 'vacancy_application_list' %}" class="btn btn-primary mt-4 d-inline-flex align-items-center justify-content-center gap-2">
+                        <span>Go to Applications</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+                <div class="card-overlay"></div>
+            </div>
+        </div>
+
+        {% if not user.is_personal %}
+        <!-- Card 3: Schedule Interview -->
+        <div class="col-12 col-sm-6 col-lg-4">
+            <div class="card h-100 shadow-sm border-0 hr-dashboard-card position-relative overflow-hidden">
+                <div class="card-help position-absolute top-0 end-0 p-3" style="z-index: 10;">
+                    {% include 'partials/help_icon.html' with faq_key='schedule_interview' placement='left' %}
+                </div>
+                <div class="card-body text-center d-flex flex-column justify-content-between pt-5">
+                    <div>
+                        <div class="icon-wrapper mb-4">
+                            <i class="fas fa-calendar-plus fa-3x"></i>
+                        </div>
+                        <h5 class="card-title fw-bold mb-2">Schedule Interview</h5>
+                        <p class="card-text text-muted mb-0">Schedule interviews for accepted vacancy applications.</p>
+                    </div>
+                    <a href="{% url 'schedule_from_scratch' %}" class="btn btn-primary mt-4 d-inline-flex align-items-center justify-content-center gap-2">
+                        <span>Schedule Now</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+                <div class="card-overlay"></div>
+            </div>
+        </div>
+
+        <!-- Card 4: Manage Interviews -->
+        <div class="col-12 col-sm-6 col-lg-4">
+            <div class="card h-100 shadow-sm border-0 hr-dashboard-card position-relative overflow-hidden">
+                <div class="card-help position-absolute top-0 end-0 p-3" style="z-index: 10;">
+                    {% include 'partials/help_icon.html' with faq_key='manage_interviews' placement='left' %}
+                </div>
+                <div class="card-body text-center d-flex flex-column justify-content-between pt-5">
+                    <div>
+                        <div class="icon-wrapper mb-4">
+                            <i class="fas fa-calendar fa-3x"></i>
+                        </div>
+                        <h5 class="card-title fw-bold mb-2">Manage Interviews</h5>
+                        <p class="card-text text-muted mb-0">View and manage scheduled interviews.</p>
+                    </div>
+                    <a href="{% url 'interview_list' %}" class="btn btn-primary mt-4 d-inline-flex align-items-center justify-content-center gap-2">
+                        <span>Go to Interviews</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+                <div class="card-overlay"></div>
+            </div>
+        </div>
+
+        <!-- Card 5: All Job Offers -->
+        <div class="col-12 col-sm-6 col-lg-4">
+            <div class="card h-100 shadow-sm border-0 hr-dashboard-card position-relative overflow-hidden">
+                <div class="card-body text-center d-flex flex-column justify-content-between pt-5">
+                    <div>
+                        <div class="icon-wrapper mb-4">
+                            <i class="fas fa-file-contract fa-3x"></i>
+                        </div>
+                        <h5 class="card-title fw-bold mb-2">All Job Offers</h5>
+                        <p class="card-text text-muted mb-0">View and manage all job offers.</p>
+                    </div>
+                    <a href="{% url 'offer_list' %}" class="btn btn-primary mt-4 d-inline-flex align-items-center justify-content-center gap-2">
+                        <span>Go to Job Offers</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+                <div class="card-overlay"></div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Quick Analytics Section -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="mb-4">
+                <h3 class="fw-bold mb-1">Quick Analytics</h3>
+                <p class="text-muted">Overview of key HR metrics</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Analytics Card 1: Total Vacancies -->
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="card h-100 shadow-sm border-0 analytics-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="stat-icon bg-primary-light">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                        <small class="text-muted">Coming Soon</small>
+                    </div>
+                    <h6 class="text-muted mb-2">Total Vacancies</h6>
+                    <h3 class="fw-bold mb-0">--</h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics Card 2: Total Applications -->
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="card h-100 shadow-sm border-0 analytics-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="stat-icon bg-success-light">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <small class="text-muted">Coming Soon</small>
+                    </div>
+                    <h6 class="text-muted mb-2">Total Applications</h6>
+                    <h3 class="fw-bold mb-0">--</h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics Card 3: Avg Applications per Vacancy -->
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="card h-100 shadow-sm border-0 analytics-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="stat-icon bg-info-light">
+                            <i class="fas fa-chart-pie"></i>
+                        </div>
+                        <small class="text-muted">Coming Soon</small>
+                    </div>
+                    <h6 class="text-muted mb-2">Avg. per Vacancy</h6>
+                    <h3 class="fw-bold mb-0">--</h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics Card 4: Interviews Scheduled -->
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="card h-100 shadow-sm border-0 analytics-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="stat-icon bg-warning-light">
+                            <i class="fas fa-calendar-check"></i>
+                        </div>
+                        <small class="text-muted">Coming Soon</small>
+                    </div>
+                    <h6 class="text-muted mb-2">Interviews Scheduled</h6>
+                    <h3 class="fw-bold mb-0">--</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* HR Dashboard Card Styling */
+    .hr-dashboard-card {
+        border-radius: 14px;
+        background: var(--bs-body-bg);
+        color: var(--bs-body-color);
+        transition: transform 360ms cubic-bezier(0.23, 1, 0.32, 1), box-shadow 360ms ease, filter 360ms ease;
+        position: relative;
+        min-height: 320px;
+    }
+
+    .hr-dashboard-card:hover {
+        transform: translateY(-12px) rotateX(4deg);
+        box-shadow: 0 20px 50px rgba(49, 151, 149, 0.15);
+        filter: saturate(1.03);
+    }
+
+    .hr-dashboard-card:active {
+        transform: translateY(-8px) rotateX(2deg) scale(0.998);
+    }
+
+    .hr-dashboard-card .card-overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(0,0,0,0.02));
+        pointer-events: none;
+        border-radius: inherit;
+    }
+
+    .hr-dashboard-card .icon-wrapper {
+        width: 80px;
+        height: 80px;
+        margin-left: auto;
+        margin-right: auto;
+        border-radius: 50%;
+        background: linear-gradient(135deg, rgba(49, 151, 149, 0.1), rgba(49, 151, 149, 0.05));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #319795;
+        font-size: 32px;
+        box-shadow: 0 6px 20px rgba(49, 151, 149, 0.12);
+        transition: transform 280ms ease, box-shadow 280ms ease;
+    }
+
+    .hr-dashboard-card:hover .icon-wrapper {
+        transform: scale(1.12) rotateY(-8deg);
+        box-shadow: 0 12px 30px rgba(49, 151, 149, 0.2);
+    }
+
+    .hr-dashboard-card .card-title {
+        color: var(--bs-body-color);
+        font-size: 1.15rem;
+        letter-spacing: -0.3px;
+    }
+
+    /* Analytics Card Styling */
+    .analytics-card {
+        border-radius: 12px;
+        background: var(--bs-body-bg);
+        color: var(--bs-body-color);
+        transition: transform 300ms ease, box-shadow 300ms ease;
+    }
+
+    .analytics-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        transition: transform 280ms ease;
+    }
+
+    .analytics-card:hover .stat-icon {
+        transform: scale(1.1) rotate(5deg);
+    }
+
+    .bg-primary-light { background: rgba(49, 151, 149, 0.12); color: #319795; }
+    .bg-success-light { background: rgba(40, 167, 69, 0.12); color: #28a745; }
+    .bg-info-light { background: rgba(23, 162, 184, 0.12); color: #17a2b8; }
+    .bg-warning-light { background: rgba(255, 193, 7, 0.12); color: #ffc107; }
+
+    /* Dark Mode Support */
+    body.dark-mode .hr-dashboard-card {
+        background: #2d3748;
+        color: #e2e8f0;
+    }
+
+    body.dark-mode .hr-dashboard-card:hover {
+        box-shadow: 0 20px 50px rgba(49, 151, 149, 0.25);
+    }
+
+    body.dark-mode .hr-dashboard-card .card-title {
+        color: #e2e8f0;
+    }
+
+    body.dark-mode .analytics-card {
+        background: #2d3748;
+        color: #e2e8f0;
+    }
+
+    body.dark-mode .analytics-card:hover {
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+        .hr-dashboard-card {
+            min-height: 300px;
+        }
+
+        .hr-dashboard-card .icon-wrapper {
+            width: 70px;
+            height: 70px;
+            font-size: 28px;
+        }
+
+        .hr-dashboard-card .card-title {
+            font-size: 1rem;
+        }
+
+        .hr-dashboard-card .card-text {
+            font-size: 0.9rem;
+        }
+
+        .stat-icon {
+            width: 45px;
+            height: 45px;
+            font-size: 20px;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .hr-dashboard-card {
+            min-height: 280px;
+        }
+
+        .hr-dashboard-card .icon-wrapper {
+            width: 65px;
+            height: 65px;
+            font-size: 26px;
+        }
+
+        .card-body {
+            padding: 1.25rem 1rem !important;
+        }
+
+        h1 {
+            font-size: 1.75rem;
+        }
+
+        .analytics-card .card-body {
+            padding: 1rem !important;
+        }
+    }
+
+    /* Reduce Motion Preference */
+    @media (prefers-reduced-motion: reduce) {
+        .hr-dashboard-card,
+        .analytics-card,
+        .stat-icon,
+        .hr-dashboard-card .icon-wrapper {
+            transition: none !important;
+            animation: none !important;
+            transform: none !important;
+        }
+    }
+
+    /* Button Enhancements */
+    .btn-primary {
+        box-shadow: 0 6px 18px rgba(49, 151, 149, 0.15);
+        transition: transform 140ms ease, box-shadow 140ms ease;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(49, 151, 149, 0.25);
+    }
+
+    .btn-primary:active {
+        transform: translateY(0px);
+    }
+</style>
+
+{% endblock %}

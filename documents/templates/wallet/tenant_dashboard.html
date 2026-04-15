@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% load custom_filters %}
+
+{% block content %}
+<div class="container mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Wallet Dashboard</h2>
+        <a href="{% url 'kyc_status' %}"
+           class="btn btn-{% if kyc_verified %}success{% elif kyc_status == 'submitted' %}info{% elif kyc_status == 'pending' %}warning{% else %}danger{% endif %}">
+            <i class="fas fa-id-card me-2"></i>KYC:
+            {% if kyc_verified %}<span class="badge bg-light text-success">Verified</span>
+            {% elif kyc_status == 'submitted' %}<span class="badge bg-light text-info">Under Review</span>
+            {% elif kyc_status == 'pending' %}<span class="badge bg-light text-warning">Pending</span>
+            {% else %}<span class="badge bg-light text-danger">Not Started</span>
+            {% endif %}
+        </a>
+    </div>
+
+    <!-- Date filter (applies to all sections) -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label for="from_date">From Date</label>
+                    <input type="date" name="from_date" id="from_date" class="form-control" value="{{ from_date }}">
+                </div>
+                <div class="col-md-4">
+                    <label for="to_date">To Date</label>
+                    <input type="date" name="to_date" id="to_date" class="form-control" value="{{ to_date }}">
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary me-2">Filter</button>
+                    <a href="{% url 'tenant_wallet' %}" class="btn btn-secondary">Clear</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if is_admin_user %}
+    <!-- ═══════════════════════════════════════════════════
+         ADMIN: two-tab layout (Organisation + Personal)
+    ═══════════════════════════════════════════════════ -->
+    <ul class="nav nav-tabs mb-0" id="walletTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active fw-semibold" id="org-tab"
+                    data-bs-toggle="tab" data-bs-target="#org-panel"
+                    type="button" role="tab">
+                <i class="fas fa-building me-1"></i>Organisation
+                {% if org_ctx %}
+                <span class="badge bg-success ms-1">
+                    ₦{{ org_ctx.wallet.available_balance|floatformat:2|intcomma }}
+                </span>
+                {% endif %}
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-semibold" id="personal-tab"
+                    data-bs-toggle="tab" data-bs-target="#personal-panel"
+                    type="button" role="tab">
+                <i class="fas fa-user me-1"></i>Personal
+                {% if personal_ctx %}
+                <span class="badge bg-primary ms-1">
+                    ₦{{ personal_ctx.wallet.available_balance|floatformat:2|intcomma }}
+                </span>
+                {% endif %}
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content border border-top-0 rounded-bottom p-3 mb-4" id="walletTabContent">
+
+        <!-- Organisation tab -->
+        <div class="tab-pane fade show active" id="org-panel" role="tabpanel">
+            {% if org_ctx %}
+                {% with ctx=org_ctx page_param="org_page" %}
+                    {% include "wallet/_wallet_section.html" %}
+                {% endwith %}
+            {% else %}
+                <div class="alert alert-info mb-0">No organisation earnings recorded yet.</div>
+            {% endif %}
+        </div>
+
+        <!-- Personal tab -->
+        <div class="tab-pane fade" id="personal-panel" role="tabpanel">
+            {% if personal_ctx %}
+                {% with ctx=personal_ctx page_param="pers_page" %}
+                    {% include "wallet/_wallet_section.html" %}
+                {% endwith %}
+            {% else %}
+                <div class="alert alert-info mb-0">No personal earnings recorded yet.</div>
+            {% endif %}
+        </div>
+
+    </div>
+
+    {% elif is_staff %}
+    <!-- ═══════════════════════════════════════════════════
+         STAFF: single booking earnings section
+    ═══════════════════════════════════════════════════ -->
+    {% if staff_ctx %}
+        {% with ctx=staff_ctx page_param="page" %}
+            {% include "wallet/_wallet_section.html" %}
+        {% endwith %}
+    {% else %}
+        <div class="alert alert-info">No earnings recorded yet.</div>
+    {% endif %}
+
+    {% else %}
+    <!-- ═══════════════════════════════════════════════════
+         PERSONAL USER: single section
+    ═══════════════════════════════════════════════════ -->
+    {% if personal_ctx %}
+        {% with ctx=personal_ctx page_param="page" %}
+            {% include "wallet/_wallet_section.html" %}
+        {% endwith %}
+    {% else %}
+        <div class="alert alert-info">No earnings recorded yet.</div>
+    {% endif %}
+    {% endif %}
+
+</div>
+
+<!-- Bank details alert toast -->
+{% with active_ctx=org_ctx|default:personal_ctx|default:staff_ctx %}
+{% if active_ctx and not active_ctx.has_bank_details %}
+<div id="bankDetailsAlert"
+     class="alert alert-warning alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3"
+     role="alert" style="z-index:9999; min-width:300px; max-width:500px; display:none;">
+    <i class="fas fa-exclamation-triangle me-2"></i>
+    Please add your bank details to receive remittance payments.
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var el = document.getElementById('bankDetailsAlert');
+    if (el) {
+        setTimeout(function () {
+            el.style.display = 'block';
+            setTimeout(function () { new bootstrap.Alert(el).close(); }, 5000);
+        }, 1000);
+    }
+});
+</script>
+{% endif %}
+{% endwith %}
+
+{% endblock %}

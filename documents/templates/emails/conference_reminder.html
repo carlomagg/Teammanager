@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conference Reminder</title>
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            color: #333333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .header {
+            background-color: #34a5adff;
+            color: #ffffff;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+        }
+        .header p {
+            margin: 10px 0 0;
+            font-size: 18px;
+        }
+        .content {
+            padding: 30px 40px;
+        }
+        .content h2 {
+            color: #2c3e50;
+            margin-top: 0;
+        }
+        .details-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        .details-table th {
+            text-align: left;
+            padding: 12px 15px;
+            background-color: #ecf0f1;
+            color: #2c3e50;
+            font-weight: bold;
+            width: 30%;
+        }
+        .details-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #34dbd0ff;
+            color: #ffffff !important;
+            text-decoration: none;
+            padding: 14px 28px;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            margin: 15px 0;
+        }
+        .btn-secondary {
+            background-color: #7f8c8d;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+        .highlight {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>Conference Reminder</h1>
+            <p>Don't miss out – your event is coming up soon!</p>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content">
+            <p>Dear {{ participant.title|default:"" }} {{ participant.first_name }} {{ participant.last_name }},</p>
+
+            <p>This is a friendly reminder about your upcoming conference registration:</p>
+
+            <h2>{{ conference.title }}</h2>
+            {% if conference.theme %}
+                <p><strong>Theme:</strong> {{ conference.theme }}</p>
+            {% endif %}
+
+            <table class="details-table">
+                <tr>
+                    <th>Date & Time</th>
+                    <td>
+                        {{ conference.start_date|date:"l, F j, Y" }} at {{ conference.start_date|time:"g:i A" }}
+                        {% if conference.end_date|date:"Y-m-d" != conference.start_date|date:"Y-m-d" %}
+                            <br>to {{ conference.end_date|date:"l, F j, Y" }} at {{ conference.end_date|time:"g:i A" }}
+                        {% endif %}
+                    </td>
+                </tr>
+
+                {% if conference.conference_type == 'physical' %}
+                <tr>
+                    <th>Venue</th>
+                    <td>{{ conference.venue }}</td>
+                </tr>
+                <tr>
+                    <th>Attendance Mode</th>
+                    <td>In-Person (Physical)</td>
+                </tr>
+
+                {% elif conference.conference_type == 'virtual' %}
+                <tr>
+                    <th>Attendance Mode</th>
+                    <td>Virtual (Online)</td>
+                </tr>
+                <tr>
+                    <th>Virtual Link</th>
+                    <td><a href="{{ conference.virtual_link }}">{{ conference.virtual_link }}</a></td>
+                </tr>
+
+                {% else %} {# hybrid #}
+                <tr>
+                    <th>Attendance Mode</th>
+                    <td>
+                        {% if participant.attendance_mode == 'physical' %}
+                            In-Person (Physical)
+                        {% else %}
+                            Virtual (Online)
+                        {% endif %}
+                    </td>
+                </tr>
+
+                {% if participant.attendance_mode == 'physical' %}
+                <tr>
+                    <th>Venue</th>
+                    <td>{{ conference.venue }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <th>Virtual Link</th>
+                    <td><a href="{{ conference.virtual_link }}">{{ conference.virtual_link }}</a></td>
+                </tr>
+                {% endif %}
+                {% endif %}
+            </table>
+
+            {% if qr_data_uri %}
+            <p>Present this at the venue for seamless checkin</p>
+            <img src="{{ qr_data_uri }}" alt="QR Code" class="img-fluid" style="max-width:240px;">
+            {% endif %}
+
+            <p style="text-align: center;">
+                <a href="{{access_url}}" class="btn">
+                    Access Your Conference
+                </a>
+            </p>
+
+            <p>This link will take you directly to your conference page where you can view details, download materials, and join when the event starts.</p>
+
+            {% if is_guest_user %}
+            <p style="text-align: center;">
+                <a href="{{ dashboard_url }}" class="btn btn-secondary">
+                    View Your Guest Dashboard
+                </a>
+            </p>
+            <p>Your guest dashboard shows all your registered conferences and other activities in one place.</p>
+            {% endif %}
+
+            <p>We look forward to seeing you there!</p>
+
+            <p>Best regards,<br>
+            The TeamManager Team</p>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>This is an automated reminder. Please do not reply to this email.</p>
+            <p>If you have any questions, contact the conference organizer at {{ conference.organizer.email }}.</p>
+        </div>
+    </div>
+</body>
+</html>

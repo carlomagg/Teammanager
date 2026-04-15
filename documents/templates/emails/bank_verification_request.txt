@@ -1,0 +1,32 @@
+BANK VERIFICATION - ACTION REQUIRED
+
+Dear {{ company_profile.company_name }},
+
+We need your attention regarding your bank details verification.
+
+Status: ✗ Not Verified
+
+YOUR SUBMITTED BANK DETAILS:
+Bank Name: {{ company_profile.bank_name }}
+Account Number: {{ company_profile.bank_account_number }}
+Account Name: {{ company_profile.bank_account_name }}
+Bank Code: {{ company_profile.bank_code }}
+
+WHAT YOU NEED TO DO
+1. Fill in your bank details
+2. Review your bank details carefully
+3. Update any incorrect information
+4. Resubmit for verification
+
+Update your bank details here: {{ edit_company_profile }}
+
+Important: Remittances cannot be processed until your bank details are verified.
+
+If you need assistance, please contact our support team.
+
+Best regards,
+The {{ "TeamManager" }} Team
+
+---
+This is an automated message from {{ "TeamManager" }}
+Please ensure your bank details are accurate to avoid payment delays.

@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Payroll Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2>Payroll Dashboard</h2>
+            <p class="text-muted">Manage organization payroll and payments</p>
+        </div>
+    </div>
+
+    {% if not password_set %}
+    <div class="alert alert-warning">
+        <i class="fas fa-exclamation-triangle"></i>
+        <strong>Payroll Password Not Set!</strong>
+        Please <a href="{% url 'set_payroll_password' %}" class="alert-link">set a payroll password</a> to enable payment execution.
+    </div>
+    {% endif %}
+
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="text-muted">Pending Approvals</h6>
+                    <h3>{{ pending_approvals }}</h3>
+                    <small>Awaiting review</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="text-muted">Total Paid This Year</h6>
+                    <h3>₦{{ year_total|floatformat:2 }}</h3>
+                    <small>{{ year_total|floatformat:0 }} total</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="text-muted">Your Role</h6>
+                    <h3>{{ user_role }}</h3>
+                    <small>Access level</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="text-muted">Actions</h6>
+                    <a href="{% url 'create_payroll' %}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus"></i> New Payroll
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Recent Payrolls</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Period</th>
+                                <th>Status</th>
+                                <th>Employees</th>
+                                <th>Total Net</th>
+                                <th>Created By</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for payroll in recent_payrolls %}
+                            <tr>
+                                <td>{{ payroll.period_start|date:"M Y" }}</td>
+                                <td>
+                                    <span class="badge badge-{{ payroll.status }}">{{ payroll.get_status_display }}</span>
+                                </td>
+                                <td>{{ payroll.items.count }}</td>
+                                <td>₦{{ payroll.total_amount|floatformat:2 }}</td>
+                                <td>{{ payroll.created_by.get_full_name|default:payroll.created_by.username }}</td>
+                                <td>
+                                    <a href="{% url 'payroll_detail' payroll.pk %}" class="btn btn-sm btn-info">
+                                        <i class="fas fa-eye"></i> View
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center">No payrolls yet. <a href="{% url 'create_payroll' %}">Create your first payroll</a></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Quick Links</h5>
+                </div>
+                <div class="card-body">
+                    <a href="{% url 'payroll_list' %}" class="btn btn-outline-primary mr-2">
+                        <i class="fas fa-list"></i> All Payrolls
+                    </a>
+                    <a href="{% url 'manage_custom_fields' %}" class="btn btn-outline-secondary mr-2">
+                        <i class="fas fa-cog"></i> Custom Fields
+                    </a>
+                    {% if can_pay %}
+                    <a href="{% url 'set_payroll_password' %}" class="btn btn-outline-warning">
+                        <i class="fas fa-key"></i> Set Password
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.badge-draft { background-color: #6c757d; }
+.badge-approved { background-color: #28a745; }
+.badge-paid { background-color: #007bff; }
+.badge-cancelled { background-color: #dc3545; }
+</style>
+{% endblock %}

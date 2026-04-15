@@ -1,0 +1,463 @@
+/* ========================================
+   Sidebar Modal System - Beautiful UI Design
+   ======================================== */
+
+/* Custom Variables for Theming */
+:root {
+    --modal-bg: #ffffff;
+    --modal-text: #2d3748;
+    --modal-border: #e2e8f0;
+    --modal-shadow: rgba(0, 0, 0, 0.1);
+    --link-hover: #f7fafc;
+    --accent: #319795;
+    --accent-dark: #2c7a7b;
+    --pointer-size: 12px;
+}
+
+body.dark-mode {
+    --modal-bg: #2d3748;
+    --modal-text: #e2e8f0;
+    --modal-border: #4a5568;
+    --modal-shadow: rgba(0, 0, 0, 0.3);
+    --link-hover: #1a202c;
+}
+
+/* ========================================
+   DESKTOP MODAL STYLES (851px+)
+   ======================================== */
+
+/* Sidebar Modal Container - Desktop */
+.sidebar-group-modal {
+    display: none;
+    position: fixed;
+    left: 250px;
+    top: 100px;
+    width: 320px;
+    background: var(--modal-bg);
+    border-radius: 12px;
+    box-shadow: 0 10px 40px var(--modal-shadow);
+    border: 1px solid var(--modal-border);
+    z-index: 1100;
+    animation: bounceInDown 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    transition: all 0.3s ease;
+    max-height: 80vh;
+    overflow-y: auto;
+    transform: none;
+    margin: 0;
+}
+
+.sidebar-group-modal.active {
+    display: block;
+}
+
+/* Modal Content Wrapper */
+.sidebar-modal-content {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Modal Pointer/Arrow */
+.sidebar-modal-pointer {
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: var(--pointer-size) var(--pointer-size) 0 0;
+    border-color: var(--modal-bg) transparent transparent transparent;
+    left: -var(--pointer-size);
+    top: 15px;
+    transition: all 0.3s ease;
+}
+
+body.dark-mode .sidebar-modal-pointer {
+    border-color: var(--modal-bg) transparent transparent transparent;
+}
+
+/* Modal Header */
+.sidebar-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--modal-border);
+    background: linear-gradient(135deg, rgba(49, 151, 149, 0.05) 0%, rgba(49, 151, 149, 0.02) 100%);
+}
+
+.sidebar-modal-title {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--modal-text);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.sidebar-modal-title i {
+    font-size: 18px;
+    color: var(--accent);
+}
+
+/* Close Button */
+.sidebar-modal-close {
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: var(--modal-text);
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    opacity: 0.6;
+}
+
+.sidebar-modal-close:hover {
+    background-color: rgba(49, 151, 149, 0.1);
+    color: var(--accent);
+    opacity: 1;
+}
+
+/* Modal List */
+.sidebar-modal-list {
+    list-style: none;
+    margin: 0;
+    padding: 8px 0;
+}
+
+.sidebar-modal-list li {
+    margin: 0;
+    padding: 0;
+}
+
+/* Modal Links */
+.sidebar-modal-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    color: var(--modal-text);
+    text-decoration: none;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+    position: relative;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.sidebar-modal-link:hover {
+    background-color: var(--link-hover);
+    border-left-color: var(--accent);
+    padding-left: 24px;
+    color: var(--accent);
+}
+
+.sidebar-modal-link i {
+    font-size: 16px;
+    width: 20px;
+    text-align: center;
+    color: var(--accent);
+    transition: all 0.2s ease;
+}
+
+.sidebar-modal-link:hover i {
+    transform: scale(1.1);
+}
+
+.sidebar-modal-link span {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Feature Badge in Modal */
+.sidebar-modal-link .feature-badge {
+    margin-left: 8px;
+    font-size: 0.55rem;
+    padding: 2px 6px;
+}
+
+/* Modal Overlay */
+.sidebar-modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.2);
+    z-index: 1099;
+    animation: fadeIn 0.3s ease;
+}
+
+.sidebar-modal-overlay.active {
+    display: block;
+}
+
+/* ========================================
+   Sidebar Item Hover State
+   ======================================== */
+
+.sidebar-item-hover {
+    background-color: var(--link-hover);
+    border-radius: 6px;
+    transition: background-color 0.2s ease;
+}
+
+body.dark-mode .sidebar-item-hover {
+    background-color: var(--link-hover);
+}
+
+/* ========================================
+   Animations
+   ======================================== */
+
+@keyframes bounceInDown {
+    0% {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    50% {
+        opacity: 1;
+        transform: translateY(10px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutUp {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+}
+
+.sidebar-group-modal.closing {
+    animation: slideOutUp 0.3s ease forwards;
+}
+
+/* ========================================
+   Tablet & Mobile Responsive Design
+   ======================================== */
+
+/* Tablet: Medium screens (768px - 1024px) */
+@media (max-width: 1024px) {
+    .sidebar-group-modal {
+        left: 200px;
+        width: 300px;
+        top: 90px;
+    }
+}
+
+/* ========================================
+   MOBILE MODAL STYLES (max 850px)
+   Completely separate implementation for mobile
+   ======================================== */
+
+@media (max-width: 850px) {
+    .sidebar-group-modal {
+        /* MOBILE: Completely centered and constrained */
+        position: fixed;
+        left: 50%;
+        top: 50%;
+        width: calc(100vw - 32px);
+        max-width: 360px;
+        max-height: calc(100vh - 60px);
+        margin: 0;
+        padding: 0;
+        transform: translate(-50%, -50%);
+        overflow-y: auto;
+        overflow-x: hidden;
+        border-radius: 14px;
+        animation: bounceInDown 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    }
+
+    /* Mobile: Hide pointer on mobile */
+    .sidebar-modal-pointer {
+        display: none;
+    }
+
+    .sidebar-modal-title {
+        font-size: 15px;
+    }
+
+    .sidebar-modal-link {
+        padding: 12px 16px;
+        font-size: 14px;
+        gap: 10px;
+    }
+
+    .sidebar-modal-link:hover {
+        padding-left: 20px;
+    }
+
+    .sidebar-modal-header {
+        padding: 16px 16px;
+    }
+}
+
+/* Mobile: Small screens (max 767px) */
+@media (max-width: 767px) {
+    .sidebar-group-modal {
+        /* Ensure even smaller devices work perfectly */
+        width: calc(100vw - 24px);
+        max-width: 340px;
+        max-height: calc(100vh - 40px);
+        padding: 0;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+    }
+
+    .sidebar-modal-title {
+        font-size: 14px;
+    }
+
+    .sidebar-modal-link {
+        padding: 11px 14px;
+        font-size: 13px;
+        gap: 10px;
+    }
+
+    .sidebar-modal-link:hover {
+        padding-left: 18px;
+    }
+
+    .sidebar-modal-header {
+        padding: 14px 14px;
+    }
+}
+
+/* Mobile: Extra small screens (max 575px) */
+@media (max-width: 575px) {
+    .sidebar-group-modal {
+        /* Ultra-compact for tiny screens */
+        width: calc(100vw - 20px);
+        max-width: 320px;
+        max-height: calc(100vh - 30px);
+        padding: 0;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        border-radius: 12px;
+    }
+
+    .sidebar-modal-title {
+        font-size: 13px;
+    }
+
+    .sidebar-modal-title i {
+        font-size: 16px;
+    }
+
+    .sidebar-modal-close {
+        font-size: 18px;
+        padding: 4px 6px;
+    }
+
+    .sidebar-modal-link {
+        padding: 10px 12px;
+        font-size: 12px;
+        gap: 8px;
+    }
+
+    .sidebar-modal-link i {
+        font-size: 14px;
+        width: 18px;
+    }
+
+    .sidebar-modal-header {
+        padding: 12px 12px;
+    }
+
+    .sidebar-modal-list li:last-child .sidebar-modal-link {
+        margin-bottom: 4px;
+    }
+}
+
+/* Mobile Landscape (max-height: 600px) */
+@media (max-height: 600px) {
+    .sidebar-group-modal {
+        max-height: 70vh;
+        max-height: calc(100vh - 50px);
+    }
+}
+
+/* Desktop: Large screens (1200px+) */
+@media (min-width: 1200px) {
+    .sidebar-group-modal {
+        width: 340px;
+    }
+
+    .sidebar-modal-link {
+        padding: 13px 22px;
+        font-size: 15px;
+        gap: 13px;
+    }
+}
+
+/* ========================================
+   Accessibility & Focus States
+   ======================================== */
+
+.sidebar-modal-link:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+    background-color: rgba(49, 151, 149, 0.1);
+}
+
+.sidebar-modal-close:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+/* Scrollbar Styling */
+.sidebar-group-modal::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar-group-modal::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.sidebar-group-modal::-webkit-scrollbar-thumb {
+    background: rgba(49, 151, 149, 0.3);
+    border-radius: 3px;
+}
+
+.sidebar-group-modal::-webkit-scrollbar-thumb:hover {
+    background: rgba(49, 151, 149, 0.5);
+}
+
+/* Dark Mode Scrollbar */
+body.dark-mode .sidebar-group-modal::-webkit-scrollbar-thumb {
+    background: rgba(49, 151, 149, 0.4);
+}
+
+body.dark-mode .sidebar-group-modal::-webkit-scrollbar-thumb:hover {
+    background: rgba(49, 151, 149, 0.6);
+}
+
+/* Print Styles */
+@media print {
+    .sidebar-group-modal,
+    .sidebar-modal-overlay {
+        display: none !important;
+    }
+}

@@ -1,0 +1,11 @@
+{% extends 'base.html'%}
+{% block title %}{{ department.name }} Department Members{% endblock %}
+{% block content %}
+<button type="button" onclick="history.back()" class="btn btn-secondary rounded-circle mb-3 float-start"><i class="fas fa-arrow-left"></i></button>
+<div class="float-start px-3">
+<h2>{{ department.name }} Department Members</h2>
+{% for member in members %}
+    <p class="float-start mt-3 px-3"><i class="fas fa-circle text-primary"></i> {{ member }}</p>
+{%endfor%}
+</div>
+{%endblock%}

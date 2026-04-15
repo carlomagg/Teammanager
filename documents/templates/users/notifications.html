@@ -1,0 +1,321 @@
+{% extends 'base.html' %}
+
+{% block title %}Notifications - TeamManager{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-md-12">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-transparent d-flex align-items-center justify-content-between">
+                    <h2 class="mb-0"><i class="fas fa-bell me-2"></i> Notifications</h2>
+                    {% if active_notifications %}
+                        <button class="btn btn-outline-primary btn-sm mark-all-read" title="Mark All as Read">
+                            <i class="fas fa-check-double me-1"></i> Mark All as Read
+                        </button>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <!-- Tab Navigation -->
+                    <ul class="nav nav-tabs mb-4" id="notificationTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link active" id="active-tab" data-bs-toggle="tab" href="#active" role="tab" aria-controls="active" aria-selected="true">Active <span class="badge bg-primary ms-1">{{ active_notifications.count }}</span></a>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link" id="dismissed-tab" data-bs-toggle="tab" href="#dismissed" role="tab" aria-controls="dismissed" aria-selected="false">Dismissed <span class="badge bg-secondary ms-1">{{ dismissed_notifications.count }}</span></a>
+                        </li>
+                    </ul>
+
+                    <!-- Tab Content -->
+                    <div class="tab-content">
+                        <!-- Active Notifications -->
+                        <div class="tab-pane fade show active" id="active" role="tabpanel" aria-labelledby="active-tab">
+                            {% for note in active_notifications %}
+                                <div class="card mb-3 notification-card" data-notification-id="{{ note.notification.id }}">
+                                    <a href="{% url 'notification_redirect' note.notification.id %}" style="text-decoration: none; color: inherit;">
+                                        <div class="card-body d-flex justify-content-between align-items-center">
+                                            <div class="d-flex align-items-center flex-grow-1">
+                                                <i class="fas fa-circle fa-xs me-3 text-primary"></i>
+                                                <div>
+                                                    <h5 class="card-title mb-1">{{ note.notification.title }}</h5>
+                                                    <p class="card-text mb-1">{{ note.notification.message|truncatewords:30 }}</p>
+                                                    <small class="text-muted">{{ note.notification.created_at|date:"F d, Y H:i" }}</small>
+                                                </div>
+                                            </div>
+                                            <button class="btn btn-danger btn-sm dismiss-notification" 
+                                                    data-notification-id="{{ note.notification.id }}" 
+                                                    title="Dismiss Notification"
+                                                    onclick="event.preventDefault(); event.stopPropagation();">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </a>
+                                </div>
+                            {% empty %}
+                                <p class="text-muted text-center">No active notifications.</p>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Dismissed Notifications -->
+                        <div class="tab-pane fade" id="dismissed" role="tabpanel" aria-labelledby="dismissed-tab">
+                            {% for note in dismissed_notifications %}
+                                <div class="card mb-3 notification-card">
+                                    <a href="{% url 'notification_redirect' note.notification.id %}" style="text-decoration: none; color: inherit;">
+                                        <div class="card-body d-flex justify-content-between align-items-center">
+                                            <div class="d-flex align-items-center flex-grow-1">
+                                                <i class="fas fa-circle fa-xs me-3 text-muted"></i>
+                                                <div>
+                                                    <h5 class="card-title mb-1">{{ note.notification.title }}</h5>
+                                                    <p class="card-text mb-1">{{ note.notification.message|truncatewords:30 }}</p>
+                                                    <small class="text-muted">Dismissed on {{ note.seen_at|date:"F d, Y H:i" }}</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </a>
+                                </div>
+                            {% empty %}
+                                <p class="text-muted text-center">No dismissed notifications.</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        border-radius: 12px;
+        transition: all 0.3s ease;
+    }
+    body.dark-mode .card {
+        background: #2d3748;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    .card-header {
+        cursor: default;
+        transition: background-color 0.2s ease;
+    }
+    body.dark-mode .card-header {
+        background: #3b4a6b !important;
+    }
+    .notification-card {
+        border-radius: 8px;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        cursor: pointer;
+    }
+    .notification-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(49, 151, 149, 0.2);
+    }
+    body.dark-mode .notification-card {
+        background: #3b4a6b;
+    }
+    body.dark-mode .notification-card:hover {
+        box-shadow: 0 6px 12px rgba(49, 151, 149, 0.3);
+    }
+    .notification-card a {
+        display: block;
+        color: inherit;
+        text-decoration: none;
+    }
+    .notification-card:hover .card-title {
+        color: #319795;
+    }
+    body.dark-mode .notification-card:hover .card-title {
+        color: #4fd1c5;
+    }
+    .card-title {
+        font-size: 1.1rem;
+        font-weight: 500;
+        color: #2d3748;
+    }
+    body.dark-mode .card-title {
+        color: #e2e8f0;
+    }
+    .card-text {
+        font-size: 0.95rem;
+        color: #718096;
+    }
+    body.dark-mode .card-text {
+        color: #a0aec0;
+    }
+    .text-muted {
+        font-size: 0.85rem;
+    }
+    .nav-tabs .nav-link {
+        border-radius: 8px 8px 0 0;
+        color: #2d3748;
+        font-weight: 500;
+    }
+    body.dark-mode .nav-tabs .nav-link {
+        color: #e2e8f0;
+    }
+    .nav-tabs .nav-link.active {
+        background: #319795;
+        color: #e2e8f0;
+        border-color: #319795;
+    }
+    body.dark-mode .nav-tabs .nav-link.active {
+        background: #2c7a7b;
+        border-color: #2c7a7b;
+    }
+    .nav-tabs .badge {
+        font-size: 0.75rem;
+        padding: 4px 8px;
+    }
+    .dismiss-notification {
+        padding: 6px 12px;
+    }
+    .mark-all-read {
+        padding: 6px 12px;
+    }
+    @media (max-width: 576px) {
+        .card-body {
+            padding: 1rem;
+        }
+        h2 {
+            font-size: 1.5rem;
+        }
+        .nav-tabs .nav-link {
+            font-size: 0.9rem;
+            padding: 8px 12px;
+        }
+        .card-title {
+            font-size: 1rem;
+        }
+        .card-text {
+            font-size: 0.9rem;
+        }
+        .dismiss-notification, .mark-all-read {
+            font-size: 0.75rem;
+            padding: 4px 8px;
+        }
+    }
+</style>
+
+<script>
+$(document).ready(function() {
+    // Dismiss Single Notification
+    $('.dismiss-notification').on('click', function() {
+        const button = $(this);
+        const notificationId = button.data('notification-id');
+        const card = button.closest('.notification-card');
+        $.ajax({
+            url: '{% url "dismiss_notification" %}',
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            data: {
+                notification_id: notificationId
+            },
+            success: function(response) {
+                if (response.status === 'success') {
+                    card.fadeOut(300, function() {
+                        $(this).remove();
+                        const activeCount = parseInt($('#active-tab .badge').text()) - 1;
+                        $('#active-tab .badge').text(activeCount);
+                        if (activeCount === 0) {
+                            $('#active').append('<p class="text-muted text-center">No active notifications.</p>');
+                            $('.mark-all-read').hide();
+                            $('#active-tab .badge').hide();
+                        }
+                    });
+                } else {
+                    showToast('Failed to dismiss notification: ' + (response.message || 'Unknown error'), 'danger');
+                }
+            },
+            error: function() {
+                showToast('An error occurred. Please try again.', 'danger');
+            }
+        });
+    });
+
+    // Mark All Notifications as Read
+    $('.mark-all-read').on('click', function() {
+        openConfirm('Mark all as read?', 'This will dismiss all active notifications.', 'Mark All', function() {
+            $.ajax({
+                url: '{% url "dismiss_all_notifications" %}',
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        $('#active .notification-card').fadeOut(300, function() {
+                            $(this).remove();
+                            $('#active').append('<p class="text-muted text-center">No active notifications.</p>');
+                            $('.mark-all-read').hide();
+                            $('#active-tab .badge').text('0').hide();
+                        });
+                        showToast('All notifications marked as read.', 'success');
+                    } else {
+                        showToast('Failed to mark all notifications as read: ' + (response.error || 'Unknown error'), 'danger');
+                    }
+                },
+                error: function() {
+                    showToast('An error occurred. Please try again.', 'danger');
+                }
+            });
+        });
+    });
+});
+</script>
+
+<!-- Toast + Confirm Modal -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1080;">
+  <div id="notifToast" class="toast align-items-center text-bg-primary border-0" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="d-flex">
+      <div class="toast-body" id="notifToastBody">Done</div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="notifConfirmModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="notifConfirmTitle">Confirm</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="notifConfirmMessage">Are you sure?</div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" id="notifConfirmOk">Continue</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function showToast(message, variant) {
+    const toastEl = document.getElementById('notifToast');
+    const bodyEl = document.getElementById('notifToastBody');
+    if (!toastEl || !bodyEl || typeof bootstrap === 'undefined') return;
+    bodyEl.textContent = message;
+    toastEl.className = 'toast align-items-center text-bg-' + (variant || 'primary') + ' border-0';
+    new bootstrap.Toast(toastEl, { delay: 3500 }).show();
+  }
+
+  function openConfirm(title, message, okText, onOk) {
+    const modalEl = document.getElementById('notifConfirmModal');
+    if (!modalEl || typeof bootstrap === 'undefined') return;
+    document.getElementById('notifConfirmTitle').textContent = title || 'Confirm';
+    document.getElementById('notifConfirmMessage').textContent = message || 'Are you sure?';
+    const okBtn = document.getElementById('notifConfirmOk');
+    okBtn.textContent = okText || 'Continue';
+    const modal = new bootstrap.Modal(modalEl);
+
+    const handler = function() {
+      okBtn.removeEventListener('click', handler);
+      modal.hide();
+      if (typeof onOk === 'function') onOk();
+    };
+    okBtn.addEventListener('click', handler);
+    modal.show();
+  }
+</script>
+{% endblock %}

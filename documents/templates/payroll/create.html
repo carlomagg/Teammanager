@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Create Payroll{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2>Create New Payroll</h2>
+            {% if copy_from_payroll %}
+            <p class="text-muted">Copying from {{ copy_from_payroll.period_start|date:"F Y" }}</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.period_start.id_for_label }}">Period Start</label>
+                            {{ form.period_start }}
+                            {% if form.period_start.errors %}
+                            <div class="text-danger">{{ form.period_start.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.period_end.id_for_label }}">Period End</label>
+                            {{ form.period_end }}
+                            {% if form.period_end.errors %}
+                            <div class="text-danger">{{ form.period_end.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.payment_date.id_for_label }}">Payment Date</label>
+                            {{ form.payment_date }}
+                            {% if form.payment_date.errors %}
+                            <div class="text-danger">{{ form.payment_date.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.payment_option.id_for_label }}">Payment Option</label>
+                            {{ form.payment_option }}
+                            {% if form.payment_option.errors %}
+                            <div class="text-danger">{{ form.payment_option.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.notification_days_before.id_for_label }}">Notify Staff (days before payment)</label>
+                            {{ form.notification_days_before }}
+                            <small class="form-text text-muted">Staff will be reminded to update bank details</small>
+                            {% if form.notification_days_before.errors %}
+                            <div class="text-danger">{{ form.notification_days_before.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.notes.id_for_label }}">Notes</label>
+                    {{ form.notes }}
+                    {% if form.notes.errors %}
+                    <div class="text-danger">{{ form.notes.errors }}</div>
+                    {% endif %}
+                </div>
+
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+                {% endif %}
+
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    After creating the payroll, all active staff with profiles will be automatically added. You can then edit individual amounts.
+                </div>
+
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Create Payroll
+                    </button>
+                    <a href="{% url 'payroll_list' %}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

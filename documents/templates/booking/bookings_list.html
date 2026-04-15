@@ -1,0 +1,557 @@
+{% extends 'base.html' %}
+{% load tz static humanize %}
+
+{% block title %}All Bookings{% endblock %}
+
+{% block extra_css %}
+<style>
+  .table th, .table td {
+    font-size: 0.92rem;
+    vertical-align: middle;
+  }
+  .table thead th {
+    font-size: 0.88rem;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: #6c757d;
+  }
+  .badge-status {
+    min-width: 92px;
+    text-align: center;
+    font-size: 0.80rem;
+  }
+  .btn-sm {
+    font-size: 0.81rem;
+    padding: 0.35rem 0.65rem;
+  }
+  .text-small-muted {
+    font-size: 0.81rem;
+    color: #6c757d;
+    line-height: 1.35;
+  }
+  .participant-info {
+    font-size: 0.84rem;
+  }
+  .preview-email-btn {
+    font-size: 0.80rem;
+  }
+  #previewEmailModal .modal-body {
+    background: #f8f9fa;
+    padding: 1.5rem;
+  }
+  /* ── Filter bar ─────────────────────────────────────────────────────────── */
+  .filter-bar {
+    background: #fff;
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+  }
+  .filter-bar .form-control,
+  .filter-bar .form-select {
+    font-size: 0.87rem;
+  }
+  .filter-bar label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: #6c757d;
+    margin-bottom: 0.25rem;
+  }
+  .filter-active-badge {
+    font-size: 0.78rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <div>
+      <a href="{% url 'booking_dashboard' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="fas fa-arrow-left me-1"></i> Dashboard
+      </a>
+      <h2 class="fw-bold text-dark mb-1 mt-2" style="font-size: 1.65rem;">Bookings</h2>
+      <p class="text-muted mb-0" style="font-size: 0.95rem;">All scheduled meetings and appointments</p>
+    </div>
+  </div>
+
+  <!-- ── Filter bar ──────────────────────────────────────────────────────── -->
+  <form id="filterForm" method="get" autocomplete="off" class="filter-bar shadow-sm mb-3">
+    <div class="row g-2 align-items-end">
+
+      <!-- Search -->
+      <div class="col-12 col-sm-6 col-lg-3">
+        <label for="filter-q"><i class="fas fa-search me-1"></i>Search</label>
+        <input type="text" id="filter-q" name="q"
+               class="form-control form-control-sm"
+               placeholder="Name or email…"
+               value="{{ active_filters.q }}">
+      </div>
+
+      <!-- Status -->
+      <div class="col-6 col-sm-3 col-lg-2">
+        <label for="filter-status"><i class="fas fa-circle me-1"></i>Status</label>
+        <select id="filter-status" name="status" class="form-select form-select-sm">
+          <option value="">All</option>
+          <option value="pending"   {% if active_filters.status == 'pending'   %}selected{% endif %}>Pending</option>
+          <option value="confirmed" {% if active_filters.status == 'confirmed' %}selected{% endif %}>Confirmed</option>
+          <option value="cancelled" {% if active_filters.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+          <option value="no_show"   {% if active_filters.status == 'no_show'   %}selected{% endif %}>No-show</option>
+        </select>
+      </div>
+
+      <!-- Payment status -->
+      <div class="col-6 col-sm-3 col-lg-2">
+        <label for="filter-payment"><i class="fas fa-credit-card me-1"></i>Payment</label>
+        <select id="filter-payment" name="payment_status" class="form-select form-select-sm">
+          <option value="">All</option>
+          <option value="not_required" {% if active_filters.payment_status == 'not_required' %}selected{% endif %}>Free</option>
+          <option value="pending"      {% if active_filters.payment_status == 'pending'      %}selected{% endif %}>Pending</option>
+          <option value="success"      {% if active_filters.payment_status == 'success'      %}selected{% endif %}>Paid</option>
+          <option value="failed"       {% if active_filters.payment_status == 'failed'       %}selected{% endif %}>Failed</option>
+        </select>
+      </div>
+
+      <!-- Date from -->
+      <div class="col-6 col-sm-3 col-lg-2">
+        <label for="filter-date-from"><i class="fas fa-calendar me-1"></i>From</label>
+        <input type="date" id="filter-date-from" name="date_from"
+               class="form-control form-control-sm"
+               value="{{ active_filters.date_from }}">
+      </div>
+
+      <!-- Date to -->
+      <div class="col-6 col-sm-3 col-lg-2">
+        <label for="filter-date-to"><i class="fas fa-calendar me-1"></i>To</label>
+        <input type="date" id="filter-date-to" name="date_to"
+               class="form-control form-control-sm"
+               value="{{ active_filters.date_to }}">
+      </div>
+
+      <!-- Clear button + result count -->
+      <div class="col-12 col-lg-1 d-flex align-items-end gap-2">
+        {% if has_active_filters %}
+        <a href="{% url 'bookings_list' %}" class="btn btn-sm btn-outline-secondary w-100"
+           title="Clear all filters">
+          <i class="fas fa-times me-1"></i>Clear
+        </a>
+        {% endif %}
+      </div>
+
+    </div>
+
+    {% if has_active_filters %}
+    <div class="mt-2 d-flex align-items-center gap-2 flex-wrap">
+      <span class="text-muted" style="font-size:0.83rem;">
+        <i class="fas fa-filter me-1"></i>
+        Showing <strong>{{ total_count }}</strong> result{{ total_count|pluralize }}
+      </span>
+      {% if active_filters.status %}
+        <span class="badge bg-light border text-dark filter-active-badge">
+          Status: {{ active_filters.status|capfirst }}</span>
+      {% endif %}
+      {% if active_filters.payment_status %}
+        <span class="badge bg-light border text-dark filter-active-badge">
+          Payment: {{ active_filters.payment_status|capfirst }}</span>
+      {% endif %}
+      {% if active_filters.q %}
+        <span class="badge bg-light border text-dark filter-active-badge">
+          Search: "{{ active_filters.q }}"</span>
+      {% endif %}
+      {% if active_filters.date_from %}
+        <span class="badge bg-light border text-dark filter-active-badge">
+          From: {{ active_filters.date_from }}</span>
+      {% endif %}
+      {% if active_filters.date_to %}
+        <span class="badge bg-light border text-dark filter-active-badge">
+          To: {{ active_filters.date_to }}</span>
+      {% endif %}
+    </div>
+    {% endif %}
+  </form>
+
+  <div class="card shadow-sm border-0 rounded-lg">
+    <div class="card-body p-0">
+      <div class="table-responsive" style="max-height:500px; overflow-y:auto;">
+        <table class="table table-hover mb-0">
+          <thead class="table-light" style="position:sticky; top:0; z-index:1;">
+            <tr>
+              <th>Event</th>
+              {% if not user.is_personal %}
+                <th>For</th>
+              {% endif %}
+              <th>Attendee</th>
+              <th>Contact</th>
+              <th>When</th>
+              <th>Mode</th>
+              <th>Status</th>
+              <th>Payment</th>
+              <th class="text-center">Invited</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="text-muted">
+            {% for booking in bookings %}
+            <tr>
+              <td class="fw-medium text-dark">{{ booking.event.title|truncatewords:8 }}</td>
+
+              {% if not user.is_personal %}
+              <td>
+                <span class="badge bg-light border text-dark px-2 py-1">
+                  {{ booking.booking_type.get_booking_for_display|default:"—" }}
+                </span>
+              </td>
+              {% endif %}
+
+              <td class="text-dark">
+                {% if booking.user %}
+                  {{ booking.user.get_full_name|default:booking.user.username|truncatechars:22 }}
+                {% else %}
+                  {{ booking.first_name }} {{ booking.last_name|default:"Guest"|truncatechars:22 }}
+                {% endif %}
+              </td>
+
+              <td class="text-small-muted">
+                {{ booking.email|default:"—" }}<br>
+                {{ booking.phone|default:"—" }}
+              </td>
+
+              <td class="text-small-muted">
+                {% timezone effective_timezone %}
+                  {{ booking.event.start_time|date:"M d · h:i A" }}
+                  <span>({{ effective_tz_abbrev }})</span>
+                {% endtimezone %}
+              </td>
+
+              <td>
+                {% if booking.booking_type.is_hybrid %}
+                  <span class="badge bg-info text-white px-2">{{ booking.get_attendance_mode_display }}</span>
+                {% elif booking.booking_type.location %}
+                  <span class="badge bg-secondary px-2">Offline</span>
+                {% elif booking.booking_type.virtual_link %}
+                  <span class="badge bg-primary px-2">Online</span>
+                {% else %}
+                  <span class="text-muted">—</span>
+                {% endif %}
+              </td>
+
+              <td>
+                <span class="badge badge-status
+                  {% if booking.status == 'confirmed' %}bg-success
+                  {% elif booking.status == 'pending' %}bg-warning text-dark
+                  {% elif booking.status == 'cancelled' %}bg-danger
+                  {% elif booking.status == 'no_show' %}bg-dark
+                  {% else %}bg-secondary{% endif %}">
+                  {{ booking.get_status_display|truncatechars:12 }}
+                </span>
+              </td>
+
+              <td>
+                <span class="badge
+                  {% if booking.payment_status == 'success' %}bg-success
+                  {% elif booking.payment_status == 'pending' %}bg-warning text-dark
+                  {% elif booking.payment_status == 'failed' %}bg-danger
+                  {% else %}bg-light border text-muted{% endif %}">
+                  {{ booking.payment_status|capfirst }}
+                </span>
+                {% if booking.amount_paid > 0 %}
+                  <div class="text-small-muted mt-1">{{ booking.amount_paid|floatformat:2 }}</div>
+                {% endif %}
+              </td>
+
+              {% comment %} <td class="text-center participant-info">
+                {% with count_ext=booking.event.external_participants.count %}
+                  {% if count_ext > 0 %}
+                    <span class="badge bg-light border text-dark">
+                      {{ count_ext }} external
+                    </span>
+                  {% else %}
+                    <span class="text-muted">—</span>
+                  {% endif %}
+                {% endwith %}
+              </td> {% endcomment %}
+              
+              <td class="text-center participant-info">
+                {% for ext in booking.event.external_participants.all|slice:":5" %}
+                    <span class="d-inline-block text-center me-1" title="{{ ext.email }}">
+                        <div class="bg-primary text-white rounded-circle" style="width:28px;height:28px;font-size:11px;line-height:28px;">
+                            {{ ext.email|slice:":2"|upper }}
+                        </div>
+                    </span>
+                {% empty %}
+                    <span class="text-muted">—</span>
+                {% endfor %}
+              </td>
+
+              <td class="text-end">
+                {% if booking.status == 'pending' %}
+                  <a href="{% url 'booking_action' booking.uuid 'accept' %}" 
+                     class="btn btn-sm btn-success me-1">Accept</a>
+                  <a href="{% url 'booking_action' booking.uuid 'decline' %}" 
+                     class="btn btn-sm btn-outline-danger me-1">Decline</a>
+                {% endif %}
+
+                <button class="btn btn-sm btn-outline-primary me-1"
+                        data-bs-toggle="modal" data-bs-target="#inviteExternalModal"
+                        data-event-id="{{ booking.event.id }}"
+                        data-event-title="{{ booking.event.title|escapejs }}">
+                  <i class="fas fa-user-plus"></i> Invite
+                </button>
+
+                <button class="btn btn-sm btn-outline-secondary preview-email-btn"
+                        data-bs-toggle="modal" data-bs-target="#previewEmailModal"
+                        data-event-title="{{ booking.event.title|escapejs }}"
+                        data-host-name="{{ booking.booking_type.host_user.get_full_name|default:booking.booking_type.host_user.username|escapejs }}"
+                        data-host-email="{{ booking.booking_type.host_user.email|escapejs }}"
+                        data-start-time="{{ booking.event.start_time|date:"l, d F Y  H:i" }}"
+                        data-end-time="{{ booking.event.end_time|date:"H:i" }}">
+                  <i class="fas fa-envelope"></i> Preview
+                </button>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="{% if not user.is_personal %}10{% else %}9{% endif %}" class="text-center py-5 text-muted">
+                <i class="fas fa-calendar-times fa-2x mb-3 opacity-50 d-block"></i>
+                No bookings yet.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {% if is_paginated %}
+    <div class="card-footer bg-white border-0 pt-3">
+      {% include "includes/pagination.html" with page_obj=page_obj %}
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<!-- ── Invite External Modal (same as dashboard) ─────────────────────────────── -->
+<div class="modal fade" id="inviteExternalModal" tabindex="-1" aria-labelledby="inviteExternalModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="inviteExternalModalLabel">Invite External Participants</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="inviteExternalForm">
+          <input type="hidden" id="invite-event-id" name="event_id">
+          <div class="mb-3">
+            <label for="invite-emails" class="form-label fw-semibold">Email addresses <small class="text-muted">(one per line or comma-separated)</small></label>
+            <textarea class="form-control" id="invite-emails" rows="5" placeholder="colleague@example.com, friend@domain.com" required></textarea>
+          </div>
+          <div class="mb-4">
+            <label for="invite-message" class="form-label fw-semibold">Personal message <small class="text-muted">(optional)</small></label>
+            <textarea class="form-control" id="invite-message" rows="3" placeholder="Looking forward to our discussion..."></textarea>
+          </div>
+          <div id="invite-result" class="d-none mt-3"></div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id="sendInviteBtn">
+          <i class="fas fa-paper-plane me-1"></i> Send Invites
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Preview Sample Email Modal ─────────────────────────────────────────────── -->
+<div class="modal fade" id="previewEmailModal" tabindex="-1" aria-labelledby="previewEmailModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="previewEmailModalLabel">Email Preview — External Invitation</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-0">
+        <iframe id="emailPreviewFrame" style="width:100%; height:520px; border:none;" sandbox="allow-same-origin"></iframe>
+      </div>
+      <div class="modal-footer">
+        <small class="text-muted me-auto">This is a static preview using the first booking's details</small>
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+/* ── Instant filter ──────────────────────────────────────────────────────── */
+(function () {
+  const form = document.getElementById('filterForm');
+  if (!form) return;
+
+  // Debounce helper
+  function debounce(fn, delay) {
+    let timer;
+    return function (...args) {
+      clearTimeout(timer);
+      timer = setTimeout(() => fn.apply(this, args), delay);
+    };
+  }
+
+  function submitFilter() {
+    // Remove empty params to keep the URL tidy
+    const url = new URL(window.location.href);
+    const data = new FormData(form);
+    // Clear existing filter params first
+    ['q', 'status', 'payment_status', 'date_from', 'date_to'].forEach(k => url.searchParams.delete(k));
+    for (const [key, value] of data.entries()) {
+      if (value.trim()) url.searchParams.set(key, value.trim());
+    }
+    window.location.href = url.toString();
+  }
+
+  // Debounced submit for the text search field (400 ms)
+  document.getElementById('filter-q')
+    ?.addEventListener('input', debounce(submitFilter, 400));
+
+  // Immediate submit for selects and date inputs
+  ['filter-status', 'filter-payment', 'filter-date-from', 'filter-date-to'].forEach(id => {
+    document.getElementById(id)?.addEventListener('change', submitFilter);
+  });
+})();
+
+/* ── CSRF helper ─────────────────────────────────────────────────────────── */
+function getCookie(name) {
+  const cookies = document.cookie.split(';');
+  for (let c of cookies) {
+    c = c.trim();
+    if (c.startsWith(name + '=')) return decodeURIComponent(c.slice(name.length + 1));
+  }
+  return null;
+}
+
+/* ── Invite External Modal: pre-fill event id from row button ─────────────── */
+document.getElementById('inviteExternalModal').addEventListener('show.bs.modal', function (e) {
+  const btn        = e.relatedTarget;
+  const eventId    = btn?.dataset.eventId;
+  const eventTitle = btn?.dataset.eventTitle;
+  const hiddenInput = document.getElementById('invite-event-id');
+
+  if (hiddenInput) hiddenInput.value = eventId || '';
+
+  // Reset result area
+  const resultEl = document.getElementById('invite-result');
+  if (resultEl) { resultEl.className = 'd-none'; resultEl.innerHTML = ''; }
+
+  // Reset textarea
+  const emailsEl = document.getElementById('invite-emails');
+  if (emailsEl) emailsEl.value = '';
+  const msgEl = document.getElementById('invite-message');
+  if (msgEl) msgEl.value = '';
+});
+
+/* ── Send Invites button ─────────────────────────────────────────────────── */
+document.getElementById('sendInviteBtn').addEventListener('click', async function () {
+  const eventId   = document.getElementById('invite-event-id')?.value;
+  const rawEmails = document.getElementById('invite-emails')?.value || '';
+  const message   = document.getElementById('invite-message')?.value?.trim() || '';
+  const resultEl  = document.getElementById('invite-result');
+
+  if (!eventId) { alert('No event selected.'); return; }
+  const emails = rawEmails.split(/[,\n]+/).map(e => e.trim()).filter(Boolean);
+  if (!emails.length) { alert('Please enter at least one email address.'); return; }
+
+  this.disabled = true;
+  this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Sending…';
+
+  try {
+    const resp = await fetch(`/api/events/${eventId}/invite-external/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken'),
+      },
+      body: JSON.stringify({ emails, message }),
+    });
+    const data = await resp.json();
+
+    let html = '';
+    if (data.sent?.length)
+      html += `<div class="alert alert-success mb-2"><i class="fas fa-check-circle me-1"></i>Invites sent to: <strong>${data.sent.join(', ')}</strong></div>`;
+    if (data.failed?.length)
+      html += `<div class="alert alert-warning mb-0"><i class="fas fa-exclamation-triangle me-1"></i>Failed: ${data.failed.map(f => `${f.email} (${f.error})`).join(', ')}</div>`;
+
+    resultEl.innerHTML = html;
+    resultEl.classList.remove('d-none');
+
+    if (data.sent?.length && !data.failed?.length) {
+      setTimeout(() => {
+        bootstrap.Modal.getInstance(document.getElementById('inviteExternalModal'))?.hide();
+        location.reload(); // refresh avatars in the Invited column
+      }, 2000);
+    }
+  } catch (err) {
+    resultEl.innerHTML = `<div class="alert alert-danger">Network error. Please try again.</div>`;
+    resultEl.classList.remove('d-none');
+  } finally {
+    this.disabled = false;
+    this.innerHTML = '<i class="fas fa-paper-plane me-1"></i> Send Invites';
+  }
+});
+
+/* ── Preview modal – dynamically build simple email HTML ─────────────────── */
+// Preview modal – dynamically build simple email HTML
+document.getElementById('previewEmailModal').addEventListener('show.bs.modal', function (event) {
+  const button = event.relatedTarget;
+  const title  = button.getAttribute('data-event-title');
+  const host   = button.getAttribute('data-host-name');
+  const email  = button.getAttribute('data-host-email');
+  const startTime = button.getAttribute('data-start-time');
+  const endTime = button.getAttribute('data-end-time');
+
+  const previewHTML = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color:#333; margin:0; background:#f4f4f4; }
+    .container { max-width:580px; margin:30px auto; background:white; border-radius:10px; overflow:hidden; box-shadow:0 3px 12px rgba(0,0,0,0.1); }
+    .header { background:#0d6efd; color:white; padding:32px 40px; text-align:center; }
+    .header h1 { margin:0; font-size:24px; }
+    .content { padding:32px 40px; line-height:1.6; }
+    .meta { margin:20px 0; padding:16px; background:#f8f9fa; border-radius:8px; }
+    .footer { padding:20px 40px; background:#f8f9fa; font-size:13px; color:#666; text-align:center; border-top:1px solid #eee; }
+    a { color:#0d6efd; text-decoration:none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>You're Invited to an Event</h1>
+      <p style="margin:8px 0 0; opacity:0.9;">${host} invited you</p>
+    </div>
+    <div class="content">
+      <h3 style="margin-top:0;">${title}</h3>
+      <div class="meta">
+        <strong>When:</strong> ${startTime} - ${endTime}<br>
+        <strong>Host:</strong> ${host} (${email})
+      </div>
+      <p>A personal message would appear here if provided.</p>
+    </div>
+    <div class="footer">
+      Sent via TeamManager • If this wasn't meant for you, you can ignore it.
+    </div>
+  </div>
+</body>
+</html>`;
+
+  const frame = document.getElementById('emailPreviewFrame');
+  frame.srcdoc = previewHTML;
+});
+</script>
+{% endblock %}

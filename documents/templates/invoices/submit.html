@@ -1,0 +1,347 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Submit Invoice to {{ tenant.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .ext-contact-btn, .ext-acct-btn {
+    cursor: pointer; transition: border-color .15s, background .15s;
+  }
+  .ext-contact-btn.active, .ext-acct-btn.active {
+    background: #e8f0fe; border-color: #0d6efd !important;
+  }
+  .ext-contact-btn:hover, .ext-acct-btn:hover {
+    border-color: #0d6efd !important; background: #f0f7ff;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5" style="max-width:780px;">
+
+  <div class="text-center mb-4">
+    {% if tenant.company_profile and tenant.company_profile.photo %}
+    <img src="{{ tenant.company_profile.photo.url }}" alt="{{ tenant.name }}"
+         style="height:56px;object-fit:contain;" class="mb-3 d-block mx-auto">
+    {% endif %}
+    <h3 class="fw-bold mb-1">Submit Invoice</h3>
+    <p class="text-muted">
+      You are submitting an invoice to <strong>{{ tenant.name }}</strong>.
+      You will receive a tracking link by email on submission.
+    </p>
+  </div>
+
+  <form method="post" enctype="multipart/form-data" id="extInvoiceForm" novalidate>
+    {% csrf_token %}
+    <input type="hidden" name="items_json" id="id_items_json" value="[]">
+
+    {# ── Your Details ── #}
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-header bg-transparent border-bottom fw-semibold py-2">
+        <i class="fas fa-user me-1 text-primary"></i>Your Details
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-12 col-md-6">
+            <label class="form-label small fw-semibold">
+              Name / Company <span class="text-danger">*</span>
+            </label>
+            {{ form.payer_name }}
+            {% if form.payer_name.errors %}
+              <div class="invalid-feedback d-block">{{ form.payer_name.errors|join:", " }}</div>
+            {% endif %}
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label small fw-semibold">
+              Email Address <span class="text-danger">*</span>
+            </label>
+            {{ form.payer_email }}
+            {% if form.payer_email.errors %}
+              <div class="invalid-feedback d-block">{{ form.payer_email.errors|join:", " }}</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# ── Invoice Details ── #}
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-header bg-transparent border-bottom fw-semibold py-2">
+        <i class="fas fa-file-invoice me-1 text-secondary"></i>Invoice Details
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-12 col-md-4">
+            <label class="form-label small fw-semibold">
+              Your Invoice Reference <span class="text-muted fw-normal">(optional)</span>
+            </label>
+            {{ form.invoice_number }}
+          </div>
+          <div class="col-6 col-md-4">
+            <label class="form-label small fw-semibold">Issue Date</label>
+            {{ form.issue_date }}
+          </div>
+          <div class="col-6 col-md-4">
+            <label class="form-label small fw-semibold">
+              Due Date <span class="text-danger">*</span>
+            </label>
+            {{ form.due_date }}
+            {% if form.due_date.errors %}
+              <div class="invalid-feedback d-block">{{ form.due_date.errors|join:", " }}</div>
+            {% endif %}
+          </div>
+          <div class="col-6 col-md-4">
+            <label class="form-label small fw-semibold">Currency</label>
+            {{ form.currency }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# ── Line Items ── #}
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-header bg-transparent border-bottom fw-semibold py-2
+                  d-flex justify-content-between align-items-center">
+        <span><i class="fas fa-list me-1 text-info"></i>Line Items</span>
+        <button type="button" class="btn btn-success btn-sm" onclick="addRow()">
+          <i class="fas fa-plus me-1"></i>Add Row
+        </button>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-sm mb-0" id="lineTable">
+            <thead class="table-light">
+              <tr>
+                <th>Description</th>
+                <th style="width:80px;">Qty</th>
+                <th style="width:120px;">Unit Price</th>
+                <th style="width:110px;">Subtotal</th>
+                <th style="width:40px;"></th>
+              </tr>
+            </thead>
+            <tbody id="lineBody"></tbody>
+            <tfoot>
+              <tr>
+                <td colspan="2">
+                  <label class="form-label small mb-0">Discount</label>
+                  {{ form.discount }}
+                </td>
+                <td class="text-end fw-bold align-middle">TOTAL</td>
+                <td class="fw-bold fs-6" id="grandTotal">0.00</td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    {# ── Payment Details ── #}
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-header bg-transparent border-bottom fw-semibold py-2">
+        <i class="fas fa-credit-card me-1 text-success"></i>How You Expect Payment
+        <small class="text-muted fw-normal ms-1">(fill one or both)</small>
+      </div>
+      <div class="card-body">
+
+        {# Toggle: saved bank account vs manual entry #}
+        <div class="d-flex gap-2 mb-3">
+          <div class="card flex-fill ext-acct-btn active border p-2 text-center"
+               id="extAcctSavedBtn" onclick="setExtAcctMode('saved')">
+            <i class="fas fa-university text-success mb-1 d-block"></i>
+            <div class="small fw-semibold">Saved Account</div>
+            <div class="text-muted" style="font-size:.7rem;">Pick from your accounts</div>
+          </div>
+          <div class="card flex-fill ext-acct-btn border p-2 text-center"
+               id="extAcctManualBtn" onclick="setExtAcctMode('manual')">
+            <i class="fas fa-pencil-alt text-secondary mb-1 d-block"></i>
+            <div class="small fw-semibold">Enter Manually</div>
+            <div class="text-muted" style="font-size:.7rem;">Type account details</div>
+          </div>
+        </div>
+
+        {# Saved accounts dropdown — pulled from BankAccount model #}
+        <div id="extAcctSavedSection">
+          <label class="form-label small fw-semibold">Select Account</label>
+          <select class="form-select mb-2" id="id_ext_saved_account"
+                  onchange="onExtSavedAccountChange(this)">
+            <option value="">— Select saved account —</option>
+            {% for acct in saved_accounts %}
+            <option value="{{ acct.pk }}"
+                    data-name="{{ acct.account_name }}"
+                    data-number="{{ acct.account_number }}"
+                    data-bank="{{ acct.bank_name }}"
+                    data-code="{{ acct.sort_code|default:'' }}">
+              {{ acct.bank_name }} — {{ acct.account_number }} ({{ acct.account_name }})
+            </option>
+            {% empty %}
+            <option value="" disabled>No saved accounts available — enter manually</option>
+            {% endfor %}
+          </select>
+          <div class="form-text">
+            These are bank accounts registered with {{ tenant.name }}.
+          </div>
+        </div>
+
+        {# Manual entry — always present so fields submit #}
+        <div id="extAcctManualSection" {% if saved_accounts %}style="display:none;"{% endif %}>
+          <div class="row g-3">
+            <div class="col-12 col-md-6">
+              <label class="form-label small fw-semibold">Bank Account Name</label>
+              {{ form.bank_account_name }}
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label small fw-semibold">Account Number</label>
+              {{ form.bank_account_number }}
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label small fw-semibold">Bank Name</label>
+              {{ form.bank_name }}
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label small fw-semibold">Sort Code / SWIFT</label>
+              {{ form.bank_code }}
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-3">
+          <label class="form-label small fw-semibold">
+            Online Payment Link <span class="text-muted fw-normal">(optional)</span>
+          </label>
+          {{ form.payment_link }}
+        </div>
+
+      </div>
+    </div>
+
+    {# ── Notes & Attachment ── #}
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-transparent border-bottom fw-semibold py-2">
+        <i class="fas fa-paperclip me-1 text-secondary"></i>Notes & Attachment
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-12 col-md-8">
+            <label class="form-label small fw-semibold">Notes / Terms</label>
+            {{ form.notes }}
+          </div>
+          <div class="col-12 col-md-4">
+            <label class="form-label small fw-semibold">
+              Attach Invoice PDF <span class="text-muted fw-normal">(optional)</span>
+            </label>
+            {{ form.attachment }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {% if form.non_field_errors %}
+    <div class="alert alert-danger py-2 small mb-3">
+      {% for e in form.non_field_errors %}<div>{{ e }}</div>{% endfor %}
+    </div>
+    {% endif %}
+
+    <button type="submit" class="btn btn-primary btn-lg w-100" id="submitBtn">
+      <i class="fas fa-paper-plane me-2"></i>Submit Invoice
+    </button>
+    <p class="text-center text-muted small mt-2">
+      You will receive a confirmation email with a tracking link.
+    </p>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let rowIdx = 0;
+
+function addRow(name='', qty=1, price=0) {
+  const tbody = document.getElementById('lineBody');
+  const idx   = rowIdx++;
+  const row   = document.createElement('tr');
+  row.dataset.idx = idx;
+  row.innerHTML = `
+    <td><input type="text" class="form-control form-control-sm item-name"
+               value="${name}" placeholder="Description" data-idx="${idx}"
+               oninput="recalcRow(${idx})"></td>
+    <td><input type="number" class="form-control form-control-sm item-qty"
+               value="${qty}" min="1" step="1" data-idx="${idx}"
+               oninput="recalcRow(${idx})"></td>
+    <td><input type="number" class="form-control form-control-sm item-price"
+               value="${price}" min="0" step="0.01" data-idx="${idx}"
+               oninput="recalcRow(${idx})"></td>
+    <td><span class="item-sub fw-semibold" data-idx="${idx}">
+          ${(qty*price).toFixed(2)}</span></td>
+    <td><button type="button" class="btn btn-xs btn-outline-danger py-0 px-1"
+                onclick="this.closest('tr').remove();recalcTotal()">
+          <i class="fas fa-times"></i></button></td>`;
+  tbody.appendChild(row);
+  recalcTotal();
+}
+
+function recalcRow(idx) {
+  const row = document.querySelector(`tr[data-idx="${idx}"]`);
+  const qty   = parseFloat(row.querySelector('.item-qty').value)   || 0;
+  const price = parseFloat(row.querySelector('.item-price').value) || 0;
+  row.querySelector('.item-sub').textContent = (qty*price).toFixed(2);
+  recalcTotal();
+}
+
+function recalcTotal() {
+  let total = 0;
+  document.querySelectorAll('.item-sub').forEach(s => total += parseFloat(s.textContent)||0);
+  const disc = parseFloat(document.querySelector('[name="discount"]')?.value)||0;
+  document.getElementById('grandTotal').textContent = Math.max(total-disc,0).toFixed(2);
+  serializeItems();
+}
+
+function serializeItems() {
+  const items = [];
+  document.querySelectorAll('#lineBody tr').forEach(row => {
+    const name  = row.querySelector('.item-name')?.value.trim();
+    const qty   = parseFloat(row.querySelector('.item-qty')?.value)   || 0;
+    const price = parseFloat(row.querySelector('.item-price')?.value) || 0;
+    if (name) items.push({ name, quantity: qty, unit_price: price,
+                           subtotal: parseFloat((qty*price).toFixed(2)) });
+  });
+  document.getElementById('id_items_json').value = JSON.stringify(items);
+}
+
+document.querySelector('[name="discount"]')?.addEventListener('input', recalcTotal);
+
+document.getElementById('extInvoiceForm').addEventListener('submit', function () {
+  serializeItems();
+  const btn = document.getElementById('submitBtn');
+  btn.disabled  = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Submitting…';
+});
+
+addRow();
+
+/* ── Account mode toggle ── */
+function setExtAcctMode(mode) {
+  document.getElementById('extAcctSavedSection').style.display  = mode === 'saved'  ? '' : 'none';
+  document.getElementById('extAcctManualSection').style.display = mode === 'manual' ? '' : 'none';
+  document.getElementById('extAcctSavedBtn').classList.toggle('active',  mode === 'saved');
+  document.getElementById('extAcctManualBtn').classList.toggle('active', mode === 'manual');
+}
+window.setExtAcctMode = setExtAcctMode;
+
+/* ── Saved account autofill ── */
+function onExtSavedAccountChange(sel) {
+  const opt = sel.options[sel.selectedIndex];
+  if (!opt.value) return;
+  const f = n => document.querySelector('[name="' + n + '"]');
+  if (f('bank_account_name'))   f('bank_account_name').value   = opt.dataset.name   || '';
+  if (f('bank_account_number')) f('bank_account_number').value = opt.dataset.number || '';
+  if (f('bank_name'))           f('bank_name').value           = opt.dataset.bank   || '';
+  if (f('bank_code'))           f('bank_code').value           = opt.dataset.code   || '';
+  // Switch to manual section so filled values are visible
+  setExtAcctMode('manual');
+  document.getElementById('extAcctManualBtn').classList.add('active');
+  document.getElementById('extAcctSavedBtn').classList.remove('active');
+}
+window.onExtSavedAccountChange = onExtSavedAccountChange;
+</script>
+{% endblock %}

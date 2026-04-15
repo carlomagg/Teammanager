@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ product.name }} - Product Detail{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-box"></i> {{ product.name }}</h2>
+        <div>
+            <a href="{% url 'crm:product_update' product.pk %}" class="btn btn-warning">
+                <i class="fas fa-edit"></i> Edit
+            </a>
+            <a href="{% url 'crm:product_delete' product.pk %}" class="btn btn-danger">
+                <i class="fas fa-trash"></i> Delete
+            </a>
+            <a href="{% url 'crm:product_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to List
+            </a>
+        </div>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-info-circle"></i> Product Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Name:</strong> {{ product.name }}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Category:</strong> {{ product.get_category_display|default:"-" }}
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Unit Price:</strong>
+                            {% if product.unit_price %}
+                                ₦{{ product.unit_price|floatformat:2 }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Status:</strong>
+                            {% if product.is_active %}
+                                <span class="badge bg-success">Active</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Inactive</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Description:</strong>
+                        <p>{{ product.description|default:"No description provided" }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-briefcase"></i> Opportunities Using This Product</h5>
+                </div>
+                <div class="card-body">
+                    {% if opportunities %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Opportunity</th>
+                                        <th>Company</th>
+                                        <th>Category</th>
+                                        <th>Stage</th>
+                                        <th>Value</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for opportunity in opportunities %}
+                                        <tr>
+                                            <td>
+                                                <a href="{% url 'crm:opportunity_detail' opportunity.pk %}">
+                                                    {{ opportunity.title }}
+                                                </a>
+                                            </td>
+                                            <td>{{ opportunity.company_name|default:"-" }}</td>
+                                            <td>
+                                                {% if opportunity.category == 'Lead' %}
+                                                    <span class="badge bg-info">{{ opportunity.category }}</span>
+                                                {% elif opportunity.category == 'Deal' %}
+                                                    <span class="badge bg-warning">{{ opportunity.category }}</span>
+                                                {% else %}
+                                                    <span class="badge bg-success">{{ opportunity.category }}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if opportunity.stage %}
+                                                    <span class="badge bg-secondary">{{ opportunity.stage.name }}</span>
+                                                {% else %}
+                                                    -
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if opportunity.estimated_amount %}
+                                                    ₦{{ opportunity.estimated_amount|floatformat:2 }}
+                                                {% else %}
+                                                    -
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No opportunities are currently using this product.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-clock"></i> Audit Information</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Created By:</strong> {{ product.created_by.get_full_name|default:product.created_by.username }}</p>
+                    <p><strong>Created At:</strong> {{ product.created_at|date:"M d, Y H:i" }}</p>
+                    {% if product.updated_by %}
+                        <p><strong>Updated By:</strong> {{ product.updated_by.get_full_name|default:product.updated_by.username }}</p>
+                    {% endif %}
+                    <p><strong>Updated At:</strong> {{ product.updated_at|date:"M d, Y H:i" }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

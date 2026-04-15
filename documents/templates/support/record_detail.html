@@ -1,0 +1,545 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Support Record Detail{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2><i class="fas fa-info-circle"></i> Support Record Detail</h2>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="{% url 'support_dashboard' %}">Support Dashboard</a></li>
+                            <li class="breadcrumb-item active">Record #{{ support_record.id }}</li>
+                        </ol>
+                    </nav>
+                </div>
+                <a href="{% url 'support_dashboard' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+
+            <div class="row">
+                <!-- Left Column: Record Information -->
+                <div class="col-md-8">
+                    <!-- Entity Information Card -->
+                    <div class="card mb-4">
+                        <div class="card-header text-white" style="background-color: #2c7a7b;">
+                            <h5 class="mb-0">
+                                <i class="fas fa-building"></i> 
+                                {{ support_record.get_entity_type_display }} Information
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            {% if entity %}
+                                <dl class="row">
+                                    <dt class="col-sm-3">Name/Title:</dt>
+                                    <dd class="col-sm-9"><strong>{{ support_record.get_entity_name }}</strong></dd>
+
+                                    {% if support_record.entity_type == 'tenant' %}
+                                        <dt class="col-sm-3">Slug:</dt>
+                                        <dd class="col-sm-9">{{ entity_details.slug }}</dd>
+
+                                        <dt class="col-sm-3">Admin:</dt>
+                                        <dd class="col-sm-9">
+                                            {% if entity_details.admin %}
+                                                <a href="{% url 'view_staff_profile' entity_details.admin.id %}">
+                                                    {{ entity_details.admin.get_full_name|default:entity_details.admin.username }}
+                                                </a>
+                                            {% else %}
+                                                <span class="text-muted">Not assigned</span>
+                                            {% endif %}
+                                        </dd>
+
+                                        <dt class="col-sm-3">Created By:</dt>
+                                        <dd class="col-sm-9">
+                                            {% if entity_details.created_by %}
+                                                {{ entity_details.created_by.get_full_name|default:entity_details.created_by.username }}
+                                            {% else %}
+                                                <span class="text-muted">Unknown</span>
+                                            {% endif %}
+                                        </dd>
+
+                                        <dt class="col-sm-3">Verified:</dt>
+                                        <dd class="col-sm-9">
+                                            {% if entity_details.is_verified %}
+                                                <span class="badge bg-success">Verified</span>
+                                            {% else %}
+                                                <span class="badge bg-warning">Not Verified</span>
+                                            {% endif %}
+                                        </dd>
+
+                                        <dt class="col-sm-3">Subscription:</dt>
+                                        <dd class="col-sm-9">
+                                            <span class="badge bg-{{ entity_details.subscription_status|yesno:'success,secondary' }}">
+                                                {{ entity_details.subscription_status|title }}
+                                            </span>
+                                        </dd>
+
+                                    {% elif support_record.entity_type == 'vacancy' %}
+                                        <dt class="col-sm-3">Tenant:</dt>
+                                        <dd class="col-sm-9">{{ entity_details.tenant.name }}</dd>
+
+                                        <dt class="col-sm-3">Created By:</dt>
+                                        <dd class="col-sm-9">
+                                            {% if entity_details.created_by %}
+                                                {{ entity_details.created_by.get_full_name|default:entity_details.created_by.username }}
+                                            {% else %}
+                                                <span class="text-muted">Unknown</span>
+                                            {% endif %}
+                                        </dd>
+
+                                        <dt class="col-sm-3">Status:</dt>
+                                        <dd class="col-sm-9">
+                                            <span class="badge bg-{{ entity_details.status|yesno:'success,secondary' }}">
+                                                {{ entity_details.status|title }}
+                                            </span>
+                                        </dd>
+
+                                        <dt class="col-sm-3">Work Mode:</dt>
+                                        <dd class="col-sm-9">{{ entity_details.work_mode|title }}</dd>
+
+                                    {% elif support_record.entity_type == 'conference' %}
+                                        <dt class="col-sm-3">Tenant:</dt>
+                                        <dd class="col-sm-9">{{ entity_details.tenant.name }}</dd>
+
+                                        <dt class="col-sm-3">Organizer:</dt>
+                                        <dd class="col-sm-9">
+                                            {% if entity_details.organizer %}
+                                                {{ entity_details.organizer.get_full_name|default:entity_details.organizer.username }}
+                                            {% else %}
+                                                <span class="text-muted">Unknown</span>
+                                            {% endif %}
+                                        </dd>
+
+                                        <dt class="col-sm-3">Start Date:</dt>
+                                        <dd class="col-sm-9">{{ entity_details.start_date|date:"Y-m-d H:i" }}</dd>
+
+                                        <dt class="col-sm-3">Type:</dt>
+                                        <dd class="col-sm-9">{{ entity_details.conference_type|title }}</dd>
+
+                                    {% elif support_record.entity_type == 'user' %}
+                                        <dt class="col-sm-3">Username:</dt>
+                                        <dd class="col-sm-9">{{ entity_details.username }}</dd>
+
+                                        <dt class="col-sm-3">Email:</dt>
+                                        <dd class="col-sm-9">{{ entity_details.email }}</dd>
+
+                                        <dt class="col-sm-3">Full Name:</dt>
+                                        <dd class="col-sm-9">{{ entity_details.full_name|default:"Not provided" }}</dd>
+
+                                        {% if entity_details.tenant %}
+                                            <dt class="col-sm-3">Tenant:</dt>
+                                            <dd class="col-sm-9">
+                                                {{ entity_details.tenant.name }}
+                                            </dd>
+                                        {% else %}
+                                            <dt class="col-sm-3">Account Type:</dt>
+                                            <dd class="col-sm-9">
+                                                Individual
+                                            </dd>
+                                        {% endif %}
+
+                                        <dt class="col-sm-3">Joined:</dt>
+                                        <dd class="col-sm-9">{{ entity_details.date_joined|date:"Y-m-d H:i" }}</dd>
+
+                                    {% elif support_record.entity_type == 'guest' %}
+                                        <dt class="col-sm-3">Email:</dt>
+                                        <dd class="col-sm-9">{{ entity_details.email }}</dd>
+
+                                        <dt class="col-sm-3">Created:</dt>
+                                        <dd class="col-sm-9">{{ entity_details.created_at|date:"Y-m-d H:i" }}</dd>
+
+                                        <dt class="col-sm-3">Last Accessed:</dt>
+                                        <dd class="col-sm-9">
+                                            {% if entity_details.last_accessed_at %}
+                                                {{ entity_details.last_accessed_at|date:"Y-m-d H:i" }}
+                                            {% else %}
+                                                <span class="text-muted">Never</span>
+                                            {% endif %}
+                                        </dd>
+                                    {% endif %}
+
+                                    <dt class="col-sm-3">Created Date:</dt>
+                                    <dd class="col-sm-9">{{ support_record.get_entity_created_date|date:"Y-m-d H:i" }}</dd>
+                                </dl>
+
+                                <!-- Quick Links -->
+                                <div class="mt-3">
+                                    <strong>Quick Links:</strong>
+                                    <div class="btn-group mt-2" role="group">
+                                        {% if support_record.entity_type == 'tenant' %}
+                                            <a href="{% url 'view_company_profile' %}?tenant_id={{entity.id}}" class="btn btn-sm" style="border: 1px solid #2c7a7b; color: #2c7a7b;">
+                                                <i class="fas fa-building"></i> Company Profile
+                                            </a>
+                                            <a href="{% url 'edit_company_profile' %}?tenant_id={{entity.id}}" class="btn btn-sm" style="border: 1px solid #2c7a7b; color: #2c7a7b;">
+                                                <i class="fas fa-edit"></i> Edit Company Profile
+                                            </a>
+                                            {% if entity_details.admin %}
+                                                <a href="{% url 'view_staff_profile' entity_details.admin.id %}" class="btn btn-sm btn-outline-info">
+                                                    <i class="fas fa-user"></i> Admin Profile
+                                                </a>
+                                            {% endif %}
+                                        {% elif support_record.entity_type == 'vacancy' %}
+                                            <a href="{% url 'vacancy_detail' entity.id %}?tenant_id={{entity.tenant.id}}" class="btn btn-sm" style="border: 1px solid #2c7a7b; color: #2c7a7b;">
+                                                <i class="fas fa-briefcase"></i> View Vacancy
+                                            </a>
+                                            <a href="{% url 'edit_vacancy' entity.id %}?tenant_id={{entity.tenant.id}}&user_id={{entity.created_by.id}}" class="btn btn-sm" style="border: 1px solid #2c7a7b; color: #2c7a7b;">
+                                                <i class="fas fa-edit"></i> Edit Vacancy
+                                            </a>
+                                        {% elif support_record.entity_type == 'conference' %}
+                                            <a href="{% url 'conference_detail' entity.id %}?tenant_id={{entity.tenant.id}}" class="btn btn-sm" style="border: 1px solid #2c7a7b; color: #2c7a7b;">
+                                                <i class="fas fa-calendar"></i> View Conference
+                                            </a>
+                                            <a href="{% url 'edit_conference' entity.id %}?tenant_id={{entity.tenant.id}}" class="btn btn-sm" style="border: 1px solid #2c7a7b; color: #2c7a7b;">
+                                                <i class="fas fa-edit"></i> Edit Conference
+                                            </a>
+                                        {% elif support_record.entity_type == 'user' %}
+                                            {% if entity.tenant is not None %}
+                                                <a href="{% url 'view_staff_profile' entity.id %}" class="btn btn-sm" style="border: 1px solid #2c7a7b; color: #2c7a7b;">
+                                                    <i class="fas fa-user"></i> View Profile
+                                                </a>
+                                                <a href="{% url 'edit_staff_profile' entity.staff_profile.id %}?tenant_id={{entity.tenant.id}}&user_id={{entity.id}}" class="btn btn-sm" style="border: 1px solid #2c7a7b; color: #2c7a7b;">
+                                                    <i class="fas fa-edit"></i> Edit User Profile
+                                                </a>
+                                            {% else %}
+                                                <a href="{% url 'admin_user_profile' %}?user_id={{entity.id}}" class="btn btn-sm" style="border: 1px solid #2c7a7b; color: #2c7a7b;">
+                                                    <i class="fas fa-user"></i> View Profile
+                                                </a>
+                                                <a href="{% url 'edit_user_profile' %}?user_id={{entity.id}}" class="btn btn-sm" style="border: 1px solid #2c7a7b; color: #2c7a7b;">
+                                                    <i class="fas fa-edit"></i> Edit User Profile
+                                                </a>
+                                            {% endif %}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% else %}
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle"></i> 
+                                    This entity has been deleted or is no longer available.
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Notes History Card -->
+                    <div class="card">
+                        <div class="card-header bg-secondary text-white">
+                            <h5 class="mb-0"><i class="fas fa-sticky-note"></i> Notes History</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if support_record.notes %}
+                                <div class="notes-container" style="white-space: pre-wrap; font-family: monospace; background-color: #f8f9fa; padding: 15px; border-radius: 5px;">{{ support_record.notes }}</div>
+                            {% else %}
+                                <p class="text-muted">No notes have been added yet.</p>
+                            {% endif %}
+
+                            <!-- Add Note Form -->
+                            <form method="post" action="{% url 'add_support_notes' support_record.id %}" class="mt-3">
+                                {% csrf_token %}
+                                <div class="mb-3">
+                                    <label for="newNotes" class="form-label">Add New Note</label>
+                                    <textarea name="notes" id="newNotes" class="form-control" rows="3" 
+                                              placeholder="Enter your notes..."></textarea>
+                                </div>
+                                <button type="submit" class="btn" style="background-color: #2c7a7b; color: white;">
+                                    <i class="fas fa-plus"></i> Add Note
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Status & Actions -->
+                <div class="col-md-4">
+                    <!-- Status Card -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0"><i class="fas fa-tasks"></i> Support Status</h5>
+                        </div>
+                        <div class="card-body">
+                            <dl class="row">
+                                <dt class="col-sm-5">Current Status:</dt>
+                                <dd class="col-sm-7">
+                                    {% if support_record.status == 'new' %}
+                                        <span class="badge bg-info">{{ support_record.get_status_display }}</span>
+                                    {% elif support_record.status == 'contacted' %}
+                                        <span class="badge bg-success">{{ support_record.get_status_display }}</span>
+                                    {% elif support_record.status == 'follow_up' %}
+                                        <span class="badge bg-warning">{{ support_record.get_status_display }}</span>
+                                    {% elif support_record.status == 'converted' %}
+                                        <span class="badge bg-primary">{{ support_record.get_status_display }}</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ support_record.get_status_display }}</span>
+                                    {% endif %}
+                                </dd>
+
+                                <dt class="col-sm-5">Contacted By:</dt>
+                                <dd class="col-sm-7">
+                                    {% if support_record.contacted_by %}
+                                        {{ support_record.contacted_by.username }}
+                                    {% else %}
+                                        <span class="text-muted">Not contacted</span>
+                                    {% endif %}
+                                </dd>
+
+                                <dt class="col-sm-5">Contacted At:</dt>
+                                <dd class="col-sm-7">
+                                    {% if support_record.contacted_at %}
+                                        {{ support_record.contacted_at|date:"Y-m-d H:i" }}
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </dd>
+
+                                <dt class="col-sm-5">Record Created:</dt>
+                                <dd class="col-sm-7">{{ support_record.created_at|date:"Y-m-d H:i" }}</dd>
+
+                                <dt class="col-sm-5">Last Updated:</dt>
+                                <dd class="col-sm-7">{{ support_record.updated_at|date:"Y-m-d H:i" }}</dd>
+                            </dl>
+                        </div>
+                    </div>
+
+                    <!-- Actions Card -->
+                    <div class="card">
+                        <div class="card-header bg-warning">
+                            <h5 class="mb-0"><i class="fas fa-cogs"></i> Quick Actions</h5>
+                        </div>
+                        <div class="card-body">
+                            <!-- Mark as Contacted -->
+                            <form method="post" action="{% url 'mark_as_contacted' support_record.id %}" class="mb-3">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-success w-100">
+                                    <i class="fas fa-check"></i> Mark as Contacted
+                                </button>
+                            </form>
+
+                            <!-- Update Status -->
+                            <form method="post" action="{% url 'update_support_status' support_record.id %}" class="mb-3">
+                                {% csrf_token %}
+                                <label for="statusSelect" class="form-label">Update Status:</label>
+                                <select name="status" id="statusSelect" class="form-select mb-2">
+                                    <option value="new" {% if support_record.status == 'new' %}selected{% endif %}>New</option>
+                                    <option value="contacted" {% if support_record.status == 'contacted' %}selected{% endif %}>Contacted</option>
+                                    <option value="follow_up" {% if support_record.status == 'follow_up' %}selected{% endif %}>Follow-up Required</option>
+                                    <option value="converted" {% if support_record.status == 'converted' %}selected{% endif %}>Converted</option>
+                                    <option value="inactive" {% if support_record.status == 'inactive' %}selected{% endif %}>Inactive</option>
+                                </select>
+                                <button type="submit" class="btn w-100" style="background-color: #2c7a7b; color: white;">
+                                    <i class="fas fa-edit"></i> Update Status
+                                </button>
+                            </form>
+
+                            {% if support_record.entity_type == 'user' and entity and entity.tenant is None %}
+                            <hr>
+                            <!-- Convert to Staff Account -->
+                            <button type="button" class="btn btn-outline-primary w-100 mb-2"
+                                    data-bs-toggle="modal" data-bs-target="#convertToStaffModal">
+                                <i class="fas fa-user-tie"></i> Convert to Staff Account
+                            </button>
+
+                            <!-- Convert to Tenant Account -->
+                            <button type="button" class="btn btn-outline-info w-100 mb-3"
+                                    data-bs-toggle="modal" data-bs-target="#convertToTenantModal">
+                                <i class="fas fa-building"></i> Convert to Tenant Account
+                            </button>
+                            {% endif %}
+
+                            <hr>
+                            <!-- Delete -->
+                            <button type="button" class="btn btn-outline-danger w-100"
+                                    data-bs-toggle="modal" data-bs-target="#deleteModal">
+                                <i class="fas fa-trash"></i> Delete Record &amp; Entity
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content border-danger">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="fas fa-trash"></i> Confirm Deletion</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'delete_support_record' support_record.id %}">
+                {% csrf_token %}
+                <input type="hidden" name="confirm_delete" value="yes">
+                <div class="modal-body">
+                    <div class="alert alert-danger mb-3">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>This action is irreversible.</strong>
+                    </div>
+                    <p>You are about to permanently delete the
+                        <strong>{{ support_record.get_entity_type_display }}</strong> record for:</p>
+                    <p class="fs-5 fw-bold text-danger">{{ support_record.get_entity_name }}</p>
+                    <p class="text-muted small">This will delete both the support record <em>and</em> the underlying entity from the system.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Delete Permanently
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% if support_record.entity_type == 'user' and entity and entity.tenant is None %}
+
+<!-- Convert to Staff Account Modal -->
+<div class="modal fade" id="convertToStaffModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header text-white" style="background-color: #2c7a7b;">
+                <h5 class="modal-title"><i class="fas fa-user-tie"></i> Convert to Staff Account</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'convert_user_to_staff' support_record.id %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p>Convert <strong>{{ support_record.get_entity_name }}</strong> from a personal account to a tenant staff account.</p>
+                    <div class="mb-3">
+                        <label for="tenantSelect" class="form-label fw-bold">Select Tenant <span class="text-danger">*</span></label>
+                        <select name="tenant_id" id="tenantSelect" class="form-select" required>
+                            <option value="">— Choose a tenant —</option>
+                            {% for t in all_tenants %}
+                                <option value="{{ t.id }}">{{ t.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="alert alert-info small">
+                        <i class="fas fa-info-circle"></i>
+                        This will:
+                        <ul class="mb-0 mt-1">
+                            <li>Assign the user to the selected tenant</li>
+                            <li>Set <code>is_personal = False</code></li>
+                            <li>Convert their <em>UserProfile</em> into a <em>StaffProfile</em></li>
+                            <li>Mark this support record as <em>Converted</em></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn text-white" style="background-color: #2c7a7b;">
+                        <i class="fas fa-user-tie"></i> Convert to Staff
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Convert to Tenant Account Modal -->
+<div class="modal fade" id="convertToTenantModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title"><i class="fas fa-building"></i> Convert to Tenant Account</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'convert_user_to_tenant' support_record.id %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p>Create a new tenant organisation for <strong>{{ support_record.get_entity_name }}</strong>, who will become its admin.</p>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="orgName" class="form-label fw-bold">Organisation Name <span class="text-danger">*</span></label>
+                            <input type="text" name="org_name" id="orgName" class="form-control"
+                                   placeholder="e.g. Acme Ltd" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="orgSlug" class="form-label fw-bold">Slug <span class="text-danger">*</span></label>
+                            <input type="text" name="slug" id="orgSlug" class="form-control"
+                                   placeholder="e.g. acme-ltd" pattern="^[a-z0-9]+(?:-[a-z0-9]+)*$"
+                                   title="Lowercase letters, numbers and hyphens only" required>
+                            <div class="form-text">Lowercase, hyphens only. Must be unique.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="companyEmail" class="form-label">Company Email</label>
+                            <input type="email" name="company_email" id="companyEmail" class="form-control"
+                                   placeholder="info@acme.com" value="{{ entity.email }}">
+                            <div class="form-text">Defaults to user's email if left blank.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="phoneNumber" class="form-label">Phone Number</label>
+                            <input type="text" name="phone_number" id="phoneNumber" class="form-control"
+                                   placeholder="+234...">
+                            <div class="form-text">Defaults to user's phone if left blank.</div>
+                        </div>
+                    </div>
+                    <div class="alert alert-info small mt-3">
+                        <i class="fas fa-info-circle"></i>
+                        This will:
+                        <ul class="mb-0 mt-1">
+                            <li>Create a new <em>Tenant</em> with the given name and slug</li>
+                            <li>Create a <em>CompanyProfile</em> with the provided contact details</li>
+                            <li>Set the user as the tenant's <em>admin</em></li>
+                            <li>Set <code>user.tenant = new_tenant</code> and <code>is_personal = False</code></li>
+                            <li>Mark this support record as <em>Converted</em></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-info text-white">
+                        <i class="fas fa-building"></i> Create Tenant &amp; Convert
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% comment %} <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" /> {% endcomment %}
+<style>
+/* Select2 inside Bootstrap modals */
+.select2-container--open { z-index: 9999; }
+.select2-container { width: 100% !important; }
+</style>
+{% comment %} <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script> {% endcomment %}
+<script>
+// Initialise Select2 on tenant dropdowns when their modals open
+document.getElementById('convertToStaffModal')?.addEventListener('shown.bs.modal', function () {
+    if (!$('#tenantSelect').data('select2')) {
+        $('#tenantSelect').select2({
+            placeholder: '— Search for a tenant —',
+            allowClear: true,
+            dropdownParent: $('#convertToStaffModal'),
+            width: '100%',
+        });
+    }
+});
+</script>
+
+<script>
+// Auto-generate slug from org name
+document.getElementById('orgName')?.addEventListener('input', function () {
+    const slugField = document.getElementById('orgSlug');
+    if (!slugField._manuallyEdited) {
+        slugField.value = this.value
+            .toLowerCase()
+            .trim()
+            .replace(/[^a-z0-9\s-]/g, '')
+            .replace(/\s+/g, '-')
+            .replace(/-+/g, '-');
+    }
+});
+document.getElementById('orgSlug')?.addEventListener('input', function () {
+    this._manuallyEdited = true;
+});
+</script>
+
+{% endif %}
+{% endblock %}

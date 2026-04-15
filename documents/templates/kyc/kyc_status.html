@@ -1,0 +1,232 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}KYC/KYB Status{% endblock %}
+
+{# Hide notification bar on KYC pages #}
+<style>
+    .notification-bar {
+        display: none !important;
+    }
+</style>
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <h2 class="mb-4">
+                <i class="fas fa-id-card"></i> KYC/KYB Verification Status
+            </h2>
+            
+            {% if messages %}
+                {% for message in messages %}
+                    {# Skip memo-specific flash messages; those are handled via the memo notification system #}
+                    {% if 'memo' not in message.tags %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+            
+            <!-- Personal/Staff KYC Section -->
+            {% if kyc %}
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-user-check"></i> 
+                        {% if is_personal %}Personal{% else %}Staff{% endif %} KYC Status
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Status:</strong> 
+                                {% if kyc.kyc_status == 'pending' %}
+                                    <span class="badge bg-secondary">Pending</span>
+                                {% elif kyc.kyc_status == 'submitted' %}
+                                    <span class="badge bg-info">Submitted - Under Review</span>
+                                {% elif kyc.kyc_status == 'verified' %}
+                                    <span class="badge bg-success">Verified</span>
+                                {% elif kyc.kyc_status == 'rejected' %}
+                                    <span class="badge bg-danger">Rejected</span>
+                                {% endif %}
+                            </p>
+                            
+                            {% if kyc.kyc_verified_at %}
+                            <p><strong>Verified On:</strong> {{ kyc.kyc_verified_at|date:"F d, Y H:i" }}</p>
+                            {% endif %}
+                            
+                            {% if kyc.kyc_rejection_reason %}
+                            <div class="alert alert-danger">
+                                <strong>Rejection Reason:</strong><br>
+                                {{ kyc.kyc_rejection_reason }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <p><strong>Completion Status:</strong></p>
+                            <ul class="list-unstyled">
+                                <li>
+                                    {% if kyc.nin or kyc.bvn %}
+                                        <i class="fas fa-check-circle text-success"></i>
+                                    {% else %}
+                                        <i class="fas fa-times-circle text-danger"></i>
+                                    {% endif %}
+                                    NIN/BVN Provided
+                                </li>
+                                <li>
+                                    {% if kyc.id_type and kyc.id_front_file %}
+                                        <i class="fas fa-check-circle text-success"></i>
+                                    {% else %}
+                                        <i class="fas fa-times-circle text-danger"></i>
+                                    {% endif %}
+                                    ID Document Uploaded
+                                </li>
+                                <li>
+                                    {% if kyc.utility_bill_file %}
+                                        <i class="fas fa-check-circle text-success"></i>
+                                    {% else %}
+                                        <i class="fas fa-times-circle text-warning"></i>
+                                    {% endif %}
+                                    Proof of Address
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        {% if kyc.kyc_status == 'pending' or kyc.kyc_status == 'rejected' %}
+                            {% if is_personal %}
+                                <a href="{% url 'complete_user_kyc' %}" class="btn btn-primary">
+                                    <i class="fas fa-edit"></i> Complete KYC
+                                </a>
+                            {% else %}
+                                <a href="{% url 'complete_staff_kyc' %}" class="btn btn-primary">
+                                    <i class="fas fa-edit"></i> Complete KYC
+                                </a>
+                            {% endif %}
+                        {% elif kyc.kyc_status == 'submitted' %}
+                            <p class="text-info">
+                                <i class="fas fa-clock"></i> Your KYC is under review. We'll notify you once it's processed.
+                            </p>
+                        {% elif kyc.kyc_status == 'verified' %}
+                            <p class="text-success">
+                                <i class="fas fa-check-circle"></i> Your KYC is verified. Thank you!
+                            </p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Company KYB Section -->
+            {% if kyb %}
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-building"></i> Company KYB Status
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Company:</strong> {{ company_profile.company_name }}</p>
+                            <p><strong>Status:</strong> 
+                                {% if kyb.kyb_status == 'pending' %}
+                                    <span class="badge bg-secondary">Pending</span>
+                                {% elif kyb.kyb_status == 'submitted' %}
+                                    <span class="badge bg-info">Submitted - Under Review</span>
+                                {% elif kyb.kyb_status == 'verified' %}
+                                    <span class="badge bg-success">Verified</span>
+                                {% elif kyb.kyb_status == 'rejected' %}
+                                    <span class="badge bg-danger">Rejected</span>
+                                {% endif %}
+                            </p>
+                            
+                            {% if kyb.kyb_verified_at %}
+                            <p><strong>Verified On:</strong> {{ kyb.kyb_verified_at|date:"F d, Y H:i" }}</p>
+                            {% endif %}
+                            
+                            {% if kyb.kyb_rejection_reason %}
+                            <div class="alert alert-danger">
+                                <strong>Rejection Reason:</strong><br>
+                                {{ kyb.kyb_rejection_reason }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <p><strong>Completion Status:</strong></p>
+                            <ul class="list-unstyled">
+                                <li>
+                                    {% if kyb.tin %}
+                                        <i class="fas fa-check-circle text-success"></i>
+                                    {% else %}
+                                        <i class="fas fa-times-circle text-danger"></i>
+                                    {% endif %}
+                                    TIN Provided
+                                </li>
+                                <li>
+                                    {% if kyb.cac_certificate_file %}
+                                        <i class="fas fa-check-circle text-success"></i>
+                                    {% else %}
+                                        <i class="fas fa-times-circle text-danger"></i>
+                                    {% endif %}
+                                    CAC Certificate Uploaded
+                                </li>
+                                <li>
+                                    {% if directors %}
+                                        <i class="fas fa-check-circle text-success"></i>
+                                    {% else %}
+                                        <i class="fas fa-times-circle text-warning"></i>
+                                    {% endif %}
+                                    Directors Added ({{ directors.count }})
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        {% if kyb.kyb_status == 'pending' or kyb.kyb_status == 'rejected' %}
+                            <a href="{% url 'complete_company_kyb' %}" class="btn btn-success">
+                                <i class="fas fa-edit"></i> Complete Company KYB
+                            </a>
+                        {% elif kyb.kyb_status == 'submitted' %}
+                            <p class="text-info">
+                                <i class="fas fa-clock"></i> Company KYB is under review. We'll notify you once it's processed.
+                            </p>
+                        {% elif kyb.kyb_status == 'verified' %}
+                            <p class="text-success">
+                                <i class="fas fa-check-circle"></i> Company KYB is verified. Thank you!
+                            </p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Information Box -->
+            <div class="card border-info">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-info-circle"></i> Why KYC/KYB?</h5>
+                    <p class="card-text">
+                        KYC (Know Your Customer) and KYB (Know Your Business) verification helps us:
+                    </p>
+                    <ul>
+                        <li>Ensure platform security and prevent fraud</li>
+                        <li>Comply with regulatory requirements</li>
+                        <li>Enable financial transactions and remittances</li>
+                        <li>Build trust within our community</li>
+                    </ul>
+                    <p class="text-muted small">
+                        <i class="fas fa-lock"></i> Your information is encrypted and stored securely. We never share your personal data without your consent.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,394 @@
+{% extends 'base.html' %}
+
+{% block title %}Fund Request Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4 fund_request-dashboard">
+    <div class="row mb-4">
+        <div class="col-12 d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <h2 class="fw-semibold mb-1">
+                    <i class="fas fa-envelope-open-text me-2 text-teal"></i>Fund Request
+                </h2>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-0 small text-muted">
+                        <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+                        <li class="breadcrumb-item active">Fund Request</li>
+                    </ol>
+                </nav>
+            </div>
+            <div class="btn-toolbar" role="toolbar">
+                <div class="btn-group me-2">
+                    <a href="{% url 'fund_request:fund_request_create' %}" class="btn btn-primary shadow-sm">
+                        <i class="fas fa-plus me-1"></i> New Fund Request
+                    </a>
+                </div>
+                <div class="btn-group me-2">
+                    <a href="{% url 'fund_request:fund_request_list' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-list me-1"></i> View All
+                    </a>
+                </div>
+                {% if is_admin %}
+                <div class="btn-group">
+                    <a href="{% url 'fund_request:categories' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-tags me-1"></i> Categories
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Row 1 -->
+    <div class="row mb-4 g-3">
+        <div class="col">
+            <div class="card h-100 shadow-sm border-0 stats-card">
+                <div class="card-body text-center">
+                    <div class="text-uppercase small text-muted mb-1">Total</div>
+                    <div class="display-6 fw-semibold">{{ stats.total }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card h-100 shadow-sm border-0 stats-card border-top border-warning border-3">
+                <div class="card-body text-center">
+                    <div class="text-uppercase small text-warning mb-1">Pending</div>
+                    <div class="h3 mb-0 fw-semibold">{{ stats.pending }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card h-100 shadow-sm border-0 stats-card border-top border-info border-3">
+                <div class="card-body text-center">
+                    <div class="text-uppercase small text-info mb-1">In Progress</div>
+                    <div class="h3 mb-0 fw-semibold">{{ stats.in_progress }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card h-100 shadow-sm border-0 stats-card border-top border-success border-3">
+                <div class="card-body text-center">
+                    <div class="text-uppercase small text-success mb-1">Approved</div>
+                    <div class="h3 mb-0 fw-semibold">{{ stats.approved }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card h-100 shadow-sm border-0 stats-card border-top border-danger border-3">
+                <div class="card-body text-center">
+                    <div class="text-uppercase small text-danger mb-1">Rejected</div>
+                    <div class="h3 mb-0 fw-semibold">{{ stats.rejected }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card h-100 shadow-sm border-0 stats-card border-top border-purple border-3">
+                <div class="card-body text-center">
+                    <div class="text-uppercase small text-purple mb-1">External</div>
+                    <div class="h3 mb-0 fw-semibold">{{ stats.external }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Row 2 -->
+    <div class="row mb-4 g-3">
+        <div class="col">
+            <div class="card h-100 shadow-sm border-0 stats-card border-top border-primary border-3">
+                <div class="card-body text-center">
+                    <div class="text-uppercase small text-primary mb-1">Created</div>
+                    <div class="h3 mb-0 fw-semibold">{{ stats.created }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card h-100 shadow-sm border-0 stats-card border-top border-success border-3">
+                <div class="card-body text-center">
+                    <div class="text-uppercase small text-success mb-1">Positive Recommendation</div>
+                    <div class="h3 mb-0 fw-semibold">{{ stats.positive_response }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card h-100 shadow-sm border-0 stats-card border-top border-danger border-3">
+                <div class="card-body text-center">
+                    <div class="text-uppercase small text-danger mb-1">Negative Recommendation</div>
+                    <div class="h3 mb-0 fw-semibold">{{ stats.negative_response }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card h-100 shadow-sm border-0 stats-card border-top border-secondary border-3">
+                <div class="card-body text-center">
+                    <div class="text-uppercase small text-secondary mb-1">Keep In-View</div>
+                    <div class="h3 mb-0 fw-semibold">{{ stats.kept_in_view }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card h-100 shadow-sm border-0 stats-card border-top border-orange border-3">
+                <div class="card-body text-center">
+                    <div class="text-uppercase small" style="color:#e65100;">Escalated</div>
+                    <div class="h3 mb-0 fw-semibold">{{ stats.escalated }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Inbox -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-0">
+                            <i class="fas fa-inbox me-2 text-primary"></i>Inbox
+                            <span class="badge bg-primary ms-1">{{ inbox_count }}</span>
+                        </h5>
+                        <small class="text-muted">Fund Requests currently assigned to you</small>
+                    </div>
+                    <a href="{% url 'fund_request:fund_request_list' %}?view=inbox" class="btn btn-sm btn-outline-primary">
+                        View all
+                    </a>
+                </div>
+                <div class="card-body pt-0">
+                    {% if inbox %}
+                        <div class="list-group list-group-flush fund_request-list-group">
+                            {% for fund_request in inbox %}
+                            <a href="{% url 'fund_request:fund_request_detail' fund_request.pk %}" class="list-group-item list-group-item-action py-3 fund_request-list-item">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="me-3">
+                                        <div class="d-flex align-items-center mb-1">
+                                            <span class="status-dot me-2 status-{{ fund_request.status }}"></span>
+                                            <strong class="text-truncate">{{ fund_request.title }}</strong>
+                                            {% if fund_request.is_external %}
+                                            <span class="badge bg-purple text-white ms-2" style="font-size: 0.7rem;">
+                                                <i class="fas fa-external-link-alt me-1"></i>External
+                                            </span>
+                                            {% endif %}
+                                        </div>
+                                        <small class="text-muted d-block">
+                                            <code class="me-1">{{ fund_request.reference_number }}</code>· From: {{ fund_request.submitter_display }}
+                                        </small>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="badge bg-{% if fund_request.status == 'pending' %}warning{% elif fund_request.status == 'in_progress' %}info{% elif fund_request.status == 'escalated' %}danger{% else %}secondary{% endif %}">
+                                            {{ fund_request.get_status_display }}
+                                        </span>
+                                        <br>
+                                        <small class="text-muted">{{ fund_request.updated_at|timesince }} ago</small>
+                                    </div>
+                                </div>
+                            </a>
+                            {% endfor %}
+                        </div>
+                        
+                        <!-- Inbox Pagination -->
+                        {% if inbox.has_other_pages %}
+                        <div class="d-flex justify-content-center mt-3 mb-2">
+                            <nav>
+                                <ul class="pagination pagination-sm mb-0">
+                                    {% if inbox.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?inbox_page={{ inbox.previous_page_number }}{% if request.GET.outbox_page %}&outbox_page={{ request.GET.outbox_page }}{% endif %}">Previous</a>
+                                    </li>
+                                    {% endif %}
+                                    {% for num in inbox.paginator.page_range %}
+                                    <li class="page-item {% if inbox.number == num %}active{% endif %}">
+                                        <a class="page-link" href="?inbox_page={{ num }}{% if request.GET.outbox_page %}&outbox_page={{ request.GET.outbox_page }}{% endif %}">{{ num }}</a>
+                                    </li>
+                                    {% endfor %}
+                                    {% if inbox.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?inbox_page={{ inbox.next_page_number }}{% if request.GET.outbox_page %}&outbox_page={{ request.GET.outbox_page }}{% endif %}">Next</a>
+                                    </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                        </div>
+                        {% endif %}
+                    {% else %}
+                        <p class="text-muted text-center py-4 mb-0">No fund requests in your inbox.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Outbox -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-0">
+                            <i class="fas fa-paper-plane me-2 text-secondary"></i>Outbox
+                            <span class="badge bg-secondary ms-1">{{ outbox_count }}</span>
+                        </h5>
+                        <small class="text-muted">Fund Requests you have created</small>
+                    </div>
+                    <a href="{% url 'fund_request:fund_request_list' %}?view=outbox" class="btn btn-sm btn-outline-secondary">
+                        View all
+                    </a>
+                </div>
+                <div class="card-body pt-0">
+                    {% if outbox %}
+                        <div class="list-group list-group-flush fund_request-list-group">
+                            {% for fund_request in outbox %}
+                            <a href="{% url 'fund_request:fund_request_detail' fund_request.pk %}" class="list-group-item list-group-item-action py-3 fund_request-list-item">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="me-3">
+                                        <div class="d-flex align-items-center mb-1">
+                                            <span class="status-dot me-2 status-{{ fund_request.status }}"></span>
+                                            <strong class="text-truncate">{{ fund_request.title }}</strong>
+                                            {% if fund_request.is_external %}
+                                            <span class="badge bg-purple text-white ms-2" style="font-size: 0.7rem;">
+                                                <i class="fas fa-external-link-alt me-1"></i>External
+                                            </span>
+                                            {% endif %}
+                                        </div>
+                                        <small class="text-muted d-block">
+                                            <code class="me-1">{{ fund_request.reference_number }}</code>· To: {{ fund_request.current_holder.username|default:"Unassigned" }}
+                                        </small>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="badge bg-{% if fund_request.status == 'approved' %}success{% elif fund_request.status == 'rejected' %}danger{% elif fund_request.status == 'completed' %}dark{% elif fund_request.status == 'pending' %}warning{% else %}secondary{% endif %}">
+                                            {{ fund_request.get_status_display }}
+                                        </span>
+                                        <br>
+                                        <small class="text-muted">{{ fund_request.created_at|timesince }} ago</small>
+                                    </div>
+                                </div>
+                            </a>
+                            {% endfor %}
+                        </div>
+                        
+                        <!-- Outbox Pagination -->
+                        {% if outbox.has_other_pages %}
+                        <div class="d-flex justify-content-center mt-3 mb-2">
+                            <nav>
+                                <ul class="pagination pagination-sm mb-0">
+                                    {% if outbox.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?outbox_page={{ outbox.previous_page_number }}{% if request.GET.inbox_page %}&inbox_page={{ request.GET.inbox_page }}{% endif %}">Previous</a>
+                                    </li>
+                                    {% endif %}
+                                    {% for num in outbox.paginator.page_range %}
+                                    <li class="page-item {% if outbox.number == num %}active{% endif %}">
+                                        <a class="page-link" href="?outbox_page={{ num }}{% if request.GET.inbox_page %}&inbox_page={{ request.GET.inbox_page }}{% endif %}">{{ num }}</a>
+                                    </li>
+                                    {% endfor %}
+                                    {% if outbox.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?outbox_page={{ outbox.next_page_number }}{% if request.GET.inbox_page %}&inbox_page={{ request.GET.inbox_page }}{% endif %}">Next</a>
+                                    </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                        </div>
+                        {% endif %}
+                    {% else %}
+                        <p class="text-muted text-center py-4 mb-0">No active fund requests sent yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Links -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-body d-flex flex-wrap align-items-center justify-content-between gap-3">
+                    <h5 class="mb-0 d-flex align-items-center">
+                        <i class="fas fa-bolt me-2 text-warning"></i>Quick Links
+                    </h5>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a href="{% url 'fund_request:fund_request_create' %}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-plus me-1"></i> New Fund Request
+                        </a>
+                        <a href="{% url 'fund_request:fund_request_list' %}" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-list me-1"></i> All Fund Requests
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .fund_request-dashboard .text-teal { color: #319795; }
+    .fund_request-dashboard .border-orange { border-color: #e65100 !important; }
+    .fund_request-dashboard .border-purple { border-color: #8b5cf6 !important; }
+    .fund_request-dashboard .text-purple { color: #8b5cf6; }
+    .fund_request-dashboard .stats-card {
+        border-radius: 0.75rem;
+    }
+    .fund_request-dashboard .fund_request-list-group .fund_request-list-item {
+        border-left: none;
+        border-right: none;
+        border-bottom: 1px solid rgba(0,0,0,0.03);
+        transition: background-color 0.15s ease, box-shadow 0.15s ease, transform 0.05s ease;
+    }
+    .fund_request-dashboard .fund_request-list-group .fund_request-list-item:first-child {
+        border-top: none;
+    }
+    .fund_request-dashboard .fund_request-list-item:hover {
+        background-color: #f8fafc;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+        transform: translateY(-1px);
+    }
+    .fund_request-dashboard .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+    .fund_request-dashboard .status-pending { background-color: #f59e0b; }
+    .fund_request-dashboard .status-in_progress { background-color: #0ea5e9; }
+    .fund_request-dashboard .status-in_view { background-color: #6366f1; }
+    .fund_request-dashboard .status-escalated { background-color: #dc2626; }
+    .fund_request-dashboard .status-approved { background-color: #16a34a; }
+    .fund_request-dashboard .status-rejected { background-color: #b91c1c; }
+    .fund_request-dashboard .status-completed { background-color: #111827; }
+    .fund_request-dashboard .status-closed { background-color: #6b7280; }
+    
+    /* Custom colorful button styles */
+    .btn-purple {
+        background-color: #8b5cf6;
+        border-color: #8b5cf6;
+    }
+    .btn-purple:hover {
+        background-color: #7c3aed;
+        border-color: #7c3aed;
+    }
+    .btn-purple:active, .btn-purple:focus {
+        background-color: #6d28d9;
+        border-color: #6d28d9;
+    }
+    .bg-purple {
+        background-color: #8b5cf6 !important;
+    }
+</style>
+
+<script>
+function copyToClipboard(elementId, button) {
+    const input = document.getElementById(elementId);
+    const textToCopy = input.value;
+    
+    navigator.clipboard.writeText(textToCopy).then(() => {
+        const originalHTML = button.innerHTML;
+        const originalClasses = button.className;
+        
+        button.innerHTML = '<i class="fas fa-check me-1"></i> Copied!';
+        button.className = 'btn btn-success text-white';
+        
+        setTimeout(() => {
+            button.innerHTML = originalHTML;
+            button.className = originalClasses;
+        }, 2000);
+    }).catch(err => {
+        console.error('Failed to copy:', err);
+    });
+}
+</script>
+{% endblock %}

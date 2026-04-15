@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Application Received - {{ vacancy_title }}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: 'Helvetica Neue', Arial, sans-serif; color: #1e293b;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f8fafc; padding: 20px 0;">
+    <tr>
+      <td align="center">
+        <!-- Main Container -->
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);">
+          
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #319795 0%, #2c7a7b 100%); padding: 36px 40px; text-align: center; color: white;">
+              <div style="display: inline-block; width: 56px; height: 56px; background-color: rgba(255, 255, 255, 0.2); border-radius: 50%; line-height: 56px; margin-bottom: 16px;">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: inline-block; vertical-align: middle;">
+                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="white"/>
+                </svg>
+              </div>
+              <h1 style="margin: 0 0 8px; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">
+                Application Received!
+              </h1>
+              <p style="margin: 0; font-size: 17px; opacity: 0.95;">
+                Thank you, <strong>{{ candidate_name }}</strong>
+              </p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 40px 32px;">
+              <p style="margin: 0 0 20px; font-size: 16px; line-height: 1.75; color: #334155;">
+                We’ve successfully received your application for the <strong>{{ vacancy_title }}</strong> position at <strong>{{ company_name }}</strong>.
+              </p>
+
+              <!-- Application Details -->
+              <div style="background-color: #e6fffa; border-left: 4px solid #319795; padding: 18px 22px; margin: 28px 0; border-radius: 0 8px 8px 0;">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="font-size: 15px; color: #065f46;">
+                  <tr>
+                    <td style="padding: 6px 0; font-weight: 600;">Position:</td>
+                    <td style="padding: 6px 0;">{{ vacancy_title }}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 6px 0; font-weight: 600;">Company:</td>
+                    <td style="padding: 6px 0;">{{ company_name }}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 6px 0; font-weight: 600;">Applied On:</td>
+                    <td style="padding: 6px 0;">{{ application_date }}</td>
+                  </tr>
+                </table>
+              </div>
+
+              <p style="margin: 24px 0 20px; font-size: 16px; line-height: 1.75; color: #334155;">
+                Our hiring team will review your application carefully. You’ll receive an email update once a decision has been made.
+              </p>
+
+              <p style="margin: 0 0 28px; font-size: 16px; line-height: 1.75; color: #334155;">
+                <strong>Please keep an eye on your inbox</strong> (including <em>spam/promotions</em> folders) so you don’t miss our next message.
+              </p>
+
+              <!-- Tip Box -->
+              {% comment %} <div style="background-color: #fffbeb; border: 1px dashed #dd6b20; border-radius: 10px; padding: 16px 20px; margin: 28px 0; text-align: center; font-size: 15px; color: #92400e;">
+                <p style="margin: 0; font-weight: 600;">Pro Tip:</p>
+                <p style="margin: 6px 0 0;">Add <strong>careers@{{ company_name|lower|cut:" "|regex_replace:"[^a-z0-9]":"" }}.com</strong> to your contacts to ensure delivery.</p>
+              </div> {% endcomment %}
+
+              <p style="margin: 28px 0 0; font-size: 15px; color: #6b7280; line-height: 1.6;">
+                <em>This is an automated confirmation. Please do not reply to this email.</em>
+              </p>
+              <p class="text-primary">Contact <strong>{{ created_by }}<strong> for any questions.</p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #f7fafc; padding: 28px 40px; text-align: center; font-size: 13px; color: #4a5568; border-top: 1px solid #e2e8f0;">
+              <p style="margin: 0 0 8px; font-weight: 600; color: #1e293b;">
+                Human Resources Team
+              </p>
+              <p style="margin: 0; font-size: 13px;">
+                {{ company_name }}<br>
+                © {{ now }} All rights reserved.
+              </p>
+            </td>
+          </tr>
+        </table>
+
+        <!-- Bottom Note -->
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="margin-top: 24px;">
+          <tr>
+            <td style="text-align: center; font-size: 12px; color: #94a3b8;">
+              <p style="margin: 0;">
+                Application ID: <strong>#{{ vacancy_application.id }}</strong> • Sent on {{ application_date }}
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Job Offer – {{ vacancy_title }}</title>
+  <style>
+    body { margin:0; padding:0; background:#f4f7fa; font-family:'Helvetica Neue',Arial,sans-serif; color:#2d3748; }
+    .container { max-width:620px; margin:40px auto; background:#ffffff; border-radius:16px; overflow:hidden; box-shadow:0 15px 35px rgba(0,0,0,0.08); }
+    .header { background:linear-gradient(135deg, #4c51bf 0%, #667eea 100%); color:white; padding:50px 40px; text-align:center; }
+    .header h1 { margin:0; font-size:32px; font-weight:700; letter-spacing:-0.5px; }
+    .header .subtitle { margin:12px 0 0; font-size:18px; opacity:0.92; }
+    .content { padding:45px 40px 35px; }
+    .greeting { font-size:19px; line-height:1.6; margin-bottom:28px; }
+    .highlight-box {
+      background:#f0faff; border:1px solid #bee3f8; border-radius:10px; padding:24px; margin:30px 0;
+      text-align:center;
+    }
+    .highlight-box h2 { margin:0 0 16px; color:#2b6cb0; font-size:24px; }
+    .cta-button {
+      display:inline-block; background:#319795; color:white !important; text-decoration:none;
+      padding:16px 42px; border-radius:50px; font-size:18px; font-weight:600;
+      box-shadow:0 6px 20px rgba(49,151,149,0.35); transition:all 0.2s;
+      margin:28px auto 20px;
+    }
+    .cta-button:hover { background:#2c7a7b; transform:translateY(-2px); }
+    .details-table { width:100%; margin:30px 0; border-collapse:collapse; }
+    .details-table td { padding:14px 0; border-bottom:1px solid #edf2f7; }
+    .details-table .label { font-weight:600; color:#4a5568; width:160px; }
+    .footer { background:#f7fafc; padding:35px 40px; text-align:center; color:#718096; font-size:14px; line-height:1.6; }
+    .footer a { color:#4c51bf; text-decoration:none; }
+    .small { font-size:13px; color:#a0aec0; margin-top:18px; }
+    @media (max-width:640px) {
+      .container { margin:20px; border-radius:12px; }
+      .header, .content, .footer { padding-left:25px; padding-right:25px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- Header -->
+    <div class="header">
+      <h1>Congratulations!</h1>
+      <p class="subtitle">You've received a job offer</p>
+    </div>
+
+    <!-- Main Content -->
+    <div class="content">
+
+      <p class="greeting">
+        Dear {{ application.get_full_name }},<br><br>
+
+        We are delighted to inform you that after a very positive interview process, we would like to offer you the position of
+        <strong>{{ application.vacancy.title }}</strong> at <strong>{{ application.vacancy.tenant.name }}</strong>.
+      </p>
+
+      <div class="highlight-box">
+        <h2>Your Offer is Ready</h2>
+        <p style="margin:0 0 24px; font-size:16px;">
+          Please review the details and let us know your decision.
+        </p>
+        <a href="{{ offer_response_url }}" class="cta-button">
+          View & Respond to Offer →
+        </a>
+      </div>
+
+      <table class="details-table">
+        <tr>
+          <td class="label">Position</td>
+          <td><strong>{{ application.vacancy.title }}</strong></td>
+        </tr>
+        <tr>
+          <td class="label">Start Date</td>
+          <td>{{ offer.proposed_start_date|default:"To be discussed" }}</td>
+        </tr>
+        <tr>
+          <td class="label">Location / Type</td>
+          <td>{{ offer.location|default:"Remote / Hybrid / On-site" }}</td>
+        </tr>
+        <!-- Add salary, benefits etc. if you store them on JobOffer model -->
+      </table>
+
+      <p style="margin:32px 0 40px; text-align:center; font-size:15px; color:#4a5568;">
+        The detailed offer letter (including compensation, benefits and terms) is attached below.<br>
+        You can also access it directly via the button above.
+      </p>
+
+      <p style="text-align:center;">
+        <a href="{{ offer.offer_letter.url }}" style="color:#319795; font-weight:500; text-decoration:underline;">
+          Download Offer Letter (PDF)
+        </a>
+      </p>
+
+      <hr style="border:0; border-top:1px solid #e2e8f0; margin:45px 0 35px;">
+
+      <p style="font-size:15px; color:#4a5568; line-height:1.6;">
+        We are very excited about the possibility of you joining the team!<br>
+        Should you have any questions, feel free to reach out.
+      </p>
+
+      <p style="margin-top:28px;">
+        Warm regards,<br>
+        <strong>{{ hr_name|default:"Talent Acquisition Team" }}</strong><br>
+        {{ hr_email }}
+      </p>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <p>This message was sent from the TeamManager recruitment platform.</p>
+      <p class="small">
+        © {{ now|date:"Y" }} TeamManager • 
+        <a href="#">Privacy Policy</a> • 
+        <a href="#">Unsubscribe</a>
+      </p>
+    </div>
+
+  </div>
+</body>
+</html>

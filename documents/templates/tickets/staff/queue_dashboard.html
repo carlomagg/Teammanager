@@ -1,0 +1,362 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Queue Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* Priority colour coding */
+  .priority-high   { border-left: 4px solid #dc3545 !important; }
+  .priority-medium { border-left: 4px solid #fd7e14 !important; }
+  .priority-low    { border-left: 4px solid #198754 !important; }
+  .priority-none   { border-left: 4px solid #adb5bd !important; }
+
+  .queue-number {
+    font-size: 1.5rem; 
+    font-weight: 800; 
+    font-family: monospace;
+    letter-radius: .04em;
+  }
+  .queue-card {
+    transition: transform .12s;
+    border-left: 4px solid #dee2e6;
+  }
+  .queue-card:hover { transform: translateY(-1px); }
+
+  .stat-pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 2px 8px; border-radius: 20px; font-size: .72rem;
+    font-weight: 600;
+  }
+  .dept-label {
+    font-size: .65rem; text-transform: uppercase;
+    letter-spacing: .1em; color: #adb5bd;
+  }
+  .category-slug {
+    font-family: monospace; font-weight: 700;
+    font-size: .85rem; color: #0d6efd;
+  }
+  .priority-badge-H { background:#dc3545; color:#fff; }
+  .priority-badge-M { background:#fd7e14; color:#fff; }
+  .priority-badge-L { background:#198754; color:#fff; }
+  .priority-badge-  { background:#dee2e6; color:#495057; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+
+  {# ── Header ── #}
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+      <h4 class="mb-0">
+        <i class="fas fa-list-ol me-2 text-info"></i>Queue Dashboard
+      </h4>
+      <small class="text-muted">
+        {{ today|date:"l, d F Y" }}
+        {% if not is_full_access and user_department %}
+          &nbsp;·&nbsp;
+          <span class="badge bg-info">{{ user_department.name }}</span>
+          <span class="text-muted ms-1">department view</span>
+        {% endif %}
+      </small>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{% url 'queue_issue' %}" class="btn btn-success btn-sm">
+        <i class="fas fa-plus me-1"></i>Issue Queue Number
+      </a>
+      <a href="{% url 'ticket_list' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="fas fa-ticket-alt me-1"></i>Tickets
+      </a>
+    </div>
+  </div>
+
+  {# ── Priority legend ── #}
+  <div class="d-flex gap-3 mb-3 flex-wrap align-items-center">
+    <span class="small text-muted fw-semibold">Priority:</span>
+    <span class="stat-pill priority-badge-H"><i class="fas fa-exclamation-circle me-1"></i>High</span>
+    <span class="stat-pill priority-badge-M"><i class="fas fa-minus-circle me-1"></i>Medium</span>
+    <span class="stat-pill priority-badge-L"><i class="fas fa-check-circle me-1"></i>Low</span>
+    <span class="stat-pill priority-badge-"><i class="fas fa-circle me-1"></i>No ticket</span>
+    <span class="text-muted small ms-2">— Queues are served High → Medium → Low → No ticket</span>
+  </div>
+
+  {# ══ PER-CATEGORY STAT CARDS ════════════════════════════════════════════ #}
+  
+  {# ── Per-category summary cards ── #}
+  <div class="row g-3 mb-4">
+    {% for stat in queue_stats %}
+    <div class="col-12 col-md-6 col-xl-4">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-transparent border-bottom py-2 d-flex justify-content-between align-items-center">
+          <span class="fw-semibold">
+            {% if stat.category.icon %}<i class="{{ stat.category.icon }} me-1"></i>{% endif %}
+            {{ stat.category.name }}
+          </span>
+          <span class="category-header">{{ stat.category.get_prefix }}-series</span>
+        </div>
+        <div class="card-body py-3">
+          <div class="row g-2 text-center mb-3">
+            <div class="col-3">
+              <div class="fw-bold text-warning fs-4">{{ stat.waiting }}</div>
+              <div class="text-muted" style="font-size:.7rem;">Waiting</div>
+            </div>
+            <div class="col-3">
+              <div class="fw-bold text-success fs-4">{{ stat.serving }}</div>
+              <div class="text-muted" style="font-size:.7rem;">Serving</div>
+            </div>
+            <div class="col-3">
+              <div class="fw-bold text-secondary fs-4">{{ stat.completed }}</div>
+              <div class="text-muted" style="font-size:.7rem;">Done</div>
+            </div>
+            <div class="col-3">
+              <div class="fw-bold text-danger fs-4">{{ stat.no_show }}</div>
+              <div class="text-muted" style="font-size:.7rem;">No Show</div>
+            </div>
+          </div>
+          <button class="btn btn-success w-100 btn-sm call-next-btn"
+                  data-category-id="{{ stat.category.pk }}"
+                  data-category-name="{{ stat.category.name }}"
+                  {% if stat.waiting == 0 %}disabled{% endif %}>
+            <i class="fas fa-bell me-1"></i>
+            Call Next
+            {% if stat.waiting > 0 %}
+            <span class="badge bg-white text-success ms-1">{{ stat.waiting }}</span>
+            {% endif %}
+          </button>
+        </div>
+      </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+      <div class="alert alert-info">
+        No active categories. Set up ticket categories first.
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {# ══ LIVE QUEUES ════════════════════════════════════════════════════════ #}
+      {# ── Waiting (priority-sorted) ── #}
+     {% for entry in waiting %}
+  {# Determine border class based on ticket priority level (3=High,2=Medium,1=Low) #}
+  <div class="queue-card
+    {% if entry.ticket and entry.ticket.priority %}
+      {% if entry.ticket.priority.level == 3 %}priority-high
+      {% elif entry.ticket.priority.level == 2 %}priority-medium
+      {% else %}priority-low
+      {% endif %}
+    {% else %}priority-none
+    {% endif %}
+    d-flex align-items-start gap-3 px-3 py-2 border-bottom">
+
+    <div class="queue-number text-primary mt-1">{{ entry.queue_number }}</div>
+
+    <div class="flex-grow-1">
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <span class="fw-semibold small">{{ entry.customer_display }}</span>
+
+        {# Priority badge #}
+        {% if entry.ticket and entry.ticket.priority %}
+          {% if entry.ticket.priority.level == 3 %}
+            <span class="stat-pill priority-badge-H" style="font-size:.65rem;">
+              <i class="fas fa-exclamation-circle"></i> High
+            </span>
+          {% elif entry.ticket.priority.level == 2 %}
+            <span class="stat-pill priority-badge-M" style="font-size:.65rem;">
+              <i class="fas fa-minus-circle"></i> Medium
+            </span>
+          {% else %}
+            <span class="stat-pill priority-badge-L" style="font-size:.65rem;">
+              <i class="fas fa-check-circle"></i> Low
+            </span>
+          {% endif %}
+        {% endif %}
+      </div>
+
+      <div class="text-muted" style="font-size:.74rem;">
+        <span class="category-slug">{{ entry.category.slug }}</span>
+        {% if entry.category.department %}
+          {# If department is an object, show its name; otherwise show raw value #}
+          {% if entry.category.department.name %} 
+            <span class="ms-1 text-muted">{{ entry.category.department.name }}</span>
+          {% else %}
+            <span class="ms-1 text-muted">{{ entry.category.department }}</span>
+          {% endif %}
+        {% endif %}
+        &nbsp;·&nbsp; {{ entry.issued_at|time:"H:i" }}
+      </div>
+
+      {% if entry.ticket %}
+        <a href="{% url 'ticket_detail' entry.ticket.ticket_number %}"
+           class="badge bg-light text-primary border text-decoration-none mt-1"
+           style="font-size:.65rem;">
+          {{ entry.ticket.ticket_number }}
+        </a>
+      {% endif %}
+    </div>
+
+    <div class="d-flex flex-column gap-1 flex-shrink-0">
+      <button class="btn btn-xs btn-success py-0 px-2 call-entry-btn"
+              data-entry-id="{{ entry.pk }}" title="Call this number">
+        <i class="fas fa-bell"></i>
+      </button>
+      <button class="btn btn-xs btn-outline-danger py-0 px-2 noshow-btn"
+              data-entry-id="{{ entry.pk }}" title="No show">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+  </div>
+{% empty %}
+  <div class="text-center text-muted py-5 small">
+    <i class="fas fa-check-circle fa-2x d-block mb-2 text-success opacity-50"></i>
+    Queue is empty
+  </div>
+{% endfor %}
+    {# ── Now Serving + Recently Done ── #}
+    <div class="col-12 col-lg-6">
+
+      <div class="card border-0 shadow-sm mb-3">
+        <div class="card-header bg-transparent border-bottom fw-semibold py-2">
+          <i class="fas fa-user-check me-1 text-success"></i>
+          Now Serving
+          <span class="badge bg-success ms-1">{{ serving.count }}</span>
+        </div>
+        <div class="card-body p-0">
+          {% for entry in serving %}
+          <div class="queue-card priority-none d-flex align-items-center gap-3 px-3 py-2 border-bottom">
+            <div class="queue-number" style="color:#198754;">{{ entry.queue_number }}</div>
+            <div class="flex-grow-1">
+              <div class="fw-semibold small">{{ entry.customer_display }}</div>
+              <div class="text-muted" style="font-size:.74rem;">
+                <span class="category-slug">{{ entry.category.slug }}</span>
+                {% if entry.called_at %}
+                  &nbsp;·&nbsp; Called {{ entry.called_at|time:"H:i" }}
+                {% endif %}
+              </div>
+            </div>
+            <button class="btn btn-xs btn-outline-secondary py-0 px-2 done-btn"
+                    data-entry-id="{{ entry.pk }}">
+              <i class="fas fa-check me-1"></i>Done
+            </button>
+          </div>
+          {% empty %}
+          <div class="text-center text-muted py-3 small">No one being served</div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-transparent border-bottom fw-semibold py-2">
+          <i class="fas fa-check-double me-1 text-secondary"></i>
+          Recently Completed
+          <span class="badge bg-secondary ms-1">{{ completed.count }}</span>
+        </div>
+        <div class="card-body p-0" style="max-height:200px;overflow-y:auto;">
+          {% for entry in completed %}
+          <div class="d-flex align-items-center gap-3 px-3 py-2 border-bottom">
+            <span class="badge bg-secondary font-monospace">{{ entry.queue_number }}</span>
+            <span class="small text-muted">{{ entry.customer_display }}</span>
+            <span class="ms-auto text-muted small">
+              {{ entry.completed_at|time:"H:i" }}
+            </span>
+          </div>
+          {% empty %}
+          <div class="text-center text-muted py-3 small">None yet today</div>
+          {% endfor %}
+        </div>
+      </div>
+
+    </div>
+  </div>{# /live queues row #}
+
+</div>
+
+{# ── Toast notification ── #}
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index:9999;">
+  <div id="callToast" class="toast align-items-center border-0" role="alert">
+    <div class="d-flex">
+      <div class="toast-body fw-bold fs-6" id="callToastBody">—</div>
+      <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast"></button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+(function () {
+  "use strict";
+
+  const CSRF = "{{ csrf_token }}";
+
+  function postJSON(url) {
+    return fetch(url, {
+      method:  'POST',
+      headers: { 'X-CSRFToken': CSRF, 'Content-Type': 'application/json' },
+    }).then(r => r.json());
+  }
+
+  function toast(msg, type = 'success') {
+    const el   = document.getElementById('callToast');
+    const body = document.getElementById('callToastBody');
+    body.textContent = msg;
+    el.className = `toast align-items-center border-0 text-bg-${type}`;
+    bootstrap.Toast.getOrCreateInstance(el, { delay: 4000 }).show();
+  }
+
+  /* ── Call Next (per category) ── */
+  document.querySelectorAll('.call-next-btn').forEach(btn => {
+    btn.addEventListener('click', function () {
+      const catId   = this.dataset.categoryId;
+      const catName = this.dataset.categoryName;
+      const url     = "{% url 'queue_call_next' 0 %}".replace('/0/', `/${catId}/`);
+      postJSON(url).then(data => {
+        if (data.ok) {
+          toast(`Now serving ${data.queue_number} — ${data.customer}`, 'success');
+          setTimeout(() => location.reload(), 1600);
+        } else {
+          toast(data.message || 'No one waiting.', 'warning');
+        }
+      });
+    });
+  });
+
+  /* ── Call individual entry ── */
+  document.querySelectorAll('.call-entry-btn').forEach(btn => {
+    btn.addEventListener('click', function () {
+      const id  = this.dataset.entryId;
+      const url = "{% url 'queue_call_next' 0 %}".replace('/0/', `/${id}/`);
+      postJSON(url).then(() => location.reload());
+    });
+  });
+
+  /* ── Mark Done ── */
+  document.querySelectorAll('.done-btn').forEach(btn => {
+    btn.addEventListener('click', function () {
+      const id  = this.dataset.entryId;
+      const url = "{% url 'queue_mark_served' 0 %}".replace('/0/', `/${id}/`);
+      postJSON(url).then(data => {
+        if (data.ok) location.reload();
+      });
+    });
+  });
+
+  /* ── No Show ── */
+  document.querySelectorAll('.noshow-btn').forEach(btn => {
+    btn.addEventListener('click', function () {
+      const id  = this.dataset.entryId;
+      const url = "{% url 'queue_mark_no_show' 0 %}".replace('/0/', `/${id}/`);
+      postJSON(url).then(data => {
+        if (data.ok) location.reload();
+      });
+    });
+  });
+
+  /* ── Auto-refresh every 30 seconds ── */
+  setTimeout(() => location.reload(), 30000);
+
+})();
+</script>
+{% endblock %}

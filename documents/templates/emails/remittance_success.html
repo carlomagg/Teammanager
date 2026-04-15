@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Remittance Completed Successfully</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #4CAF50;
+            margin-bottom: 30px;
+        }
+        .success-icon {
+            color: #4CAF50;
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        .amount-box {
+            background-color: #f0f9f0;
+            border: 2px solid #4CAF50;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            margin: 25px 0;
+        }
+        .amount {
+            font-size: 32px;
+            font-weight: bold;
+            color: #2E7D32;
+        }
+        .details {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+        .detail-label {
+            font-weight: 600;
+            color: #555;
+        }
+        .detail-value {
+            color: #333;
+            text-align: right;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+            color: #666;
+            font-size: 14px;
+        }
+        .bank-info {
+            background-color: #e8f5e9;
+            border-left: 4px solid #4CAF50;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: #319795;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: 600;
+            margin-top: 20px;
+        }
+        .btn:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="success-icon">✅</div>
+            <h1 style="color: #2E7D32; margin: 0;">Remittance Completed Successfully</h1>
+            <p style="color: #666; margin-top: 5px;">Your funds have been transferred successfully</p>
+        </div>
+        
+        <div class="amount-box">
+            <div style="color: #666; font-size: 14px; margin-bottom: 5px;">Amount Transferred</div>
+            <div class="amount">₦{{ amount|floatformat:2|intcomma }}</div>
+        </div>
+        
+        <div class="details">
+            <h3 style="color: #333; margin-top: 0;">Transaction Details</h3>
+            
+            <div class="detail-row">
+                <div class="detail-label">Remittance Reference:</div>
+                <div class="detail-value"><strong>{{ remittance.reference }}</strong></div>
+            </div>
+            
+            <div class="detail-row">
+                <div class="detail-label">Bank Reference:</div>
+                <div class="detail-value">{{ bank_reference|default:"Processing" }}</div>
+            </div>
+            
+            <div class="detail-row">
+                <div class="detail-label">Completion Date:</div>
+                <div class="detail-value">{{ completion_date|date:"F d, Y H:i" }}</div>
+            </div>
+            
+            <div class="detail-row">
+                <div class="detail-label">Status:</div>
+                <div class="detail-value" style="color: #4CAF50; font-weight: bold;">✅ Completed</div>
+            </div>
+        </div>
+        
+        <div class="bank-info">
+            <h4 style="margin-top: 0; color: #2E7D32;">Bank Details Used:</h4>
+            <p style="margin: 5px 0;"><strong>Bank Name:</strong> {{ company_profile.bank_name }}</p>
+            <p style="margin: 5px 0;"><strong>Account Name:</strong> {{ company_profile.bank_account_name }}</p>
+            <p style="margin: 5px 0;"><strong>Account Number:</strong> {{ company_profile.bank_account_number }}</p>
+        </div>
+        
+        <div style="text-align: center; margin: 30px 0;">
+            <p style="color: #666;">The funds should reflect in your bank account within 1-24 hours, depending on your bank.</p>
+            
+            {% if tenant %}
+            <a href="{{ wallet_url }}" class="btn">View Wallet Dashboard</a>
+            {% endif %}
+        </div>
+        
+        <div class="footer">
+            <p>This is an automated notification. Please do not reply to this email.</p>
+            <p>If you have any questions, contact our support team.</p>
+            <p style="font-size: 12px; color: #999; margin-top: 20px;">
+                TeamManager
+            </p>
+        </div>
+    </div>
+</body>
+</html>

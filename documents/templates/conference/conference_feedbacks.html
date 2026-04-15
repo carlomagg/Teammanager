@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Feedback for {{ conference.title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Feedback for: {{ conference.title }}</h2>
+    <p class="text-muted">
+        {{ conference.start_date|date:"M d, Y" }} – {{ conference.end_date|date:"M d, Y" }}
+        {% if conference.is_virtual %}(Virtual){% else %}( {{ conference.venue }} ){% endif %}
+    </p>
+
+    {% if not has_feedback %}
+        <div class="alert alert-info">
+            No feedback has been submitted for this conference yet.
+        </div>
+        <button type= "button" onclick="history.back()" class="btn btn-secondary btn-sm mt-3" data-bs-toggle="tooltip" title="Return to previous page">
+            <i class="fas fa-arrow-left me-1"></i> Back
+        </button>
+    {% endif %}
+
+    <!-- Summary Stats -->
+    {% if has_feedback %}
+    <div class="card mb-4">
+        <div class="card-body">
+            <h4 class="card-title">Overall Rating</h4>
+            <div class="display-4 fw-bold">{{ avg_rating|default:"N/A" }}</div>
+            <div class="fs-3 mb-3">{{ avg_rating_stars }}</div>
+            <p><strong>Total feedback:</strong> {{ total_feedback }}</p>
+
+            <h5>Rating Distribution</h5>
+            {% for dist in rating_distribution_list %}
+            <div class="d-flex align-items-center mb-2">
+                <span class="me-2" style="width: 50px;">{{ dist.stars }} ★</span>
+                <div class="progress flex-grow-1" style="height: 20px;">
+                    <div class="progress-bar bg-warning" role="progressbar"
+                        style="width: {{ dist.percentage }}%;"
+                        aria-valuenow="{{ dist.percentage }}" aria-valuemin="0" aria-valuemax="100">
+                        {{ dist.count }} ({{ dist.percentage }}%)
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Individual Feedback List -->
+    <h4 class="mt-5">Individual Feedback ({{ total_feedback }})</h4>
+    <div class="row">
+        {% for feedback in feedbacks %}
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <strong>Rating:</strong>
+                            <span class="fs-4">{{ feedback.rating_display|safe }}</span>
+                            <span class="ms-2">{{ feedback.rating_text|safe }}</span>
+                        </div>
+                        <small class="text-muted">{{ feedback.created_at|date:"M d, Y" }}</small>
+                    </div>
+
+                    {% if feedback.topic %}
+                        <p><strong>Topic:</strong> {{ feedback.topic }}</p>
+                    {% endif %}
+
+                    {% if feedback.comment %}
+                        <p><strong>Comment:</strong></p>
+                        <p>{{ feedback.comment|linebreaks }}</p>
+                    {% else %}
+                        <p><em>No comment provided</em></p>
+                    {% endif %}
+
+                    <hr>
+                    <small class="text-muted">
+                        <strong>From:</strong>
+                        {% if feedback.guest_user %}
+                            Guest ({{ feedback.guest_user.email }})
+                        {% elif feedback.user %}
+                            Registered User ({{ feedback.user.email }})
+                        {% elif feedback.anonymous_name %}
+                            {{ feedback.anonymous_name }}
+                        {% elif feedback.anonymous_email %}
+                            Anonymous ({{ feedback.anonymous_email }})
+                        {% else %}
+                            Fully Anonymous
+                        {% endif %}
+                    </small>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+            <p>No feedback yet.</p>
+        {% endfor %}
+    </div>
+
+    <button type= "button" onclick="history.back()" class="btn btn-secondary btn-sm mt-3" data-bs-toggle="tooltip" title="Return to previous page">
+        <i class="fas fa-arrow-left me-1"></i> Back
+    </button>
+</div>
+{% endblock %}

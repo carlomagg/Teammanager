@@ -1,0 +1,2882 @@
+{% extends "base.html" %}
+{% load static %}
+{% load payroll_filters %}
+
+{% block title %}Payroll Management{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary-color: #14b8a6;
+        --primary-dark: #0d9488;
+        --secondary-color: #8b5cf6;
+        --success-color: #10b981;
+        --danger-color: #ef4444;
+        --warning-color: #f59e0b;
+        --info-color: #3b82f6;
+        --cyan: #06b6d4;
+        --purple: #a855f7;
+        --pink: #ec4899;
+        --gray-50: #f9fafb;
+        --gray-100: #f3f4f6;
+        --gray-200: #e5e7eb;
+        --gray-300: #d1d5db;
+        --gray-600: #4b5563;
+        --gray-700: #374151;
+        --gray-800: #1f2937;
+        --gray-900: #111827;
+    }
+
+    body {
+        background: #f9fafb;
+        min-height: 100vh;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        overflow-x: hidden;
+    }
+
+    .payroll-container {
+        max-width: 1600px;
+        margin: 0 auto;
+        padding: 2rem 1.5rem;
+        overflow-x: hidden;
+    }
+
+    /* Header Section */
+    .payroll-header {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        border-left: 4px solid var(--primary-color);
+    }
+
+    .payroll-title {
+        font-size: 1.875rem;
+        font-weight: 700;
+        color: var(--gray-900);
+        margin: 0 0 0.5rem 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .payroll-title i {
+        color: var(--primary-color);
+    }
+
+    .payroll-subtitle {
+        color: var(--gray-600);
+        font-size: 0.95rem;
+        margin: 0;
+    }
+
+    /* Quick Actions */
+    .quick-actions {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        margin-top: 1.5rem;
+    }
+
+    .quick-action-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.625rem 1.25rem;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-primary-action {
+        background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+        color: white;
+        border: none;
+    }
+
+    .btn-primary-action:hover {
+        background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
+        transform: translateY(-4px) scale(1.02);
+        box-shadow: 0 8px 16px rgba(20, 184, 166, 0.3);
+    }
+
+    .btn-secondary-action {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        border: none;
+    }
+
+    .btn-secondary-action:hover {
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(16, 185, 129, 0.3);
+    }
+
+    /* Payroll Selector */
+    .payroll-selector-card {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        border: 1px solid var(--gray-200);
+    }
+
+    .payroll-select-wrapper {
+        position: relative;
+        max-width: 400px;
+    }
+
+    .payroll-select {
+        width: 100%;
+        padding: 0.875rem 1rem;
+        border: 2px solid var(--gray-200);
+        border-radius: 10px;
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--gray-900);
+        background: white;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .payroll-select:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    /* Excel-like Table */
+    .payroll-table-card {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        border: 1px solid var(--gray-200);
+        overflow: hidden;
+        max-width: 100%;
+    }
+
+    .table-wrapper {
+        overflow-x: auto;
+        overflow-y: visible;
+        margin: 1rem 0;
+        -webkit-overflow-scrolling: touch;
+        border: 1px solid var(--gray-200);
+        border-radius: 8px;
+    }
+    
+    .table-wrapper::-webkit-scrollbar {
+        height: 10px;
+    }
+    
+    .table-wrapper::-webkit-scrollbar-track {
+        background: #f3f4f6;
+        border-radius: 5px;
+    }
+    
+    .table-wrapper::-webkit-scrollbar-thumb {
+        background: #9ca3af;
+        border-radius: 5px;
+    }
+    
+    .table-wrapper::-webkit-scrollbar-thumb:hover {
+        background: #6b7280;
+    }
+
+    .payroll-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        font-size: 0.9rem;
+    }
+
+    .payroll-table thead {
+        background: var(--gray-50);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    .payroll-table th {
+        padding: 1rem 0.75rem;
+        text-align: left;
+        font-weight: 600;
+        color: var(--gray-700);
+        border-bottom: 2px solid var(--gray-200);
+        white-space: nowrap;
+    }
+
+    .payroll-table td {
+        padding: 0.75rem;
+        border-bottom: 1px solid var(--gray-100);
+    }
+
+    .payroll-table tbody tr {
+        transition: background 0.15s;
+    }
+
+    .payroll-table tbody tr:hover {
+        background: var(--gray-50);
+    }
+
+    .table-input {
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid var(--gray-200);
+        border-radius: 6px;
+        font-size: 0.9rem;
+        transition: all 0.2s;
+    }
+
+    .table-input:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .table-input.calculated {
+        background: var(--gray-100);
+        font-weight: 600;
+        color: var(--success-color);
+    }
+
+    .table-input[readonly]:not(.calculated) {
+        background: var(--gray-50);
+        cursor: not-allowed;
+        opacity: 0.7;
+    }
+
+    .delete-row-btn {
+        color: var(--danger-color);
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 0.5rem;
+        border-radius: 6px;
+        transition: all 0.2s;
+    }
+
+    .delete-row-btn:hover {
+        background: #fee2e2;
+    }
+
+    /* Action Buttons */
+    .table-actions {
+        display: flex;
+        gap: 0.75rem;
+        margin-top: 1rem;
+    }
+
+    .add-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.625rem 1.25rem;
+        border: 2px dashed var(--gray-300);
+        border-radius: 8px;
+        background: white;
+        color: var(--gray-600);
+        font-weight: 600;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .add-btn:hover {
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+        background: rgba(59, 130, 246, 0.05);
+        transform: translateY(-4px) scale(1.02);
+        box-shadow: 0 8px 16px rgba(59, 130, 246, 0.3);
+    }
+
+    /* Approval Card */
+    .approval-card {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        border: 1px solid var(--gray-200);
+    }
+
+    .approval-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--gray-900);
+        margin-bottom: 1rem;
+    }
+
+    .approval-progress {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin: 1.5rem 0;
+    }
+
+    .approval-step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+        flex: 1;
+    }
+
+    .approval-circle {
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 1.5rem;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .approval-circle.completed {
+        background: linear-gradient(135deg, #06d6a0 0%, #05b587 100%);
+        color: white;
+        box-shadow: 0 8px 25px rgba(6, 214, 160, 0.4);
+        transform: scale(1.05);
+    }
+
+    .approval-circle.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        animation: pulse 2s infinite;
+        transform: scale(1.1);
+    }
+
+    .approval-circle.pending {
+        background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+        color: var(--gray-500);
+    }
+    
+    @keyframes pulse {
+        0%, 100% {
+            box-shadow: 0 0 0 6px rgba(102, 126, 234, 0.2);
+        }
+        50% {
+            box-shadow: 0 0 0 12px rgba(102, 126, 234, 0.1);
+        }
+    }
+
+    .approval-label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--gray-700);
+        text-align: center;
+    }
+
+    .approval-connector {
+        flex: 1;
+        height: 2px;
+        background: var(--gray-200);
+        position: relative;
+        top: -24px;
+    }
+
+    .approval-connector.completed {
+        background: var(--success-color);
+    }
+
+    /* Bottom Actions */
+    .bottom-actions {
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
+        border-radius: 24px;
+        padding: 2.5rem 3rem;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(102, 126, 234, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.8);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 2rem;
+    }
+
+    .total-summary {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--gray-900);
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .btn-large {
+        padding: 1rem 2.5rem;
+        font-size: 1.05rem;
+        font-weight: 700;
+        border-radius: 14px;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.625rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .btn-success {
+        background: var(--success-color);
+        color: white;
+    }
+
+    .btn-success:hover {
+        background: #059669;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-outline {
+        background: white;
+        color: var(--gray-700);
+        border: 1px solid var(--gray-300);
+    }
+
+    .btn-outline:hover {
+        background: var(--gray-50);
+        border-color: var(--gray-400);
+    }
+
+    /* Status Badges */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: white;
+    }
+
+    .status-draft {
+        background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+        color: white;
+    }
+
+    .status-pending {
+        background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+        color: white;
+    }
+
+    .status-approved {
+        background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+        color: white;
+    }
+
+    .status-paid {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+    }
+    
+    .status-pending_approval {
+        background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+        color: white;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .payroll-container {
+            padding: 1rem 0.5rem;
+        }
+
+        .payroll-header {
+            padding: 1.5rem;
+        }
+
+        .payroll-title {
+            font-size: 1.5rem;
+        }
+
+        .quick-actions {
+            flex-direction: column;
+        }
+
+        .quick-action-btn {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .approval-progress {
+            flex-direction: column;
+        }
+
+        .approval-connector {
+            display: none;
+        }
+
+        .bottom-actions {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+        }
+
+        .btn-large {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+
+    /* Loading State */
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.9);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    }
+
+    .spinner {
+        width: 48px;
+        height: 48px;
+        border: 4px solid var(--gray-200);
+        border-top-color: var(--primary-color);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .payroll-header,
+    .payroll-selector-card,
+    .payroll-table-card,
+    .approval-card,
+    .bottom-actions {
+        animation: fadeInUp 0.6s ease-out;
+    }
+
+    .payroll-selector-card {
+        animation-delay: 0.1s;
+    }
+
+    .payroll-table-card {
+        animation-delay: 0.2s;
+    }
+
+    .approval-card {
+        animation-delay: 0.3s;
+    }
+
+    .bottom-actions {
+        animation-delay: 0.4s;
+    }
+
+    /* Custom Modal */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        backdrop-filter: blur(10px);
+        padding: 1rem;
+    }
+
+    .modal-content {
+        background: white;
+        border-radius: 24px;
+        padding: 0;
+        max-width: 600px;
+        width: 100%;
+        max-height: 90vh;
+        overflow: hidden;
+        box-shadow: 0 25px 80px rgba(0, 0, 0, 0.4);
+        animation: modalSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        flex-direction: column;
+    }
+
+    @keyframes modalSlideIn {
+        from {
+            transform: translateY(20px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+    .modal-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 2.5rem 2rem 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .modal-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -20%;
+        width: 300px;
+        height: 300px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+    }
+
+    .modal-icon {
+        width: 80px;
+        height: 80px;
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.25rem;
+        color: white;
+        font-size: 2rem;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        position: relative;
+        z-index: 1;
+    }
+
+    .modal-title {
+        font-size: 1.75rem;
+        font-weight: 800;
+        color: white !important;
+        margin: 0;
+        position: relative;
+        z-index: 1;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .modal-body {
+        padding: 2rem;
+        overflow-y: auto;
+        flex: 1;
+    }
+
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+
+    .form-label {
+        display: block;
+        font-weight: 600;
+        color: var(--gray-700);
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 0.875rem 1rem;
+        border: 2px solid var(--gray-200);
+        border-radius: 10px;
+        font-size: 1rem;
+        transition: all 0.2s;
+        font-family: inherit;
+    }
+
+    .form-input:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .form-input::placeholder {
+        color: var(--gray-400);
+    }
+
+    .form-help {
+        font-size: 0.8rem;
+        color: var(--gray-500);
+        margin-top: 0.375rem;
+    }
+
+    .modal-footer {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+        padding: 1.5rem 2rem;
+        background: var(--gray-50);
+        border-top: 1px solid var(--gray-200);
+    }
+
+    .modal-btn {
+        padding: 1rem 2rem;
+        border-radius: 12px;
+        font-weight: 700;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.625rem;
+        font-size: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .modal-btn-cancel {
+        background: white;
+        color: var(--gray-700);
+        border: 2px solid var(--gray-300);
+    }
+
+    .modal-btn-cancel:hover {
+        background: var(--gray-100);
+        border-color: var(--gray-400);
+        transform: translateY(-4px) scale(1.02);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    }
+
+    .modal-btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .modal-btn-primary:hover {
+        transform: translateY(-4px) scale(1.02);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    }
+
+    .modal-btn-primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    /* Settings Tabs */
+    .settings-tab {
+        padding: 0.875rem 1.25rem;
+        border: none;
+        border-radius: 8px;
+        color: white;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        white-space: nowrap;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+    }
+
+    .settings-tab[data-tab="security"] {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    }
+
+    .settings-tab[data-tab="defaults"] {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    }
+
+    .settings-tab[data-tab="templates"] {
+        background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    }
+
+    .settings-tab[data-tab="notifications"] {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    }
+
+    .settings-tab[data-tab="export"] {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    }
+
+    .settings-tab:hover {
+        transform: translateY(-4px) scale(1.02);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    .settings-tab.active {
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+        transform: translateY(-4px) scale(1.02);
+    }
+
+    .settings-tab-content {
+        animation: fadeIn 0.3s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Toast Notification */
+    .toast {
+        position: fixed;
+        top: 2rem;
+        right: 2rem;
+        background: white;
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        z-index: 10001;
+        animation: slideInRight 0.3s;
+        max-width: 400px;
+    }
+
+    @keyframes slideInRight {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    .toast-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .toast-success {
+        background: #d1fae5;
+        color: var(--success-color);
+    }
+
+    .toast-error {
+        background: #fee2e2;
+        color: var(--danger-color);
+    }
+
+    .toast-info {
+        background: #dbeafe;
+        color: var(--primary-color);
+    }
+
+    .toast-content {
+        flex: 1;
+    }
+
+    .toast-title {
+        font-weight: 600;
+        color: var(--gray-900);
+        margin-bottom: 0.25rem;
+    }
+
+    .toast-message {
+        font-size: 0.875rem;
+        color: var(--gray-600);
+    }
+
+    .toast-close {
+        background: none;
+        border: none;
+        color: var(--gray-400);
+        cursor: pointer;
+        padding: 0.25rem;
+        border-radius: 6px;
+        transition: all 0.2s;
+    }
+
+    .toast-close:hover {
+        background: var(--gray-100);
+        color: var(--gray-600);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="payroll-container">
+    <!-- Header -->
+    <div class="payroll-header">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
+            <div>
+                <h1 class="payroll-title"><i class="fas fa-money-bill-wave" style="color: #319795 !important;"></i> Payroll Management</h1>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0;">
+                <select id="payrollSelect" class="payroll-select" onchange="loadPayroll(this.value)" style="padding: 0.625rem 0.75rem; border: 1px solid var(--gray-300); border-radius: 8px; font-size: 0.8125rem; font-weight: 600; color: #1f2937; background: white; cursor: pointer; width: 180px; max-width: 180px;">
+                    <option value="" style="color: #1f2937;">-- Select --</option>
+                    {% for payroll in payrolls %}
+                    <option value="{{ payroll.id }}" {% if selected_payroll.id == payroll.id %}selected{% endif %} style="color: #1f2937;">
+                        {{ payroll.title }} - {{ payroll.get_status_display }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <button class="quick-action-btn" onclick="createNewPayroll()" style="background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%); color: white; border: none;" onmouseover="this.style.transform='translateY(-4px) scale(1.02)'; this.style.boxShadow='0 8px 16px rgba(20, 184, 166, 0.3)';" onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 2px 4px rgba(0, 0, 0, 0.1)';">
+                    <i class="fas fa-plus"></i>
+                    New Payroll
+                </button>
+                <button class="quick-action-btn" onclick="openSettings()" style="background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%); color: white; border: none;" onmouseover="this.style.transform='translateY(-4px) scale(1.02)'; this.style.boxShadow='0 8px 16px rgba(107, 114, 128, 0.3)';" onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 2px 4px rgba(0, 0, 0, 0.1)';">
+                    <i class="fas fa-cog"></i>
+                    Settings
+                </button>
+                <button class="quick-action-btn" onclick="viewHistory()" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; border: none;" onmouseover="this.style.transform='translateY(-4px) scale(1.02)'; this.style.boxShadow='0 8px 16px rgba(59, 130, 246, 0.3)';" onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 2px 4px rgba(0, 0, 0, 0.1)';">
+                    <i class="fas fa-history"></i>
+                    History
+                </button>
+                <button class="quick-action-btn" onclick="exportPayroll()" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: white; border: none;" onmouseover="this.style.transform='translateY(-4px) scale(1.02)'; this.style.boxShadow='0 8px 16px rgba(139, 92, 246, 0.3)';" onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 2px 4px rgba(0, 0, 0, 0.1)';">
+                    <i class="fas fa-download"></i>
+                    Export
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.75rem; margin-bottom: 1.5rem;">
+        <!-- Total Payrolls -->
+        <div class="stat-card" onclick="filterPayrollsByStatus('all')" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); border-radius: 10px; padding: 1rem; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); transition: all 0.3s ease; cursor: pointer;" onmouseover="this.style.transform='translateY(-4px) scale(1.02)'; this.style.boxShadow='0 8px 16px rgba(59, 130, 246, 0.3)';" onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 2px 4px rgba(0, 0, 0, 0.1)';">
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                <i class="fas fa-file-invoice-dollar" style="color: white; font-size: 1.125rem;"></i>
+                <p style="color: white; font-size: 0.75rem; margin: 0; font-weight: 600;">Total Payrolls</p>
+            </div>
+            <h3 style="font-size: 1.5rem; font-weight: 700; color: white; margin: 0;">{{ payrolls.count }}</h3>
+            <p style="color: rgba(255,255,255,0.8); font-size: 0.625rem; margin: 0.25rem 0 0 0;">All payrolls</p>
+        </div>
+
+        <!-- Draft -->
+        <div class="stat-card" onclick="filterPayrollsByStatus('draft')" style="background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); border-radius: 10px; padding: 1rem; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); transition: all 0.3s ease; cursor: pointer;" onmouseover="this.style.transform='translateY(-4px) scale(1.02)'; this.style.boxShadow='0 8px 16px rgba(251, 191, 36, 0.3)';" onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 2px 4px rgba(0, 0, 0, 0.1)';">
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                <i class="fas fa-edit" style="color: white; font-size: 1.125rem;"></i>
+                <p style="color: white; font-size: 0.75rem; margin: 0; font-weight: 600;">Draft</p>
+            </div>
+            <h3 style="font-size: 1.5rem; font-weight: 700; color: white; margin: 0;">{{ payrolls|filter_by_status:'draft'|length }}</h3>
+            <p style="color: rgba(255,255,255,0.8); font-size: 0.625rem; margin: 0.25rem 0 0 0;">Not yet submitted</p>
+        </div>
+
+        <!-- Pending Approval -->
+        <div class="stat-card" onclick="filterPayrollsByStatus('pending_approval')" style="background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); border-radius: 10px; padding: 1rem; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); transition: all 0.3s ease; cursor: pointer;" onmouseover="this.style.transform='translateY(-4px) scale(1.02)'; this.style.boxShadow='0 8px 16px rgba(6, 182, 212, 0.3)';" onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 2px 4px rgba(0, 0, 0, 0.1)';">
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                <i class="fas fa-clock" style="color: white; font-size: 1.125rem;"></i>
+                <p style="color: white; font-size: 0.75rem; margin: 0; font-weight: 600;">Pending Approval</p>
+            </div>
+            <h3 style="font-size: 1.5rem; font-weight: 700; color: white; margin: 0;">{{ payrolls|filter_by_status:'pending_approval'|length }}</h3>
+            <p style="color: rgba(255,255,255,0.8); font-size: 0.625rem; margin: 0.25rem 0 0 0;">Awaiting approval</p>
+        </div>
+
+        <!-- Approved -->
+        <div class="stat-card" onclick="filterPayrollsByStatus('approved')" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); border-radius: 10px; padding: 1rem; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); transition: all 0.3s ease; cursor: pointer;" onmouseover="this.style.transform='translateY(-4px) scale(1.02)'; this.style.boxShadow='0 8px 16px rgba(139, 92, 246, 0.3)';" onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 2px 4px rgba(0, 0, 0, 0.1)';">
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                <i class="fas fa-check-circle" style="color: white; font-size: 1.125rem;"></i>
+                <p style="color: white; font-size: 0.75rem; margin: 0; font-weight: 600;">Approved</p>
+            </div>
+            <h3 style="font-size: 1.5rem; font-weight: 700; color: white; margin: 0;">{{ payrolls|filter_by_status:'approved'|length }}</h3>
+            <p style="color: rgba(255,255,255,0.8); font-size: 0.625rem; margin: 0.25rem 0 0 0;">Ready for payment</p>
+        </div>
+
+        <!-- Paid -->
+        <div class="stat-card" onclick="filterPayrollsByStatus('paid')" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 10px; padding: 1rem; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); transition: all 0.3s ease; cursor: pointer;" onmouseover="this.style.transform='translateY(-4px) scale(1.02)'; this.style.boxShadow='0 8px 16px rgba(16, 185, 129, 0.3)';" onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 2px 4px rgba(0, 0, 0, 0.1)';">
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                <i class="fas fa-money-check-alt" style="color: white; font-size: 1.125rem;"></i>
+                <p style="color: white; font-size: 0.75rem; margin: 0; font-weight: 600;">Paid</p>
+            </div>
+            <h3 style="font-size: 1.5rem; font-weight: 700; color: white; margin: 0;">{{ payrolls|filter_by_status:'paid'|length }}</h3>
+            <p style="color: rgba(255,255,255,0.8); font-size: 0.625rem; margin: 0.25rem 0 0 0;">Completed</p>
+        </div>
+    </div>
+
+
+    {% if selected_payroll %}
+    <!-- Excel-like Table -->
+    <div class="payroll-table-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h2 style="font-size: 1.5rem; font-weight: 700; color: var(--gray-900); margin: 0; display: flex; align-items: center; gap: 0.75rem;">
+                {{ selected_payroll.title }}
+                {% if selected_payroll.status == 'paid' or selected_payroll.is_locked %}
+                <i class="fas fa-lock" style="color: var(--warning-color); font-size: 1.25rem;" title="This payroll is locked and cannot be modified"></i>
+                {% endif %}
+            </h2>
+            {% if selected_payroll.status == 'draft' %}
+            <span class="status-badge" style="background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); color: white; padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">
+                {{ selected_payroll.get_status_display }}
+            </span>
+            {% elif selected_payroll.status == 'pending_approval' %}
+            <span class="status-badge" style="background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); color: white; padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">
+                {{ selected_payroll.get_status_display }}
+            </span>
+            {% elif selected_payroll.status == 'approved' %}
+            <span class="status-badge" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: white; padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">
+                {{ selected_payroll.get_status_display }}
+            </span>
+            {% elif selected_payroll.status == 'paid' %}
+            <span class="status-badge" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">
+                {{ selected_payroll.get_status_display }}
+            </span>
+            {% else %}
+            <span class="status-badge status-{{ selected_payroll.status }}">
+                {{ selected_payroll.get_status_display }}
+            </span>
+            {% endif %}
+        </div>
+
+        <div class="table-wrapper">
+            <table class="payroll-table" id="payrollTable">
+                <thead>
+                    <tr>
+                        <th style="width: 80px;">S/N</th>
+                        <th style="width: 200px;">Staff Name</th>
+                        <th style="width: 150px;"><span class="currency-symbol">₦</span> Gross Amount</th>
+                        {% for column in custom_columns %}
+                        <th style="width: 150px; position: relative;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;">
+                                <div>
+                                    <span class="currency-symbol">₦</span> {{ column.name }}
+                                    <span style="color: var(--gray-500); font-size: 0.75rem; display: block;">
+                                        ({{ column.get_operation_display }})
+                                    </span>
+                                </div>
+                                {% if selected_payroll.status != 'paid' and not selected_payroll.is_locked %}
+                                <div style="display: flex; gap: 0.25rem;">
+                                    <button onclick="editColumn({{ column.id }}, '{{ column.name }}', '{{ column.operation }}')" 
+                                            style="background: var(--primary-color); color: white; border: none; padding: 0.375rem 0.5rem; border-radius: 6px; cursor: pointer; font-size: 0.75rem;">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button onclick="deleteColumn({{ column.id }})" 
+                                            style="background: var(--danger-color); color: white; border: none; padding: 0.375rem 0.5rem; border-radius: 6px; cursor: pointer; font-size: 0.75rem;">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </th>
+                        {% endfor %}
+                        <th style="width: 150px;"><span class="currency-symbol">₦</span> Net Amount</th>
+                        <th style="width: 60px;"></th>
+                    </tr>
+                </thead>
+                <tbody id="payrollTableBody">
+                    {% for item in payroll_items %}
+                    <tr data-item-id="{{ item.id }}">
+                        <td style="text-align: center;">
+                            <span style="font-weight: 600; color: var(--gray-700);">{{ forloop.counter }}</span>
+                        </td>
+                        <td style="position: relative;">
+                            <input type="text" class="table-input staff-name-input" 
+                                   value="{{ item.first_name|default:'' }} {{ item.last_name|default:'' }}" 
+                                   onchange="updateStaffName({{ item.id }}, this.value)"
+                                   onfocus="showStaffDropdown(this)"
+                                   onblur="hideStaffDropdown(this)"
+                                   placeholder="Select or type staff name"
+                                   autocomplete="off"
+                                   data-item-id="{{ item.id }}"
+                                   {% if selected_payroll.status == 'paid' or selected_payroll.is_locked %}readonly{% endif %}>
+                            <div class="staff-dropdown" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: #2d3748; border: 1px solid #4a5568; border-radius: 8px; max-height: 200px; overflow-y: auto; z-index: 1000; box-shadow: 0 8px 16px rgba(0,0,0,0.3); margin-top: 2px;">
+                                {% for user in all_staff %}
+                                <div class="staff-option" 
+                                     onclick="selectStaff(this, '{{ user.first_name }}', '{{ user.last_name }}')"
+                                     style="padding: 0.625rem 0.875rem; cursor: pointer; border-bottom: 1px solid #4a5568; color: white;"
+                                     onmouseover="this.style.background='#14b8a6'; this.style.color='white';"
+                                     onmouseout="this.style.background='transparent'; this.style.color='white';">
+                                    <strong style="color: inherit;">{{ user.first_name }} {{ user.last_name }}</strong>
+                                    {% if user.department %}<span style="color: #cbd5e0; font-size: 0.875rem; margin-left: 0.5rem;">{{ user.department.name }}</span>{% endif %}
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </td>
+                        <td>
+                            <input type="number" class="table-input" value="{{ item.gross_amount }}" 
+                                   step="0.01" onchange="updateItem({{ item.id }}, 'gross_amount', this.value)"
+                                   {% if selected_payroll.status == 'paid' or selected_payroll.is_locked %}readonly{% endif %}>
+                        </td>
+                        {% for column in custom_columns %}
+                        <td>
+                            <input type="number" class="table-input" 
+                                   value="{{ item.column_values|get_item:column.name|default:0 }}" 
+                                   step="0.01" onchange="updateColumnValue({{ item.id }}, '{{ column.name }}', this.value)"
+                                   {% if selected_payroll.status == 'paid' or selected_payroll.is_locked %}readonly{% endif %}>
+                        </td>
+                        {% endfor %}
+                        <td>
+                            <input type="number" class="table-input calculated" value="{{ item.net_amount }}" readonly>
+                        </td>
+                        <td>
+                            {% if selected_payroll.status != 'paid' and not selected_payroll.is_locked %}
+                            <button class="delete-row-btn" onclick="deleteRow({{ item.id }})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr style="background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%); font-weight: 700; border-top: 2px solid var(--gray-300);">
+                        <td colspan="2" style="text-align: left; padding: 0.625rem 0.75rem; color: #111827;">
+                            <i class="fas fa-calculator" style="margin-right: 0.5rem; color: #0d9488; font-size: 0.875rem;"></i>
+                            <span style="color: #111827; font-weight: 800; letter-spacing: 0.5px; font-size: 0.875rem;">TOTAL</span>
+                        </td>
+                        <td style="padding: 0.625rem 0.75rem;">
+                            <strong style="color: #0d9488; font-size: 0.9375rem; font-weight: 800;">{{ total_gross|default:0|floatformat:2 }}</strong>
+                        </td>
+                        {% for column in custom_columns %}
+                        <td style="padding: 0.625rem 0.75rem;">
+                            <strong style="color: #1f2937; font-size: 0.875rem; font-weight: 800;">{{ column.total|default:0|floatformat:2 }}</strong>
+                        </td>
+                        {% endfor %}
+                        <td style="padding: 0.625rem 0.75rem;">
+                            <strong style="color: #059669; font-size: 0.9375rem; font-weight: 800;">{{ total_net|default:0|floatformat:2 }}</strong>
+                        </td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        {% if selected_payroll.status != 'paid' and not selected_payroll.is_locked %}
+        <div class="table-actions" style="display: flex; justify-content: flex-start; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+            <button class="add-btn" onclick="addRow()" style="background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%); color: white; border: none;">
+                <i class="fas fa-plus"></i>
+                Add Row
+            </button>
+            <button class="add-btn" onclick="addColumn()" style="background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); color: white; border: none;">
+                <i class="fas fa-columns"></i>
+                Add Column
+            </button>
+            <button class="btn-large btn-outline" onclick="saveDraft()" style="background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%); color: white; border: none;">
+                <i class="fas fa-save"></i>
+                Save Draft
+            </button>
+            {% if selected_payroll.status == 'draft' %}
+            <button class="btn-large btn-success" onclick="submitForApproval()" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none;">
+                <i class="fas fa-paper-plane"></i>
+                Submit for Approval
+            </button>
+            {% elif selected_payroll.status == 'approved' %}
+            <button class="btn-large btn-success" onclick="processPayment()" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: white; border: none;">
+                <i class="fas fa-credit-card"></i>
+                Process Payment
+            </button>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Approvers -->
+    {% if approvals %}
+    <div style="background: #f9fafb; border-top: 1px solid var(--gray-200); padding: 0.625rem 1.5rem; border-bottom-left-radius: 16px; border-bottom-right-radius: 16px;">
+        <div style="display: inline-flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+            <span style="font-weight: 700; color: #1f2937; font-size: 0.8125rem; letter-spacing: 0.3px;">Approvers:</span>
+            {% for approval in approvals %}
+            <div style="display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.4rem 0.875rem; background: {% if approval.status == 'approved' %}linear-gradient(135deg, #10b981 0%, #059669 100%){% else %}linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%){% endif %}; border-radius: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.12);">
+                {% if approval.status == 'approved' %}
+                <i class="fas fa-check-circle" style="color: white; font-size: 0.75rem;"></i>
+                {% else %}
+                <i class="fas fa-clock" style="color: white; font-size: 0.75rem;"></i>
+                {% endif %}
+                <span style="font-size: 0.8125rem; font-weight: 700; color: white; letter-spacing: 0.2px;">{{ approval.approver.get_full_name }}</span>
+            </div>
+            {% endfor %}
+            {% if selected_payroll.status == 'pending_approval' and can_user_approve %}
+            <button onclick="approvePayroll()" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; font-weight: 600; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.375rem; font-size: 0.8125rem; margin-left: 0.5rem;">
+                <i class="fas fa-check"></i> Approve
+            </button>
+            <button onclick="rejectPayroll()" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; font-weight: 600; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.375rem; font-size: 0.8125rem;">
+                <i class="fas fa-times"></i> Reject
+            </button>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+    {% else %}
+    <!-- Empty State -->
+    <div style="text-align: center; padding: 4rem 2rem; background: white; border-radius: 16px;">
+        <i class="fas fa-file-invoice-dollar" style="font-size: 4rem; color: var(--gray-300); margin-bottom: 1rem;"></i>
+        <h3 style="color: var(--gray-700); margin-bottom: 0.5rem;">No Payroll Selected</h3>
+        <p style="color: var(--gray-500); margin-bottom: 1.5rem;">Select a payroll from the dropdown or create a new one</p>
+        <button class="quick-action-btn btn-primary-action" onclick="createNewPayroll()">
+            <i class="fas fa-plus"></i>
+            Create New Payroll
+        </button>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="loading-overlay" style="display: none;">
+    <div class="spinner"></div>
+</div>
+
+<!-- Create Payroll Modal -->
+<div id="createPayrollModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-header">
+            <div class="modal-icon">
+                <i class="fas fa-plus"></i>
+            </div>
+            <h2 class="modal-title" style="color: white;">Create New Payroll</h2>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label class="form-label" for="payrollTitle">Payroll Title</label>
+                <input type="text" id="payrollTitle" class="form-input" placeholder="e.g., March 2026 Salary" autocomplete="off">
+                <p class="form-help">Give your payroll a descriptive name</p>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="payrollPin">Payment PIN</label>
+                <input type="password" id="payrollPin" class="form-input" placeholder="4-6 digit PIN" maxlength="6" autocomplete="off">
+                <p class="form-help">This PIN will be required to authorize payments</p>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="modal-btn modal-btn-cancel" onclick="closeCreateModal()" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; border: none;" onmouseover="this.style.transform='translateY(-4px) scale(1.02)'; this.style.boxShadow='0 8px 16px rgba(239, 68, 68, 0.3)';" onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 2px 4px rgba(0, 0, 0, 0.1)';">
+                Cancel
+            </button>
+            <button class="modal-btn modal-btn-primary" onclick="submitCreatePayroll()" style="background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);" onmouseover="this.style.transform='translateY(-4px) scale(1.02)'; this.style.boxShadow='0 8px 16px rgba(20, 184, 166, 0.3)';" onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 4px 15px rgba(102, 126, 234, 0.3)';">
+                <i class="fas fa-check"></i>
+                Create Payroll
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Column Modal -->
+<div id="addColumnModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-icon">
+                <i class="fas fa-columns"></i>
+            </div>
+            <h2 class="modal-title" id="columnModalTitle" style="color: white;">Add Custom Column</h2>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="editColumnId" value="">
+            <div class="form-group">
+                <label class="form-label" for="columnName">Column Name</label>
+                <input type="text" id="columnName" class="form-input" placeholder="e.g., Tax, Bonus, Allowance" autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Operation</label>
+                <div style="display: flex; gap: 0.5rem;">
+                    <label style="display: flex; align-items: center; justify-content: center; gap: 0.375rem; cursor: pointer; flex: 1; padding: 0.5rem 0.75rem; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: 8px; transition: all 0.3s ease; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); font-size: 0.8125rem;" onmouseover="this.style.transform='translateY(-2px) scale(1.01)'; this.style.boxShadow='0 3px 6px rgba(16, 185, 129, 0.3)';" onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 1px 3px rgba(0, 0, 0, 0.1)';">
+                        <input type="radio" name="columnOperation" value="add" id="opAdd" style="width: 14px; height: 14px; cursor: pointer;">
+                        <span style="font-weight: 600; font-size: 0.8125rem;"><i class="fas fa-plus-circle" style="font-size: 0.75rem;"></i> Add to Net</span>
+                    </label>
+                    <label style="display: flex; align-items: center; justify-content: center; gap: 0.375rem; cursor: pointer; flex: 1; padding: 0.5rem 0.75rem; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; border: none; border-radius: 8px; transition: all 0.3s ease; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); font-size: 0.8125rem;" onmouseover="this.style.transform='translateY(-2px) scale(1.01)'; this.style.boxShadow='0 3px 6px rgba(239, 68, 68, 0.3)';" onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 1px 3px rgba(0, 0, 0, 0.1)';">
+                        <input type="radio" name="columnOperation" value="subtract" id="opSubtract" checked style="width: 14px; height: 14px; cursor: pointer;">
+                        <span style="font-weight: 600; font-size: 0.8125rem;"><i class="fas fa-minus-circle" style="font-size: 0.75rem;"></i> Subtract from Net</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="modal-btn modal-btn-cancel" onclick="closeColumnModal()" style="background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%); color: white; border: none;" onmouseover="this.style.transform='translateY(-4px) scale(1.02)'; this.style.boxShadow='0 8px 16px rgba(107, 114, 128, 0.3)';" onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 2px 4px rgba(0, 0, 0, 0.1)';">
+                Cancel
+            </button>
+            <button class="modal-btn modal-btn-primary" onclick="submitColumnForm()" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);" onmouseover="this.style.transform='translateY(-4px) scale(1.02)'; this.style.boxShadow='0 8px 16px rgba(139, 92, 246, 0.3)';" onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 4px 15px rgba(102, 126, 234, 0.3)';">
+                <i class="fas fa-check"></i>
+                <span id="columnSubmitText">Add Column</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Payment PIN Modal -->
+<div id="paymentPinModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-icon" style="background: linear-gradient(135deg, var(--success-color), #059669);">
+                <i class="fas fa-lock"></i>
+            </div>
+            <h2 class="modal-title" style="color: white;">Authorize Payment</h2>
+        </div>
+        <div class="modal-body">
+            <p style="color: var(--gray-600); margin-bottom: 1.25rem;">Enter your PIN to process this payroll payment</p>
+            <div class="form-group">
+                <label class="form-label" for="paymentPin">Payment PIN</label>
+                <input type="password" id="paymentPin" class="form-input" placeholder="Enter PIN" maxlength="6" autocomplete="off">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="modal-btn modal-btn-cancel" onclick="closePaymentModal()">
+                Cancel
+            </button>
+            <button class="modal-btn modal-btn-primary" onclick="submitPayment()">
+                <i class="fas fa-credit-card"></i>
+                Process Payment
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Clone Payroll Modal -->
+<div id="clonePayrollModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-header">
+            <div class="modal-icon">
+                <i class="fas fa-copy"></i>
+            </div>
+            <h2 class="modal-title" style="color: white;">Clone Payroll Structure</h2>
+        </div>
+        <div class="modal-body">
+            <div style="background: linear-gradient(135deg, #4ecdc4 0%, #44a3a0 100%); padding: 1.5rem; border-radius: 16px; margin-bottom: 1.5rem; color: white;">
+                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                    <i class="fas fa-info-circle" style="font-size: 2rem;"></i>
+                    <div>
+                        <h4 style="margin: 0 0 0.5rem 0; font-weight: 700;">What will be cloned?</h4>
+                        <p style="margin: 0; font-size: 0.9rem; opacity: 0.95;">This will copy the payroll structure without any data</p>
+                    </div>
+                </div>
+                <ul style="margin: 0; padding-left: 1.5rem; font-size: 0.9rem; opacity: 0.95;">
+                    <li>Custom columns (names and operations)</li>
+                    <li>Approval workflow</li>
+                    <li>Empty staff rows (no names or amounts)</li>
+                </ul>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="clonePayrollTitle">New Payroll Title</label>
+                <input type="text" id="clonePayrollTitle" class="form-input" placeholder="e.g., April 2026 Salary" autocomplete="off">
+                <p class="form-help">Give the cloned payroll a new name</p>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="clonePayrollPin">Payment PIN</label>
+                <input type="password" id="clonePayrollPin" class="form-input" placeholder="4-6 digit PIN" maxlength="6" autocomplete="off">
+                <p class="form-help">Set a PIN for this new payroll</p>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="modal-btn modal-btn-cancel" onclick="closeCloneModal()">
+                Cancel
+            </button>
+            <button class="modal-btn modal-btn-primary" onclick="submitClonePayroll()">
+                <i class="fas fa-copy"></i>
+                Clone Payroll
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Settings Modal -->
+<div id="settingsModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content" style="max-width: 900px;">
+        <div class="modal-header">
+            <div class="modal-icon">
+                <i class="fas fa-cog"></i>
+            </div>
+            <h2 class="modal-title" style="color: white;">Payroll Settings</h2>
+        </div>
+        <div class="modal-body">
+            <!-- Settings Tabs -->
+            <div style="display: flex; gap: 0.75rem; margin-bottom: 2rem; overflow-x: auto; padding-bottom: 1rem;">
+                <button class="settings-tab active" onclick="switchSettingsTab('security')" data-tab="security" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important; color: white !important;">
+                    <i class="fas fa-lock"></i> Security
+                </button>
+                <button class="settings-tab" onclick="switchSettingsTab('defaults')" data-tab="defaults" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important; color: white !important;">
+                    <i class="fas fa-sliders-h"></i> Defaults
+                </button>
+                <button class="settings-tab" onclick="switchSettingsTab('templates')" data-tab="templates" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%) !important; color: white !important;">
+                    <i class="fas fa-columns"></i> Templates
+                </button>
+                <button class="settings-tab" onclick="switchSettingsTab('notifications')" data-tab="notifications" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important; color: white !important;">
+                    <i class="fas fa-bell"></i> Notifications
+                </button>
+                <button class="settings-tab" onclick="switchSettingsTab('export')" data-tab="export" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important; color: white !important;">
+                    <i class="fas fa-file-export"></i> Export
+                </button>
+            </div>
+
+            <!-- Security Tab -->
+            <div id="security-tab" class="settings-tab-content">
+                <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem; color: var(--gray-900);">Security Settings</h3>
+                
+                <div class="form-group">
+                    <label class="form-label">Change Payment PIN</label>
+                    <p class="form-help" style="margin-bottom: 0.75rem;">Update the PIN required to authorize payroll payments</p>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                        <input type="password" id="currentPin" class="form-input" placeholder="Current PIN" maxlength="6">
+                        <input type="password" id="newPin" class="form-input" placeholder="New PIN (4-6 digits)" maxlength="6">
+                        <input type="password" id="confirmPin" class="form-input" placeholder="Confirm New PIN" maxlength="6">
+                    </div>
+                    <button onclick="changePaymentPin()" style="margin-top: 1rem; padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);" onmouseover="this.style.transform='translateY(-4px) scale(1.02)'; this.style.boxShadow='0 8px 16px rgba(239, 68, 68, 0.3)';" onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 2px 4px rgba(0, 0, 0, 0.1)';">
+                        <i class="fas fa-key"></i> Update PIN
+                    </button>
+                </div>
+
+                <div class="form-group" style="margin-top: 2rem;">
+                    <label class="form-label">Two-Factor Authentication</label>
+                    <p class="form-help">Add an extra layer of security to payment authorization</p>
+                    <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer; margin-top: 0.75rem;">
+                        <input type="checkbox" id="enable2FA" style="width: 20px; height: 20px;">
+                        <span style="font-weight: 600;">Enable 2FA for payment processing</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Defaults Tab -->
+            <div id="defaults-tab" class="settings-tab-content" style="display: none;">
+                <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem; color: var(--gray-900);">Default Settings</h3>
+                
+                <div class="form-group">
+                    <label class="form-label">Default Tax Rate (%)</label>
+                    <input type="number" id="defaultTaxRate" class="form-input" placeholder="e.g., 7.5" step="0.1" min="0" max="100">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Default Pension Rate (%)</label>
+                    <input type="number" id="defaultPensionRate" class="form-input" placeholder="e.g., 8" step="0.1" min="0" max="100">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Currency</label>
+                    <select id="defaultCurrency" class="form-input">
+                        <option value="NGN">Nigerian Naira (₦)</option>
+                        <option value="USD">US Dollar ($)</option>
+                        <option value="GBP">British Pound (£)</option>
+                        <option value="EUR">Euro (€)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Default Approvers</label>
+                    <p class="form-help" style="margin-bottom: 0.75rem;">Set default approvers for new payrolls</p>
+                    <div id="defaultApproversList" style="display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 0.75rem;">
+                        <!-- Default approvers will be added here -->
+                    </div>
+                    <button type="button" onclick="addDefaultApprover()" style="width: 100%; padding: 0.75rem; background: var(--gray-100); color: var(--gray-700); border: 2px dashed var(--gray-300); border-radius: 10px; font-weight: 600; cursor: pointer;">
+                        <i class="fas fa-user-plus"></i> Add Default Approver
+                    </button>
+                </div>
+
+                <button onclick="saveDefaultSettings()" style="margin-top: 1.5rem; padding: 0.875rem 2rem; background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%); color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);" onmouseover="this.style.transform='translateY(-4px) scale(1.02)'; this.style.boxShadow='0 8px 16px rgba(20, 184, 166, 0.3)';" onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 2px 4px rgba(0, 0, 0, 0.1)';">
+                    <i class="fas fa-save"></i> Save Defaults
+                </button>
+            </div>
+
+            <!-- Templates Tab -->
+            <div id="templates-tab" class="settings-tab-content" style="display: none;">
+                <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem; color: var(--gray-900);">Column Templates</h3>
+                
+                <div class="form-group">
+                    <label class="form-label">Create New Template</label>
+                    <input type="text" id="templateName" class="form-input" placeholder="Template name (e.g., 'Standard Deductions')" style="margin-bottom: 0.75rem;">
+                    
+                    <div id="templateColumnsList" style="display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 0.75rem;">
+                        <!-- Template columns will be added here -->
+                    </div>
+                    
+                    <div style="display: flex; gap: 1rem; align-items: center;">
+                        <button type="button" onclick="addTemplateColumn()" style="flex: 1; padding: 0.875rem 2rem; background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);" onmouseover="this.style.transform='translateY(-4px) scale(1.02)'; this.style.boxShadow='0 8px 16px rgba(6, 182, 212, 0.3)';" onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 2px 4px rgba(0, 0, 0, 0.1)';">
+                            <i class="fas fa-plus"></i> Add Column to Template
+                        </button>
+                        
+                        <button onclick="saveColumnTemplate()" style="flex: 1; padding: 0.875rem 2rem; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);" onmouseover="this.style.transform='translateY(-4px) scale(1.02)'; this.style.boxShadow='0 8px 16px rgba(16, 185, 129, 0.3)';" onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 2px 4px rgba(0, 0, 0, 0.1)';">
+                            <i class="fas fa-save"></i> Save Template
+                        </button>
+                    </div>
+                </div>
+
+                <div style="margin-top: 2rem; padding-top: 2rem; border-top: 2px solid var(--gray-200);">
+                    <h4 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem; color: var(--gray-900);">Saved Templates</h4>
+                    <div id="savedTemplatesList" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                        <!-- Saved templates will be displayed here -->
+                        <div style="text-align: center; padding: 2rem; color: var(--gray-500);">
+                            <i class="fas fa-inbox" style="font-size: 2rem; margin-bottom: 0.5rem; opacity: 0.5;"></i>
+                            <p>No templates saved yet</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notifications Tab -->
+            <div id="notifications-tab" class="settings-tab-content" style="display: none;">
+                <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem; color: var(--gray-900);">Notification Settings</h3>
+                
+                <div class="form-group">
+                    <label class="form-label">Email Notifications</label>
+                    <div style="display: flex; flex-direction: column; gap: 1rem; margin-top: 0.75rem;">
+                        <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
+                            <input type="checkbox" id="notifyApproval" checked style="width: 20px; height: 20px;">
+                            <div>
+                                <div style="font-weight: 600;">Approval Requests</div>
+                                <div style="font-size: 0.875rem; color: var(--gray-600);">Notify approvers when a payroll needs approval</div>
+                            </div>
+                        </label>
+                        
+                        <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
+                            <input type="checkbox" id="notifyPayment" checked style="width: 20px; height: 20px;">
+                            <div>
+                                <div style="font-weight: 600;">Payment Confirmations</div>
+                                <div style="font-size: 0.875rem; color: var(--gray-600);">Send confirmation emails after payment processing</div>
+                            </div>
+                        </label>
+                        
+                        <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
+                            <input type="checkbox" id="notifyDeadline" style="width: 20px; height: 20px;">
+                            <div>
+                                <div style="font-weight: 600;">Deadline Reminders</div>
+                                <div style="font-size: 0.875rem; color: var(--gray-600);">Remind about upcoming payroll deadlines</div>
+                            </div>
+                        </label>
+                        
+                        <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
+                            <input type="checkbox" id="notifyRejection" checked style="width: 20px; height: 20px;">
+                            <div>
+                                <div style="font-weight: 600;">Rejection Alerts</div>
+                                <div style="font-size: 0.875rem; color: var(--gray-600);">Alert when a payroll is rejected</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <button onclick="saveNotificationSettings()" style="margin-top: 1.5rem; padding: 0.875rem 2rem; background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%); color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);" onmouseover="this.style.transform='translateY(-4px) scale(1.02)'; this.style.boxShadow='0 8px 16px rgba(20, 184, 166, 0.3)';" onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 2px 4px rgba(0, 0, 0, 0.1)';">
+                    <i class="fas fa-save"></i> Save Notification Settings
+                </button>
+            </div>
+
+            <!-- Export Tab -->
+            <div id="export-tab" class="settings-tab-content" style="display: none;">
+                <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem; color: var(--gray-900);">Export Settings</h3>
+                
+                <div class="form-group">
+                    <label class="form-label">Default Export Format</label>
+                    <select id="defaultExportFormat" class="form-input">
+                        <option value="excel">Excel (.xlsx)</option>
+                        <option value="csv">CSV (.csv)</option>
+                        <option value="pdf">PDF (.pdf)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Include in Export</label>
+                    <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.75rem;">
+                        <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
+                            <input type="checkbox" id="exportApprovals" checked style="width: 20px; height: 20px;">
+                            <span style="font-weight: 600;">Approval History</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
+                            <input type="checkbox" id="exportSummary" checked style="width: 20px; height: 20px;">
+                            <span style="font-weight: 600;">Summary Totals</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
+                            <input type="checkbox" id="exportTimestamp" checked style="width: 20px; height: 20px;">
+                            <span style="font-weight: 600;">Export Timestamp</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Email Distribution List</label>
+                    <p class="form-help" style="margin-bottom: 0.75rem;">Send exported payrolls to these email addresses</p>
+                    <div id="distributionList" style="display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 0.75rem;">
+                        <!-- Distribution emails will be added here -->
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 1rem; align-items: center; margin-top: 1.5rem;">
+                    <button type="button" onclick="addDistributionEmail()" style="flex: 1; padding: 0.875rem 2rem; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);" onmouseover="this.style.transform='translateY(-4px) scale(1.02)'; this.style.boxShadow='0 8px 16px rgba(245, 158, 11, 0.3)';" onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 2px 4px rgba(0, 0, 0, 0.1)';">
+                        <i class="fas fa-envelope-plus"></i> Add Email
+                    </button>
+                    
+                    <button onclick="saveExportSettings()" style="flex: 1; padding: 0.875rem 2rem; background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%); color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);" onmouseover="this.style.transform='translateY(-4px) scale(1.02)'; this.style.boxShadow='0 8px 16px rgba(20, 184, 166, 0.3)';" onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 2px 4px rgba(0, 0, 0, 0.1)';">
+                        <i class="fas fa-save"></i> Save Export Settings
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="modal-btn modal-btn-cancel" onclick="closeSettingsModal()">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- History Modal -->
+<div id="historyModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content" style="max-width: 800px;">
+        <div class="modal-header">
+            <div class="modal-icon">
+                <i class="fas fa-history"></i>
+            </div>
+            <h2 class="modal-title" style="color: white;">Payroll History</h2>
+        </div>
+        <div class="modal-body">
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                {% for payroll in payrolls %}
+                <div style="padding: 1.25rem; background: var(--gray-50); border-radius: 12px; border-left: 4px solid {% if payroll.status == 'paid' %}var(--success-color){% elif payroll.status == 'approved' %}var(--primary-color){% elif payroll.status == 'pending_approval' %}var(--warning-color){% else %}var(--gray-300){% endif %};">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.75rem;">
+                        <div>
+                            <h4 style="margin: 0 0 0.5rem 0; font-size: 1.1rem; font-weight: 700; color: var(--gray-900);">{{ payroll.title }}</h4>
+                            <p style="margin: 0; font-size: 0.875rem; color: var(--gray-600);">
+                                <i class="fas fa-calendar"></i> {{ payroll.created_at|date:"M d, Y" }}
+                            </p>
+                        </div>
+                        <span class="status-badge status-{{ payroll.status }}">
+                            {{ payroll.get_status_display }}
+                        </span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; font-size: 0.875rem;">
+                        <div>
+                            <span style="color: var(--gray-600);">Total Gross:</span>
+                            <strong style="color: var(--gray-900);">₦{{ payroll.total_gross|floatformat:2 }}</strong>
+                        </div>
+                        <div>
+                            <span style="color: var(--gray-600);">Total Net:</span>
+                            <strong style="color: var(--success-color);">₦{{ payroll.total_net|floatformat:2 }}</strong>
+                        </div>
+                    </div>
+                    <div style="margin-top: 0.75rem;">
+                        <button onclick="window.location.href='?payroll_id={{ payroll.id }}'; closeHistoryModal();" 
+                                onmouseover="this.style.transform='translateY(-4px) scale(1.02)'; this.style.boxShadow='0 10px 35px rgba(78, 205, 196, 0.5)';"
+                                onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 6px 25px rgba(78, 205, 196, 0.4)';"
+                                style="padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #4ecdc4 0%, #44a3a0 100%); border: none; color: white; border-radius: 12px; font-weight: 700; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 6px 25px rgba(78, 205, 196, 0.4); display: inline-flex; align-items: center; gap: 0.5rem;">
+                            <i class="fas fa-eye"></i> View Payroll
+                        </button>
+                    </div>
+                </div>
+                {% empty %}
+                <div style="text-align: center; padding: 3rem; color: var(--gray-500);">
+                    <i class="fas fa-inbox" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                    <p>No payroll history found</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="modal-btn modal-btn-cancel" onclick="closeHistoryModal()">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Container -->
+<div id="toastContainer"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Toast Notification System
+function showToast(title, message, type = 'success') {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    
+    const iconClass = type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle';
+    const iconBg = type === 'success' ? 'toast-success' : type === 'error' ? 'toast-error' : 'toast-info';
+    
+    toast.innerHTML = `
+        <div class="toast-icon ${iconBg}">
+            <i class="fas ${iconClass}"></i>
+        </div>
+        <div class="toast-content">
+            <div class="toast-title">${title}</div>
+            <div class="toast-message">${message}</div>
+        </div>
+        <button class="toast-close" onclick="this.parentElement.remove()">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    
+    container.appendChild(toast);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        toast.style.animation = 'slideInRight 0.3s reverse';
+        setTimeout(() => toast.remove(), 300);
+    }, 5000);
+}
+
+// Modal Functions
+function openCreateModal() {
+    document.getElementById('createPayrollModal').style.display = 'flex';
+    document.getElementById('payrollTitle').focus();
+}
+
+function closeCreateModal() {
+    document.getElementById('createPayrollModal').style.display = 'none';
+    document.getElementById('payrollTitle').value = '';
+    document.getElementById('payrollPin').value = '';
+}
+
+// Approver Management
+let approverCount = 0;
+const staffMembers = {{ staff_members|safe }};
+
+function addApproverField() {
+    approverCount++;
+    const approversList = document.getElementById('approversList');
+    const approverDiv = document.createElement('div');
+    approverDiv.id = `approver-${approverCount}`;
+    approverDiv.style.cssText = 'display: flex; flex-direction: column; gap: 0.5rem; padding: 1rem; background: var(--gray-50); border-radius: 12px; border: 2px solid var(--gray-200);';
+    
+    // Build staff options
+    let staffOptions = '<option value="">-- Select Staff Member --</option>';
+    staffMembers.forEach(staff => {
+        staffOptions += `<option value="${staff.email}" data-role="${staff.role}">${staff.name} - ${staff.role}</option>`;
+    });
+    
+    approverDiv.innerHTML = `
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+            <span style="font-weight: 700; color: var(--primary-color); font-size: 0.9rem;">Approver ${approverCount}</span>
+            <button type="button" onclick="removeApprover(${approverCount})" style="background: var(--danger-color); color: white; border: none; padding: 0.5rem 0.75rem; border-radius: 8px; cursor: pointer; font-size: 0.85rem;">
+                <i class="fas fa-times"></i> Remove
+            </button>
+        </div>
+        <div>
+            <label style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--gray-700); margin-bottom: 0.25rem;">
+                <i class="fas fa-user"></i> Select Staff Member
+            </label>
+            <select class="form-input approver-email" style="width: 100%; padding: 0.625rem 0.875rem;">
+                ${staffOptions}
+            </select>
+        </div>
+    `;
+    approversList.appendChild(approverDiv);
+}
+
+function removeApprover(id) {
+    document.getElementById(`approver-${id}`).remove();
+}
+
+function openColumnModal() {
+    document.getElementById('columnModalTitle').textContent = 'Add Custom Column';
+    document.getElementById('columnSubmitText').textContent = 'Add Column';
+    document.getElementById('editColumnId').value = '';
+    document.getElementById('columnName').value = '';
+    document.getElementById('opSubtract').checked = true;
+    document.getElementById('addColumnModal').style.display = 'flex';
+    document.getElementById('columnName').focus();
+}
+
+function closeColumnModal() {
+    document.getElementById('addColumnModal').style.display = 'none';
+    document.getElementById('columnName').value = '';
+    document.getElementById('editColumnId').value = '';
+}
+
+function openPaymentModal() {
+    document.getElementById('paymentPinModal').style.display = 'flex';
+    document.getElementById('paymentPin').focus();
+}
+
+function closePaymentModal() {
+    document.getElementById('paymentPinModal').style.display = 'none';
+    document.getElementById('paymentPin').value = '';
+}
+
+// AJAX Functions
+function showLoading() {
+    document.getElementById('loadingOverlay').style.display = 'flex';
+}
+
+function hideLoading() {
+    document.getElementById('loadingOverlay').style.display = 'none';
+}
+
+function loadPayroll(payrollId) {
+    if (!payrollId) return;
+    showLoading();
+    window.location.href = `?payroll_id=${payrollId}`;
+}
+
+function filterPayrollsByStatus(status) {
+    const select = document.getElementById('payrollSelect');
+    const options = select.options;
+    
+    let visibleCount = 0;
+    
+    // Show all options first
+    for (let i = 0; i < options.length; i++) {
+        options[i].style.display = '';
+    }
+    
+    // If not 'all', filter by status
+    if (status !== 'all') {
+        for (let i = 1; i < options.length; i++) { // Skip first option (placeholder)
+            const optionText = options[i].text.toLowerCase();
+            const statusMap = {
+                'draft': 'draft',
+                'pending_approval': 'pending approval',
+                'approved': 'approved',
+                'paid': 'paid'
+            };
+            
+            if (!optionText.includes(statusMap[status])) {
+                options[i].style.display = 'none';
+            } else {
+                visibleCount++;
+            }
+        }
+    } else {
+        visibleCount = options.length - 1; // All except placeholder
+    }
+    
+    // Focus and expand the dropdown
+    select.focus();
+    
+    // Try multiple methods to open the dropdown
+    setTimeout(() => {
+        select.size = Math.min(visibleCount + 1, 10); // Show multiple options
+        select.click();
+        
+        // Reset size after a delay
+        setTimeout(() => {
+            select.size = 0;
+        }, 100);
+    }, 100);
+    
+    // Show toast notification
+    const statusNames = {
+        'all': 'All Payrolls',
+        'draft': 'Draft Payrolls',
+        'pending_approval': 'Pending Approval Payrolls',
+        'approved': 'Approved Payrolls',
+        'paid': 'Paid Payrolls'
+    };
+    
+    const message = visibleCount > 0 
+        ? `Found ${visibleCount} ${statusNames[status].toLowerCase()}` 
+        : `No ${statusNames[status].toLowerCase()} found`;
+    
+    showToast('Filter Applied', message, visibleCount > 0 ? 'info' : 'warning');
+}
+
+function createNewPayroll() {
+    openCreateModal();
+}
+
+function submitCreatePayroll() {
+    const title = document.getElementById('payrollTitle').value.trim();
+    const pin = document.getElementById('payrollPin').value.trim();
+    
+    if (!title) {
+        showToast('Validation Error', 'Please enter a payroll title', 'error');
+        return;
+    }
+    
+    if (!pin || pin.length < 4 || pin.length > 6) {
+        showToast('Validation Error', 'PIN must be 4-6 digits', 'error');
+        return;
+    }
+    
+    closeCreateModal();
+    showLoading();
+    
+    fetch('{% url "payroll_create" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({ title, pin, approvers: [] })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Success!', 'Payroll created successfully', 'success');
+            setTimeout(() => {
+                window.location.href = `?payroll_id=${data.payroll_id}`;
+            }, 1000);
+        } else {
+            hideLoading();
+            showToast('Error', data.error || 'Failed to create payroll', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        hideLoading();
+        showToast('Error', 'An error occurred', 'error');
+    });
+}
+
+function addRow() {
+    const payrollId = document.getElementById('payrollSelect').value;
+    if (!payrollId) return;
+    
+    showLoading();
+    fetch('{% url "payroll_add_row" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({ payroll_id: payrollId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert(data.error || 'Failed to add row');
+            hideLoading();
+        }
+    });
+}
+
+function addColumn() {
+    openColumnModal();
+}
+
+function editColumn(columnId, columnName, operation) {
+    document.getElementById('columnModalTitle').textContent = 'Edit Column';
+    document.getElementById('columnSubmitText').textContent = 'Update Column';
+    document.getElementById('editColumnId').value = columnId;
+    document.getElementById('columnName').value = columnName;
+    
+    if (operation === 'add') {
+        document.getElementById('opAdd').checked = true;
+    } else {
+        document.getElementById('opSubtract').checked = true;
+    }
+    
+    document.getElementById('addColumnModal').style.display = 'flex';
+    document.getElementById('columnName').focus();
+}
+
+function deleteColumn(columnId) {
+    showLoading();
+    fetch('{% url "payroll_delete_column" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({ column_id: columnId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Deleted!', 'Column deleted successfully', 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            hideLoading();
+            showToast('Error', data.error || 'Failed to delete column', 'error');
+        }
+    });
+}
+
+function submitColumnForm() {
+    const name = document.getElementById('columnName').value.trim();
+    const operation = document.querySelector('input[name="columnOperation"]:checked').value;
+    const columnId = document.getElementById('editColumnId').value;
+    const payrollId = document.getElementById('payrollSelect').value;
+    
+    if (!name) {
+        showToast('Validation Error', 'Please enter a column name', 'error');
+        return;
+    }
+    
+    closeColumnModal();
+    showLoading();
+    
+    const url = columnId ? '{% url "payroll_update_column" %}' : '{% url "payroll_add_column" %}';
+    const payload = columnId 
+        ? { column_id: columnId, name, operation }
+        : { payroll_id: payrollId, name, operation };
+    
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify(payload)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const message = columnId ? 'Column updated successfully' : 'Column added successfully';
+            showToast('Success!', message, 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            hideLoading();
+            showToast('Error', data.error || 'Operation failed', 'error');
+        }
+    });
+}
+
+function calculateTotals() {
+    const table = document.getElementById('payrollTable');
+    const tbody = table.querySelector('tbody');
+    const tfoot = table.querySelector('tfoot');
+    const rows = tbody.querySelectorAll('tr');
+    
+    if (!rows.length || !tfoot) return;
+    
+    // Get all column indices from tbody (data rows)
+    const firstRow = rows[0];
+    const totalCells = firstRow.cells.length;
+    const grossIndex = 2; // Gross Amount column (after S/N, Staff Name)
+    const netIndex = totalCells - 2; // Net Amount (before delete button)
+    
+    let totalGross = 0;
+    let totalNet = 0;
+    const columnTotals = {};
+    
+    // Calculate totals from each row
+    rows.forEach(row => {
+        const cells = row.cells;
+        
+        // Gross Amount
+        const grossInput = cells[grossIndex]?.querySelector('input');
+        if (grossInput) {
+            totalGross += parseFloat(grossInput.value) || 0;
+        }
+        
+        // Net Amount
+        const netInput = cells[netIndex]?.querySelector('input');
+        if (netInput) {
+            totalNet += parseFloat(netInput.value) || 0;
+        }
+        
+        // Custom columns (between Gross and Net)
+        for (let i = grossIndex + 1; i < netIndex; i++) {
+            const input = cells[i]?.querySelector('input');
+            if (input) {
+                const colName = `col_${i}`;
+                columnTotals[colName] = (columnTotals[colName] || 0) + (parseFloat(input.value) || 0);
+            }
+        }
+    });
+    
+    // Update footer totals
+    const footerCells = tfoot.querySelector('tr').cells;
+    
+    // Footer has: [TOTAL (colspan=3), Gross, Custom cols..., Net, Delete]
+    // So Gross is at index 1, not 3
+    const footerGrossIndex = 1;
+    const footerNetIndex = footerCells.length - 2;
+    
+    // Update Gross total
+    footerCells[footerGrossIndex].innerHTML = `<strong style="color: #0d9488; font-size: 0.9375rem; font-weight: 800;">${totalGross.toFixed(2)}</strong>`;
+    
+    // Update custom column totals
+    let footerColIndex = footerGrossIndex + 1;
+    for (let i = grossIndex + 1; i < netIndex; i++) {
+        const colName = `col_${i}`;
+        footerCells[footerColIndex].innerHTML = `<strong style="color: #1f2937; font-size: 0.875rem; font-weight: 800;">${(columnTotals[colName] || 0).toFixed(2)}</strong>`;
+        footerColIndex++;
+    }
+    
+    // Update Net total
+    footerCells[footerNetIndex].innerHTML = `<strong style="color: #059669; font-size: 0.9375rem; font-weight: 800;">${totalNet.toFixed(2)}</strong>`;
+}
+
+// Staff dropdown functions
+function showStaffDropdown(input) {
+    const dropdown = input.nextElementSibling;
+    if (dropdown && dropdown.classList.contains('staff-dropdown')) {
+        dropdown.style.display = 'block';
+    }
+}
+
+function hideStaffDropdown(input) {
+    setTimeout(() => {
+        const dropdown = input.nextElementSibling;
+        if (dropdown && dropdown.classList.contains('staff-dropdown')) {
+            dropdown.style.display = 'none';
+        }
+    }, 200);
+}
+
+function selectStaff(element, firstName, lastName) {
+    const input = element.parentElement.previousElementSibling;
+    const fullName = `${firstName} ${lastName}`;
+    input.value = fullName;
+    
+    const itemId = input.getAttribute('data-item-id');
+    
+    // Update both first and last name
+    updateItem(itemId, 'first_name', firstName);
+    updateItem(itemId, 'last_name', lastName);
+    
+    // Hide dropdown
+    element.parentElement.style.display = 'none';
+}
+
+function updateStaffName(itemId, fullName) {
+    // Split the name into first and last
+    const parts = fullName.trim().split(' ');
+    const firstName = parts[0] || '';
+    const lastName = parts.slice(1).join(' ') || '';
+    
+    // Update both fields
+    updateItem(itemId, 'first_name', firstName);
+    updateItem(itemId, 'last_name', lastName);
+}
+
+function updateItem(itemId, field, value) {
+    fetch('{% url "payroll_update_item" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({ item_id: itemId, field, value })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.net_amount) {
+            // Update net amount in the row
+            const row = document.querySelector(`tr[data-item-id="${itemId}"]`);
+            const netInput = row.querySelector('.calculated');
+            netInput.value = data.net_amount;
+        }
+        // Recalculate totals
+        calculateTotals();
+    });
+}
+
+function updateColumnValue(itemId, columnName, value) {
+    fetch('{% url "payroll_update_column_value" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({ item_id: itemId, column_name: columnName, value })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.net_amount) {
+            const row = document.querySelector(`tr[data-item-id="${itemId}"]`);
+            const netInput = row.querySelector('.calculated');
+            netInput.value = data.net_amount;
+        }
+        // Recalculate totals
+        calculateTotals();
+    });
+}
+
+// Calculate totals and load currency on page load
+document.addEventListener('DOMContentLoaded', function() {
+    calculateTotals();
+    
+    // Load and apply saved currency
+    const settings = JSON.parse(localStorage.getItem('payrollSettings') || '{}');
+    const currency = settings.currency || 'NGN';
+    updateCurrencySymbols(currency);
+});
+
+function deleteRow(itemId) {
+    if (!confirm('Delete this row?')) return;
+    
+    showLoading();
+    fetch('{% url "payroll_delete_row" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({ item_id: itemId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert(data.error || 'Failed to delete row');
+            hideLoading();
+        }
+    });
+}
+
+function saveDraft() {
+    const payrollId = document.getElementById('payrollSelect')?.value;
+    
+    if (!payrollId) {
+        showToast('Error', 'Please select a payroll first', 'error');
+        return;
+    }
+    showToast('Saved!', 'Draft saved successfully', 'success');
+}
+
+function submitForApproval() {
+    const payrollId = document.getElementById('payrollSelect')?.value;
+    
+    if (!payrollId) {
+        showToast('Error', 'Please select a payroll first', 'error');
+        return;
+    }
+    
+    showLoading();
+    
+    fetch('{% url "payroll_submit_approval" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({ payroll_id: payrollId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading();
+        if (data.success) {
+            showToast('Success!', 'Payroll submitted successfully', 'success');
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showToast('Error', data.error || 'Failed to submit', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        hideLoading();
+        showToast('Error', 'An error occurred', 'error');
+    });
+}
+
+function approvePayroll() {
+    const payrollId = document.getElementById('payrollSelect')?.value;
+    
+    if (!payrollId) {
+        showToast('Error', 'Please select a payroll first', 'error');
+        return;
+    }
+    
+    if (!confirm('Are you sure you want to approve this payroll?')) {
+        return;
+    }
+    
+    showLoading();
+    
+    fetch('{% url "payroll_submit_approval" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({ 
+            payroll_id: payrollId,
+            action: 'approve'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading();
+        if (data.success) {
+            showToast('Success!', 'Payroll approved successfully', 'success');
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showToast('Error', data.error || 'Failed to approve', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        hideLoading();
+        showToast('Error', 'An error occurred', 'error');
+    });
+}
+
+function rejectPayroll() {
+    const payrollId = document.getElementById('payrollSelect')?.value;
+    
+    if (!payrollId) {
+        showToast('Error', 'Please select a payroll first', 'error');
+        return;
+    }
+    
+    const reason = prompt('Please provide a reason for rejection:');
+    if (!reason) {
+        return;
+    }
+    
+    showLoading();
+    
+    fetch('{% url "payroll_submit_approval" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({ 
+            payroll_id: payrollId,
+            action: 'reject',
+            comments: reason
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading();
+        if (data.success) {
+            showToast('Success!', 'Payroll rejected', 'success');
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showToast('Error', data.error || 'Failed to reject', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        hideLoading();
+        showToast('Error', 'An error occurred', 'error');
+    });
+}
+
+function processPayment() {
+    openPaymentModal();
+}
+
+function submitPayment() {
+    const pin = document.getElementById('paymentPin').value.trim();
+    
+    if (!pin) {
+        showToast('Validation Error', 'Please enter your PIN', 'error');
+        return;
+    }
+    
+    if (pin.length < 4 || pin.length > 6) {
+        showToast('Validation Error', 'PIN must be 4-6 digits', 'error');
+        return;
+    }
+    
+    const payrollId = document.getElementById('payrollSelect').value;
+    
+    if (!payrollId) {
+        showToast('Error', 'No payroll selected', 'error');
+        return;
+    }
+    
+    console.log('Processing payment for payroll:', payrollId, 'with PIN length:', pin.length);
+    
+    closePaymentModal();
+    showLoading();
+    
+    fetch('{% url "payroll_process_payment" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({ payroll_id: payrollId, pin: pin })
+    })
+    .then(response => {
+        console.log('Payment response status:', response.status);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Payment response data:', data);
+        hideLoading();
+        if (data.success) {
+            showToast('Success!', 'Payment processed successfully', 'success');
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            console.error('Payment failed:', data.error);
+            const errorMsg = data.error || 'Failed to process payment';
+            showToast('Error', errorMsg, 'error');
+            // Fallback alert in case toast doesn't work
+            alert('Error: ' + errorMsg);
+        }
+    })
+    .catch(error => {
+        hideLoading();
+        console.error('Payment error:', error);
+        showToast('Error', 'Failed to process payment: ' + error.message, 'error');
+    });
+}
+
+function openSettings() {
+    document.getElementById('settingsModal').style.display = 'flex';
+    loadSettings();
+}
+
+function closeSettingsModal() {
+    document.getElementById('settingsModal').style.display = 'none';
+}
+
+function switchSettingsTab(tabName) {
+    // Hide all tab contents
+    document.querySelectorAll('.settings-tab-content').forEach(content => {
+        content.style.display = 'none';
+    });
+    
+    // Remove active class from all tabs
+    document.querySelectorAll('.settings-tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    
+    // Show selected tab content
+    document.getElementById(`${tabName}-tab`).style.display = 'block';
+    
+    // Add active class to selected tab
+    document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+}
+
+function loadSettings() {
+    // Load settings from localStorage
+    const settings = JSON.parse(localStorage.getItem('payrollSettings') || '{}');
+    
+    // Load default settings
+    document.getElementById('defaultTaxRate').value = settings.taxRate || '';
+    document.getElementById('defaultPensionRate').value = settings.pensionRate || '';
+    document.getElementById('defaultCurrency').value = settings.currency || 'NGN';
+    document.getElementById('enable2FA').checked = settings.enable2FA || false;
+    
+    // Load notification settings
+    document.getElementById('notifyApproval').checked = settings.notifyApproval !== false;
+    document.getElementById('notifyPayment').checked = settings.notifyPayment !== false;
+    document.getElementById('notifyDeadline').checked = settings.notifyDeadline || false;
+    document.getElementById('notifyRejection').checked = settings.notifyRejection !== false;
+    
+    // Load export settings
+    document.getElementById('defaultExportFormat').value = settings.exportFormat || 'excel';
+    document.getElementById('exportApprovals').checked = settings.exportApprovals !== false;
+    document.getElementById('exportSummary').checked = settings.exportSummary !== false;
+    document.getElementById('exportTimestamp').checked = settings.exportTimestamp !== false;
+}
+
+// Change Payment PIN
+function changePaymentPin() {
+    const currentPin = document.getElementById('currentPin').value.trim();
+    const newPin = document.getElementById('newPin').value.trim();
+    const confirmPin = document.getElementById('confirmPin').value.trim();
+    
+    if (!currentPin || !newPin || !confirmPin) {
+        showToast('Error', 'Please fill all PIN fields', 'error');
+        return;
+    }
+    
+    if (newPin.length < 4 || newPin.length > 6) {
+        showToast('Error', 'New PIN must be 4-6 digits', 'error');
+        return;
+    }
+    
+    if (newPin !== confirmPin) {
+        showToast('Error', 'New PIN and confirmation do not match', 'error');
+        return;
+    }
+    
+    // TODO: Add backend API call to change PIN
+    showToast('Success!', 'Payment PIN updated successfully', 'success');
+    document.getElementById('currentPin').value = '';
+    document.getElementById('newPin').value = '';
+    document.getElementById('confirmPin').value = '';
+}
+
+// Default Approvers
+let defaultApproverCount = 0;
+function addDefaultApprover() {
+    defaultApproverCount++;
+    const list = document.getElementById('defaultApproversList');
+    const div = document.createElement('div');
+    div.id = `default-approver-${defaultApproverCount}`;
+    div.style.cssText = 'display: flex; flex-direction: column; gap: 0.5rem; padding: 1rem; background: var(--gray-50); border-radius: 10px; border: 1px solid var(--gray-200);';
+    
+    // Build staff options
+    const staffOptions = `
+        <option value="">-- Select Staff --</option>
+        {% for user in all_staff %}
+        <option value="{{ user.first_name }} {{ user.last_name }}" data-email="{{ user.email }}" data-role="{{ user.department.name|default:'Staff' }}">
+            {{ user.first_name }} {{ user.last_name }} - {{ user.department.name|default:'Staff' }}
+        </option>
+        {% endfor %}
+    `;
+    
+    div.innerHTML = `
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+            <span style="font-weight: 700; color: var(--gray-700);">Approver ${defaultApproverCount}</span>
+            <button type="button" onclick="removeDefaultApprover(${defaultApproverCount})" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; border: none; padding: 0.5rem 0.75rem; border-radius: 6px; cursor: pointer; font-size: 0.875rem;">
+                <i class="fas fa-times"></i> Remove
+            </button>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+            <select class="form-input default-approver-name" onchange="fillApproverDetails(this, ${defaultApproverCount})" style="padding: 0.625rem 0.875rem;">
+                ${staffOptions}
+            </select>
+            <input type="text" class="form-input default-approver-role" id="approver-role-${defaultApproverCount}" placeholder="Role (e.g., Manager)" style="padding: 0.625rem 0.875rem;">
+        </div>
+        <input type="email" class="form-input default-approver-email" id="approver-email-${defaultApproverCount}" placeholder="Email Address" style="padding: 0.625rem 0.875rem;">
+    `;
+    list.appendChild(div);
+}
+
+function fillApproverDetails(selectElement, approverId) {
+    const selectedOption = selectElement.options[selectElement.selectedIndex];
+    const email = selectedOption.getAttribute('data-email');
+    const role = selectedOption.getAttribute('data-role');
+    
+    if (email) {
+        document.getElementById(`approver-email-${approverId}`).value = email;
+    }
+    if (role) {
+        document.getElementById(`approver-role-${approverId}`).value = role;
+    }
+}
+
+function removeDefaultApprover(id) {
+    document.getElementById(`default-approver-${id}`).remove();
+}
+
+// Currency symbol mapping
+const currencySymbols = {
+    'NGN': '₦',
+    'USD': '$',
+    'GBP': '£',
+    'EUR': '€'
+};
+
+function updateCurrencySymbols(currencyCode) {
+    const symbol = currencySymbols[currencyCode] || '₦';
+    const currencyElements = document.querySelectorAll('.currency-symbol');
+    currencyElements.forEach(el => {
+        el.textContent = symbol;
+    });
+}
+
+function saveDefaultSettings() {
+    // Collect approver data
+    const approverContainers = document.querySelectorAll('[id^="default-approver-"]');
+    const defaultApprovers = Array.from(approverContainers).map(container => {
+        const name = container.querySelector('.default-approver-name')?.value.trim();
+        const role = container.querySelector('.default-approver-role')?.value.trim();
+        const email = container.querySelector('.default-approver-email')?.value.trim();
+        
+        if (name && role && email) {
+            return { name, role, email };
+        }
+        return null;
+    }).filter(approver => approver !== null);
+    
+    const currency = document.getElementById('defaultCurrency').value;
+    
+    const settings = {
+        taxRate: document.getElementById('defaultTaxRate').value,
+        pensionRate: document.getElementById('defaultPensionRate').value,
+        currency: currency,
+        enable2FA: document.getElementById('enable2FA').checked,
+        defaultApprovers: defaultApprovers
+    };
+    
+    const existingSettings = JSON.parse(localStorage.getItem('payrollSettings') || '{}');
+    localStorage.setItem('payrollSettings', JSON.stringify({...existingSettings, ...settings}));
+    
+    // Update currency symbols in the table
+    updateCurrencySymbols(currency);
+    
+    showToast('Saved!', 'Default settings saved successfully', 'success');
+}
+
+// Column Templates
+let templateColumnCount = 0;
+function addTemplateColumn() {
+    templateColumnCount++;
+    const list = document.getElementById('templateColumnsList');
+    const div = document.createElement('div');
+    div.id = `template-column-${templateColumnCount}`;
+    div.style.cssText = 'display: flex; align-items: center; gap: 0.5rem;';
+    div.innerHTML = `
+        <input type="text" class="form-input template-column-name" placeholder="Column name" style="flex: 1; padding: 0.625rem 0.875rem;">
+        <select class="form-input template-column-operation" style="width: 150px; padding: 0.625rem 0.875rem;">
+            <option value="subtract">Subtract (-)</option>
+            <option value="add">Add (+)</option>
+        </select>
+        <button type="button" onclick="removeTemplateColumn(${templateColumnCount})" style="background: var(--danger-color); color: white; border: none; padding: 0.625rem 0.875rem; border-radius: 8px; cursor: pointer;">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    list.appendChild(div);
+}
+
+function removeTemplateColumn(id) {
+    document.getElementById(`template-column-${id}`).remove();
+}
+
+function saveColumnTemplate() {
+    const templateName = document.getElementById('templateName').value.trim();
+    const columns = Array.from(document.querySelectorAll('.template-column-name')).map((input, index) => ({
+        name: input.value.trim(),
+        operation: document.querySelectorAll('.template-column-operation')[index].value
+    })).filter(col => col.name);
+    
+    if (!templateName) {
+        showToast('Error', 'Please enter a template name', 'error');
+        return;
+    }
+    
+    if (columns.length === 0) {
+        showToast('Error', 'Please add at least one column', 'error');
+        return;
+    }
+    
+    const templates = JSON.parse(localStorage.getItem('columnTemplates') || '[]');
+    templates.push({ name: templateName, columns, createdAt: new Date().toISOString() });
+    localStorage.setItem('columnTemplates', JSON.stringify(templates));
+    
+    showToast('Success!', 'Template saved successfully', 'success');
+    document.getElementById('templateName').value = '';
+    document.getElementById('templateColumnsList').innerHTML = '';
+    templateColumnCount = 0;
+    loadSavedTemplates();
+}
+
+function loadSavedTemplates() {
+    const templates = JSON.parse(localStorage.getItem('columnTemplates') || '[]');
+    const list = document.getElementById('savedTemplatesList');
+    
+    if (templates.length === 0) {
+        list.innerHTML = `
+            <div style="text-align: center; padding: 2rem; color: var(--gray-500);">
+                <i class="fas fa-inbox" style="font-size: 2rem; margin-bottom: 0.5rem; opacity: 0.5;"></i>
+                <p>No templates saved yet</p>
+            </div>
+        `;
+        return;
+    }
+    
+    list.innerHTML = templates.map((template, index) => `
+        <div style="padding: 1rem; background: var(--gray-50); border-radius: 10px; border-left: 4px solid var(--primary-color);">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
+                <h5 style="margin: 0; font-weight: 700; color: var(--gray-900);">${template.name}</h5>
+                <button onclick="deleteTemplate(${index})" style="background: var(--danger-color); color: white; border: none; padding: 0.375rem 0.75rem; border-radius: 6px; font-size: 0.875rem; cursor: pointer;">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+            <div style="font-size: 0.875rem; color: var(--gray-600);">
+                ${template.columns.map(col => `<span style="display: inline-block; margin-right: 0.5rem; padding: 0.25rem 0.5rem; background: white; border-radius: 4px;">${col.name} (${col.operation === 'add' ? '+' : '-'})</span>`).join('')}
+            </div>
+        </div>
+    `).join('');
+}
+
+function deleteTemplate(index) {
+    const templates = JSON.parse(localStorage.getItem('columnTemplates') || '[]');
+    templates.splice(index, 1);
+    localStorage.setItem('columnTemplates', JSON.stringify(templates));
+    showToast('Deleted', 'Template deleted successfully', 'success');
+    loadSavedTemplates();
+}
+
+// Notification Settings
+function saveNotificationSettings() {
+    const settings = {
+        notifyApproval: document.getElementById('notifyApproval').checked,
+        notifyPayment: document.getElementById('notifyPayment').checked,
+        notifyDeadline: document.getElementById('notifyDeadline').checked,
+        notifyRejection: document.getElementById('notifyRejection').checked
+    };
+    
+    const existingSettings = JSON.parse(localStorage.getItem('payrollSettings') || '{}');
+    localStorage.setItem('payrollSettings', JSON.stringify({...existingSettings, ...settings}));
+    
+    showToast('Saved!', 'Notification settings saved successfully', 'success');
+}
+
+// Distribution List
+let distributionEmailCount = 0;
+function addDistributionEmail() {
+    distributionEmailCount++;
+    const list = document.getElementById('distributionList');
+    const div = document.createElement('div');
+    div.id = `distribution-email-${distributionEmailCount}`;
+    div.style.cssText = 'display: flex; align-items: center; gap: 0.5rem;';
+    div.innerHTML = `
+        <input type="email" class="form-input distribution-email" placeholder="Email address" style="flex: 1; padding: 0.625rem 0.875rem;">
+        <button type="button" onclick="removeDistributionEmail(${distributionEmailCount})" style="background: var(--danger-color); color: white; border: none; padding: 0.625rem 0.875rem; border-radius: 8px; cursor: pointer;">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    list.appendChild(div);
+}
+
+function removeDistributionEmail(id) {
+    document.getElementById(`distribution-email-${id}`).remove();
+}
+
+// Export Settings
+function saveExportSettings() {
+    const settings = {
+        exportFormat: document.getElementById('defaultExportFormat').value,
+        exportApprovals: document.getElementById('exportApprovals').checked,
+        exportSummary: document.getElementById('exportSummary').checked,
+        exportTimestamp: document.getElementById('exportTimestamp').checked,
+        distributionEmails: Array.from(document.querySelectorAll('.distribution-email')).map(input => input.value.trim()).filter(email => email)
+    };
+    
+    const existingSettings = JSON.parse(localStorage.getItem('payrollSettings') || '{}');
+    localStorage.setItem('payrollSettings', JSON.stringify({...existingSettings, ...settings}));
+    
+    showToast('Saved!', 'Export settings saved successfully', 'success');
+}
+
+function viewHistory() {
+    document.getElementById('historyModal').style.display = 'flex';
+}
+
+function closeHistoryModal() {
+    document.getElementById('historyModal').style.display = 'none';
+}
+
+// Clone Payroll Functions
+function openCloneModal() {
+    const payrollId = document.getElementById('payrollSelect').value;
+    if (!payrollId) {
+        showToast('Error', 'Please select a payroll first', 'error');
+        return;
+    }
+    document.getElementById('clonePayrollModal').style.display = 'flex';
+    document.getElementById('clonePayrollTitle').value = '';
+    document.getElementById('clonePayrollPin').value = '';
+}
+
+function closeCloneModal() {
+    document.getElementById('clonePayrollModal').style.display = 'none';
+}
+
+function submitClonePayroll() {
+    const payrollId = document.getElementById('payrollSelect').value;
+    const title = document.getElementById('clonePayrollTitle').value.trim();
+    const pin = document.getElementById('clonePayrollPin').value.trim();
+    
+    if (!payrollId) {
+        showToast('Error', 'No payroll selected', 'error');
+        return;
+    }
+    
+    if (!title) {
+        showToast('Error', 'Please enter a payroll title', 'error');
+        return;
+    }
+    
+    if (!pin || pin.length < 4 || pin.length > 6) {
+        showToast('Error', 'PIN must be 4-6 digits', 'error');
+        return;
+    }
+    
+    showLoading();
+    
+    // Add timeout to prevent infinite loading
+    const timeoutId = setTimeout(() => {
+        hideLoading();
+        showToast('Error', 'Request timed out. Please try again.', 'error');
+    }, 30000); // 30 second timeout
+    
+    fetch('{% url "payroll_clone" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({
+            source_payroll_id: payrollId,
+            title: title,
+            pin: pin
+        })
+    })
+    .then(response => {
+        clearTimeout(timeoutId);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        hideLoading();
+        if (data.success) {
+            showToast('Success!', 'Payroll cloned successfully', 'success');
+            closeCloneModal();
+            setTimeout(() => {
+                window.location.href = `/payroll/?payroll_id=${data.payroll_id}`;
+                window.location.reload();
+            }, 1000);
+        } else {
+            showToast('Error', data.error || 'Failed to clone payroll', 'error');
+        }
+    })
+    .catch(error => {
+        clearTimeout(timeoutId);
+        hideLoading();
+        console.error('Clone error:', error);
+        showToast('Error', 'Failed to clone payroll: ' + error.message, 'error');
+    });
+}
+
+function exportPayroll() {
+    const payrollId = document.getElementById('payrollSelect').value;
+    if (!payrollId) {
+        showToast('Error', 'Please select a payroll first', 'error');
+        return;
+    }
+    showToast('Exporting...', 'Your payroll is being exported', 'info');
+    window.location.href = `{% url "payroll_export" %}?payroll_id=${payrollId}`;
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    // Escape key closes modals
+    if (e.key === 'Escape') {
+        closeCreateModal();
+        closeColumnModal();
+        closePaymentModal();
+        closeHistoryModal();
+        closeSettingsModal();
+        closeCloneModal();
+    }
+    
+    // Enter key submits forms in modals ONLY
+    if (e.key === 'Enter') {
+        const createModal = document.getElementById('createPayrollModal');
+        const columnModal = document.getElementById('addColumnModal');
+        const paymentModal = document.getElementById('paymentPinModal');
+        
+        if (createModal && createModal.style.display === 'flex') {
+            e.preventDefault();
+            submitCreatePayroll();
+        } else if (columnModal && columnModal.style.display === 'flex') {
+            e.preventDefault();
+            submitColumnForm();
+        } else if (paymentModal && paymentModal.style.display === 'flex') {
+            e.preventDefault();
+            submitPayment();
+        }
+    }
+});
+
+// Close modal when clicking outside
+document.querySelectorAll('.modal-overlay').forEach(modal => {
+    modal.addEventListener('click', function(e) {
+        if (e.target === this) {
+            this.style.display = 'none';
+        }
+    });
+});
+</script>
+{% endblock %}

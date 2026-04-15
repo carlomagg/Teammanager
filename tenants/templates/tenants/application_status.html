@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Your Application Status - Team Manager{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2 class="mb-4" style="font-weight: 600; color: #2d3748;">
+        <i class="fas fa-user-shield me-2"></i>Your Company Applications
+    </h2>
+    <div class="card shadow-sm border-0" style="border-radius: 12px; background: #ffffff;">
+        <div class="card-body p-4">
+            {% if applications %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr style="background: #f8fafc; color: #2d3748;">
+                            <th scope="col">Organization Name</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Submitted</th>
+                            {% comment %} <th scope="col">Actions</th> {% endcomment %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for application in applications %}
+                        <tr style="transition: background-color 0.2s ease;">
+                            <td>{{ application.organization_name }}</td>
+                            <td>
+                                <span class="badge {% if application.status == 'pending' %}bg-warning{% elif application.status == 'approved' %}bg-success{% else %}bg-danger{% endif %}">
+                                    {{ application.status }}
+                                </span>
+                            </td>
+                            <td>{{ application.created_at|date:"M d, Y" }}</td>
+                            {% comment %} <td>
+                                <a href="{% url 'tenant_application_detail' application.id %}" class="btn btn-sm btn-outline-primary" title="View Details" aria-label="View Application Details">
+                                    <i class="fas fa-eye"></i> View
+                                </a>
+                            </td> {% endcomment %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted text-center">No company applications found.</p>
+            {% endif %}
+            <div class="mt-4">
+                <a href="{% url 'apply_for_tenant' %}" class="btn btn-primary" title="Apply for a New Tenant" aria-label="Apply for a New Tenant">
+                    <i class="fas fa-plus me-2"></i>Apply Again
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    body.dark-mode .card {
+        background: #2d3748 !important;
+        color: #e2e8f0;
+    }
+    body.dark-mode .table {
+        color: #e2e8f0;
+    }
+    body.dark-mode thead tr {
+        background: #3b4a6b !important;
+        color: #e2e8f0;
+    }
+    .table-hover tbody tr:hover {
+        background-color: #f8fafc;
+    }
+    body.dark-mode .table-hover tbody tr:hover {
+        background-color: #3b4a6b;
+    }
+    .btn-sm {
+        padding: 6px 12px;
+        font-size: 0.85rem;
+        border-radius: 8px;
+    }
+    .btn-primary {
+        background-color: #319795;
+        border-color: #319795;
+        transition: background-color 0.2s ease;
+    }
+    .btn-primary:hover {
+        background-color: #2c7a7b;
+        border-color: #2c7a7b;
+    }
+    .btn-outline-primary {
+        border-color: #319795;
+        color: #319795;
+        transition: background-color 0.2s ease, color 0.2s ease;
+    }
+    .btn-outline-primary:hover {
+        background-color: #319795;
+        color: #ffffff;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const buttons = document.querySelectorAll('.btn-sm, .btn-primary, .btn-outline-primary');
+        buttons.forEach(btn => {
+            btn.addEventListener('focus', function() {
+                this.style.outline = '2px solid #319795';
+                this.style.outlineOffset = '2px';
+            });
+            btn.addEventListener('blur', function() {
+                this.style.outline = 'none';
+            });
+        });
+    });
+</script>
+{% endblock %}

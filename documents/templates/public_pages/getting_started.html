@@ -1,0 +1,1920 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}TeamManager Signup Guide for Companies{% endblock %}
+
+{% block meta_description %}Complete signup guide for companies. Learn how to register, create staff accounts, set up subdomains, and configure Zoho Mail for TeamManager.{% endblock %}
+
+{% block content %}
+<style>
+    html {
+        scroll-behavior: smooth;
+    }
+
+    .gs-hero {
+        background: linear-gradient(135deg, #319795 0%, #2c7a7b 100%);
+        color: white;
+        padding: 5rem 2rem;
+        text-align: center;
+        margin-bottom: 0;
+    }
+
+    .gs-hero h1 {
+        font-size: clamp(2rem, 5vw, 3.5rem);
+        font-weight: 700;
+        margin-bottom: 1rem;
+        letter-spacing: -0.5px;
+    }
+
+    .gs-hero p {
+        font-size: clamp(1rem, 2vw, 1.25rem);
+        opacity: 0.95;
+        font-weight: 300;
+    }
+
+    .gs-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 0 2rem;
+    }
+
+    .gs-section {
+        margin-bottom: 4rem;
+        padding-bottom: 2rem;
+        border-bottom: 1px solid #e2e8f0;
+        scroll-margin-top: 70px;
+    }
+
+    body.dark-mode .gs-section {
+        border-bottom-color: #333;
+    }
+
+    .gs-section:last-child {
+        border-bottom: none;
+    }
+
+    .gs-section h2 {
+        color: #2d3748;
+        font-size: 1.75rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #e2e8f0;
+        margin-top: 0;
+    }
+
+    body.dark-mode .gs-section h2 {
+        color: #e2e8f0;
+        border-bottom-color: #333;
+    }
+
+    .gs-section h3 {
+        color: #319795;
+        font-size: 1.25rem;
+        margin-top: 1.5rem;
+        margin-bottom: 1rem;
+        font-weight: 600;
+    }
+
+    .gs-section h4 {
+        color: #2d3748;
+        font-size: 1.1rem;
+        margin-top: 1.25rem;
+        margin-bottom: 0.75rem;
+        font-weight: 600;
+    }
+
+    body.dark-mode .gs-section h4 {
+        color: #e2e8f0;
+    }
+
+    .gs-section p {
+        line-height: 1.8;
+        color: #4a5568;
+        margin-bottom: 1rem;
+        font-size: 0.95rem;
+    }
+
+    body.dark-mode .gs-section p {
+        color: #cbd5e0;
+    }
+
+    .gs-section ol, .gs-section ul {
+        margin-left: 2rem;
+        margin-bottom: 1rem;
+        line-height: 1.8;
+    }
+
+    .gs-section li {
+        margin-bottom: 0.75rem;
+        color: #4a5568;
+        font-size: 0.95rem;
+    }
+
+    body.dark-mode .gs-section li {
+        color: #cbd5e0;
+    }
+
+    .gs-section ul ul, .gs-section ol ol {
+        margin-left: 2rem;
+        margin-top: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .gs-highlight {
+        background: #f0f4ff;
+        border-left: 4px solid #319795;
+        padding: 1.5rem;
+        border-radius: 4px;
+        margin: 1.5rem 0;
+        font-size: 0.95rem;
+    }
+
+    body.dark-mode .gs-highlight {
+        background: #2d3748;
+        border-left-color: #75b8b7ff;
+    }
+
+    .gs-highlight strong {
+        color: #319795;
+    }
+
+    body.dark-mode .gs-highlight strong {
+        color: #75b8b7ff;
+    }
+
+    .gs-highlight a {
+        color: #319795;
+        font-weight: 500;
+        text-decoration: none;
+    }
+
+    .gs-highlight a:hover {
+        text-decoration: underline;
+    }
+
+    .gs-note {
+        background: #fef3c7;
+        border-left: 4px solid #f59e0b;
+        padding: 1.5rem;
+        border-radius: 4px;
+        margin: 1.5rem 0;
+    }
+
+    body.dark-mode .gs-note {
+        background: #78350f;
+        border-left-color: #fbbf24;
+    }
+
+    .gs-note strong {
+        color: #b45309;
+    }
+
+    body.dark-mode .gs-note strong {
+        color: #fcd34d;
+    }
+
+    .gs-option {
+        background: #f7fafc;
+        border-radius: 8px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        border: 1px solid #e2e8f0;
+    }
+
+    body.dark-mode .gs-option {
+        background: #2d3748;
+        border-color: #4a5568;
+    }
+
+    .gs-option h4 {
+        color: #319795;
+        margin-top: 0;
+    }
+
+    .gs-intro {
+        background: #f0f4ff;
+        border-radius: 8px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        border: 1px solid #e2e8f0;
+    }
+
+    body.dark-mode .gs-intro {
+        background: #2d3748;
+        border-color: #4a5568;
+    }
+
+    .gs-intro p {
+        margin-bottom: 0.5rem;
+    }
+
+    .gs-intro p:last-child {
+        margin-bottom: 0;
+    }
+
+    .gs-btn-group {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-top: 2rem;
+    }
+
+    .gs-btn-group .btn {
+        min-width: 200px;
+    }
+
+    .gs-content-wrapper {
+        display: flex;
+        gap: 1.5rem;
+        align-items: flex-start;
+        margin: 0;
+        padding: 0;
+    }
+
+    .gs-quick-nav {
+        flex-shrink: 0;
+        width: 260px;
+        background: #f7fafc;
+        border-radius: 8px;
+        padding: 1.5rem;
+        border: 1px solid #e2e8f0;
+        position: sticky;
+        top: 100px;
+        height: fit-content;
+        max-height: calc(100vh - 120px);
+        overflow-y: auto;
+        margin: 0;
+    }
+
+    body.dark-mode .gs-quick-nav {
+        background: #2d3748;
+        border-color: #4a5568;
+    }
+
+    .gs-quick-nav h5 {
+        color: #319795;
+        margin-bottom: 1rem;
+        font-weight: 600;
+        font-size: 1rem;
+    }
+
+    .gs-quick-nav ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .gs-quick-nav li {
+        margin-bottom: 0.75rem;
+    }
+
+    .gs-quick-nav a {
+        color: #319795;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        font-size: 0.9rem;
+        display: block;
+        padding: 0.75rem 0.75rem 0.75rem 1rem;
+        border-radius: 4px;
+        border-left: 3px solid transparent;
+        margin-left: -3px;
+        position: relative;
+    }
+
+    .gs-quick-nav a:hover {
+        color: #187b7aff;
+        background-color: rgba(102, 126, 234, 0.08);
+        border-left-color: #187b7aff;
+        padding-left: 1.1rem;
+    }
+
+    /* Active state for current section */
+    .gs-quick-nav a.active {
+        color: #187b7aff;
+        background-color: rgba(102, 126, 234, 0.15);
+        border-left-color: #187b7aff;
+        font-weight: 600;
+        padding-left: 1.1rem;
+    }
+
+    .gs-main-content {
+        flex: 1;
+        min-width: 0;
+        padding: 0;
+    }
+
+    /* Extra Large Screens (1200px+) */
+    @media (min-width: 1200px) {
+        .gs-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .gs-content-wrapper {
+            gap: 2rem;
+        }
+
+        .gs-quick-nav {
+            width: 280px;
+            padding: 2rem;
+        }
+    }
+
+    /* Large Screens (992px - 1199px) */
+    @media (min-width: 992px) and (max-width: 1199px) {
+        .gs-container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }
+
+        .gs-content-wrapper {
+            gap: 1.5rem;
+        }
+
+        .gs-quick-nav {
+            width: 240px;
+            padding: 1.5rem;
+        }
+
+        .gs-section h2 {
+            font-size: 1.5rem;
+        }
+
+        .gs-section h3 {
+            font-size: 1.1rem;
+        }
+    }
+
+    /* Medium Screens (768px - 991px) */
+    @media (max-width: 991px) {
+        .gs-container {
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        .gs-hero {
+            padding: 3rem 1rem;
+        }
+
+        .gs-hero h1 {
+            font-size: 2rem;
+        }
+
+        .gs-hero p {
+            font-size: 1rem;
+        }
+
+        .gs-content-wrapper {
+            gap: 1rem;
+            flex-direction: row;
+        }
+
+        .gs-quick-nav {
+            width: 220px;
+            padding: 1.25rem;
+            position: static;
+            max-height: none;
+            top: auto;
+        }
+
+        .gs-quick-nav h5 {
+            font-size: 0.95rem;
+        }
+
+        .gs-quick-nav a {
+            font-size: 0.85rem;
+            padding: 0.65rem 0.65rem 0.65rem 0.85rem;
+            margin-left: -3px;
+        }
+
+        .gs-quick-nav a:hover,
+        .gs-quick-nav a.active {
+            padding-left: 1rem;
+        }
+
+        .gs-main-content {
+            min-width: 0;
+        }
+
+        .gs-section {
+            margin-bottom: 2.5rem;
+            padding-bottom: 1.5rem;
+        }
+
+        .gs-section h2 {
+            font-size: 1.4rem;
+            margin-bottom: 0.9rem;
+        }
+
+        .gs-section h3 {
+            font-size: 1rem;
+            margin-top: 1.5rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .gs-section h4 {
+            font-size: 0.95rem;
+        }
+
+        .gs-section p {
+            font-size: 0.9rem;
+            line-height: 1.65;
+        }
+
+        .gs-section ol, .gs-section ul {
+            margin-left: 1.5rem;
+            font-size: 0.9rem;
+        }
+
+        .gs-section li {
+            margin-bottom: 0.6rem;
+            line-height: 1.65;
+        }
+
+        .gs-option {
+            padding: 1.25rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .gs-highlight {
+            padding: 1.25rem;
+            margin: 1.25rem 0;
+            font-size: 0.9rem;
+        }
+
+        .gs-note {
+            padding: 1.25rem;
+            margin: 1.25rem 0;
+            font-size: 0.9rem;
+        }
+
+        .gs-btn-group {
+            gap: 0.75rem;
+            flex-direction: column;
+            margin-top: 1.25rem;
+        }
+
+        .gs-btn-group .btn {
+            min-width: auto;
+            width: 100%;
+            padding: 0.75rem 1rem;
+            font-size: 0.9rem;
+        }
+
+        .gs-faq-section {
+            margin-top: 2.5rem;
+        }
+
+        .gs-faq-section .accordion-item {
+            margin-bottom: 0.85rem;
+        }
+
+        .gs-faq-section .accordion-button {
+            font-size: 0.9rem;
+            padding: 0.9rem;
+        }
+
+        .gs-faq-section .accordion-body {
+            font-size: 0.85rem;
+            padding: 1rem;
+            line-height: 1.65;
+        }
+    }
+
+    /* Small Tablets and Large Phones (576px - 767px) */
+    @media (max-width: 767px) {
+        .gs-container {
+            max-width: 100%;
+            margin: 0;
+            padding: 0 1rem;
+        }
+
+        .gs-hero {
+            padding: 2.5rem 1rem;
+            margin-bottom: 0;
+        }
+
+        .gs-hero h1 {
+            font-size: 1.75rem;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.3px;
+        }
+
+        .gs-hero p {
+            font-size: 0.95rem;
+            font-weight: 300;
+        }
+
+        .gs-intro {
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-radius: 6px;
+        }
+
+        .gs-intro p {
+            font-size: 0.9rem;
+            line-height: 1.65;
+            margin-bottom: 0.5rem;
+        }
+
+        .gs-content-wrapper {
+            flex-direction: column;
+            gap: 0;
+            margin: 0;
+            padding: 0;
+        }
+
+        .gs-quick-nav {
+            width: 100%;
+            margin-bottom: 2rem;
+            margin-left: 0;
+            margin-right: 0;
+            padding: 1.5rem;
+            position: static;
+            max-height: none;
+            border-radius: 6px;
+            border-left: none;
+        }
+
+        .gs-quick-nav h5 {
+            font-size: 0.95rem;
+            margin-bottom: 1rem;
+        }
+
+        .gs-quick-nav ul {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .gs-quick-nav li {
+            margin-bottom: 0;
+            flex: 0 1 calc(50% - 0.25rem);
+        }
+
+        .gs-quick-nav a {
+            font-size: 0.8rem;
+            padding: 0.5rem 0.6rem 0.5rem 0.8rem;
+            margin-left: 0;
+            border-left: 2px solid transparent;
+            text-align: center;
+            padding-left: 0.6rem;
+        }
+
+        .gs-quick-nav a:hover,
+        .gs-quick-nav a.active {
+            border-left: 2px solid #187b7aff;
+            padding-left: 0.6rem;
+        }
+
+        .gs-main-content {
+            width: 100%;
+            padding: 0;
+        }
+
+        .gs-section {
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .gs-section:last-child {
+            border-bottom: none;
+        }
+
+        .gs-section h2 {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            gap: 0.5rem;
+        }
+
+        .gs-section h3 {
+            font-size: 0.95rem;
+            margin-top: 1.25rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .gs-section h4 {
+            font-size: 0.9rem;
+            margin-top: 1rem;
+            margin-bottom: 0.6rem;
+        }
+
+        .gs-section p {
+            font-size: 0.88rem;
+            line-height: 1.6;
+            margin-bottom: 0.75rem;
+        }
+
+        .gs-section ol, .gs-section ul {
+            font-size: 0.88rem;
+            padding-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .gs-section li {
+            margin-bottom: 0.5rem;
+            line-height: 1.6;
+        }
+
+        .gs-section a {
+            word-break: break-word;
+        }
+
+        .gs-option {
+            padding: 1rem;
+            margin-bottom: 1.25rem;
+            border-radius: 6px;
+        }
+
+        .gs-option h4 {
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            margin-top: 0;
+        }
+
+        .gs-option ol, .gs-option ul {
+            font-size: 0.85rem;
+            padding-left: 1.25rem;
+            margin: 0.5rem 0 0 0;
+        }
+
+        .gs-highlight {
+            padding: 1rem;
+            margin: 1rem 0;
+            border-left: 4px solid #319795;
+            font-size: 0.85rem;
+            border-radius: 4px;
+        }
+
+        .gs-note {
+            padding: 1rem;
+            margin: 1rem 0;
+            border-left: 4px solid #f59e0b;
+            font-size: 0.85rem;
+            border-radius: 4px;
+        }
+
+        .gs-btn-group {
+            gap: 0.6rem;
+            flex-direction: column;
+            margin-top: 1.5rem;
+        }
+
+        .gs-btn-group .btn {
+            min-width: auto;
+            width: 100%;
+            padding: 0.7rem 1rem;
+            font-size: 0.88rem;
+        }
+
+        .gs-faq-section {
+            margin-top: 2rem;
+        }
+
+        .gs-faq-section .accordion-item {
+            margin-bottom: 0.75rem;
+            border-radius: 4px;
+        }
+
+        .gs-faq-section .accordion-button {
+            font-size: 0.88rem;
+            padding: 0.9rem;
+        }
+
+        .gs-faq-section .accordion-body {
+            font-size: 0.85rem;
+            padding: 1rem;
+            line-height: 1.6;
+        }
+    }
+
+    /* Extra Small Devices (up to 575px) */
+    @media (max-width: 575px) {
+        .gs-container {
+            padding: 0 0.75rem;
+        }
+
+        .gs-hero {
+            padding: 2rem 0.75rem;
+            margin-bottom: 0;
+        }
+
+        .gs-hero h1 {
+            font-size: 1.4rem;
+            margin-bottom: 0.4rem;
+            letter-spacing: -0.2px;
+            line-height: 1.3;
+        }
+
+        .gs-hero p {
+            font-size: 0.85rem;
+            font-weight: 300;
+        }
+
+        .gs-intro {
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 4px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .gs-intro p {
+            font-size: 0.8rem;
+            line-height: 1.5;
+            margin-bottom: 0.3rem;
+        }
+
+        .gs-intro p:last-child {
+            margin-bottom: 0;
+        }
+
+        .gs-content-wrapper {
+            flex-direction: column;
+            gap: 0;
+            margin: 0;
+            padding: 0;
+        }
+
+        .gs-quick-nav {
+            width: 100%;
+            margin: 0 0 1.5rem 0;
+            padding: 1rem;
+            border-radius: 4px;
+            position: static;
+            max-height: none;
+            border-left: none;
+        }
+
+        .gs-quick-nav h5 {
+            font-size: 0.85rem;
+            margin-bottom: 0.75rem;
+            margin-top: 0;
+        }
+
+        .gs-quick-nav ul {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            padding: 0;
+            margin: 0;
+        }
+
+        .gs-quick-nav li {
+            margin-bottom: 0;
+        }
+
+        .gs-quick-nav a {
+            font-size: 0.75rem;
+            padding: 0.4rem 0.5rem;
+            margin-left: 0;
+            border-left: 2px solid transparent;
+            text-align: center;
+            border-radius: 3px;
+        }
+
+        .gs-quick-nav a:hover,
+        .gs-quick-nav a.active {
+            border-left: 2px solid #187b7aff;
+            background-color: rgba(102, 126, 234, 0.1);
+        }
+
+        .gs-main-content {
+            width: 100%;
+            padding: 0;
+        }
+
+        .gs-section {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .gs-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .gs-section h2 {
+            font-size: 1.1rem;
+            margin-bottom: 0.6rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #e2e8f0;
+            gap: 0.4rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .gs-section h2 i {
+            font-size: 1rem;
+        }
+
+        .gs-section h3 {
+            font-size: 0.9rem;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #319795;
+        }
+
+        .gs-section h4 {
+            font-size: 0.85rem;
+            margin-top: 0.75rem;
+            margin-bottom: 0.4rem;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        body.dark-mode .gs-section h4 {
+            color: #e2e8f0;
+        }
+
+        .gs-section p {
+            font-size: 0.78rem;
+            line-height: 1.5;
+            margin-bottom: 0.6rem;
+        }
+
+        .gs-section ol {
+            padding-left: 1.2rem;
+            margin: 0.6rem 0 0.8rem 0;
+            font-size: 0.78rem;
+        }
+
+        .gs-section ul {
+            padding-left: 1.2rem;
+            margin: 0.6rem 0 0.8rem 0;
+            font-size: 0.78rem;
+        }
+
+        .gs-section li {
+            margin-bottom: 0.3rem;
+            line-height: 1.5;
+        }
+
+        .gs-section strong {
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        body.dark-mode .gs-section strong {
+            color: #e2e8f0;
+        }
+
+        .gs-section a {
+            word-break: break-word;
+            color: #319795;
+        }
+
+        .gs-option {
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            border-radius: 4px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .gs-option h4 {
+            font-size: 0.8rem;
+            margin-top: 0;
+            margin-bottom: 0.4rem;
+        }
+
+        .gs-option ol, .gs-option ul {
+            font-size: 0.75rem;
+            padding-left: 1rem;
+            margin: 0.4rem 0;
+        }
+
+        .gs-option li {
+            margin-bottom: 0.25rem;
+        }
+
+        .gs-highlight {
+            padding: 0.75rem;
+            margin: 0.8rem 0;
+            border-left: 3px solid #319795;
+            font-size: 0.78rem;
+            border-radius: 3px;
+            line-height: 1.5;
+        }
+
+        .gs-highlight strong {
+            color: #319795;
+            font-weight: 600;
+        }
+
+        .gs-note {
+            padding: 0.75rem;
+            margin: 0.8rem 0;
+            border-left: 3px solid #f59e0b;
+            font-size: 0.78rem;
+            border-radius: 3px;
+            line-height: 1.5;
+        }
+
+        .gs-note strong {
+            color: #b45309;
+            font-weight: 600;
+        }
+
+        .gs-btn-group {
+            gap: 0.5rem;
+            flex-direction: column;
+            margin-top: 1rem;
+        }
+
+        .gs-btn-group .btn {
+            width: 100%;
+            padding: 0.55rem 0.8rem;
+            font-size: 0.8rem;
+        }
+
+        .gs-faq-section {
+            margin-top: 1.5rem;
+        }
+
+        .gs-faq-section .accordion {
+            border: none;
+        }
+
+        .gs-faq-section .accordion-item {
+            margin-bottom: 0.5rem;
+            border-radius: 3px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .gs-faq-section .accordion-button {
+            font-size: 0.78rem;
+            padding: 0.6rem 0.75rem;
+            font-weight: 500;
+        }
+
+        .gs-faq-section .accordion-button:not(.collapsed) {
+            background-color: #f0f4ff;
+            color: #319795;
+        }
+
+        .gs-faq-section .accordion-body {
+            font-size: 0.75rem;
+            padding: 0.75rem;
+            line-height: 1.5;
+        }
+    }
+
+    .gs-faq-section {
+        margin-top: 3rem;
+    }
+
+    .gs-faq-section .accordion-item {
+        background: #f7fafc;
+        border: 1px solid #e2e8f0;
+        margin-bottom: 1rem;
+        border-radius: 6px;
+        overflow: hidden;
+    }
+
+    body.dark-mode .gs-faq-section .accordion-item {
+        background: #2d3748;
+        border-color: #4a5568;
+    }
+
+    body.dark-mode .gs-faq-section .accordion-button {
+        color: #e2e8f0;
+        background: #2d3748;
+    }
+
+    .gs-faq-section .accordion-button:not(.collapsed) {
+        background-color: #f0f4ff;
+        color: #319795;
+    }
+
+    body.dark-mode .gs-faq-section .accordion-button:not(.collapsed) {
+        background-color: #3d4959;
+        color: #75b8b7ff;
+    }
+
+    @media (max-width: 1024px) {
+        .gs-content-wrapper {
+            gap: 1.5rem;
+        }
+
+        .gs-quick-nav {
+            width: 240px;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .gs-content-wrapper {
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .gs-quick-nav {
+            width: 100%;
+            position: static;
+            margin-bottom: 2rem;
+            max-height: none;
+        }
+
+        .gs-main-content {
+            width: 100%;
+        }
+
+        .gs-hero {
+            padding: 3rem 1rem;
+        }
+
+        .gs-hero h1 {
+            font-size: 1.75rem;
+        }
+
+        .gs-container {
+            padding: 0 1rem;
+        }
+
+        .gs-section {
+            margin-bottom: 2rem;
+        }
+
+        .gs-option {
+            padding: 1.5rem;
+        }
+
+        .gs-btn-group .btn {
+            min-width: 100%;
+        }
+
+        .gs-quick-nav {
+            margin-bottom: 2rem;
+        }
+    }
+</style>
+
+<!-- Hero Section -->
+<div class="gs-hero">
+    <div class="gs-container">
+        <h1>📚 TeamManager Signup Guide for Companies</h1>
+        <p>Complete walkthrough for company registration, staff onboarding, and email configuration</p>
+        <div class="gs-btn-group">
+            <a href="{% url 'apply_for_tenant' %}" class="btn btn-light btn-lg" style="font-weight: 600; color: #667eea;">
+                <i class="fas fa-building me-2"></i>Sign Up for Company
+            </a>
+            <a href="{% url 'unified_signup' %}" class="btn btn-light btn-lg" style="font-weight: 600; color: #667eea;">
+                <i class="fas fa-user me-2"></i>Sign Up as User
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="gs-container" style="margin-top: 3rem; margin-bottom: 3rem;">
+    <!-- Introduction -->
+    <div class="gs-intro">
+        <p>Welcome to TeamManager, a powerful platform for managing staff profiles, documents, tasks, and folders in a secure, multi-tenant environment. This comprehensive guide explains how your company can sign up for a dedicated account, create a personalized subdomain, access your unique app space, and enable staff to create user accounts. Follow these steps to get started.</p>
+    </div>
+
+    <!-- Content Wrapper with Sidebar -->
+    <div class="gs-content-wrapper">
+        <!-- Quick Navigation Sidebar -->
+        <div class="gs-quick-nav">
+            <h5><i class="fas fa-link me-2"></i>Quick Navigation</h5>
+            <ul>
+                <li><a href="#signup">Company Signup</a></li>
+                <li><a href="#login">Access Your Account</a></li>
+                <li><a href="#staff">Create Staff Accounts</a></li>
+                <li><a href="#email">Email Configuration</a></li>
+                <li><a href="#faq">FAQ</a></li>
+            </ul>
+        </div>
+
+        <!-- Main Content -->
+        <div class="gs-main-content">
+            <!-- Section 1: Company Signup -->
+    <section class="gs-section" id="signup">
+        <h2><i class="fas fa-building text-primary"></i>Signing Up for Your Company</h2>
+        <p>To use TeamManager, your company must create a dedicated account, which provides a private workspace for your data, accessible via a unique subdomain.</p>
+
+        <h3>Steps to Sign Up:</h3>
+        <ol>
+            <li>
+                <strong>Visit the Main Site:</strong>
+                <ol type="a">
+                    <li>Navigate to <a href="https://teammanager.ng/tenants/" target="_blank" rel="noopener">https://teammanager.ng/tenants/</a> using a modern browser (Edge, Chrome, Safari, or Firefox).</li>
+                </ol>
+            </li>
+            <li>
+                <strong>Locate the Company Signup Option:</strong>
+                <ol type="a">
+                    <li>On the homepage, find the <em>Apply for your Company</em> or <em>Get Started With Your Company</em> button (typically in the hero section or navigation bar).</li>
+                    <li>Click to open the Company signup form.</li>
+                </ol>
+            </li>
+            <li>
+                <strong>Complete the Signup Form:</strong>
+                <ol type="a">
+                    <li>Provide the following details—note that all fields are important:
+                        <ul>
+                            <li><strong>Organization Name:</strong> Your organization's legal or trading name (e.g., Xtra Youth Zealous Partners LTD).</li>
+                            <li><strong>Email:</strong> A primary contact email for account administration.</li>
+                            <li><strong>Admin Username:</strong> A username for your company's superuser account.</li>
+                            <li><strong>Password:</strong> A secure password for the admin account.</li>
+                            <li><strong>Slug:</strong> Your preferred subdomain identifier.</li>
+                        </ul>
+                    </li>
+                </ol>
+            </li>
+            <li>
+                <strong>Choose a Subdomain:</strong>
+                <ol type="a">
+                    <li>You'll be prompted to enter a preferred subdomain (e.g., 'xyz' for the company Xtra Youth Zealous Partners LTD).</li>
+                    <li>The subdomain must:
+                        <ul>
+                            <li>Be unique (not already in use by another company).</li>
+                            <li>Contain only lowercase letters, numbers, and hyphens (no spaces or special characters).</li>
+                            <li>Be concise and reflective of your company name.</li>
+                        </ul>
+                    </li>
+                </ol>
+            </li>
+            <li>
+                <strong>Validate the Subdomain:</strong>
+                <ol type="a">
+                    <li>The system will check availability in real-time. If your chosen subdomain is taken, you'll be prompted to select another.</li>
+                </ol>
+            </li>
+            <li>
+                <strong>Confirm Subdomain:</strong>
+                <ol type="a">
+                    <li>Once validated, your subdomain is linked to your company account.</li>
+                    <li>Your app space will be accessible at <strong>https://&lt;your-subdomain&gt;.teammanager.ng</strong> (e.g., https://xyz.teammanager.ng).</li>
+                </ol>
+            </li>
+            <li>
+                <strong>Submit the Form:</strong>
+                <ol type="a">
+                    <li>Click <em>Submit</em> to create your company's account. The system will generate a record in the backend, linked to your company's details.</li>
+                </ol>
+            </li>
+        </ol>
+
+        <div class="gs-highlight">
+            <strong>Note:</strong> All details filled in are crucial and must be correct, as they will be needed for authentication.
+        </div>
+
+        <div class="gs-highlight">
+            <strong>Tip:</strong> Record your subdomain, as it's the primary way to access your TeamManager instance.
+        </div>
+    </section>
+
+    <!-- Section 2: Accessing Your Account -->
+    <section class="gs-section" id="login">
+        <h2><i class="fas fa-sign-in-alt text-primary"></i>Accessing Your Personalized Login Redirect</h2>
+        <p>After company account creation, you'll receive a login redirect link to access your company's personalized app space.</p>
+
+        <h3>Steps to Access:</h3>
+        <ol>
+            <li>
+                <strong>Click the Login Redirect Link:</strong>
+                <ol type="a">
+                    <li>Clicking the link will take you to your company's login page (e.g., https://xyz.teammanager.ng/accounts/login).</li>
+                    <li>The redirect ensures you're routed to your subdomain's secure login interface.</li>
+                </ol>
+            </li>
+            <li>
+                <strong>Log In:</strong>
+                <ul>
+                    <li>Enter your admin username and password.</li>
+                    <li>If prompted, reset your password for security.</li>
+                    <li>You'll land on your company's dashboard, styled with Bootstrap for a user-friendly experience.</li>
+                </ul>
+            </li>
+        </ol>
+
+        <div class="gs-note">
+            <strong>Security Note:</strong> Bookmark your company's login page (e.g., https://xyz.teammanager.ng/login) for future access. Avoid sharing your admin credentials.
+        </div>
+    </section>
+
+    <!-- Section 3: Staff Account Creation -->
+    <section class="gs-section" id="staff">
+        <h2><i class="fas fa-users text-primary"></i>Enabling Staff to Create User Accounts</h2>
+        <p>Once your company is set up, your company's staff can create user accounts to access TeamManager's features, such as profile management, document uploads, tasks collaboration, calendar, contacts, and more.</p>
+
+        <h3>Steps for Staff Account Creation:</h3>
+        <ol>
+            <li>
+                <strong>Admin Setup:</strong>
+                <ul>
+                    <li>Log in as your company admin (using the steps above).</li>
+                    <li>Navigate to the Admin Dashboard. Here you can organize your company details.</li>
+                    <li>Define departments and teams to organize staff (e.g., HR, IT, Sales).</li>
+                </ul>
+            </li>
+            <li>
+                <strong>Invite Staff:</strong>
+                <div class="gs-option">
+                    <h4><i class="fas fa-user me-2"></i>Option 1: Manual Account Creation</h4>
+                    <ul>
+                        <li><strong>Admin Dashboard &gt; Users (View Users) &gt; Add User</strong> — Admin creates accounts by entering staff details (username, email, password; password can be reset by staff later on).</li>
+                        <li>Select a role (e.g., HOD) to set permissions.</li>
+                        <li>Save to generate a welcome email with a temporary password and login link (e.g., https://xyz.teammanager.ng/accounts/login).</li>
+                    </ul>
+                </div>
+                <div class="gs-option">
+                    <h4><i class="fas fa-user-plus me-2"></i>Option 2: Self-Registration</h4>
+                    <ul>
+                        <li>Share a company-specific signup link (e.g., https://xyz.teammanager.ng/register).</li>
+                        <li>Staff complete the registration form with their details.</li>
+                        <li>Accounts require admin approval—this ensures security within your company.</li>
+                        <li>Accounts can be activated by going to <strong>Admin Dashboard &gt; Users (View Users)</strong>. Here there is an <em>Activate</em> button on the list of users.</li>
+                    </ul>
+                </div>
+            </li>
+            <li>
+                <strong>Staff Onboarding:</strong>
+                <ul>
+                    <li>Staff log in using their credentials or Single Sign-On (if configured).</li>
+                    <li>They can fill in their staff profile in <strong>My Profile</strong>, including:
+                        <ul>
+                            <li>Personal details (name, bio, photo).</li>
+                            <li>Contact information (email, phone).</li>
+                            <li>If not completed, details can still be partially saved.</li>
+                        </ul>
+                    </li>
+                    <li>Staff can access features like documents, folders, tasks, and the calendar, based on their permissions.</li>
+                </ul>
+            </li>
+        </ol>
+
+        <h3>Permissions:</h3>
+        <ul>
+            <li>Staff can only access data within their department or team.</li>
+            <li>Admins can manage user accounts, assign roles, and approve registrations.</li>
+        </ul>
+
+        <div class="gs-highlight">
+            <strong>Tip:</strong> Use the <em>Performance Dashboard</em> to monitor staff account activity and ensure onboarding completion.
+        </div>
+    </section>
+
+    <!-- Section 4: Zoho Email Setup -->
+    <section class="gs-section" id="email">
+        <h2><i class="fas fa-envelope text-primary"></i>Creating Zoho Email for Email Automation</h2>
+        <p>To enable email automation in TeamManager, allowing your staff to receive account registration, activation, and notification emails, you need to set up a Zoho Mail account if one doesn't already exist. This can be done individually by staff for personal use, or the company can create and host a centralized emailing system under Zoho Mail for professional, custom-domain emails (e.g., info@yourcompany.com). Zoho Mail offers a free plan with 5GB storage for up to five mailboxes, making it accessible for small teams, while paid plans provide more features for larger organizations.</p>
+        <p>Using Zoho Mail integrates seamlessly with TeamManager's email configuration in the admin settings, where you'll enter your Zoho email address and password to enable automated sending.</p>
+
+        <h3>Steps for Creating Zoho Email</h3>
+
+        <h4>Option 1: For Individual/Personal Use (Free Plan)</h4>
+        <ol>
+            <li><strong>Visit the Zoho Mail Website:</strong> Go to <a href="https://www.zoho.com/mail/" target="_blank" rel="noopener">https://www.zoho.com/mail/</a> in your web browser.</li>
+            <li><strong>Sign Up for Free:</strong> Click the <em>Sign Up for Free</em> button on the homepage. This will direct you to the registration page (or pricing overview).</li>
+            <li><strong>Fill in Your Details:</strong>
+                <ul>
+                    <li>Enter your email address (this will be your initial login email; you can set up custom ones later).</li>
+                    <li>Provide a strong password.</li>
+                    <li>Enter your name, phone number, and any other required information.</li>
+                    <li>Agree to the terms of service and privacy policy.</li>
+                </ul>
+            </li>
+            <li><strong>Verify Your Account:</strong> Check your inbox for a verification email from Zoho and click the link to activate your account.</li>
+            <li><strong>Set Up Your Mailbox:</strong> Log in to your new Zoho Mail dashboard. You can start using the free plan immediately, which includes 5GB storage and basic features.</li>
+            <li><strong>Configure in TeamManager:</strong> Once set up, go to your TeamManager settings (<strong>Settings &gt; Email Configuration</strong>), enter your Zoho email address and password, and save. This enables email automation for your tenant.</li>
+        </ol>
+
+        <h4>Option 2: For Company/Business Use (Custom Domain)</h4>
+        <p>For a professional setup, use Zoho Mail's business plans to host company emails with a custom domain (e.g., yourcompany.com). This is recommended for teams to maintain branding and centralized control.</p>
+        <ol>
+            <li><strong>Visit the Zoho Mail Website:</strong> Go to <a href="https://www.zoho.com/mail/" target="_blank" rel="noopener">https://www.zoho.com/mail/</a> in your web browser.</li>
+            <li><strong>Sign Up for Free or Choose a Plan:</strong> Click <em>Sign Up for Free</em> or navigate to the pricing page (<a href="https://www.zoho.com/mail/zohomail-pricing.html" target="_blank" rel="noopener">https://www.zoho.com/mail/zohomail-pricing.html</a>). Select a plan:
+                <ul>
+                    <li><strong>Free:</strong> 5GB storage for up to 5 mailboxes (suitable for small teams).</li>
+                    <li><strong>Paid plans</strong> (starting from affordable rates): Unlimited storage, advanced features like e-Discovery, and support for more users. Review pricing for details.</li>
+                </ul>
+            </li>
+            <li><strong>Register or Use an Existing Domain:</strong>
+                <ul>
+                    <li>If you don't have a domain, purchase one through Zoho or a third-party registrar (e.g., GoDaddy).</li>
+                    <li>Enter your domain name during signup (e.g., yourcompany.com).</li>
+                </ul>
+            </li>
+            <li><strong>Fill in Company Details:</strong>
+                <ul>
+                    <li>Provide your organization name, admin email, password, and contact information.</li>
+                    <li>Agree to the terms.</li>
+                </ul>
+            </li>
+            <li><strong>Verify Domain Ownership:</strong>
+                <ul>
+                    <li>Zoho will guide you through verification methods (e.g., adding a TXT record to your DNS settings or uploading an HTML file to your website).</li>
+                    <li>This step ensures you own the domain and can set up custom emails.</li>
+                </ul>
+            </li>
+            <li><strong>Set Up Mailboxes and Users:</strong>
+                <ul>
+                    <li>Log in to the Zoho Mail Admin Console (<a href="https://www.zoho.com/mail/control-panel.html" target="_blank" rel="noopener">https://www.zoho.com/mail/control-panel.html</a>).</li>
+                    <li>Add users (e.g., staff@yourcompany.com) and assign mailboxes.</li>
+                    <li>Configure group aliases, policies, and retention settings as needed for email automation.</li>
+                </ul>
+            </li>
+            <li><strong>Configure in TeamManager:</strong>
+                <ul>
+                    <li>In your TeamManager admin settings (<strong>Settings &gt; Email Configuration</strong>), enter a dedicated Zoho email address (e.g., notifications@yourcompany.com) and its password.</li>
+                    <li>Test the setup by sending a sample email or inviting a staff member to verify automation works.</li>
+                </ul>
+            </li>
+        </ol>
+
+        <div class="gs-highlight">
+            <strong>Next Steps:</strong> Once your Zoho Mail is configured, TeamManager's email automation will handle staff notifications automatically, streamlining your onboarding process.
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="gs-section gs-faq-section" id="faq">
+        <h2><i class="fas fa-question-circle text-primary"></i>Frequently Asked Questions</h2>
+        <p class="lead">Find answers to common questions about TeamManager setup and usage.</p>
+
+        <div class="accordion" id="faqAccordion">
+            <!-- Account & Access Section -->
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                        How do I create a company account?
+                    </button>
+                </h2>
+                <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        <ol>
+                            <li>Visit <a href="https://teammanager.ng" target="_blank" rel="noopener">teammanager.ng</a></li>
+                            <li>Click Sign Up for Company</li>
+                            <li>Select "Get Started with Your Company"</li>
+                            <li>Enter your details:
+                                <ul>
+                                    <li>Email</li>
+                                    <li>Password</li>
+                                    <li>Organization name</li>
+                                    <li>Slug/Subdomain</li>
+                                </ul>
+                            </li>
+                            <li>Click Apply to complete registration</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                        How do I log in to my account?
+                    </button>
+                </h2>
+                <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        <ol>
+                            <li>Click the Login button at the top-right corner of the page</li>
+                            <li>Enter your Username and Password</li>
+                            <li>Click Login</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                        How do I reset my password?
+                    </button>
+                </h2>
+                <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        <ol>
+                            <li>Click "Forgot password?" below the login button</li>
+                            <li>Enter your registered email address</li>
+                            <li>Click "Send reset link"</li>
+                            <li>Follow the instructions in your email</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
+                        How do I edit my profile?
+                    </button>
+                </h2>
+                <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        <ol>
+                            <li>Click "Edit Profile" at the top-right corner</li>
+                            <li>Update your information:
+                                <ul>
+                                    <li>Personal details (Date of Birth, State, etc.)</li>
+                                    <li>Contact details (Phone, Address)</li>
+                                    <li>Education (Institution, Course, etc.)</li>
+                                </ul>
+                            </li>
+                            <li>Click "Save Profile"</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq5">
+                        How do I configure my email settings?
+                    </button>
+                </h2>
+                <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        <ol>
+                            <li>Go to Settings</li>
+                            <li>Click "Email Configuration"</li>
+                            <li>Select your email provider</li>
+                            <li>Enter your email address and password</li>
+                            <li>Click "Save and Test"</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Task Management Section -->
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq6">
+                        How do I create a new task?
+                    </button>
+                </h2>
+                <div id="faq6" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        <ol>
+                            <li>Click "Task" from the sidebar</li>
+                            <li>Select "New Task"</li>
+                            <li>Enter:
+                                <ul>
+                                    <li>Title</li>
+                                    <li>Description</li>
+                                    <li>Documents (optional)</li>
+                                </ul>
+                            </li>
+                            <li>Assign to a staff member or team</li>
+                            <li>Set the timeframe</li>
+                            <li>Choose the task status (default is Pending)</li>
+                            <li>Click "Add Task"</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq7">
+                        How do I change a task's status?
+                    </button>
+                </h2>
+                <div id="faq7" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        Click and hold the task ribbon, then drag it to the appropriate status column.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Conferences & Events Section -->
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq8">
+                        How do I create a conference or event?
+                    </button>
+                </h2>
+                <div id="faq8" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        <ol>
+                            <li>Click "Conference" from the sidebar</li>
+                            <li>Select "Create Conference"</li>
+                            <li>Enter:
+                                <ul>
+                                    <li>Title</li>
+                                    <li>Theme</li>
+                                    <li>Description</li>
+                                    <li>Ticket price</li>
+                                    <li>Conference type</li>
+                                    <li>Expected participants</li>
+                                    <li>Host details</li>
+                                </ul>
+                            </li>
+                            <li>Set reminders if needed</li>
+                            <li>Click "Create Conference"</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+            <!-- HR & Recruitment Section -->
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq9">
+                        How do I navigate HR features?
+                    </button>
+                </h2>
+                <div id="faq9" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        <ol>
+                            <li>Click "HR Dashboard" from the sidebar</li>
+                            <li>Access features such as:
+                                <ul>
+                                    <li>Vacancies</li>
+                                    <li>Applications</li>
+                                    <li>Interviews</li>
+                                    <li>Performance tracking</li>
+                                </ul>
+                            </li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq10">
+                        How do I create a job vacancy?
+                    </button>
+                </h2>
+                <div id="faq10" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        <ol>
+                            <li>Go to HR Dashboard → Vacancies</li>
+                            <li>Click "Create Vacancy"</li>
+                            <li>Enter job details</li>
+                            <li>Click "Save" to publish</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq11">
+                        How do I view applications?
+                    </button>
+                </h2>
+                <div id="faq11" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        <ol>
+                            <li>Click "View Applications"</li>
+                            <li>Select "View" to see applicant details</li>
+                            <li>Click "View CV" to preview or download</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq12">
+                        How do I schedule an interview?
+                    </button>
+                </h2>
+                <div id="faq12" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        <ol>
+                            <li>From HR Dashboard, click "Schedule New Interview"</li>
+                            <li>Select:
+                                <ul>
+                                    <li>Vacancy</li>
+                                    <li>Applicant</li>
+                                    <li>Interviewer(s)</li>
+                                </ul>
+                            </li>
+                            <li>Set date and timezone</li>
+                            <li>Choose interview mode:
+                                <ul>
+                                    <li><strong>Virtual:</strong> Add meeting link</li>
+                                    <li><strong>Physical:</strong> Enter interview address</li>
+                                </ul>
+                            </li>
+                            <li>Click "Create Interview" or "Create & Schedule Another"</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Platform Features Section -->
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq13">
+                        What can I do on TeamManager?
+                    </button>
+                </h2>
+                <div id="faq13" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        TeamManager allows you to:
+                        <ul>
+                            <li>Post jobs and track applications</li>
+                            <li>Schedule interviews</li>
+                            <li>Create and manage conferences/events</li>
+                            <li>Delegate and manage tasks</li>
+                            <li>Onboard staff</li>
+                            <li>Track individual and team performance</li>
+                            <li>Manage your own tenant (organization workspace)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq14">
+                        What is a tenant?
+                    </button>
+                </h2>
+                <div id="faq14" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        A tenant is a separate organization or workspace within TeamManager. Each tenant has its own:
+                        <ul>
+                            <li>Users</li>
+                            <li>Data</li>
+                            <li>Settings</li>
+                            <li>Permissions</li>
+                        </ul>
+                        This ensures complete data separation and privacy between organizations.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Security & Data Protection Section -->
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq15">
+                        Are my data and documents safe with TeamManager?
+                    </button>
+                </h2>
+                <div id="faq15" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        Yes. Your data security is our top priority. TeamManager is hosted on Amazon Web Services (AWS) — a globally trusted cloud infrastructure used by banks, governments, and enterprises.
+                        <br><br>
+                        We protect your data through:
+                        <ul>
+                            <li>Encryption in transit (HTTPS/SSL)</li>
+                            <li>Encryption at rest</li>
+                            <li>Secure AWS data centers with 24/7 monitoring</li>
+                            <li>Role-based access controls and authentication</li>
+                            <li>Regular backups and disaster recovery</li>
+                            <li>Network firewalls and DDoS protection</li>
+                        </ul>
+                        AWS complies with major security standards including ISO 27001, SOC, and GDPR. Additionally, we implement strong application-level security to ensure your information remains private and protected. Your data is never shared without authorization and is accessible only to permitted users.
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq16">
+                        Can I change my subdomain after registration?
+                    </button>
+                </h2>
+                <div id="faq16" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        It's best to choose your subdomain carefully, as changing it can affect bookmarks and shared links. Contact support to discuss subdomain changes—we can help migrate your instance if needed.
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq17">
+                        How many staff accounts can I create?
+                    </button>
+                </h2>
+                <div id="faq17" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        There's no limit on the number of staff accounts. You can create accounts for all your employees. Check your subscription plan for any user limits or contact our sales team for enterprise options.
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq18">
+                        What if a staff member forgets their password?
+                    </button>
+                </h2>
+                <div id="faq18" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        Staff members can use the "Forgot Password" link on the login page. If email is configured, they'll receive a reset link. Alternatively, admins can reset passwords in the Users section of the Admin Dashboard.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Email & Integrations Section -->
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq19">
+                        Can I integrate TeamManager with other tools?
+                    </button>
+                </h2>
+                <div id="faq19" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        TeamManager integrates with Zoho Mail for email automation. Additional integrations may be available based on your subscription. Contact our support team for more information.
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq20">
+                        How do I enable email notifications?
+                    </button>
+                </h2>
+                <div id="faq20" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        Follow the "Creating Zoho Email for Email Automation" section above. You'll need to set up a Zoho Mail account and configure it in TeamManager's email settings. Once configured, staff will automatically receive registration, activation, and system notification emails.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Staff Management Section -->
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq21">
+                        What's the difference between manual account creation and self-registration?
+                    </button>
+                </h2>
+                <div id="faq21" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        <strong>Manual Creation:</strong> Admin creates accounts and sends welcome emails with temporary passwords. Best for controlled onboarding.
+                        <br><br>
+                        <strong>Self-Registration:</strong> Staff fill out a registration form, and admin approves accounts. Better for larger teams and remote hiring.
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq22">
+                        Can I organize staff into departments and teams?
+                    </button>
+                </h2>
+                <div id="faq22" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        Yes! TeamManager allows you to create and manage departments and teams. Staff can only access data within their assigned department or team (based on permissions), ensuring privacy and organization.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Support Section -->
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq23">
+                        How do I contact TeamManager Customer Support?
+                    </button>
+                </h2>
+                <div id="faq23" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        <strong>Option 1 – In-App Support:</strong>
+                        <ol>
+                            <li>Click "Contact Support" from the sidebar</li>
+                            <li>Enter:
+                                <ul>
+                                    <li>Subject</li>
+                                    <li>Message details</li>
+                                    <li>Screenshot (optional)</li>
+                                </ul>
+                            </li>
+                            <li>Click "Send Message"</li>
+                        </ol>
+                        <strong>Option 2 – Email:</strong>
+                        <ul>
+                            <li>📧 contact@teammanager.ng</li>
+                            <li>📧 teammanagerhelpdesk@gmail.com</li>
+                        </ul>
+                        <strong>Option 3 – Phone:</strong>
+                        <ul>
+                            <li>📞 +234-8169387684</li>
+                            <li>📞 +234-9075579816</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq24">
+                        How do I get support?
+                    </button>
+                </h2>
+                <div id="faq24" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        You can reach out via the <a href="{% url 'contact_support' %}">Contact Support</a> page, or email our support team directly. We're available during Normal Business Hours (9 AM - 5 PM, Monday-Friday) and typically respond within 24 hours.
+                    </div>
+                </div>
+            </div>
+
+            <!-- HR & Conference specific FAQ additions -->
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq25">
+                        Managing Vacancies
+                    </button>
+                </h2>
+                <div id="faq25" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        Use the HR Dashboard → Manage Vacancies to create and publish vacancies. Click a vacancy to view details, edit, or close it. Published vacancies accept applications and are visible to candidates.
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq26">
+                        Viewing All Applications
+                    </button>
+                </h2>
+                <div id="faq26" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        The All Applications page lists applications across vacancies. Use filters to narrow by vacancy, status or date. Click an application to view the applicant's details and take actions such as accept, shortlist, or reject.
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq27">
+                        Scheduling & Managing Interviews
+                    </button>
+                </h2>
+                <div id="faq27" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        Use Schedule Interview to create interview slots and link them to applications. The Manage Interviews page shows scheduled interviews and lets you update times, add participants, or cancel interviews.
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq28">
+                        Conference List & Management
+                    </button>
+                </h2>
+                <div id="faq28" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        The Conferences page lists all conferences. Use filters or search to find events. You can create, edit, post, or withdraw conference posts and manage participants from the conference detail page.
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="gs-section" style="text-align: center;">
+        <div style="background: #f7fafc; border-radius: 8px; padding: 3rem; border: 1px solid #e2e8f0;">
+            <h3 style="color: #2d3748; margin-bottom: 1rem;">Ready to Get Started?</h3>
+            <p style="color: #4a5568; margin-bottom: 1.5rem;">Follow the steps above to set up your company and enable your team. If you need assistance, our support team is here to help.</p>
+            <div class="gs-btn-group">
+                <a href="{% url 'unified_signup' %}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-rocket me-2"></i>Register Your Company
+                </a>
+                <a href="{% url 'contact_support' %}" class="btn btn-outline-primary btn-lg">
+                    <i class="fas fa-headset me-2"></i>Get Support
+                </a>
+            </div>
+        </div>
+    </section>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Highlight current section in quick nav
+    window.addEventListener('scroll', () => {
+        const sections = document.querySelectorAll('.gs-section[id]');
+        const quickNavLinks = document.querySelectorAll('.gs-quick-nav a');
+        
+        let current = '';
+        sections.forEach(section => {
+            const sectionTop = section.offsetTop;
+            if (window.pageYOffset >= sectionTop - 200) {
+                current = section.getAttribute('id');
+            }
+        });
+
+        quickNavLinks.forEach(link => {
+            const href = link.getAttribute('href').substring(1);
+            if (href === current) {
+                link.classList.add('active');
+            } else {
+                link.classList.remove('active');
+            }
+        });
+    });
+</script>
+{% endblock %}

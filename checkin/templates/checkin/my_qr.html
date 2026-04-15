@@ -1,0 +1,235 @@
+{% extends 'base.html' %}
+
+{% block title %}My QR Code{% endblock %}
+
+{% block content %}
+<div class="container py-4" style="max-width:480px;">
+
+  {# ── Header ── #}
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h4 class="mb-0"><i class="fas fa-qrcode me-2 text-primary"></i>My QR Code</h4>
+      <small class="text-muted">Scan this at the reception terminal to check in.</small>
+    </div>
+    <a href="{% url 'checkin:set_staff_pin' %}" class="btn btn-outline-secondary btn-sm">
+      <i class="fas fa-key me-1"></i>My PIN
+    </a>
+  </div>
+
+  {# ── QR card ── #}
+  <div class="card border-0 shadow-sm mb-3 overflow-hidden" id="qrCard">
+
+    {# Coloured header strip #}
+    <div style="background:linear-gradient(135deg,#0d6efd 0%,#198754 100%);padding:1rem 1rem .6rem;">
+      <div class="text-white fw-bold text-center" style="font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;">
+        Staff Check-in QR
+      </div>
+    </div>
+
+    <div class="card-body d-flex flex-column align-items-center py-4">
+
+      {# ── QR container — MUST be a <div>, not <canvas> ── #}
+      {# qrcode.js creates its own <canvas> or <img> inside this div #}
+      {# Quiet zone padding is critical — scanners need white space around QR edges #}
+      <div id="qrWrap" class="rounded mb-3"
+           style="display:inline-block;line-height:0;padding:16px;
+                  background:#ffffff;border:1px solid #dee2e6;">
+        <div id="qrCanvas"></div>
+      </div>
+
+      {# Staff name + username #}
+      <div class="fw-bold fs-5 mb-0">
+        {{ request.user.get_full_name|default:request.user.username }}
+      </div>
+      <div class="text-muted small mb-3">@{{ request.user.username }}</div>
+
+      {# Token display (truncated for display) #}
+      <div class="d-flex align-items-center gap-2 mb-1">
+        <code class="text-muted" style="font-size:.72rem;" id="tokenDisplay">
+          {{ qr_token|slice:":8" }}…{{ qr_token|slice:"-4:" }}
+        </code>
+        <button class="btn btn-link btn-sm p-0 text-muted" onclick="copyToken()"
+                title="Copy full token" data-bs-toggle="tooltip">
+          <i class="fas fa-copy" id="copyIcon"></i>
+        </button>
+      </div>
+      <div class="small text-muted">Token (partial) – refreshes when you regenerate</div>
+
+    </div>
+
+    {# Footer strip #}
+    <div class="card-footer bg-transparent border-top py-2 text-center">
+      <small class="text-muted">
+        <i class="fas fa-shield-alt me-1 text-success"></i>
+        This QR is unique to you. Do not share it.
+      </small>
+    </div>
+
+  </div>
+
+  {# ── Actions ── #}
+  <div class="row g-2 mb-3">
+    <div class="col-6">
+      <button onclick="downloadQR()" class="btn btn-primary w-100">
+        <i class="fas fa-download me-2"></i>Download
+      </button>
+    </div>
+    <div class="col-6">
+      <button onclick="printQR()" class="btn btn-outline-primary w-100">
+        <i class="fas fa-print me-2"></i>Print
+      </button>
+    </div>
+    <div class="col-6">
+      <button onclick="shareQR()" class="btn btn-outline-success w-100" id="shareBtn">
+        <i class="fas fa-share-alt me-2"></i>Share
+      </button>
+    </div>
+    <div class="col-6">
+      {# Regenerate – POST form for CSRF safety #}
+      <form method="post" action="{% url 'checkin:regenerate_qr' %}" id="regenForm">
+        {% csrf_token %}
+        <button type="button" onclick="confirmRegen()" class="btn btn-outline-danger w-100">
+          <i class="fas fa-sync-alt me-2"></i>Regenerate
+        </button>
+      </form>
+    </div>
+  </div>
+
+  {# ── Info cards ── #}
+  <div class="row g-2">
+    <div class="col-12">
+      <div class="card border-0 bg-light">
+        <div class="card-body py-2 small text-muted">
+          <i class="fas fa-info-circle me-1 text-primary"></i>
+          <strong>How to use:</strong> Show this QR to the receptionist or hold it up to the
+          camera on the check-in terminal. The system will identify you automatically.
+        </div>
+      </div>
+    </div>
+    <div class="col-12">
+      <div class="card border-0 bg-light">
+        <div class="card-body py-2 small text-muted">
+          <i class="fas fa-exclamation-triangle me-1 text-warning"></i>
+          <strong>Lost or compromised?</strong> Click <em>Regenerate</em> to invalidate your
+          current QR immediately and get a new one. Your old QR will stop working right away.
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"
+        integrity="sha512-CNgIRecGo7nphbeZ04Sc13ka07paqdeTu0WR1IM4kNcpmBAUSHSQX0FslNhTDadL4O5SAGapGt4FodqL8My0mA=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script>
+(function () {
+  "use strict";
+
+  const TOKEN = "{{ qr_token }}";
+  const NAME  = "{{ request.user.get_full_name|default:request.user.username|escapejs }}";
+
+  /* ── Generate QR into the <div> container ── */
+  const qrDiv = document.getElementById('qrCanvas');
+  const qr    = new QRCode(qrDiv, {
+    text:         TOKEN,
+    width:        260,          /* larger = easier for cameras to resolve */
+    height:       260,
+    colorDark:    "#000000",    /* MUST be black — coloured QRs fail most cameras */
+    colorLight:   "#ffffff",    /* MUST be white — no transparency */
+    correctLevel: QRCode.CorrectLevel.M,  /* M gives better scan rate than H */
+  });
+
+  /* ── Helper: get the rendered canvas or img inside qrDiv ── */
+  function getQRElement() {
+    return qrDiv.querySelector('canvas') || qrDiv.querySelector('img');
+  }
+
+  /* ── Download as PNG ── */
+  window.downloadQR = function () {
+    const el   = getQRElement();
+    const link = document.createElement('a');
+    link.download = `checkin-qr-${NAME.replace(/\s/g,'_')}.png`;
+    link.href     = (el.tagName === 'CANVAS') ? el.toDataURL('image/png') : el.src;
+    link.click();
+  };
+
+  /* ── Print ── */
+  window.printQR = function () { window.print(); };
+
+  /* ── Share (Web Share API → clipboard fallback) ── */
+  window.shareQR = async function () {
+    const el = getQRElement();
+    if (navigator.share && el && el.tagName === 'CANVAS') {
+      try {
+        el.toBlob(async blob => {
+          const file = new File([blob], 'my-checkin-qr.png', { type: 'image/png' });
+          await navigator.share({ title: 'My Check-in QR', text: `${NAME}'s check-in QR`, files: [file] });
+        }, 'image/png');
+        return;
+      } catch (_) {}
+    }
+    try {
+      await navigator.clipboard.writeText(TOKEN);
+      const btn  = document.getElementById('shareBtn');
+      const orig = btn.innerHTML;
+      btn.innerHTML = '<i class="fas fa-check me-2"></i>Token Copied!';
+      btn.classList.replace('btn-outline-success', 'btn-success');
+      setTimeout(() => { btn.innerHTML = orig; btn.classList.replace('btn-success', 'btn-outline-success'); }, 2000);
+    } catch (_) {
+      alert('Share not supported. Screenshot your QR code to save it.');
+    }
+  };
+
+  /* ── Copy full token ── */
+  window.copyToken = async function () {
+    try {
+      await navigator.clipboard.writeText(TOKEN);
+      const icon = document.getElementById('copyIcon');
+      icon.className = 'fas fa-check text-success';
+      setTimeout(() => icon.className = 'fas fa-copy', 1800);
+    } catch (_) {}
+  };
+
+  /* ── Regenerate confirmation ── */
+  window.confirmRegen = function () {
+    if (confirm(
+      'Regenerate your QR code?\n\nYour current QR will stop working immediately. ' +
+      'You will need to use your new QR for future check-ins.'
+    )) {
+      document.getElementById('regenForm').submit();
+    }
+  };
+
+  /* ── Bootstrap tooltips ── */
+  document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
+    new bootstrap.Tooltip(el, { trigger: 'hover focus' });
+  });
+
+})();
+</script>
+{% endblock %}
+
+
+{% block extra_css %}
+<style>
+@media print {
+  body *    { visibility: hidden !important; }
+  #qrCard,
+  #qrCard * { visibility: visible !important; }
+  #qrCard {
+    position: fixed !important;
+    inset: 0 !important;
+    top: 15mm !important;
+    left: 50% !important;
+    width: 80mm !important;
+    transform: translateX(-50%) !important;
+    box-shadow: none !important;
+    border: 1px solid #ccc !important;
+  }
+}
+</style>
+{% endblock %}

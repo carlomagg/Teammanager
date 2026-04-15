@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Receptionist Role{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4 memo-receptionist-page">
+    <div class="row mb-4">
+        <div class="col-12 d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <h2 class="fw-semibold mb-1">
+                    <i class="fas fa-user-tie me-2 text-primary"></i>Manage Receptionist Role
+                </h2>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-0 small text-muted">
+                        <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'memo:dashboard' %}">Mail & Memo</a></li>
+                        <li class="breadcrumb-item active">Receptionist</li>
+                    </ol>
+                </nav>
+                <p class="text-muted mb-0 small mt-2">
+                    Receptionists handle incoming memos with no specific recipient and route them to the right staff.
+                </p>
+            </div>
+            <a href="{% url 'memo:dashboard' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Back to dashboard
+            </a>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Staff Member</th>
+                        <th>Email</th>
+                        <th>Current Role</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for member in staff %}
+                    <tr>
+                        <td>
+                            <strong>{{ member.get_full_name|default:member.username }}</strong>
+                        </td>
+                        <td>{{ member.email }}</td>
+                        <td>
+                            {% if member.pk in receptionist_ids %}
+                            <span class="badge bg-success"><i class="fas fa-user-tie me-1"></i> Receptionist</span>
+                            {% else %}
+                            <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <form method="POST" style="display: inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="user_id" value="{{ member.pk }}">
+                                {% if member.pk in receptionist_ids %}
+                                <button type="button" class="btn btn-sm btn-outline-danger js-confirm-submit" data-confirm-title="Revoke Receptionist" data-confirm-message="Revoke receptionist role from {{ member.username }}?" data-confirm-submit-text="Revoke">
+                                    <i class="fas fa-user-minus me-1"></i> Revoke
+                                </button>
+                                {% else %}
+                                <button type="submit" name="action" value="assign" class="btn btn-sm btn-outline-success">
+                                    <i class="fas fa-user-plus me-1"></i> Assign
+                                </button>
+                                {% endif %}
+                            </form>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center py-4 text-muted">No staff members found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Confirm Action Modal -->
+<div class="modal fade" id="receptionistConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="receptionistConfirmTitle">Confirm</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="receptionistConfirmMessage">Are you sure?</div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="receptionistConfirmSubmitBtn">Continue</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        const modalEl = document.getElementById('receptionistConfirmModal');
+        if (!modalEl || typeof bootstrap === 'undefined') return;
+
+        const modal = new bootstrap.Modal(modalEl);
+        const titleEl = document.getElementById('receptionistConfirmTitle');
+        const msgEl = document.getElementById('receptionistConfirmMessage');
+        const submitBtn = document.getElementById('receptionistConfirmSubmitBtn');
+        let formToSubmit = null;
+
+        document.querySelectorAll('.js-confirm-submit').forEach(btn => {
+            btn.addEventListener('click', function() {
+                formToSubmit = this.closest('form');
+                if (!formToSubmit) return;
+
+                titleEl.textContent = this.getAttribute('data-confirm-title') || 'Confirm';
+                msgEl.textContent = this.getAttribute('data-confirm-message') || 'Are you sure?';
+                submitBtn.textContent = this.getAttribute('data-confirm-submit-text') || 'Continue';
+                modal.show();
+            });
+        });
+
+        submitBtn.addEventListener('click', function() {
+            if (formToSubmit) formToSubmit.submit();
+        });
+    })();
+</script>
+{% endblock %}

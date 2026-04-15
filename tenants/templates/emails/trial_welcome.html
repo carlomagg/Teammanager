@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #2c3e50, #3498db); color: white; padding: 20px; text-align: center; }
+        .content { padding: 20px; background: #f9f9f9; }
+        .trial-box { background: #e8f4f8; border-left: 4px solid #3498db; padding: 15px; margin: 20px 0; text-align: center; }
+        .button { display: inline-block; padding: 12px 24px; background: #3498db; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; }
+        .footer { text-align: center; padding: 20px; font-size: 12px; color: #777; }
+        .warning { background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Welcome to {{ TeamManager }}! 🎉</h2>
+        </div>
+        <div class="content">
+            <h3>Hello {{ user.get_full_name|default:user.email }},</h3>
+            
+            <p>Thank you for using {{ TeamManager }}! We're excited to have you on board.</p>
+            
+            <div class="trial-box">
+                <h3>🎁 You have a 7-Day Free Trial!</h3>
+                <p>Your trial period started today and will end on <strong>{{ trial_end_date|date:"F j, Y" }}</strong>.</p>
+                <p>During your trial, you have full access to all premium features.</p>
+            </div>
+            
+            {% if is_tenant_user %}
+                <div class="warning">
+                    <h4>⚠️ Important Information for Team Members</h4>
+                    <p>Your organization's administrator will need to subscribe to a plan after your trial ends.</p>
+                    <p>Please contact your administrator to ensure continued access:</p>
+                    {% if admin_email %}
+                    <p><strong>Admin Email:</strong> <a href="mailto:{{ admin_email }}">{{ admin_email }}</a></p>
+                    {% endif %}
+                </div>
+            {% else %}
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="{{ subscribe_url }}" class="button">Choose a Plan & Subscribe</a>
+                </div>
+                <p style="text-align: center;">Choose a plan that fits your needs before your trial ends!</p>
+            {% endif %}
+            
+            <div class="warning">
+                <h4>⏰ What happens after 7 days?</h4>
+                <p>When your trial ends:</p>
+                <ul>
+                    <li>You will lose access to premium features</li>
+                    {% if is_tenant_user %}
+                    <li>Contact your administrator to subscribe</li>
+                    {% else %}
+                    <li>You'll need to subscribe to continue using the platform</li>
+                    <li>Your data will be preserved for 30 days after trial ends</li>
+                    {% endif %}
+                </ul>
+            </div>
+            
+            <div style="margin: 30px 0;">
+                <h4>✨ What you can do during your trial:</h4>
+                <ul>
+                    <li>Explore all premium features</li>
+                    <li>Invite team members (if you're an admin)</li>
+                    <li>Create and manage content</li>
+                    <li>Access 24/7 support</li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer">
+            <p>Need help? Contact our support team at <a href="mailto:support@{{ domain }}">support@{{ domain }}</a></p>
+            <p>&copy; {% now "Y" %} {{ TeamManager }}. All rights reserved.</p>
+            <p><small>You're receiving this email because you created an account with us.</small></p>
+        </div>
+    </div>
+</body>
+</html>

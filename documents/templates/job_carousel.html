@@ -1,0 +1,252 @@
+{% load static %}
+
+{# Job Board Carousel - similar to conference carousel but for vacancies #}
+{% if vacancies %}
+<h3 class="tm-carousel-heading text-center mb-4"><a class="header-link" href="{% url 'job_board' %}">💼 Job Opportunities </a></h3>
+<div class="tm-carousel-container" aria-label="job opportunities carousel">
+    <button class="tm-carousel-nav tm-carousel-prev">❮</button>
+    <div class="tm-carousel-track" aria-hidden="true">
+        <div class="tm-carousel-track-inner">
+            {% for item in vacancies %}
+            <div class="tm-carousel-card">
+                {% comment %} <a href="{% url 'vacancy_post' item.share_token %}" class="tm-card-enter-icon" title="View job post">↗</a> {% endcomment %}
+                <div class="tm-card-image" style="background: linear-gradient(135deg, #319795 0%, #2d3748 100%); display: flex; align-items: center; justify-content: center;">
+                    <span style="color: #fff; font-size: 2rem; font-weight: bold;">💼</span>
+                </div>
+                <div class="tm-card-content">
+                    <h3>{{ item.title }}</h3>
+                    {%if item.tenant is not None %}
+                        <small class="text-primary">{{ item.tenant.name }}</small>
+                    {% else %}
+                        <small class="text-primary">{{ item.created_by.get_full_name }}</small>
+                    {% endif %}
+                    <p>{% if item.description %}{{ item.description|truncatewords:18 }}{% else %}{{ item.title }}{% endif %}</p>
+                </div>
+                <a href="{% url 'vacancy_post' item.share_token %}" class="tm-card-link" aria-label="View details for {{ item.title }}"></a>
+            </div>
+            {% endfor %}
+
+            {# end vacancies loop - single set only #}
+        </div>
+    </div>
+    <button class="tm-carousel-nav tm-carousel-next">❯</button>
+</div>
+
+<style>
+    /* Job carousel uses same base styles as conference carousel */
+    .tm-carousel-heading {
+        color: #2d3748;
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+    }
+    body.dark-mode .tm-carousel-heading {
+        color: #e2e8f0;
+    }
+    .tm-carousel-container { margin: 30px auto; max-width: 1200px; overflow: hidden; position: relative; border-radius: 0.75rem; background: transparent; }
+    .tm-carousel-track { width: 100%; }
+    .tm-carousel-track-inner { display: flex; gap: 1.2rem; align-items: stretch; padding: 1rem 0; will-change: transform; transition: transform 0.05s linear; /* For smoother scrolling */ }
+    .tm-card-link {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 10;         /* Ensures it's on top of images/text */
+    }
+
+    .tm-card-link::after {
+        content: "";
+        position: absolute;
+        inset: 0;            /* Shorthand for top/right/bottom/left: 0 */
+    }
+    .tm-carousel-card { flex: 0 0 280px; height: 220px; background: #ffffff; border-radius: 0.75rem; overflow: hidden; box-shadow: 0 6px 18px rgba(0,0,0,0.08); display: flex; flex-direction: column; position: relative; cursor: pointer; transition: transform 0.25s ease, box-shadow 0.25s ease; transform-origin: center top; }
+    .tm-carousel-card:focus-within {
+        outline: 3px solid #007bff;  /* Or your preferred focus color */
+        outline-offset: 2px;
+    }
+    .tm-card-enter-icon { position: absolute; top: 8px; right: 8px; width: 36px; height: 36px; background-color: rgba(43, 108, 176, 0.85); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; text-decoration: none; z-index: 10; transition: background-color 0.2s ease, transform 0.2s ease; }
+    .tm-card-enter-icon:hover { background-color: rgba(43, 108, 176, 1); transform: scale(1.1); }
+    .tm-card-image { width: 100%; height: 120px; background-size: cover; background-position: center; object-fit: cover; }
+    .tm-card-content { padding: 0.6rem; text-align: center; display: flex; flex-direction: column; justify-content: space-between; }
+    .tm-card-content h3 { margin: 0.25rem 0; font-size: 1.05rem; color: #2d3748; font-weight: 700; }
+    .tm-card-content p { margin: 0; font-size: 0.85rem; color: #4a5568; opacity: 0.95; }
+
+    /* Hover / focus lift to visually pull card forward */
+    .tm-carousel-card:hover,
+    .tm-carousel-card:focus-within {
+        transform: translateY(-8px) scale(1.035);
+        box-shadow: 0 14px 36px rgba(15, 23, 42, 0.18);
+        z-index: 30;
+    }
+
+    /* Navigation Buttons */
+    .tm-carousel-nav {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        background-color: rgba(102, 126, 234, 0.8);
+        color: #fff;
+        border: none;
+        padding: 0.5rem 0.75rem;
+        border-radius: 0.375rem;
+        font-size: 1.2rem;
+        cursor: pointer;
+        z-index: 20;
+        transition: background-color 0.2s ease, transform 0.2s ease;
+        font-weight: bold;
+    }
+    .tm-carousel-nav:hover {
+        background-color: rgba(102, 126, 234, 1);
+        transform: translateY(-50%) scale(1.1);
+    }
+    .tm-carousel-nav:active {
+        transform: translateY(-50%) scale(0.95);
+    }
+    .tm-carousel-prev {
+        left: 8px;
+    }
+    .tm-carousel-next {
+        right: 8px;
+    }
+
+    /* Dark Mode Theme */
+    body.dark-mode .tm-carousel-container {
+        background: #2d3748;
+    }
+    body.dark-mode .tm-carousel-card {
+        background: #3b4a6b;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+    }
+    body.dark-mode .tm-card-content h3 {
+        color: #e2e8f0;
+    }
+    body.dark-mode .tm-card-content p {
+        color: #a0aec0;
+    }
+    body.dark-mode .tm-carousel-nav {
+        background-color: rgba(118, 75, 162, 0.8);
+    }
+    body.dark-mode .tm-carousel-nav:hover {
+        background-color: rgba(118, 75, 162, 1);
+    }
+
+    /* JS-driven continuous scroll (no CSS animation) */
+
+    @media (max-width: 1024px) { .tm-carousel-card { flex: 0 0 220px; } }
+    @media (max-width: 768px) { .tm-carousel-card { flex: 0 0 180px; } }
+
+    .header-link {
+        text-decoration: none;
+        color: inherit;
+    }
+</style>
+{% else %}
+<!-- No job vacancies available -->
+{% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+    const container = document.querySelector('.tm-carousel-container[aria-label="job opportunities carousel"]');
+    if(!container) return;
+    const track = container.querySelector('.tm-carousel-track-inner');
+    if(!track) return;
+
+    // Infinite scroll: clone items to create seamless loop (reintroduced for infinite slide without bounce)
+    const originalChildren = Array.from(track.children);
+    const cloneCount = 2; // Duplicate twice for smoother loop (adjust if needed)
+    for(let i = 0; i < cloneCount; i++) {
+        originalChildren.forEach(child => track.appendChild(child.cloneNode(true)));
+    }
+
+    let cardWidth = 280; // match CSS var(--card-width)
+    let gap = 19.2; // match CSS var(--card-gap) 1.2rem in px (~19.2px at 16px base)
+    let offset = 0;
+    let speed = 5; // pixels per scroll step
+    let isAutoScroll = true;
+    let autoScrollInterval = null;
+    let singleSetWidth = 0;
+    let startX = 0;
+    let isDragging = false;
+    let currentOffset = 0;
+
+    // Calculate dynamic widths on load
+    function updateDimensions(){
+        const firstCard = track.querySelector('.tm-carousel-card');
+        if(firstCard){
+            cardWidth = firstCard.offsetWidth;
+            gap = parseFloat(window.getComputedStyle(track).gap) || 19.2;
+        }
+        singleSetWidth = originalChildren.length * (cardWidth + gap);
+        console.log('Single Set Width:', singleSetWidth, 'Track Width:', track.scrollWidth, 'Container Width:', container.offsetWidth); // Debug log
+    }
+
+    function autoScroll(){
+        offset += speed;
+        if(offset >= singleSetWidth) offset -= singleSetWidth;
+        track.style.transform = `translateX(${-offset}px)`;
+    }
+
+    function scroll(direction){
+        isAutoScroll = false;
+        const stepSize = cardWidth + gap;
+        offset += direction * stepSize;
+        track.style.transform = `translateX(${-offset}px)`;
+        // Resume auto-scroll after 3 seconds
+        setTimeout(() => { isAutoScroll = true; }, 3000);
+    }
+
+    // Touch/Swipe functionality
+    function handleTouchStart(e) {
+        isAutoScroll = false;
+        isDragging = true;
+        startX = e.touches[0].clientX;
+        currentOffset = offset;
+        track.style.transition = 'none'; // Remove transition for smooth drag
+    }
+
+    function handleTouchMove(e) {
+        if (!isDragging) return;
+        const touchX = e.touches[0].clientX;
+        const deltaX = startX - touchX;
+        offset = currentOffset + deltaX;
+        track.style.transform = `translateX(${-offset}px)`;
+    }
+
+    function handleTouchEnd() {
+        isDragging = false;
+        track.style.transition = 'transform 0.05s linear'; // Restore transition
+        // Snap to nearest card (optional, for better UX)
+        const nearestCard = Math.round(offset / (cardWidth + gap)) * (cardWidth + gap);
+        offset = nearestCard;
+        track.style.transform = `translateX(${-offset}px)`;
+        // Resume auto-scroll after 3 seconds
+        setTimeout(() => { isAutoScroll = true; }, 3000);
+    }
+
+    // Auto-scroll on an interval
+    function startAutoScroll(){
+        autoScrollInterval = setInterval(() => { if(isAutoScroll && !isDragging) autoScroll(); }, 30);
+    }
+
+    // Navigation buttons
+    const prevBtn = container.querySelector('.tm-carousel-prev');
+    const nextBtn = container.querySelector('.tm-carousel-next');
+    if(prevBtn) prevBtn.addEventListener('click', () => scroll(-1));
+    if(nextBtn) nextBtn.addEventListener('click', () => scroll(1));
+
+    // Pause on hover
+    container.addEventListener('mouseenter', () => { isAutoScroll = false; });
+    container.addEventListener('mouseleave', () => { isAutoScroll = true; });
+
+    // Touch events for swipe
+    track.addEventListener('touchstart', handleTouchStart);
+    track.addEventListener('touchmove', handleTouchMove);
+    track.addEventListener('touchend', handleTouchEnd);
+
+    // Start and re-calculate on resize for responsiveness
+    updateDimensions();
+    startAutoScroll();
+    window.addEventListener('resize', updateDimensions);
+});
+</script>

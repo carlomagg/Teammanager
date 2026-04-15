@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ conference.title }} — Update Notification</title>
+  <style type="text/css">
+    /* Reset styles */
+    body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacOSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f4f4f9; color: #333333; }
+    table, td { border-collapse: collapse; }
+    a { color: #2c7a7b; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* Container */
+    .email-wrapper { width: 100%; background-color: #f4f4f9; padding: 20px 0; }
+    .email-container { max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+
+    /* Header */
+    .header { background-color: #319795; color: white; padding: 32px 24px; text-align: center; }
+    .header h1 { margin: 0; font-size: 24px; font-weight: 600; }
+
+    /* Content */
+    .content { padding: 32px 24px; font-size: 16px; line-height: 1.5; }
+    .content h2 { margin: 0 0 16px; font-size: 20px; color: #1a1a1a; }
+    .content p { margin: 0 0 20px; }
+    .detail-row { margin-bottom: 16px; }
+    .detail-label { font-weight: 600; color: #444; min-width: 140px; display: inline-block; }
+    .detail-value { color: #222; }
+
+    /* Button */
+    .btn { display: inline-block; background-color: #2c7a7b; color: white !important; padding: 14px 32px; border-radius: 6px; font-weight: 500; text-decoration: none !important; margin: 24px 0; }
+    .btn:hover { background-color: #47a3a2ff; }
+
+    /* Footer */
+    .footer { background-color: #f8f9fa; padding: 24px; text-align: center; font-size: 14px; color: #666; border-top: 1px solid #eee; }
+    .footer a { color: #319795; }
+
+    /* Responsive */
+    @media only screen and (max-width: 600px) {
+      .content { padding: 24px 16px; }
+      .header { padding: 24px 16px; }
+      .detail-label { display: block; margin-bottom: 4px; }
+      h1 { font-size: 22px !important; }
+    }
+  </style>
+</head>
+<body>
+  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" class="email-wrapper">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" class="email-container">
+          
+          <!-- Header -->
+          <tr>
+            <td class="header">
+              <h1>Conference Update</h1>
+            </td>
+          </tr>
+
+          <!-- Main Content -->
+          <tr>
+            <td class="content">
+
+              <p>Hi <strong>{{ participant_name|default:"Participant" }}</strong>,</p>
+
+              <p>The following conference has been updated:</p>
+
+              <h2>{{ conference.title }}</h2>
+
+              <div class="detail-row">
+                <span class="detail-label">Theme:</span>
+                <span class="detail-value">{{ conference.theme|default:"Not specified" }}</span>
+              </div>
+
+              <div class="detail-row">
+                <span class="detail-label">Start Date:</span>
+                <span class="detail-value">{{ conference.start_date|date:"D, d M Y" }}</span>
+              </div>
+
+              <div class="detail-row">
+                <span class="detail-label">End Date:</span>
+                <span class="detail-value">{{ conference.end_date|date:"D, d M Y"|default:"Not specified" }}</span>
+              </div>
+
+              <div class="detail-row">
+                <span class="detail-label">Type:</span>
+                <span class="detail-value">{{ conference.conference_type|capfirst|default:"Not specified" }}</span>
+              </div>
+
+              {% if conference.conference_type == "physical" or participant_attendance_mode == "physical" %}
+                <div class="detail-row">
+                  <span class="detail-label">Venue:</span>
+                  <span class="detail-value">{{ conference.venue|default:"To be announced" }}</span>
+                </div>
+              {% else %}
+                <div class="detail-row">
+                  <span class="detail-label">Virtual Link:</span>
+                  <span class="detail-value">
+                    {% if conference.virtual_link %}
+                      <a href="{{ conference.virtual_link }}">{{ conference.virtual_link }}</a>
+                    {% else %}
+                      Not provided
+                    {% endif %}
+                  </span>
+                </div>
+              {% endif %}
+
+              {% if qr_data_uri %}
+              <p>Present this at the venue for seamless checkin</p>
+              <img src="{{ qr_data_uri }}" alt="QR Code" class="img-fluid" style="max-width:240px;">
+              {% endif %}
+
+              <p style="margin-top: 32px;">
+                <a href="{{ access_url }}" class="btn">View Conference Details</a>
+              </p>
+
+              <p style="margin-top: 32px; font-size: 15px;">
+                You can also manage your participation and view all your events from your dashboard:
+              </p>
+
+              <p>
+                <a href="{{ dashboard_url }}" class="btn">Go to Dashboard</a>
+              </p>
+
+              <p style="margin-top: 32px; color: #555; font-size: 14px;">
+                If you have any questions, feel free to contact the organizer or support team.
+              </p>
+
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td class="footer">
+              <p>
+                This is an automated notification from <strong>{{ "TeamManager" }}</strong>.<br>
+                <a href="{{ dashboard_url }}">My Dashboard</a> • 
+                <a href="#">Unsubscribe from updates</a> • 
+                <a href="{% url 'policies' %}">Privacy Policy</a>
+              </p>
+              <p>&copy; {{ current_year }} TeamManager. All rights reserved.</p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

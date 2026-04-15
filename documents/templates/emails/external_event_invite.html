@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: Arial, sans-serif; color: #333; margin:0; padding:0; background:#f4f4f4; }
+    .wrapper { max-width:600px; margin:30px auto; background:#fff; border-radius:8px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.08); }
+    .header { background:#1a56db; color:#fff; padding:28px 32px; }
+    .header h1 { margin:0; font-size:22px; }
+    .body { padding:28px 32px; }
+    .detail-row { display:flex; gap:12px; margin-bottom:12px; }
+    .detail-label { font-weight:600; min-width:90px; color:#555; }
+    .message-box { background:#f0f4ff; border-left:4px solid #1a56db; padding:14px 16px; border-radius:4px; margin-top:20px; }
+    .footer { padding:16px 32px; background:#f9fafb; font-size:12px; color:#888; border-top:1px solid #eee; }
+    a { color:#1a56db; }
+  </style>
+</head>
+<body>
+<div class="wrapper">
+  <div class="header">
+    <h1>📅 You're Invited</h1>
+    <p style="margin:4px 0 0;opacity:0.85;">{{ inviter_name }} has invited you to an event</p>
+  </div>
+  <div class="body">
+    <h2 style="margin-top:0;">{{ event.title }}</h2>
+ 
+    <div class="detail-row">
+      <span class="detail-label">When</span>
+      <span>{{ event.start_time|date:"l, d F Y  H:i" }} – {{ event.end_time|date:"H:i" }}</span>
+    </div>
+ 
+    {% if event.booking_type and event.booking_type.location %}
+    <div class="detail-row">
+      <span class="detail-label">Where</span>
+      <span>{{ event.booking_type.location }}</span>
+    </div>
+    {% endif %}
+ 
+    {% if event.event_link %}
+    <div class="detail-row">
+      <span class="detail-label">Link</span>
+      <span><a href="{{ event.event_link }}">{{ event.event_link }}</a></span>
+    </div>
+    {% endif %}
+ 
+    {% if event.description %}
+    <div class="detail-row">
+      <span class="detail-label">Details</span>
+      <span>{{ event.description }}</span>
+    </div>
+    {% endif %}
+ 
+    {% if personal_message %}
+    <div class="message-box">
+      <strong>A note from {{ inviter_name }}:</strong><br>
+      {{ personal_message }}
+    </div>
+    {% endif %}
+  </div>
+  <div class="footer">
+    Sent by {{ inviter_name }} ({{ inviter.email }}) via {{ site_name }}.
+    If you believe you received this email in error, you can safely ignore it.
+  </div>
+</div>
+</body>
+</html>

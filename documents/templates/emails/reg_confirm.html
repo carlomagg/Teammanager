@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Account Approved - {{ tenant_name }}</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body style="margin: 0; padding: 0; background-color: #f7fafc; font-family: 'Helvetica Neue', Arial, sans-serif; color: #4a5568;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f7fafc; padding: 20px 0;">
+    <tr>
+      <td align="center">
+        <!-- Main Container -->
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);">
+          
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #319795 0%, #2c7a7b 100%); padding: 36px 40px; text-align: center; color: white;">
+              <h1 style="margin: 0 0 8px; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">
+                Account Confirmed & Approved!
+              </h1>
+              <p style="margin: 0; font-size: 17px; opacity: 0.95;">
+                Your account is ready
+              </p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 40px 32px;">
+              <p style="margin: 0 0 20px; font-size: 16px; line-height: 1.75; color: #4a5568;">
+                Hello <strong>{{ user_name }}</strong>,
+              </p>
+
+              <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.75; color: #4a5568;">
+                Your account registration has been <span style="color: #319795; font-weight: 600;">successfully received and approved</span>. Your staff profile is now active.
+              </p>
+
+              <!-- Status Message -->
+              <div style="background-color: #e6fffa; border: 1px solid #81e6d9; border-radius: 10px; padding: 24px; margin: 28px 0; text-align: center;">
+                <h3 style="margin: 0 0 12px; font-size: 20px; color: #2c7a7b; font-weight: 600;">
+                  Account Created & Approved
+                </h3>
+                <p style="margin: 0; font-size: 16px; color: #2c7a7b;">
+                  You’re all set to log in and get started!
+                </p>
+              </div>
+
+              <!-- Account Details -->
+              <div style="background-color: #f8fffe; border-left: 4px solid #319795; padding: 20px; margin: 28px 0; border-radius: 0 8px 8px 0;">
+                <h3 style="margin: 0 0 16px; font-size: 18px; color: #2d3748; font-weight: 600;">
+                  Account Information
+                </h3>
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="font-size: 15px;">
+                  <tr>
+                    <td style="padding: 6px 0; font-weight: 600; color: #718096; width: 120px;">Username:</td>
+                    <td style="padding: 6px 0; color: #2d3748;">{{ user_name }}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 6px 0; font-weight: 600; color: #718096; width: 120px;">Email:</td>
+                    <td style="padding: 6px 0; color: #2d3748;">{{ user_email }}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 6px 0; font-weight: 600; color: #718096; width: 120px;">Temporary Password:</td>
+                    <td style="padding: 6px 0; color: #2d3748;">{{ user_password }}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 6px 0; font-weight: 600; color: #718096;">Company:</td>
+                    <td style="padding: 6px 0; color: #2d3748;">{{ tenant_name }}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 6px 0; font-weight: 600; color: #718096;">Status:</td>
+                    <td style="padding: 6px 0;">
+                      <span style="color: #319795; font-weight: 600;">Approved</span>
+                      <span style="display: inline-block; background-color: #319795; color: white; font-size: 12px; font-weight: bold; padding: 2px 10px; border-radius: 20px; margin-left: 8px;"><i class="fas fa-check"></i></span>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+
+              <!-- Login Info -->
+              <div style="background-color: #f0fdfa; border: 1px solid #81e6d9; border-radius: 10px; padding: 20px; margin: 28px 0; text-align: center;">
+                <h4 style="margin: 0 0 12px; font-size: 17px; color: #2c7a7b; font-weight: 600;">
+                  Login Link
+                </h4>
+                <p style="margin: 0 0 12px; font-size: 15px; color: #4a5568;">
+                  Access your account here:
+                </p>
+                <p style="background-color: white; padding: 12px; border-radius: 6px; font-family: 'Courier New', monospace; font-size: 14px; word-break: break-all; color: #2c7a7b; border: 1px dashed #81e6d9;">
+                  <a href={{ login_url }}>Login</a>
+                </p>
+                <p style="margin: 12px 0 0; font-size: 14px; color: #718096;">
+                  <em>Your account is now active — log in anytime.</em>
+                </p>
+              </div>
+
+              <!-- Next Steps -->
+              <div style="background-color: #f8fffe; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px; margin: 28px 0;">
+                <h4 style="margin: 0 0 16px; font-size: 17px; color: #2c7a7b; font-weight: 600;">
+                  What’s Next?
+                </h4>
+                <p style="margin: 0 0 16px; font-size: 15px; color: #4a5568;">
+                  After logging in, here’s what you can do:
+                </p>
+                <ul style="margin: 0; padding-left: 20px; font-size: 15px; color: #4a5568; line-height: 1.7;">
+                  <li><strong>Staff Profile:</strong> <a href="{{ my_profile }}" style="color: #319795; text-decoration: underline;">Update your profile</a> with your details.</li>
+                  <li><strong>SMTP Email:</strong> Go to <a href="{{ email_config }}" style="color: #319795; text-decoration: underline;">Settings</a> to set up email for notifications.</li>
+                  <li><strong>Organization:</strong> View your <a href="{{ comp_profile }}" style="color: #319795; text-decoration: underline;">company profile</a>.</li>
+                  <li><strong>Get Started:</strong> Streamline your workflow with our tools!</li>
+                </ul>
+              </div>
+
+              <p style="margin: 28px 0 0; font-size: 15px; color: #718096;">
+                Need help? Contact your system administrator.
+              </p>
+
+              <!-- Signature -->
+              <div style="margin-top: 36px; padding-top: 28px; border-top: 1px solid #e2e8f0;">
+                <p style="margin: 0; font-size: 16px; color: #2d3748;">
+                  Best regards,
+                </p>
+                <p style="margin: 4px 0 0; font-size: 16px; color: #319795; font-weight: 600;">
+                  {{ admin_name }}
+                </p>
+                <p style="margin: 4px 0 0; font-size: 14px; color: #718096;">
+                  System Administrator<br>
+                  {{ tenant_name }}
+                </p>
+                <p style="margin: 8px 0 0; font-size: 14px; color: #4a5568;">
+                  <strong>{{ admin_email }}</strong>
+                </p>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #f7fafc; padding: 28px 40px; text-align: center; font-size: 13px; color: #94a3b8; border-top: 1px solid #e2e8f0;">
+              <p style="margin: 0 0 8px; font-weight: 600; color: #4a5568;">
+                {{ tenant_name }} Team Portal
+              </p>
+              <p style="margin: 0; font-size: 12px;">
+                This is an automated confirmation • Do not reply<br>
+                © {{ "now"|date:"Y" }} {{ tenant_name }}. All rights reserved.
+              </p>
+            </td>
+          </tr>
+        </table>
+
+        <!-- Bottom Note -->
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="margin-top: 24px;">
+          <tr>
+            <td style="text-align: center; font-size: 12px; color: #94a3b8;">
+              <p style="margin: 0;">
+                Sent to <a href="mailto:{{ user_email }}" style="color: #319795; text-decoration: none;">{{ user_email }}</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

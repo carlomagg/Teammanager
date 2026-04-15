@@ -1,0 +1,822 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+{% block title %}
+  {{ profile.full_name }}'s Profile - TeamManager
+{% endblock title %}
+{% block content %}
+  <div class="container-fluid mt-4 linkedin-profile">
+    <div class="row">
+      <!-- ── Left Sidebar ─────────────────────────────────────── -->
+      <div class="col-lg-4 mb-4">
+      <div class="card profile-card shadow-sm p-0">
+          <!-- Photo -->
+          <div class="profile-photo-container">
+            {% if profile.photo %}
+              <img src="{{ profile.photo.url }}"
+                   class="profile-photo"
+                   alt="Profile Photo">
+            {% else %}
+              <div class="profile-photo-placeholder">
+                {{ profile.first_name|first|upper }}{{ profile.last_name|first|upper }}
+              </div>
+            {% endif %}
+            {% if is_owner %}
+              <a href="{% url 'edit_my_profile' %}"
+                 class="photo-edit-btn"
+                 title="Edit Profile">
+                <i class="fas fa-pen"></i>
+              </a>
+            {% endif %}
+          </div>
+          <div class="card-body px-4 pb-4 pt-3">
+            <h3 class="profile-name mb-0 fw-bold">{{ profile.full_name }}</h3>
+            <p class="profile-title mb-1">
+              {{ profile.designation|default:"Staff Member" }}
+              {% if profile.tenant %}, {{ profile.tenant.name }}{% endif %}
+            </p>
+            {% if profile.current_department %}
+              <div class="info-row mt-1"
+                   style="padding:0;
+                          background:transparent;
+                          border:none">
+                <span class="info-icon"><i class="fas fa-building"></i></span>
+                <span class="info-text"
+                      style="color:var(--pg-text-secondary);
+                             font-size:0.86rem">{{ profile.current_department.name }}</span>
+              </div>
+            {% endif %}
+            <!-- Action buttons -->
+            <div class="action-row d-flex flex-wrap align-items-center gap-2 mt-3 mb-4">
+              {% if profile.email %}
+                <a href="mailto:{{ profile.email }}"
+                   class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-semibold">
+                  <i class="fas fa-envelope me-1"></i> Email
+                </a>
+              {% endif %}
+              {% if profile.phone_number %}
+                <a href="tel:{{ profile.phone_number }}"
+                   class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-semibold"
+                   title="Call">
+                  <i class="fas fa-phone me-1"></i> Call
+                </a>
+              {% endif %}
+              {% if not is_owner %}
+                {% if profile.user.personal_external_token %}
+                  <a href="{% url 'memo:external_submit_personal' profile.user.personal_external_token %}"
+                     target="_blank"
+                     class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-semibold"
+                     title="Send Memo">
+                    <i class="fas fa-envelope-open-text me-1"></i> Send Memo
+                  </a>
+                {% endif %}
+                <div class="dropdown">
+                  <button class="btn btn-primary btn-sm rounded-pill px-3 fw-semibold dropdown-toggle"
+                          type="button"
+                          data-bs-toggle="dropdown"
+                          aria-expanded="false">
+                    <i class="fas fa-layer-group me-1"></i> Connect & Services
+                  </button>
+                  <ul class="dropdown-menu shadow-sm border-0 py-2" style="max-height: 400px; overflow-y: auto;">
+                    {% if profile.user.has_public_bookings %}
+                      <li>
+                        <a class="dropdown-item py-2"
+                           href="{% url 'unified_calendar_public' profile.user.id %}"
+                           target="_blank">
+                          <i class="fas fa-calendar-alt fa-fw text-success me-2"></i> Book Meeting
+                        </a>
+                      </li>
+                    {% else %}
+                      <li>
+                        <span class="dropdown-item py-2 text-muted"
+                              style="cursor:not-allowed"
+                              title="Not Available">
+                          <i class="fas fa-calendar-alt fa-fw text-secondary opacity-50 me-2"></i> Book Meeting <small>(N/A)</small>
+                        </span>
+                      </li>
+                    {% endif %}
+                    {% if profile.user.has_public_tickets %}
+                      <li>
+                        <a class="dropdown-item py-2" href="#" target="_blank">
+                          <i class="fas fa-ticket-alt fa-fw text-success me-2"></i> Ticket
+                        </a>
+                      </li>
+                    {% else %}
+                      <li>
+                        <span class="dropdown-item py-2 text-muted"
+                              style="cursor:not-allowed"
+                              title="Not Available">
+                          <i class="fas fa-ticket-alt fa-fw text-secondary opacity-50 me-2"></i> Ticket <small>(N/A)</small>
+                        </span>
+                      </li>
+                    {% endif %}
+                    {% if profile.user.has_public_queues %}
+                      <li>
+                        <a class="dropdown-item py-2" href="#" target="_blank">
+                          <i class="fas fa-users fa-fw text-success me-2"></i> Queue
+                        </a>
+                      </li>
+                    {% else %}
+                      <li>
+                        <span class="dropdown-item py-2 text-muted"
+                              style="cursor:not-allowed"
+                              title="Not Available">
+                          <i class="fas fa-users fa-fw text-secondary opacity-50 me-2"></i> Queue <small>(N/A)</small>
+                        </span>
+                      </li>
+                    {% endif %}
+                    {% if profile.user.has_public_send_me_file %}
+                      <li>
+                        <a class="dropdown-item py-2" href="#" target="_blank">
+                          <i class="fas fa-file-upload fa-fw text-success me-2"></i> Send Me File
+                        </a>
+                      </li>
+                    {% else %}
+                      <li>
+                        <span class="dropdown-item py-2 text-muted"
+                              style="cursor:not-allowed"
+                              title="Not Available">
+                          <i class="fas fa-file-upload fa-fw text-secondary opacity-50 me-2"></i> Send Me File <small>(N/A)</small>
+                        </span>
+                      </li>
+                    {% endif %}
+                    {% if profile.user.has_public_visitors_form %}
+                      <li>
+                        <a class="dropdown-item py-2" href="#" target="_blank">
+                          <i class="fas fa-clipboard-list fa-fw text-success me-2"></i> Visitors Form
+                        </a>
+                      </li>
+                    {% else %}
+                      <li>
+                        <span class="dropdown-item py-2 text-muted"
+                              style="cursor:not-allowed"
+                              title="Not Available">
+                          <i class="fas fa-clipboard-list fa-fw text-secondary opacity-50 me-2"></i> Visitors Form <small>(N/A)</small>
+                        </span>
+                      </li>
+                    {% endif %}
+                    {% if profile.user.has_public_pay_me %}
+                      <li>
+                        <a class="dropdown-item py-2" href="#" target="_blank">
+                          <i class="fas fa-money-bill fa-fw text-success me-2"></i> Pay Me
+                        </a>
+                      </li>
+                    {% else %}
+                      <li>
+                        <span class="dropdown-item py-2 text-muted"
+                              style="cursor:not-allowed"
+                              title="Not Available">
+                          <i class="fas fa-money-bill fa-fw text-secondary opacity-50 me-2"></i> Pay Me <small>(N/A)</small>
+                        </span>
+                      </li>
+                    {% endif %}
+                    {% if profile.user.has_public_my_events %}
+                      <li>
+                        <a class="dropdown-item py-2" href="#" target="_blank">
+                          <i class="fas fa-calendar-check fa-fw text-success me-2"></i> My Events
+                        </a>
+                      </li>
+                    {% else %}
+                      <li>
+                        <span class="dropdown-item py-2 text-muted"
+                              style="cursor:not-allowed"
+                              title="Not Available">
+                          <i class="fas fa-calendar-check fa-fw text-secondary opacity-50 me-2"></i> My Events <small>(N/A)</small>
+                        </span>
+                      </li>
+                    {% endif %}
+                    {% if profile.user.has_public_vacancies %}
+                      <li>
+                        <a class="dropdown-item py-2" href="#" target="_blank">
+                          <i class="fas fa-briefcase fa-fw text-success me-2"></i> Check Vacancies
+                        </a>
+                      </li>
+                    {% else %}
+                      <li>
+                        <span class="dropdown-item py-2 text-muted"
+                              style="cursor:not-allowed"
+                              title="Not Available">
+                          <i class="fas fa-briefcase fa-fw text-secondary opacity-50 me-2"></i> Vacancies <small>(N/A)</small>
+                        </span>
+                      </li>
+                    {% endif %}
+                    {% if request.user.is_authenticated %}
+                      <li><hr class="dropdown-divider"></li>
+                      <li>
+                        <a class="dropdown-item py-2" href="{% url 'leave:dashboard' %}">
+                          <i class="fas fa-umbrella-beach fa-fw text-info me-2"></i> Leave Request
+                        </a>
+                      </li>
+                      <li>
+                        <a class="dropdown-item py-2" href="{% url 'permissions:dashboard' %}">
+                          <i class="fas fa-user-check fa-fw text-warning me-2"></i> Permission Request
+                        </a>
+                      </li>
+                      <li>
+                        <a class="dropdown-item py-2" href="{% url 'fund_request:dashboard' %}">
+                          <i class="fas fa-money-check-alt fa-fw text-success me-2"></i> Fund Request
+                        </a>
+                      </li>
+                    {% endif %}
+                  </ul>
+                </div>
+              {% endif %}
+            </div>
+            <!-- Personal Details -->
+            <div class="info-block mb-4">
+              {% if profile.home_address %}
+                <div class="info-row">
+                  <span class="info-icon"><i class="fas fa-map-marker-alt"></i></span>
+                  <span class="info-text">{{ profile.home_address }}</span>
+                </div>
+              {% endif %}
+              {% if profile.sex %}
+                <div class="info-row">
+                  <span class="info-icon"><i class="fas fa-venus-mars"></i></span>
+                  <span class="info-text">{{ profile.get_sex_display }}</span>
+                </div>
+              {% endif %}
+              {% if profile.date_of_birth %}
+                <div class="info-row">
+                  <span class="info-icon"><i class="fas fa-birthday-cake"></i></span>
+                  <span class="info-text">{{ profile.date_of_birth|date:"F j, Y" }}</span>
+                </div>
+              {% endif %}
+              {% if profile.religion %}
+                <div class="info-row">
+                  <span class="info-icon"><i class="fas fa-moon"></i></span>
+                  <span class="info-text">{{ profile.get_religion_display }}</span>
+                </div>
+              {% endif %}
+              {% if profile.state_of_origin %}
+                <div class="info-row">
+                  <span class="info-icon"><i class="fas fa-flag"></i></span>
+                  <span class="info-text">{{ profile.state_of_origin }}
+                    {% if profile.lga %}, {{ profile.lga }}{% endif %}
+                  </span>
+                </div>
+              {% endif %}
+            </div>
+            <!-- Profile Completion (owner only) -->
+            {% if is_owner %}
+              {% if profile.profile_completion == 100 %}
+                <div class="completion-done mb-4">
+                  <div class="completion-done-icon">
+                    <i class="fas fa-check-circle"></i>
+                  </div>
+                  <div>
+                    <div class="completion-done-title">Profile Complete!</div>
+                    <div class="completion-done-sub">Your profile is fully filled out.</div>
+                  </div>
+                </div>
+              {% else %}
+                <div class="completion-block mb-4">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="completion-label">Profile Completion</span>
+                    <span class="completion-pct">{{ profile.profile_completion }}%</span>
+                  </div>
+                  <div class="completion-track">
+                    <div class="completion-fill"
+                         style="width:{{ profile.profile_completion }}%"></div>
+                  </div>
+                </div>
+              {% endif %}
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      <!-- ── Right Content ─────────────────────────────────────── -->
+      <div class="col-lg-8">
+        <!-- Bio -->
+        <div class="card shadow-sm mb-4{% if is_owner %} {% if profile.bio %}section-complete{% else %}section-incomplete{% endif %}{% endif %}">
+          <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div class="d-flex align-items-center gap-2">
+                <h4 class="card-title fw-bold mb-0">Bio</h4>
+                {% if is_owner %}
+                  <span class="section-status-badge {% if profile.bio %}status-ok{% else %}status-missing{% endif %}">
+                    {% if profile.bio %}Complete{% else %}Missing{% endif %}
+                  </span>
+                {% endif %}
+              </div>
+              {% if is_owner %}
+                <button class="btn btn-light btn-sm rounded-circle text-muted"
+                        data-bs-toggle="modal"
+                        data-bs-target="#editBioModal">
+                  <i class="fas fa-pen"></i>
+                </button>
+              {% endif %}
+            </div>
+            <p class="text-muted mb-0">{{ profile.bio|default:"No bio added yet." }}</p>
+          </div>
+        </div>
+        <!-- Promotion / Career History (drives current_designation / dept / team) -->
+        {% comment %} <div class="card shadow-sm mb-4">
+          <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h4 class="card-title fw-bold mb-0">
+                <i class="fas fa-level-up-alt me-2 text-success"></i>Career / Promotion History
+              </h4>
+              {% if is_owner %}
+                <button class="btn btn-light btn-sm rounded-circle text-muted" data-bs-toggle="modal" data-bs-target="#addPromotionModal">
+                  <i class="fas fa-plus"></i>
+                </button>
+              {% endif %}
+            </div>
+            <p class="text-muted small mb-3">
+              The <strong>most recent entry</strong> below determines the current
+              department, team, and designation shown on this profile.
+            </p>
+            {% for promo in promotion_list %}
+              <div class="timeline-item {% if not forloop.last %}mb-3 pb-3 border-bottom{% endif %}">
+                <div class="d-flex justify-content-between">
+                  <div>
+                    <div class="fw-semibold">
+                      {{ promo.designation }}
+                      {% if forloop.first %}<span class="badge bg-success ms-1">Current</span>{% endif %}
+                    </div>
+                    {% if promo.department %}
+                      <div class="text-muted small">
+                        <i class="fas fa-building me-1"></i>{{ promo.department.name }}
+                      </div>
+                    {% endif %}
+                    {% if promo.team %}
+                      <div class="text-muted small">
+                        <i class="fas fa-users me-1"></i>{{ promo.team.name }}
+                      </div>
+                    {% endif %}
+                    <div class="text-muted small">
+                      {{ promo.start_date|date:"M Y" }} – {{ promo.end_date|date:"M Y"|default:"Present" }}
+                    </div>
+                    {% if promo.salary %}<div class="text-muted small">Salary: {{ promo.salary }}</div>{% endif %}
+                    {% if promo.description %}<p class="small mt-1 mb-0">{{ promo.description }}</p>{% endif %}
+                    {% if promo.promotion_letter %}
+                      <a href="{{ promo.promotion_letter.url }}" target="_blank" class="small">
+                        <i class="fas fa-file-alt me-1"></i>Promotion Letter
+                      </a>
+                    {% endif %}
+                  </div>
+                  {% if is_owner %}
+                    <div class="d-flex flex-column gap-1">
+                      <button class="btn btn-sm btn-link text-muted p-0" data-bs-toggle="modal" data-bs-target="#addPromotionModal" data-id="{{ promo.id }}" data-organization_name="{{ promo.organization_name }}" data-designation="{{ promo.designation }}" data-start_date="{{ promo.start_date|date:'Y-m-d' }}" data-end_date="{{ promo.end_date|date:'Y-m-d' }}" data-department="{{ promo.department_id }}" data-team="{{ promo.team_id }}" data-description="{{ promo.description }}">
+                        <i class="fas fa-pen"></i>
+                      </button>
+                      <form method="post" class="d-inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="delete_promotion">
+                        <input type="hidden" name="item_id" value="{{ promo.id }}">
+                        <button type="submit" class="btn btn-sm btn-link text-danger p-0" onclick="return confirm('Delete this promotion record?')">
+                          <i class="fas fa-trash-alt"></i>
+                        </button>
+                      </form>
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+            {% empty %}
+              <p class="text-muted mb-0">No promotion history recorded yet.</p>
+            {% endfor %}
+          </div>
+        </div> {% endcomment %}
+        <!-- Work Experience -->
+        <div class="card shadow-sm mb-4{% if is_owner %} {% if profile.work_history.exists %}section-complete{% else %}section-incomplete{% endif %}{% endif %}">
+          <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div class="d-flex align-items-center gap-2">
+                <h4 class="card-title fw-bold mb-0">Work Experience</h4>
+                {% if is_owner %}
+                  <span class="section-status-badge {% if profile.work_history.exists %}status-ok{% else %}status-missing{% endif %}">
+                    {% if profile.work_history.exists %}Complete{% else %}Missing{% endif %}
+                  </span>
+                {% endif %}
+              </div>
+              {% if is_owner %}
+                <button class="btn btn-light btn-sm rounded-circle text-muted"
+                        data-bs-toggle="modal"
+                        data-bs-target="#addExperienceModal">
+                  <i class="fas fa-plus"></i>
+                </button>
+              {% endif %}
+            </div>
+            {% for exp in experience_list %}
+              <div class="timeline-item {% if not forloop.last %}mb-3 pb-3 border-bottom{% endif %}">
+                <div class="d-flex justify-content-between">
+                  <div>
+                    <div class="fw-semibold">{{ exp.designation }}</div>
+                    <div class="text-muted small">{{ exp.organization_name }}</div>
+                    <div class="text-muted small">{{ exp.start_date|date:"M Y" }} – {{ exp.end_date|date:"M Y"|default:"Present" }}</div>
+                    {% if exp.description %}<p class="small mt-1 mb-0">{{ exp.description }}</p>{% endif %}
+                  </div>
+                  {% if is_owner %}
+                    <div>
+                      <button class="btn btn-sm btn-link text-muted p-0"
+                              data-bs-toggle="modal"
+                              data-bs-target="#addExperienceModal"
+                              data-id="{{ exp.id }}"
+                              data-organization_name="{{ exp.organization_name }}"
+                              data-designation="{{ exp.designation }}"
+                              data-start_date="{{ exp.start_date|date:'Y-m-d' }}"
+                              data-end_date="{{ exp.end_date|date:'Y-m-d' }}"
+                              data-mode="{{ exp.mode }}"
+                              data-description="{{ exp.description }}">
+                        <i class="fas fa-pen"></i>
+                      </button>
+                      <form method="post" class="d-inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="delete_experience">
+                        <input type="hidden" name="item_id" value="{{ exp.id }}">
+                        <button type="submit"
+                                class="btn btn-sm btn-link text-danger p-0"
+                                onclick="return confirm('Delete?')">
+                          <i class="fas fa-trash-alt"></i>
+                        </button>
+                      </form>
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+            {% empty %}
+              <p class="text-muted mb-0">No work experience added yet.</p>
+            {% endfor %}
+          </div>
+        </div>
+        <!-- Education -->
+        <div class="card shadow-sm mb-4{% if is_owner %} {% if profile.education_history.exists %}section-complete{% else %}section-incomplete{% endif %}{% endif %}">
+          <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div class="d-flex align-items-center gap-2">
+                <h4 class="card-title fw-bold mb-0">Education</h4>
+                {% if is_owner %}
+                  <span class="section-status-badge {% if profile.education_history.exists %}status-ok{% else %}status-missing{% endif %}">
+                    {% if profile.education_history.exists %}Complete{% else %}Missing{% endif %}
+                  </span>
+                {% endif %}
+              </div>
+              {% if is_owner %}
+                <button class="btn btn-light btn-sm rounded-circle text-muted"
+                        data-bs-toggle="modal"
+                        data-bs-target="#addEducationModal">
+                  <i class="fas fa-plus"></i>
+                </button>
+              {% endif %}
+            </div>
+            {% for edu in education_list %}
+              <div class="timeline-item {% if not forloop.last %}mb-3 pb-3 border-bottom{% endif %}">
+                <div class="d-flex justify-content-between">
+                  <div>
+                    <div class="fw-semibold">{{ edu.degree }} – {{ edu.course }}</div>
+                    <div class="text-muted small">{{ edu.school_name }}</div>
+                    <div class="text-muted small">{{ edu.start_date|date:"M Y" }} – {{ edu.end_date|date:"M Y"|default:"Present" }}</div>
+                    {% if edu.certificate %}
+                      <a href="{{ edu.certificate.url }}" target="_blank" class="small">
+                        <i class="fas fa-file-pdf me-1"></i>Certificate
+                      </a>
+                    {% endif %}
+                  </div>
+                  {% if is_owner %}
+                    <div>
+                      <button class="btn btn-sm btn-link text-muted p-0"
+                              data-bs-toggle="modal"
+                              data-bs-target="#addEducationModal"
+                              data-id="{{ edu.id }}"
+                              data-school_name="{{ edu.school_name }}"
+                              data-course="{{ edu.course }}"
+                              data-degree="{{ edu.degree }}"
+                              data-start_date="{{ edu.start_date|date:'Y-m-d' }}"
+                              data-end_date="{{ edu.end_date|date:'Y-m-d' }}">
+                        <i class="fas fa-pen"></i>
+                      </button>
+                      <form method="post" class="d-inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="delete_education">
+                        <input type="hidden" name="item_id" value="{{ edu.id }}">
+                        <button type="submit"
+                                class="btn btn-sm btn-link text-danger p-0"
+                                onclick="return confirm('Delete?')">
+                          <i class="fas fa-trash-alt"></i>
+                        </button>
+                      </form>
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+            {% empty %}
+              <p class="text-muted mb-0">No education history added yet.</p>
+            {% endfor %}
+          </div>
+        </div>
+        <!-- Achievements -->
+        <div class="card shadow-sm mb-4{% if is_owner %} {% if profile.achievements.exists %}section-complete{% else %}section-incomplete{% endif %}{% endif %}">
+          <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div class="d-flex align-items-center gap-2">
+                <h4 class="card-title fw-bold mb-0">Achievements</h4>
+                {% if is_owner %}
+                  <span class="section-status-badge {% if profile.achievements.exists %}status-ok{% else %}status-missing{% endif %}">
+                    {% if profile.achievements.exists %}Complete{% else %}Missing{% endif %}
+                  </span>
+                {% endif %}
+              </div>
+              {% if is_owner %}
+                <button class="btn btn-light btn-sm rounded-circle text-muted"
+                        data-bs-toggle="modal"
+                        data-bs-target="#addAchievementModal">
+                  <i class="fas fa-plus"></i>
+                </button>
+              {% endif %}
+            </div>
+            {% for ach in achievement_list %}
+              <div class="timeline-item {% if not forloop.last %}mb-3 pb-3 border-bottom{% endif %}">
+                <div class="d-flex justify-content-between">
+                  <div>
+                    <span class="badge bg-primary me-2">{{ ach.get_category_display }}</span>
+                    <span class="fw-semibold">{{ ach.title }}</span>
+                    {% if ach.issuer %}<div class="text-muted small">{{ ach.issuer }}</div>{% endif %}
+                    <div class="text-muted small">{{ ach.date|date:"M Y" }}</div>
+                    {% if ach.url %}<a href="{{ ach.url }}" target="_blank" class="small">View</a>{% endif %}
+                  </div>
+                  {% if is_owner %}
+                    <div>
+                      <button class="btn btn-sm btn-link text-muted p-0"
+                              data-bs-toggle="modal"
+                              data-bs-target="#addAchievementModal"
+                              data-id="{{ ach.id }}"
+                              data-category="{{ ach.category }}"
+                              data-title="{{ ach.title }}"
+                              data-issuer="{{ ach.issuer }}"
+                              data-description="{{ ach.description }}"
+                              data-date="{{ ach.date|date:'Y-m-d' }}"
+                              data-url="{{ ach.url }}">
+                        <i class="fas fa-pen"></i>
+                      </button>
+                      <form method="post" class="d-inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="delete_achievement">
+                        <input type="hidden" name="item_id" value="{{ ach.id }}">
+                        <button type="submit"
+                                class="btn btn-sm btn-link text-danger p-0"
+                                onclick="return confirm('Delete?')">
+                          <i class="fas fa-trash-alt"></i>
+                        </button>
+                      </form>
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+            {% empty %}
+              <p class="text-muted mb-0">No achievements added yet.</p>
+            {% endfor %}
+          </div>
+        </div>
+        <!-- Recommendations -->
+        <div class="card shadow-sm mb-4">
+          <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h4 class="card-title fw-bold mb-0">
+                <i class="fas fa-star-half-alt text-warning me-2"></i>Recommendations
+              </h4>
+              {% if not is_owner %}
+                <button class="btn btn-outline-primary btn-sm rounded-pill px-3"
+                        data-bs-toggle="modal"
+                        data-bs-target="#writeRecommendationModal">
+                  <i class="fas fa-pen me-1"></i> Write a Recommendation
+                </button>
+              {% endif %}
+            </div>
+            {% if is_owner %}
+              {% for rec in profile.recommendations.all %}
+                <div class="p-3 mb-3 rounded-3 border {% if not rec.is_visible %}bg-light opacity-75{% endif %} {% if not forloop.last %}border-bottom-0 rounded-bottom-0{% endif %}">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                      <span class="fw-semibold">{{ rec.recommender.get_full_name|default:rec.recommender.username }}</span>
+                      <span class="badge bg-secondary ms-2">{{ rec.relationship }}</span>
+                      {% if not rec.is_visible %}<span class="badge bg-warning text-dark ms-1">Hidden</span>{% endif %}
+                      <p class="text-muted small mb-1 mt-1">{{ rec.created_at|date:"M j, Y" }}</p>
+                      {% if rec.work_history %}
+                        <p class="small text-muted mb-1">
+                          <i class="fas fa-briefcase me-1"></i>Re: {{ rec.work_history.designation }} at {{ rec.work_history.organization_name }}
+                        </p>
+                      {% endif %}
+                      {% if rec.education_history %}
+                        <p class="small text-muted mb-1">
+                          <i class="fas fa-university me-1"></i>Re: {{ rec.education_history.degree }} at {{ rec.education_history.school_name }}
+                        </p>
+                      {% endif %}
+                      <p class="mb-0 mt-2" style="white-space:pre-line">{{ rec.body }}</p>
+                    </div>
+                    <div class="d-flex gap-1 ms-3 flex-shrink-0">
+                      <!-- Toggle visibility (owner POSTs to view_my_profile) -->
+                      <form method="post" action="{% url 'view_my_profile' %}" class="d-inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="toggle_recommendation_visibility">
+                        <input type="hidden" name="item_id" value="{{ rec.id }}">
+                        <button type="submit"
+                                class="btn btn-sm btn-link p-0 text-muted"
+                                title="{{ rec.is_visible|yesno:'Hide,Show' }}">
+                          <i class="fas fa-eye{% if not rec.is_visible %}-slash{% endif %}"></i>
+                        </button>
+                      </form>
+                      <!-- Delete -->
+                      <form method="post"
+                            action="{% url 'view_my_profile' %}"
+                            class="d-inline"
+                            onsubmit="return confirm('Delete this recommendation?')">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="delete_recommendation">
+                        <input type="hidden" name="item_id" value="{{ rec.id }}">
+                        <button type="submit" class="btn btn-sm btn-link p-0 text-danger">
+                          <i class="fas fa-trash-alt"></i>
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              {% empty %}
+                <p class="text-muted fst-italic mb-0">No recommendations yet.</p>
+              {% endfor %}
+            {% else %}
+              {% for rec in profile.recommendations.all %}
+                {% if rec.is_visible %}
+                  <div class="p-3 mb-3 rounded-3 border {% if not forloop.last %}border-bottom-0 rounded-bottom-0{% endif %}">
+                    <div class="d-flex justify-content-between align-items-start">
+                      <div>
+                        <span class="fw-semibold">{{ rec.recommender.get_full_name|default:rec.recommender.username }}</span>
+                        <span class="badge bg-secondary ms-2">{{ rec.relationship }}</span>
+                        <p class="text-muted small mb-1 mt-1">{{ rec.created_at|date:"M j, Y" }}</p>
+                        {% if rec.work_history %}
+                          <p class="small text-muted mb-1">
+                            <i class="fas fa-briefcase me-1"></i>Re: {{ rec.work_history.designation }} at {{ rec.work_history.organization_name }}
+                          </p>
+                        {% endif %}
+                        {% if rec.education_history %}
+                          <p class="small text-muted mb-1">
+                            <i class="fas fa-university me-1"></i>Re: {{ rec.education_history.degree }} at {{ rec.education_history.school_name }}
+                          </p>
+                        {% endif %}
+                        <p class="mb-0 mt-2" style="white-space:pre-line">{{ rec.body }}</p>
+                      </div>
+                      {% if rec.recommender == request.user %}
+                        <form method="post"
+                              action="{% url 'delete_recommendation' rec.id %}"
+                              class="d-inline ms-3"
+                              onsubmit="return confirm('Delete your recommendation?')">
+                          {% csrf_token %}
+                          <button type="submit" class="btn btn-sm btn-link p-0 text-danger">
+                            <i class="fas fa-trash-alt"></i>
+                          </button>
+                        </form>
+                      {% endif %}
+                    </div>
+                  </div>
+                {% endif %}
+              {% empty %}
+                <p class="text-muted fst-italic mb-0">No recommendations yet.</p>
+              {% endfor %}
+            {% endif %}
+          </div>
+        </div>
+        <!-- Write Recommendation Modal (non-owners only) -->
+        {% if not is_owner %}
+          <div class="modal fade"
+               id="writeRecommendationModal"
+               tabindex="-1"
+               aria-labelledby="writeRecommendationModalLabel"
+               aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="writeRecommendationModalLabel">
+                    <i class="fas fa-star-half-alt text-warning me-2"></i>Write a Recommendation
+                  </h5>
+                  <button type="button"
+                          class="btn-close"
+                          data-bs-dismiss="modal"
+                          aria-label="Close"></button>
+                </div>
+                <form method="post"
+                      action="{% url 'give_recommendation' 'staff' profile.id %}">
+                  {% csrf_token %}
+                  <div class="modal-body">
+                    <div class="mb-3">
+                      <label class="form-label fw-semibold">Your Relationship</label>
+                      <input type="text"
+                             name="relationship"
+                             class="form-control"
+                             placeholder="e.g. Direct Manager, Colleague, Professor"
+                             required
+                             maxlength="100">
+                    </div>
+                    <div class="mb-3">
+                      <label class="form-label fw-semibold">Recommendation</label>
+                      <textarea name="body"
+                                class="form-control"
+                                rows="5"
+                                placeholder="Share your experience working with this person..."
+                                required></textarea>
+                    </div>
+                    {% if profile.work_history.exists %}
+                      <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                          Related Work Experience
+                          <span class="text-muted fw-normal">(optional)</span>
+                        </label>
+                        <select name="work_history" class="form-select">
+                          <option value="">— None —</option>
+                          {% for wh in profile.work_history.all %}
+                            <option value="{{ wh.id }}">{{ wh.designation }} at {{ wh.organization_name }}</option>
+                          {% endfor %}
+                        </select>
+                      </div>
+                    {% endif %}
+                    {% if profile.education_history.exists %}
+                      <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                          Related Education
+                          <span class="text-muted fw-normal">(optional)</span>
+                        </label>
+                        <select name="education_history" class="form-select">
+                          <option value="">— None —</option>
+                          {% for eh in profile.education_history.all %}
+                            <option value="{{ eh.id }}">{{ eh.degree }} at {{ eh.school_name }}</option>
+                          {% endfor %}
+                        </select>
+                      </div>
+                    {% endif %}
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                      <i class="fas fa-paper-plane me-1"></i> Submit Recommendation
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        {% endif %}
+        <!-- Identity Documents (owner only) -->
+        {% if is_owner %}
+          <div class="card shadow-sm mb-4{% if is_owner %} {% if profile.identity_documents.exists %}section-complete{% else %}section-incomplete{% endif %}{% endif %}">
+            <div class="card-body p-4">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="d-flex align-items-center gap-2">
+                  <h4 class="card-title fw-bold mb-0">Identity Documents</h4>
+                  {% if is_owner %}
+                    <span class="section-status-badge {% if profile.identity_documents.exists %}status-ok{% else %}status-missing{% endif %}">
+                      {% if profile.identity_documents.exists %}Complete{% else %}Missing{% endif %}
+                    </span>
+                  {% endif %}
+                </div>
+                <button class="btn btn-light btn-sm rounded-circle text-muted"
+                        data-bs-toggle="modal"
+                        data-bs-target="#addIdentityDocumentModal">
+                  <i class="fas fa-plus"></i>
+                </button>
+              </div>
+              {% for doc in identity_list %}
+                <div class="d-flex justify-content-between align-items-center {% if not forloop.last %}mb-2 pb-2 border-bottom{% endif %}">
+                  <div>
+                    <span class="badge bg-secondary me-2">{{ doc.get_document_type_display }}</span>
+                    <span class="fw-medium">{{ doc.number }}</span>
+                    <div class="text-muted small">
+                      Issued: {{ doc.issue_date|date:"d M Y" }}
+                      {% if doc.expiry_date %}| Expires: {{ doc.expiry_date|date:"d M Y" }}{% endif %}
+                    </div>
+                  </div>
+                  <div>
+                    {% if doc.file %}
+                      <a href="{{ doc.file.url }}"
+                         target="_blank"
+                         class="btn btn-sm btn-outline-secondary me-1">
+                        <i class="fas fa-eye"></i>
+                      </a>
+                    {% endif %}
+                    <form method="post" class="d-inline">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="delete_identity_document">
+                      <input type="hidden" name="item_id" value="{{ doc.id }}">
+                      <button type="submit"
+                              class="btn btn-sm btn-outline-danger"
+                              onclick="return confirm('Delete this document?')">
+                        <i class="fas fa-trash-alt"></i>
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              {% empty %}
+                <p class="text-muted mb-0">No identity documents added yet.</p>
+              {% endfor %}
+            </div>
+          </div>
+        {% endif %}
+      </div>
+      <!-- /col-lg-8 -->
+    </div>
+    <!-- /row -->
+  </div>
+  <!-- Modals (only for owner) -->
+  {% if is_owner %}
+    {% include 'staff/profile_modals.html' with request=request profile=profile %}
+  {% endif %}
+  {% include 'profile_styles.html' %}
+{% endblock %}

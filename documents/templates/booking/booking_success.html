@@ -1,0 +1,13 @@
+<!-- booking/booking_success.html -->
+{% extends "base.html" %}
+{% block content %}
+<div class="container py-5 text-center">
+    <div class="card shadow p-5">
+        <i class="{{ icon }} fa-5x mb-4 {{ class }}"></i>
+        <h2 class="{{ class }}">{{ title }}</h2>
+        <p class="lead">{{ message }}</p>
+        <p>{{ submessage }}</p>
+        <a href="/" class="btn btn-primary mt-4">Back to Home</a>
+    </div>
+</div>
+{% endblock %}

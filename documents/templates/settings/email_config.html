@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block title %}Email Configuration - TeamManager{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-transparent">
+                    <h2 class="mb-0"><i class="fas fa-envelope me-2"></i> Email Configuration</h2>
+                    {% include 'partials/help_icon.html' with faq_key='email_config' %}
+                </div>
+                <div class="card-body">
+                    <form method="POST" novalidate>
+                        {% csrf_token %}
+                        {% if email_config_form.non_field_errors %}
+                            <div class="alert alert-danger" role="alert">
+                                {% for error in email_config_form.non_field_errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        {% for field in email_config_form %}
+                            <div class="mb-3">
+                                <label for="{{ field.id_for_label }}" class="form-label fw-medium">
+                                    {{ field.label }}
+                                    {% if field.field.required %}
+                                        <span class="text-danger">*</span>
+                                    {% endif %}
+                                </label>
+                                {{ field }}
+                                {% if field.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in field.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                {% if field.help_text %}
+                                    <div class="form-text small">{{ field.help_text }}</div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i> Save and Test
+                            </button>
+                            <a href="{% url 'view_my_profile' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-1"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        border-radius: 12px;
+        transition: all 0.3s ease;
+    }
+    body.dark-mode .card {
+        background: #2d3748;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    .form-label {
+        color: #2d3748;
+    }
+    body.dark-mode .form-label {
+        color: #e2e8f0;
+    }
+    .form-control, .form-select {
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    body.dark-mode .form-control,
+    body.dark-mode .form-select {
+        background: #4a5568;
+        border-color: #4a5568;
+        color: #e2e8f0;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: #319795;
+        box-shadow: 0 0 0 0.2rem rgba(49, 151, 149, 0.25);
+    }
+    .form-text {
+        color: #718096;
+    }
+    body.dark-mode .form-text {
+        color: #a0aec0;
+    }
+    textarea.form-control {
+        resize: vertical;
+        min-height: 100px;
+    }
+    @media (max-width: 576px) {
+        .card-body {
+            padding: 1rem;
+        }
+        h2 {
+            font-size: 1.5rem;
+        }
+    }
+</style>
+{% endblock %}

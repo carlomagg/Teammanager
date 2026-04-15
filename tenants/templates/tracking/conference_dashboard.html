@@ -1,0 +1,411 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Conference Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="mb-0"><i class="fas fa-chalkboard-teacher me-2"></i>Conference Dashboard</h4>
+        <small class="text-muted">Staff view &mdash; all tenants</small>
+      </div>
+
+      {# ROW 1 – Summary cards (8)                                    #}
+      <div class="row g-3 mb-4">
+
+        <div class="col-6 col-md-3 col-xl-3">
+          <div class="card shadow-sm border-0 h-100">
+            <div class="card-body text-center py-3">
+              <div class="fs-3 fw-bold text-primary">{{ total_conferences|intcomma }}</div>
+              <div class="small text-muted">Total Conferences</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-6 col-md-3 col-xl-3">
+          <div class="card shadow-sm border-0 h-100">
+            <div class="card-body text-center py-3">
+              <div class="fs-3 fw-bold text-success">{{ total_upcoming|intcomma }}</div>
+              <div class="small text-muted">Upcoming</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-6 col-md-3 col-xl-3">
+          <div class="card shadow-sm border-0 h-100">
+            <div class="card-body text-center py-3">
+              <div class="fs-3 fw-bold text-secondary">{{ total_past|intcomma }}</div>
+              <div class="small text-muted">Past</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-6 col-md-3 col-xl-3">
+          <div class="card shadow-sm border-0 h-100">
+            <div class="card-body text-center py-3">
+              <div class="fs-3 fw-bold text-info">{{ total_participants|intcomma }}</div>
+              <div class="small text-muted">Total Participants</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-6 col-md-3 col-xl-3">
+          <div class="card shadow-sm border-0 h-100">
+            <div class="card-body text-center py-3">
+              <div class="fs-3 fw-bold text-warning">{{ avg_feedback }}</div>
+              <div class="small text-muted">Avg Feedback <span class="text-warning">★</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-6 col-md-3 col-xl-3">
+          <div class="card shadow-sm border-0 h-100">
+            <div class="card-body text-center py-3">
+              <div class="fs-3 fw-bold text-primary">{{ with_speakers|intcomma }}</div>
+              <div class="small text-muted">With Speakers</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-6 col-md-3 col-xl-3">
+          <div class="card shadow-sm border-0 h-100">
+            <div class="card-body text-center py-3">
+              <div class="fs-3 fw-bold text-primary">{{ with_questions|intcomma }}</div>
+              <div class="small text-muted">With Custom Questions</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-6 col-md-3 col-xl-3">
+          <div class="card shadow-sm border-0 h-100">
+            <div class="card-body text-center py-3">
+              <div class="fs-3 fw-bold text-primary">{{ with_upload_folders|intcomma }}</div>
+              <div class="small text-muted">With Upload Folders</div>
+            </div>
+          </div>
+        </div>
+
+      </div>{# /row 1 #}
+
+      {# ROW 2 – Pie charts + tenant bar chart                        #}
+      <div class="row g-3 mb-4">
+
+        {# Paid vs Free #}
+        <div class="col-12 col-md-6 col-xl-4">
+          <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-transparent border-0 fw-semibold">
+              <i class="fas fa-tag me-1 text-primary"></i>Paid vs Free
+            </div>
+            <div class="card-body d-flex flex-column align-items-center">
+              <div style="position:relative;width:200px;height:200px;">
+                <canvas id="paidFreeChart"></canvas>
+              </div>
+              <div class="d-flex gap-3 mt-2 small text-muted">
+                <span><span class="badge bg-primary">&nbsp;</span> Paid ({{ paid_count }})</span>
+                <span><span class="badge bg-secondary">&nbsp;</span> Free ({{ free_count }})</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {# Conference type #}
+        <div class="col-12 col-md-6 col-xl-4">
+          <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-transparent border-0 fw-semibold">
+              <i class="fas fa-globe me-1 text-success"></i>Conference Format
+            </div>
+            <div class="card-body d-flex flex-column align-items-center">
+              <div style="position:relative;width:200px;height:200px;">
+                <canvas id="typeChart"></canvas>
+              </div>
+              <div class="d-flex gap-3 mt-2 small text-muted flex-wrap justify-content-center">
+                <span><span class="badge bg-success">&nbsp;</span> In-Person ({{ physical_count }})</span>
+                <span><span class="badge bg-info">&nbsp;</span> Virtual ({{ virtual_count }})</span>
+                <span><span class="badge bg-warning text-dark">&nbsp;</span> Hybrid ({{ hybrid_count }})</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {# Conferences per tenant – bar chart #}
+        <div class="col-12 col-xl-4">
+          <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-transparent border-0 fw-semibold">
+              <i class="fas fa-building me-1 text-secondary"></i>Conferences per Tenant (top 20)
+            </div>
+            <div class="card-body">
+              <canvas id="tenantChart" height="230"></canvas>
+            </div>
+          </div>
+        </div>
+
+      </div>{# /row 2 #}
+
+      {# ROW 3 – Top 10 attendance + Top 10 registration              #}
+      <div class="row g-3 mb-4">
+
+        <div class="col-12 col-xl-6">
+          <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-transparent border-0 fw-semibold">
+              <i class="fas fa-users me-1 text-info"></i>Top 10 Conferences by Attendance
+            </div>
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th>#</th>
+                      <th>Conference</th>
+                      <th>Tenant</th>
+                      <th class="text-end">Checked In</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for conf in top_by_attendance %}
+                    <tr>
+                      <td class="text-muted">{{ forloop.counter }}</td>
+                      <td>{{ conf.title|truncatechars:40 }}</td>
+                      <td class="small text-muted">
+                        {% if conf.tenant__name %}
+                            {{ conf.tenant__name|default:"—" }}
+                        {% else %}
+                            {{ conf.organizer__first_name|default:conf.organizer__username }}
+                        {% endif %}
+                      </td>
+                      <td class="text-end fw-semibold text-info">{{ conf.attendance|intcomma }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="4" class="text-center text-muted py-3">No data</td></tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-xl-6">
+          <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-transparent border-0 fw-semibold">
+              <i class="fas fa-clipboard-list me-1 text-success"></i>Top 10 Conferences by Registration
+            </div>
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th>#</th>
+                      <th>Conference</th>
+                      <th>Tenant</th>
+                      <th class="text-end">Registrations</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for conf in top_by_registration %}
+                    <tr>
+                      <td class="text-muted">{{ forloop.counter }}</td>
+                      <td>{{ conf.title|truncatechars:40 }}</td>
+                      {% comment %} <td class="small text-muted">{{ conf.tenant__name|default:"—" }}</td> {% endcomment %}
+                      <td class="small text-muted">
+                        {% if conf.tenant__name %}
+                            {{ conf.tenant__name|default:"—" }}
+                        {% else %}
+                            {{ conf.organizer__first_name|default:conf.organizer__username }}
+                        {% endif %}
+                      </td>
+                      <td class="text-end fw-semibold text-success">{{ conf.registration_count|intcomma }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="4" class="text-center text-muted py-3">No data</td></tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>{# /row 3 #}
+
+      {# ROW 4 – Per-tenant table                                     #}
+      <div class="row g-3 mb-4">
+
+        <div class="col-12 col-xl-6">
+          <div class="card shadow-sm border-0">
+            <div class="card-header bg-transparent border-0 fw-semibold">
+              <i class="fas fa-building me-1 text-secondary"></i>Conferences &amp; Participants per Tenant
+            </div>
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Tenant</th>
+                      <th class="text-end">Conferences</th>
+                      <th class="text-end">Participants</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for row in conferences_per_tenant %}
+                    {% with prow=participants_per_tenant %}
+                    <tr>
+                      {% comment %} <td>{{ row.tenant__name|default:"—" }}</td> {% endcomment %}
+                      <td class="small text-muted">
+                        {% if row.tenant__name %}
+                            {{ row.tenant__name|default:"—" }}
+                        {% else %}
+                            {{ row.organizer__first_name|default:row.organizer__username }}
+                        {% endif %}
+                      </td>
+                      <td class="text-end">{{ row.conference_count|intcomma }}</td>
+                      <td class="text-end">
+                        {% for p in participants_per_tenant %}
+                          {% if p.tenant__id == row.tenant__id %}{{ p.participant_count|intcomma }}{% endif %}
+                        {% endfor %}
+                      </td>
+                    </tr>
+                    {% endwith %}
+                    {% empty %}
+                    <tr><td colspan="3" class="text-center text-muted py-3">No data</td></tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-xl-6">
+          <div class="card shadow-sm border-0">
+            <div class="card-header bg-transparent border-0 fw-semibold">
+              <i class="fas fa-user me-1 text-primary"></i>Conferences &amp; Participants per User
+            </div>
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th>User</th>
+                      <th class="text-end">Conferences</th>
+                      <th class="text-end">Participants</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for row in conferences_per_user %}
+                    <tr>
+                      <td>
+                        {% if row.created_by__first_name or row.created_by__last_name %}
+                          {{ row.created_by__first_name }} {{ row.created_by__last_name }}
+                        {% else %}
+                          {{ row.created_by__username|default:"—" }}
+                        {% endif %}
+                      </td>
+                      <td class="text-end">{{ row.conference_count|intcomma }}</td>
+                      <td class="text-end">
+                        {% for p in participants_per_user %}
+                          {% if p.conference__created_by__id == row.created_by__id %}
+                            {{ p.participant_count|intcomma }}
+                          {% endif %}
+                        {% endfor %}
+                      </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="3" class="text-center text-muted py-3">No data</td></tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>{# /row 4 #}
+
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+(function () {
+  "use strict";
+
+  /* ---- palette (matches your existing dashboards) ---- */
+  const COLORS = {
+    blue:   "#0d6efd",
+    green:  "#198754",
+    yellow: "#ffc107",
+    cyan:   "#0dcaf0",
+    red:    "#dc3545",
+    gray:   "#6c757d",
+    light:  "#e9ecef",
+  };
+
+  /* ---- 1. Paid vs Free – doughnut ---- */
+  new Chart(document.getElementById("paidFreeChart"), {
+    type: "doughnut",
+    data: {
+      labels: {{ paid_free_labels|safe }},
+      datasets: [{
+        data: {{ paid_free_data|safe }},
+        backgroundColor: [COLORS.blue, COLORS.light],
+        borderColor: ["#fff", "#fff"],
+        borderWidth: 3,
+      }],
+    },
+    options: {
+      cutout: "65%",
+      plugins: { legend: { display: false } },
+    },
+  });
+
+  /* ---- 2. Conference type – doughnut ---- */
+  new Chart(document.getElementById("typeChart"), {
+    type: "doughnut",
+    data: {
+      labels: {{ type_labels|safe }},
+      datasets: [{
+        data: {{ type_data|safe }},
+        backgroundColor: [COLORS.green, COLORS.cyan, COLORS.yellow],
+        borderColor: ["#fff", "#fff", "#fff"],
+        borderWidth: 3,
+      }],
+    },
+    options: {
+      cutout: "65%",
+      plugins: {
+        legend: { display: false },
+      },
+    },
+  });
+
+  /* ---- 3. Conferences per tenant – horizontal bar ---- */
+  new Chart(document.getElementById("tenantChart"), {
+    type: "bar",
+    data: {
+      labels: {{ tenant_chart_labels|safe }},
+      datasets: [{
+        label: "Conferences",
+        data: {{ tenant_chart_data|safe }},
+        backgroundColor: COLORS.blue,
+        borderRadius: 4,
+      }],
+    },
+    options: {
+      indexAxis: "y",
+      scales: {
+        x: { beginAtZero: true, ticks: { precision: 0 } },
+        y: { ticks: { font: { size: 11 } } },
+      },
+      plugins: { legend: { display: false } },
+    },
+  });
+
+})();
+</script>
+{% endblock %}

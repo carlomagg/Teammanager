@@ -1,0 +1,98 @@
+<!-- templates/emails/document_approved.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Document Approved</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f6f9fc; font-family: 'Helvetica Neue', Arial, sans-serif; color: #333333;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f6f9fc; padding: 20px 0;">
+    <tr>
+      <td align="center">
+        <!-- Main Container -->
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);">
+          
+          <!-- Success Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #319795 0%, #2c7a7b 100%); padding: 32px 40px; text-align: center; color: white;">
+              <div style="display: inline-block; width: 48px; height: 48px; background-color: rgba(255, 255, 255, 0.2); border-radius: 50%; line-height: 48px; margin-bottom: 12px;">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: inline-block; vertical-align: middle;">
+                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="white"/>
+                </svg>
+              </div>
+              <h1 style="margin: 0; font-size: 26px; font-weight: 600;">Document Approved!</h1>
+              <p style="margin: 8px 0 0; font-size: 16px; opacity: 0.95;">Great news for {{ company_name }}</p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px;">
+              <p style="margin: 0 0 16px; font-size: 16px; line-height: 1.6;">
+                Hello {{ creator_name }},
+              </p>
+
+              <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.7;">
+                We're pleased to inform you that your <strong>{{ document_type|default:"document" }}</strong> for <strong>{{ company_name }}</strong> has been <span style="color: #10b981; font-weight: 600;">officially approved</span> by <strong>{{ approver_name }}</strong>.
+              </p>
+
+              <!-- Approval Details -->
+              <div style="background-color: #e6fffa; border-left: 4px solid #319795; padding: 16px 20px; margin: 24px 0; border-radius: 0 8px 8px 0;">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="font-size: 15px;">
+                  <tr>
+                    <td style="padding: 6px 0; color: #065f46; font-weight: 600;">Approved For:</td>
+                    <td style="padding: 6px 0;">{{ tenant_name }}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 6px 0; color: #065f46; font-weight: 600;">Document:</td>
+                    <td style="padding: 6px 0;">{{ company_name }}{% if document_type %} – {{ document_type }}{% endif %}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 6px 0; color: #065f46; font-weight: 600;">Approved By:</td>
+                    <td style="padding: 6px 0;">{{ approver_name }}</td>
+                  </tr>
+                </table>
+              </div>
+
+              <p style="margin: 24px 0 20px; font-size: 16px; line-height: 1.7;">
+                The final approved PDF is attached to this email. You can now proceed with distribution, filing, or any next steps.
+              </p>
+
+              <!-- CTA Button -->
+              <div style="text-align: center; margin: 32px 0;">
+                <a href={{document_link}} style="background-color: #319795; color: white; text-decoration: none; padding: 14px 32px; font-size: 16px; font-weight: 600; border-radius: 8px; display: inline-block; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
+                  View in System
+                </a>
+              </div>
+
+              <p style="margin: 20px 0 0; font-size: 14px; color: #6b7280; line-height: 1.5;">
+                <em>Note:</em> This is an automated approval notification. Replies to this email are not monitored.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #f7fafc; padding: 24px 40px; text-align: center; font-size: 13px; color: #4a5568; border-top: 1px solid #e2e8f0;">
+              <p style="margin: 0;">
+                Approved on <strong>{{ "now"|date:"F j, Y \\a\\t g:i A" }}</strong><br />
+                &copy; {{ "now"|date:"Y" }} {{ tenant_name }}. All rights reserved.
+              </p>
+            </td>
+          </tr>
+        </table>
+
+        <!-- Bottom Note -->
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="margin-top: 20px;">
+          <tr>
+            <td style="text-align: center; font-size: 12px; color: #9ca3af;">
+              <p style="margin: 0;">This email confirms successful approval. No further action is required unless specified.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

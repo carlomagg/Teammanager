@@ -1,0 +1,374 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2">{{ title }}</h1>
+            <p class="text-muted mb-0">{{ message }}</p>
+        </div>
+        <a href="{% url 'create_company_group' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Create New Group
+        </a>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-primary text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title">
+                                {% if is_superuser %}Total{% else %}My{% endif %} Groups
+                            </h5>
+                            <h2 class="mb-0">{{ total_groups }}</h2>
+                        </div>
+                        <i class="bi bi-collection display-6"></i>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <span class="small">
+                        {% if is_superuser %}All groups{% else %}Groups you own{% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card bg-success text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title">Total Companies</h5>
+                            <h2 class="mb-0">{{ total_members }}</h2>
+                        </div>
+                        <i class="bi bi-buildings display-6"></i>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <span class="small">Under oversight</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Statistics Cards  -->
+<div class="col-md-4">
+    <div class="card bg-info text-white mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="card-title">Active Groups</h5>
+                    <h2 class="mb-0">
+                        {{ total_active_groups }}
+                    </h2>
+                </div>
+                <i class="bi bi-bar-chart display-6"></i>
+            </div>
+        </div>
+        <div class="card-footer d-flex align-items-center justify-content-between">
+            <span class="small">
+                    Active groups
+            </span>
+        </div>
+    </div>
+</div>
+    </div>
+
+    <!-- Filter/Search Bar -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-6">
+                    <input type="text" name="search" class="form-control" placeholder="Search groups by name or slug..." 
+                           value="{{ search_term|default:'' }}">
+                </div>
+                {%comment%}
+                <div class="col-md-4">
+                    <select name="status" class="form-select">
+                        <option value="">All Status</option>
+                        <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active Only</option>
+                        <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactive Only</option>
+                    </select>
+                </div>
+                {%endcomment%}
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search"></i> Filter
+                    </button>
+                </div>
+            </form>
+            
+            <!-- Clear Filters Link -->
+            {% if search_term or status_filter %}
+            <div class="mt-2">
+                <a href="{% url 'company_group_list' %}" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-x-circle"></i> Clear Filters
+                </a>
+                {% if search_term %}
+                <span class="ms-2">
+                    Search: <strong>"{{ search_term }}"</strong>
+                </span>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Groups Table -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                {% if is_superuser %}All Company Groups{% else %}Your Company Groups{% endif %}
+                <span class="badge bg-secondary ms-2">{{ groups.count }}</span>
+            </h5>
+            <div class="btn-group">
+                <a href="{% url 'company_group_list' %}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-arrow-clockwise"></i> Refresh
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            {% if groups %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Group Name</th>
+                            <th>Companies</th>
+                            <th>Owner</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for group in groups %}
+                        <tr>
+                            <td>
+                                <strong>{{ group.name }}</strong><br>
+                                <small class="text-muted">{{ group.slug }}</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-info">{{ group.members.count }}</span>
+                            </td>
+                            <td>
+                                {% if group.owner %}
+                                    <small>{{ group.owner.username }}</small>
+                                    {% if group.owner == request.user %}
+                                        <span class="badge bg-success ms-1">You</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-muted">Not set</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {{ group.created_at|date:"M d, Y" }}<br>
+                                <small class="text-muted">{{ group.created_at|timesince }} ago</small>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'company_group_detail' group.id %}" class="btn btn-outline-primary" title="View">
+                                        <i class="bi bi-eye">View</i>
+                                    </a>
+                                    {% if group.owner == request.user %}
+                                    <a href="{% url 'edit_company_group' group.id %}" class="btn btn-outline-warning" title="Edit">
+                                        <i class="bi bi-pencil">Edit</i>
+                                    </a>
+                                    <a href="{% url 'tenant_application_with_group' group.id %}" class="btn btn-outline-success" title="Add Member">
+                                        <i class="bi bi-plus">Add Member</i>
+                                    </a>
+                                    {% elif group.owner == request.user.is_superuser%}
+                                    <a href="{% url 'edit_company_group_admin' group.id %}" class="btn btn-outline-warning" title="Edit">
+                                        <i class="bi bi-pencil">Edit</i>
+                                    </a>
+                                    <a href="{% url 'edit_company_group_admin' group.id %}" class="btn btn-outline-success" title="Add Member">
+                                        <i class="bi bi-plus">Add Member</i>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Empty State Message -->
+            {% else %}
+            <div class="text-center py-5">
+                {% if search_term or status_filter %}
+                    <i class="bi bi-search display-1 text-muted"></i>
+                    <h4 class="mt-3">No matching groups found</h4>
+                    <p class="text-muted">
+                        No groups match your search criteria.
+                    </p>
+                    <a href="{% url 'company_group_list' %}" class="btn btn-primary">
+                        <i class="bi bi-list"></i> View All Groups
+                    </a>
+                {% else %}
+                    <i class="bi bi-inbox display-1 text-muted"></i>
+                    <h4 class="mt-3">No company groups found</h4>
+                    <p class="text-muted">
+                        {% if is_superuser %}
+                            There are no company groups in the system yet.
+                        {% else %}
+                            You don't own any company groups yet.
+                        {% endif %}
+                    </p>
+                    <a href="{% url 'create_company_group' %}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Create Your First Group
+                    </a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+        
+        {% if groups %}
+        <div class="card-footer text-muted">
+            Showing {{ groups.count }} group{{ groups.count|pluralize }}
+            {% if is_superuser %}
+                (all groups in system)
+            {% else %}
+                (owned by you)
+            {% endif %}
+            {% if search_term or status_filter %}
+                - filtered view
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Summary Information -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">View Summary</h6>
+                </div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-6">Current User:</dt>
+                        <dd class="col-sm-6">{{ request.user.username }}</dd>
+                        
+                        <dt class="col-sm-6">User Type:</dt>
+                        <dd class="col-sm-6">
+                            {% if is_superuser %}
+                                <span class="badge bg-danger">Superuser</span>
+                            {% else %}
+                                <span class="badge bg-info">Regular User</span>
+                            {% endif %}
+                        </dd>
+                        
+                        <dt class="col-sm-6">Groups Showing:</dt>
+                        <dd class="col-sm-6">
+                            {% if is_superuser %}
+                                All groups
+                            {% else %}
+                                Owned groups only
+                            {% endif %}
+                        </dd>
+                        
+                        <dt class="col-sm-6">Active Filters:</dt>
+                        <dd class="col-sm-6">
+                            {% if search_term %}
+                                <span class="badge bg-info">Search: "{{ search_term }}"</span>
+                            {% endif %}
+                            {% if status_filter %}
+                                <span class="badge bg-info ms-1">Status: {{ status_filter }}</span>
+                            {% endif %}
+                            {% if not search_term and not status_filter %}
+                                <span class="text-muted">None</span>
+                            {% endif %}
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Quick Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'create_company_group' %}" class="btn btn-primary">
+                            <i class="bi bi-plus-circle"></i> Create New Group
+                        </a>
+                        <a href="{% url 'company_group_dashboard' %}" class="btn btn-outline-info">
+                            <i class="bi bi-speedometer2"></i>Group Dashboard
+                        </a>
+                        {%comment%}
+                        {% if is_superuser %}
+                        <a href="{% url 'admin:index' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-gear"></i> Admin Panel
+                        </a>
+                        {% endif %}
+                        {%endcomment%}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-submit status filter when changed (optional)
+    const statusSelect = document.querySelector('select[name="status"]');
+    if (statusSelect) {
+        statusSelect.addEventListener('change', function() {
+            if (this.value) {
+                this.form.submit();
+            }
+        });
+    }
+    
+    // Clear search button functionality
+    const searchInput = document.querySelector('input[name="search"]');
+    if (searchInput && searchInput.value) {
+        // Add clear button inside search field
+        const clearButton = document.createElement('button');
+        clearButton.type = 'button';
+        clearButton.className = 'btn btn-sm btn-outline-secondary position-absolute end-0 top-50 translate-middle-y me-2';
+        clearButton.innerHTML = '<i class="bi bi-x"></i>';
+        clearButton.style.zIndex = '10';
+        clearButton.addEventListener('click', function() {
+            searchInput.value = '';
+            searchInput.focus();
+        });
+        
+        const searchContainer = searchInput.parentElement;
+        searchContainer.style.position = 'relative';
+        searchContainer.appendChild(clearButton);
+        
+        // Adjust padding so text doesn't go under button
+        searchInput.style.paddingRight = '40px';
+    }
+    
+    // Keyboard shortcut for search focus
+    document.addEventListener('keydown', function(e) {
+        // Ctrl/Cmd + F to focus search
+        if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+            e.preventDefault();
+            if (searchInput) {
+                searchInput.focus();
+                searchInput.select();
+            }
+        }
+        
+        // Escape to clear search
+        if (e.key === 'Escape' && searchInput && searchInput.value) {
+            searchInput.value = '';
+            searchInput.focus();
+        }
+    });
+});
+</script>
+{% endblock %}

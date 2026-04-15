@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}Confirm Bank Details - {{ company_profile.company_name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-check-circle me-2"></i>
+                        Confirm Your Bank Details
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-success">
+                        <i class="fas fa-check me-2"></i>
+                        <strong>Bank details saved successfully!</strong>
+                        <p class="mb-0">Please review and confirm your bank details below.</p>
+                    </div>
+                    
+                    <!-- Bank Details Display -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">Bank Details for Remittance</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><strong>Bank Name:</strong><br>{{ company_profile.bank_name }}</p>
+                                    <p><strong>Account Number:</strong><br>{{ company_profile.bank_account_number }}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>Account Name:</strong><br>{{ company_profile.bank_account_name }}</p>
+                                    <p><strong>Bank Code:</strong><br>{{ company_profile.bank_code }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Confirmation Form -->
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">Confirmation</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        {{ form.is_correct }}
+                                        <label class="form-check-label" for="{{ form.is_correct.id_for_label }}">
+                                            <strong>I confirm that these bank details are correct</strong>
+                                        </label>
+                                        {% if form.is_correct.errors %}
+                                            <div class="text-danger small">
+                                                {{ form.is_correct.errors }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        {{ form.agree_to_terms }}
+                                        <label class="form-check-label" for="{{ form.agree_to_terms.id_for_label }}">
+                                            <strong>I agree that incorrect bank details may delay payment processing</strong>
+                                        </label>
+                                        {% if form.agree_to_terms.errors %}
+                                            <div class="text-danger small">
+                                                {{ form.agree_to_terms.errors }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>Important:</strong> Once confirmed, these details will be submitted for verification. 
+                            Remittances can only be processed after admin verification.
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'bank_verification' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-edit me-2"></i> Edit Details
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-check-circle me-2"></i> Confirm & Submit for Verification
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,377 @@
+{% extends 'base.html' %}
+{% block title %}Users - {{user.tenant.name}}{% endblock %}
+{% block content %}
+<div class="users-page">
+    <div class="card shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h4 class="card-title mb-0">
+                <i class="fas fa-user-shield me-2 text-primary" aria-hidden="true"></i>
+                Users ({{ count }})
+            </h4>
+            <div class="mb-3">
+                <a href="{% url 'create_user' %}" class="btn btn-success">Add User</a>
+            </div>
+            <div class="input-group w-50 w-md-25">
+                <span class="input-group-text bg-transparent border-end-0">
+                    <i class="fas fa-search text-muted"></i>
+                </span>
+                <input type="text" class="form-control border-start-0" id="searchUsers" placeholder="Search users..." aria-label="Search users">
+            </div>
+            <a href="{% url 'admin_dashboard' %}" class="btn btn-outline-secondary btn-sm" title="Back to Admin Dashboard">
+                <i class="fas fa-arrow-left me-1"></i> Back
+            </a>
+        </div>
+
+        <div class="card-body">
+            <div class="table-responsive">
+                {% comment %} <form method="POST" id="bulkActionForm">
+                    {% csrf_token %}
+                    <select name="action" class="form-select d-inline w-auto me-2">
+                        <option value="activate">Activate</option>
+                        <option value="delete">Delete</option>
+                    </select>
+                    <button type="submit" class="btn btn-primary btn-sm">Apply</button>
+                </form> {% endcomment %}
+                <button class="btn btn-primary btn-sm" onclick="bulkActivateUsers()">
+                    Activate Selected
+                    <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                </button>
+                <table class="table table-hover table-bordered align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col">ID</th>
+                            <th scope="col">Username</th>
+                            <th scope="col">Full Name</th>
+                            <th scope="col">Phone Number</th>
+                            <th scope="col">Email</th>
+                            <th scope="col">Active</th>
+                            <th scope="col">Date Joined</th>
+                            <th scope="col">Position</th>
+                            <th scope="col">SMTP/Mail Provider Email</th>
+                            <th scope="col">Actions</th>
+                            {% comment %} <th scope="col"><input type="checkbox" id="selectAll" aria-label="Select all users">Select All</th> {% endcomment %}
+                            <th scope="col"><input type="checkbox" id="select_all" onclick="toggleSelectAll()"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="userTableBody">
+                        {% for user in users %}
+                        <tr>
+                            <td>{{ user.id }}</td>
+                            <td><a href="{% url 'view_user_details' user.id %}">{{ user.username }}</a></td>
+                            <td>{{ user.first_name }} {{ user.last_name }}</td>
+                            <td>{{ user.phone_number|default:'—' }}</td>
+                            <td>{{ user.email }}</td>
+                            <td>
+                                {% if user.is_active %}
+                                    <i class="fas fa-check-circle text-success" aria-hidden="true" title="Active"></i>
+                                {% else %}
+                                    <i class="fas fa-times-circle text-danger" aria-hidden="true" title="Failed"></i>
+                                    {% comment %} <form action="{% url 'approve_user' user.id %}" method="POST" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-primary btn-sm" title="Activate User" id="activate-{{ user.id }}">
+                                            <i class="fas fa-check me-1"></i> Activate
+                                            <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                                        </button>
+                                    </form> {% endcomment %}
+                                {% endif %}
+                            </td>
+                            <td>{{ user.date_joined|date:"d M Y" }}</td>
+                            <td>{{ user.position|default:'—' }}</td>
+                            <td>{{ user.email_address|default:'—' }}</td>
+                            <td>
+                                <a href="{% url 'edit_user' user.id %}" class="btn btn-outline-primary btn-sm me-1" title="Edit User">
+                                    <i class="fas fa-edit me-1"></i> Edit
+                                </a>
+                                <form action="{% url 'delete_user' user.id %}" method="POST" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit Missouri System: submit" class="btn btn-danger btn-sm" title="Delete User"onclick="return confirm('Are you sure you want to delete {{ user.username }}?');">
+                                        <i class="fas fa-trash-alt me-1"></i> Delete
+                                    </button>
+                                </form>
+                            </td>
+                            {% comment %} <td><input type="checkbox" name="user_ids" value="{{ user.id }}" class="user-checkbox"></td> {% endcomment %}
+                            <td><input type="checkbox" name="selected_users" value="{{ user.id }}"></td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="10" class="text-center text-muted">No users found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% if users.has_other_pages %}
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center mt-3">
+                            {% if users.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ users.previous_page_number }}" aria-label="Previous">
+                                        <span aria-hidden="true">«</span>
+                                    </a>
+                                </li>
+                            {% endif %}
+                            <!--First page-->
+                            <li class="page-item {% if users.number == 1 %}active{% endif %}">
+                                <a class="page-link" href="?page=1">1</a>
+                            </li>
+                            {% if users.number != 1 and users.number != 2 %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">...</span>
+                                </li>
+                            {% endif %}
+                            {% if users.number != 1 %}
+                                <li class="page-item {% if users.number %}active{% endif %}">
+                                    <a class="page-link" href="?page={{ users.number }}">{{ users.number }}</a>
+                                </li>
+                            {% endif %}
+                            {% if users.number != users.paginator.num_pages and users.number != users.paginator.num_pages|add:-1 %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">...</span>
+                                </li>
+                            {% endif %}
+                            <!-- Last page (only if not already shown) -->
+                            {% if users.number != users.paginator.num_pages %}
+                                <li class="page-item {% if users.number == users.paginator.num_pages %}active{% endif %}">
+                                    <a class="page-link" href="?page={{ users.paginator.num_pages }}">{{ users.paginator.num_pages }}</a>
+                                </li>
+                            {% endif %}
+                            {% if users.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ users.next_page_number }}" aria-label="Next">
+                                        <span aria-hidden="true">»</span>
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style scoped>
+    .pagination .page-link {
+        color: #319795;
+        border-radius: 8px;
+        margin: 0 2px;
+    }
+    .pagination .page-item.active .page-link {
+        background-color: #319795;
+        border-color: #319795;
+        color: #ffffff;
+    }
+    .pagination .page-link:hover {
+        background-color: #f1f5f9;
+        color: #2c7a7b;
+    }
+    .users-page {
+        padding: 20px;
+    }
+
+    .users-page .card {
+        border: none;
+        border-radius: 12px; /* Match base.html's rounded corners */
+        background: #ffffff;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); /* Match base.html's main-content */
+    }
+
+    .users-page .card-header {
+        background: #f8fafc;
+        border-bottom: 1px solid #e2e8f0; /* Match base.html's border color */
+        border-radius: 12px 12px 0 0;
+        padding: 15px 20px;
+    }
+
+    .users-page .card-title {
+        font-weight: 600;
+        color: #2d3748; /* Match base.html's text color */
+    }
+
+    .users-page .table {
+        margin-bottom: 0;
+        font-size: 0.95rem;
+    }
+
+    .users-page .table th {
+        font-weight: 500;
+        color: #2d3748;
+        background: #f8fafc;
+        border-bottom: 2px solid #e2e8f0;
+    }
+
+    .users-page .table td {
+        vertical-align: middle;
+        border-color: #e2e8f0;
+    }
+
+    .users-page .table-hover tbody tr:hover {
+        background-color: #f1f5f9; /* Subtle hover effect */
+    }
+
+    .users-page .btn-primary {
+        background-color: #319795;
+        border-color: #319795;
+        border-radius: 8px; /* Match base.html's button style */
+        padding: 6px 12px;
+        font-size: 0.9rem;
+        transition: background-color 0.2s ease;
+    }
+
+    .users-page .btn-primary:hover {
+        background-color: #2c7a7b;
+        border-color: #2c7a7b;
+    }
+
+    .users-page .btn-danger {
+        background-color: #dc3545;
+        border-color: #dc3545;
+        border-radius: 8px;
+        padding: 6px 12px;
+        font-size: 0.9rem;
+        transition: background-color 0.2s ease;
+    }
+
+    .users-page .btn-danger:hover {
+        background-color: #c82333;
+        border-color: #c82333;
+    }
+
+    .users-page .form-control {
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        font-size: 0.9rem;
+        padding: 8px;
+    }
+
+    .users-page .form-control:focus {
+        border-color: #319795;
+        box-shadow: 0 0 0 0.2rem rgba(49, 151, 149, 0.25);
+    }
+
+    .users-page .input-group-text {
+        border-radius: 8px 0 0 8px;
+        border: 1px solid #e2e8f0;
+    }
+
+    /* Focus styles for accessibility */
+    .users-page a:focus, .users-page button:focus, .users-page input:focus {
+        outline: 2px solid #319795;
+        outline-offset: 2px;
+        border-radius: 4px;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .users-page {
+            padding: 15px;
+        }
+
+        .users-page .card-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .users-page .input-group {
+            width: 100% !important;
+        }
+
+        .users-page .table {
+            font-size: 0.85rem;
+        }
+
+        .users-page .btn-sm {
+            padding: 4px 8px;
+            font-size: 0.85rem;
+        }
+    }
+</style>
+
+<script>
+    document.getElementById('searchUsers').addEventListener('input', function(e) {
+        const searchTerm = e.target.value.toLowerCase();
+        const rows = document.querySelectorAll('#userTableBody tr:not(.no-results)');
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(searchTerm) ? '' : 'none';
+        });
+        const noResultsRow = document.querySelector('#userTableBody tr.no-results');
+        if (noResultsRow) {
+            noResultsRow.style.display = Array.from(rows).every(row => row.style.display === 'none') ? '' : 'none';
+        }
+    });
+    
+    document.querySelectorAll('form').forEach(form => {
+        form.addEventListener('submit', function() {
+            const btn = form.querySelector('button[type="submit"]');
+            btn.querySelector('.spinner-border').classList.remove('d-none');
+            btn.disabled = true;
+        });
+    });
+    // Function to get CSRF token from cookie
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Function to handle bulk activation
+    function bulkActivateUsers() {
+        const selectedUsers = document.querySelectorAll('input[name="selected_users"]:checked');
+        if (selectedUsers.length === 0) {
+            alert('Please select at least one user to activate.');
+            return;
+        }
+
+        const csrfToken = getCookie('csrftoken');
+
+        selectedUsers.forEach((checkbox) => {
+            const userId = checkbox.value;
+            const activateUrl = "{% url 'approve_user' 0 %}".replace('0', userId); // Base URL for activation
+            const url = activateUrl;
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({})
+            })
+            .then(response => {
+                if (response.ok) {
+                    // Update UI to reflect activation
+                    const row = checkbox.closest('tr');
+                    const statusCell = row.cells[5]; // Active column
+                    statusCell.innerHTML = `<i class="fas fa-check-circle text-success" aria-hidden="true" title="Active"></i>`;
+                    checkbox.checked = false; // Uncheck after activation
+                } else {
+                    console.error('Failed to activate user ID: ' + userId);
+                }
+            })
+            .catch(error => console.error('Error activating user:', error));
+        });
+
+        // Optionally, uncheck the "Select All" checkbox
+        document.getElementById('select_all').checked = false;
+    }
+
+    // Function to handle Select All checkbox
+    function toggleSelectAll() {
+        const selectAll = document.getElementById('select_all');
+        const checkboxes = document.querySelectorAll('input[name="selected_users"]');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = selectAll.checked;
+        });
+    }
+</script>
+{% endblock %}

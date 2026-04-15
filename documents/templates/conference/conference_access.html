@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}{{ conference.title }} — Your Registration{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+  <div class="row">
+    <div class="col-lg-8">
+      <div class="card shadow-sm mb-3">
+        {% if conference.banner %}
+          <img src="{{ conference.banner.url }}" alt="{{ conference.title }}" class="img-fluid w-100" style="max-height:300px; object-fit:cover;">
+        {% endif %}
+        <div class="card-body">
+          <h3 class="card-title">{{ conference.title }}</h3>
+          <p class="text-muted small">{{ conference.start_date|date:"SHORT_DATETIME_FORMAT" }} — {{ conference.end_date|date:"SHORT_DATETIME_FORMAT" }}</p>
+          <p>{{ conference.description|linebreaksbr }}</p>
+          <p class="mb-1"><strong>Venue:</strong> {{ conference.venue|default:"Virtual / TBA" }}</p>
+          <p class="mb-1"><strong>Registration status:</strong>
+            {% if participant.status == "pending" %}
+              <span class="badge bg-secondary">Pending</span>
+            {% elif participant.status == "accepted" %}
+              <span class="badge bg-success">Accepted</span>
+            {% else %}
+              <span class="badge bg-danger">Declined</span>
+            {% endif %}
+          </p>
+
+          <div class="mt-3 d-flex gap-2">
+            {% comment %} <a href="{% url 'participant_dashboard' token=participant.participant_profile.unique_token %}" class="btn btn-outline-primary">
+              <i class="fas fa-list me-1"></i> My Registrations
+            </a> {% endcomment %}
+
+            <a href="{% url 'guest_dashboard' %}" class="btn btn-outline-primary">
+                <i class="fas fa-list me-1"></i> My Dashboard
+            </a>
+
+            {% if participant.status != "declined" %}
+              <a href="{% url 'participant_card' id=participant.id %}" class="btn btn-outline-secondary" target="_blank">
+                <i class="fas fa-id-card me-1"></i> Print Card
+              </a>
+              {% if conference.start_date <= now and conference.end_date > now %}
+              <form method="post" action="{% url 'unregister_conf_participation' id=participant.id %}" style="display:inline;">
+                {% csrf_token %}
+                <button class="btn btn-outline-danger" type="submit" onclick="return confirm('Are you sure you want to cancel your registration? There would be no refunds if payments already made.');">
+                  <i class="fas fa-times me-1"></i> Unregister
+                </button>
+              </form>
+              {% endif %}
+            {% endif %}
+            <button type= "button" onclick="history.back()" class="btn btn-secondary btn-sm mt-3" data-bs-toggle="tooltip" title="Return to previous page">
+                <i class="fas fa-arrow-left me-1"></i> Back
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

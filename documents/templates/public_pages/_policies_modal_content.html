@@ -1,0 +1,180 @@
+{% load static %}
+
+<style>
+    /* Most of the original styles are reusable in a modal. 
+       We keep the relevant ones and remove hero/quick-nav specific rules */
+    .policies-tabs {
+        display: flex;
+        gap: 0.5rem;
+        border-bottom: 2px solid #e2e8f0;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        padding: 0 1rem;
+    }
+
+    .tab-button {
+        padding: 0.8rem 1.2rem;
+        border: none;
+        background: none;
+        cursor: pointer;
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #4a5568;
+        border-bottom: 3px solid transparent;
+        transition: all 0.3s ease;
+    }
+
+    .tab-button.active {
+        color: #319795;
+        border-bottom-color: #319795;
+    }
+
+    .tab-button:hover {
+        color: #319795;
+    }
+
+    #policies-tabs-wrapper .tab-content {
+        display: none;
+        animation: fadeIn 0.3s ease;
+        padding: 0 1rem;
+        max-width: 100%;
+        overflow-x: auto;
+    }
+
+    #policies-tabs-wrapper .tab-content.active {
+        display: block;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Keep the rest of the policy styling (h2, h3, p, ul, tables, etc.) */
+    .policy-section h2 {
+        color: #2d3748;
+        font-size: 1.75rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid #e2e8f0;
+        padding-bottom: 1rem;
+    }
+
+    .policy-section h3 { color: #319795; font-size: 1.25rem; margin: 2rem 0 1rem; }
+    .policy-section p, .policy-section li { line-height: 1.8; color: #4a5568; font-size: 0.95rem; margin-bottom: 1rem; }
+    /* Add any other styles you need from the original — copy-paste the bulk if required */
+</style>
+
+<div id="policies-tabs-wrapper">
+    <!-- Tab Navigation -->
+    <div class="policies-tabs">
+        <button class="tab-button" data-tab="terms-conditions">
+            <i class="fas fa-file-contract me-2"></i>Terms & Conditions
+        </button>
+        <button class="tab-button active" data-tab="terms-use">
+            <i class="fas fa-gavel me-2"></i>Terms of Use
+        </button>
+        <button class="tab-button" data-tab="privacy">
+            <i class="fas fa-shield-alt me-2"></i>Privacy Policy
+        </button>
+        <button class="tab-button" data-tab="pricing">
+            <i class="fas fa-tags me-2"></i>Pricing & Fees
+        </button>
+    </div>
+
+    <!-- Tab Contents (copy-paste directly from your original policies.html) -->
+    <div id="terms-conditions" class="tab-content">
+        <div class="policy-section">
+            <!-- Full Terms and Conditions for modal -->
+            {% include "public_pages/terms_conditions_modal_content.html" %}
+        </div>
+    </div>
+
+    <div id="terms-use" class="tab-content active">
+        <div class="policy-section">
+            <!-- Full Terms of Use for modal -->
+            {% include "public_pages/terms_use_modal_content.html" %}
+        </div>
+    </div>
+
+    <div id="privacy" class="tab-content">
+        <div class="policy-section">
+            <!-- Full Privacy Policy for modal -->
+            {% include "public_pages/privacy_policy_modal_content.html" %}
+        </div>
+    </div>
+
+    <div id="pricing" class="tab-content">
+        <div class="policy-section">
+            <!-- Full Pricing & Fees for modal -->
+            {% include "public_pages/pricing_fees_modal_content.html" %}
+        </div>
+    </div>
+</div>
+
+<script>
+    function activatePolicyTab(tabName) {
+        const wrapper = document.getElementById('policies-tabs-wrapper');
+        if (!wrapper) return;
+
+        wrapper.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'))
+        wrapper.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'))
+
+        //document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+        //document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+        const target = document.getElementById(tabName);
+        if (target) target.classList.add('active');
+        const btn = document.querySelector('.tab-button[data-tab="' + tabName + '"]');
+        if (btn) btn.classList.add('active');
+    }
+
+    document.querySelectorAll('.tab-button').forEach(button => {
+        button.addEventListener('click', function() {
+            const tabName = this.getAttribute('data-tab');
+            activatePolicyTab(tabName);
+        });
+    });
+
+    // Handle clicks on links that request a specific policy tab
+    document.addEventListener('click', function(e) {
+        const el = e.target.closest('[data-policy-tab]');
+        if (!el) return;
+        e.preventDefault();
+        const tab = el.getAttribute('data-policy-tab');
+        // Ensure modal exists
+        const modalEl = document.getElementById('policiesModal');
+        if (!modalEl) return;
+        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modal.show();
+        // Wait for modal to be visible to avoid layout jumps
+        setTimeout(() => activatePolicyTab(tab || 'terms-use'), 50);
+    });
+
+    // If linking directly with hash like #policies-privacy, open modal and activate
+    document.addEventListener('DOMContentLoaded', function() {
+        if (window.location.hash && window.location.hash.startsWith('#policies-')) {
+            const tab = window.location.hash.replace('#policies-', '');
+            const modalEl = document.getElementById('policiesModal');
+            if (modalEl) {
+                const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                modal.show();
+                setTimeout(() => activatePolicyTab(tab), 50);
+            }
+        }
+
+        // Links inside modal that navigate to the full Policies page
+        document.querySelectorAll('[data-open-policies]').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const tab = this.getAttribute('data-open-policies') || (this.getAttribute('href') || '').split('#')[1];
+                const modalEl = document.getElementById('policiesModal');
+                if (!modalEl) { window.location.href = '{% url "policies" %}#' + (tab || 'terms-use'); return; }
+                const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                modal.hide();
+                setTimeout(() => {
+                    // Navigate to the policies page and the specific section
+                    window.location.href = '{% url "policies" %}#' + (tab || 'terms-use');
+                }, 200);
+            });
+        });
+    });
+</script>

@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interview Scheduled - {{ vacancy_title }}</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #f4f6f9;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #333333;
+    }
+    .container {
+      max-width: 600px;
+      margin: 30px auto;
+      background-color: #ffffff;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    .header {
+      background: linear-gradient(135deg, #63abaaff 0%, #158583ff 100%);
+      color: white;
+      padding: 40px 30px;
+      text-align: center;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 600;
+    }
+    .header p {
+      margin: 10px 0 0;
+      font-size: 17px;
+      opacity: 0.95;
+    }
+    .content {
+      padding: 40px 30px;
+    }
+    .greeting {
+      font-size: 18px;
+      margin-bottom: 24px;
+      line-height: 1.5;
+    }
+    .highlight-box {
+      background-color: #f8f9ff;
+      border-left: 5px solid #319795;
+      padding: 20px;
+      border-radius: 0 8px 8px 0;
+      margin: 30px 0;
+    }
+    .highlight-box h2 {
+      margin: 0 0 15px 0;
+      color: #319795;
+      font-size: 22px;
+    }
+    table.info-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+    }
+    table.info-table td {
+      padding: 12px 0;
+      vertical-align: top;
+    }
+    table.info-table td.label {
+      font-weight: 600;
+      color: #555;
+      width: 140px;
+    }
+    .btn {
+      display: inline-block;
+      background-color: #319795;
+      color: white !important;
+      text-decoration: none;
+      padding: 14px 32px;
+      border-radius: 50px;
+      font-weight: 600;
+      margin: 25px 0;
+      font-size: 16px;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+      transition: all 0.3s;
+    }
+    .btn:hover {
+      background-color: #5eaeacff;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(102, 234, 225, 0.5);
+    }
+    .footer {
+      background-color: #f8f9ff;
+      padding: 30px;
+      text-align: center;
+      color: #777777;
+      font-size: 14px;
+    }
+    .footer a {
+      color: #319795;
+      text-decoration: none;
+    }
+    @media (max-width: 600px) {
+      .container { margin: 15px; border-radius: 10px; }
+      .header { padding: 30px 20px; }
+      .header h1 { font-size: 24px; }
+      .content { padding: 25px 20px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <h1>Interview Scheduled</h1>
+      <p>Congratulations, {{ candidate_name }}!</p>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+      <p class="greeting">
+        Hi {{ candidate_name }},<br><br>
+        Great news! We've scheduled an interview for the <strong>{{ vacancy_title }}</strong> position at <strong>{{ company_name }}</strong>.
+      </p>
+
+      <div class="highlight-box">
+        <h2>Interview Details</h2>
+        
+        <table class="info-table">
+          <tr>
+            <td class="label">Date</td>
+            <td><strong>{{ interview_date }}</strong></td>
+          </tr>
+          <tr>
+            <td class="label">Time</td>
+            <td><strong>{{ interview_time }}</strong> ({{ interview_timezone|cut:"_"|title }})</td>
+          </tr>
+          <tr>
+            <td class="label">Type</td>
+            <td>
+              {% if interview_type %}
+                <span style="color:#28a745;font-weight:600;">Virtual Interview</span>
+              {% else %}
+                <span style="color:#dc3545;font-weight:600;">In-Person Interview</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% if interview_type and interview_link %}
+          <tr>
+            <td class="label">Join Link</td>
+            <td>
+              <a href="{{ interview_link }}" style="color:#667eea;font-weight:600;">
+                Click here to join the meeting
+              </a>
+            </td>
+          </tr>
+          {% elif not interview_type and interview_location %}
+          <tr>
+            <td class="label">Location</td>
+            <td><strong>{{ interview_location }}</strong></td>
+          </tr>
+          {% endif %}
+        </table>
+      </div>
+
+      {% if interview_type and interview_link %}
+      <div style="text-align:center;">
+        <a href="{{ interview_link }}" class="btn" target="_blank">
+          Join Interview
+        </a>
+      </div>
+      {% endif %}
+
+      <p>
+        Please make sure to:
+      </p>
+      <ul style="line-height:1.8;">
+        <li>Test your internet connection and microphone/camera (if virtual)</li>
+        <li>Be ready 5–10 minutes before the scheduled time</li>
+        <li>Have your ID and resume handy</li>
+      </ul>
+
+      <hr style="border:0;border-top:1px solid #eee;margin:35px 0;">
+
+      <p>
+        If you need to reschedule or have any questions, please contact:<br>
+        <strong>{{ hr_name }}</strong> at <a href="mailto:{{ hr_email }}">{{ hr_email }}</a>
+      </p>
+
+      <p>We’re excited to meet you and discuss how you can contribute to {{ company_name }}!</p>
+
+      <p>Best regards,<br>
+         <strong>{{ hr_name }}</strong><br>
+         Human Resources Team<br>
+         {{ company_name }}
+      </p>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <p>
+        This is an automated message from {{ company_name }}'s recruitment system.<br>
+        Please do not reply directly to this email.
+      </p>
+      <p>
+        <a href="#">Unsubscribe</a> • 
+        <a href="#">Privacy Policy</a> • 
+        <a href="#">Contact Us</a>
+      </p>
+      <p style="margin-top:20px;color:#aaa;font-size:12px;">
+        © {{ now|date:"Y" }} {{ company_name }}. All rights reserved.
+      </p>
+    </div>
+  </div>
+</body>
+</html>

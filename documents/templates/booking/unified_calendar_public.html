@@ -1,0 +1,598 @@
+{% extends 'base.html' %}
+{% load tz %}
+{% load static %}
+
+{% block title %}
+  {% if is_organization %}Book with {{ organization_name }}
+  {% else %}Schedule with {{ owner_name }}{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+  <div class="card shadow-lg border-0">
+    {% if is_organization %}
+      <div class="card-header bg-primary text-white py-4">
+        <h3 class="mb-1">Book with {{ organization_name }}</h3>
+        <small class="opacity-75">Organization scheduling</small>
+      </div>
+    {% else %}
+      <div class="card-header bg-primary text-white py-4">
+        <h3 class="mb-1">Schedule with {{ owner_name }}</h3>
+        <small class="opacity-75">Select a service &amp; time</small>
+      </div>
+    {% endif %}
+
+    <!-- Meeting-type filter bar -->
+    <div class="card-body border-bottom pb-3 pt-3" id="type-filter-bar">
+      <div class="d-flex flex-wrap gap-2 align-items-center">
+        <span class="fw-semibold me-1 small text-muted">Filter by meeting type:</span>
+        <button class="btn btn-sm btn-primary active-filter" data-uuid="all">All</button>
+        <!-- populated by JS -->
+      </div>
+    </div>
+
+    <div class="card-body p-0">
+      <div id="calendar" style="min-height: 650px;"></div>
+    </div>
+
+    <div class="card-footer bg-light small text-muted d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <span>Timezone: <strong id="current-tz">{{ user_timezone|default:"Africa/Lagos" }}</strong></span>
+      <div id="legend" class="d-flex flex-wrap gap-2"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Booking Modal ─────────────────────────────────────────────────────── -->
+<div class="modal fade" id="bookingModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title"><i class="fas fa-calendar-check me-2"></i>Confirm Booking</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+
+        <!-- Selected time summary -->
+        <div id="selected-time-block" class="alert alert-info mb-3">
+          <strong><i class="fas fa-clock me-1"></i>Selected time:</strong>
+          <span id="selected-time">—</span>
+        </div>
+
+        <form id="bookingForm" novalidate>
+          <input type="hidden" name="start" id="booking-start">
+          <input type="hidden" name="booking_type_uuid" id="booking-type-uuid">
+
+          <!-- Service selector -->
+          <div class="mb-3">
+            <label class="form-label fw-bold">Service / Meeting Type <span class="text-danger">*</span></label>
+            <select class="form-select" id="booking-type-select" name="booking_type" required>
+              <option value="">Select service…</option>
+            </select>
+          </div>
+
+          <!-- Dynamic details pill -->
+          <div id="type-details" class="d-none mb-4 p-3 rounded" style="background:#f8f9fc;border:1px solid #e2e8f0;">
+            <div class="d-flex flex-wrap gap-3 align-items-center">
+              <span><i class="fas fa-hourglass-half me-1 text-primary"></i><strong>Duration:</strong> <span id="type-duration"></span> min</span>
+              <span><i class="fas fa-tag me-1 text-success"></i><strong>Price:</strong> <span id="type-price"></span></span>
+              <span id="type-desc-wrap" class="d-none text-muted small"><i class="fas fa-info-circle me-1"></i><span id="type-desc"></span></span>
+            </div>
+          </div>
+
+          <div class="mb-3" id="is-multiple-section" style="display:none;">
+            <p class="text-warning"><strong>Note:</strong> Selected service allows multiple people in a time-slot, you may encounter others here</p>
+          </div>
+          <div class="mb-3" id="is-single-section" style="display:none;">
+            <p class="text-muted">This is a 1:1 service.</p>
+          </div>
+
+          <!-- Attendance mode (shown only for hybrid types) -->
+          <div class="mb-3" id="attendance-mode-section" style="display:none;">
+            <label class="form-label fw-bold">Attendance Mode <span class="text-danger">*</span></label>
+            <select class="form-select" id="attendance-mode-select" name="attendance_mode">
+              <option value="">Select mode…</option>
+              <option value="online">Online (Virtual)</option>
+              <option value="offline">In-person</option>
+            </select>
+            <div class="invalid-feedback">Please select how you'd like to attend</div>
+          </div>
+
+          <!-- Location / link info -->
+          <div id="location-info" class="alert alert-light small mb-3 d-none">
+            <div id="physical-location-block" class="mb-1 d-none">
+              <i class="fas fa-map-marker-alt me-1 text-danger"></i>
+              <strong>Location:</strong> <span id="display-location"></span>
+            </div>
+            <div id="virtual-link-info" class="d-none">
+              <i class="fas fa-video me-1 text-primary"></i>
+              <strong>Meeting link:</strong> Will be shared after confirmation
+            </div>
+          </div>
+
+          <!-- Personal details -->
+          <div class="row">
+            <div class="col-12 col-md-6 mb-3">
+              <label class="form-label fw-bold">First Name <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" name="first_name" required>
+              <div class="invalid-feedback">Please enter your first name</div>
+            </div>
+            <div class="col-12 col-md-6 mb-3">
+              <label class="form-label fw-bold">Last Name</label>
+              <input type="text" class="form-control" name="last_name">
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Email <span class="text-danger">*</span></label>
+            <input type="email" class="form-control" name="email" required>
+            <div class="invalid-feedback">Please enter a valid email</div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Phone <span class="text-muted fw-normal">(optional)</span></label>
+            <input type="tel" class="form-control" name="phone">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Notes <span class="text-muted fw-normal">(optional)</span></label>
+            <textarea class="form-control" name="notes" rows="3"></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary px-4" id="confirmBookingBtn" disabled>
+          <span id="action-text">Book Now</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Data islands ──────────────────────────────────────────────────────── -->
+{{ available_slots_json|json_script:"available-slots-data" }}
+{{ booking_types_json|json_script:"booking-types-data" }}
+
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+
+<script>
+/* ── helpers ────────────────────────────────────────────────────────────── */
+function getCookie(name) {
+  const val = `; ${document.cookie}`.split(`; ${name}=`)[1];
+  return val ? val.split(';')[0] : null;
+}
+
+/* ── main ───────────────────────────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', function () {
+  const calendarEl = document.getElementById('calendar');
+  const allSlots   = JSON.parse(document.getElementById('available-slots-data').textContent);
+  const bookingTypes = JSON.parse(document.getElementById('booking-types-data').textContent);
+
+  /* ── type lookup map ──────────────────────────────────────────────────── */
+  const typeMap = {};
+  bookingTypes.forEach(t => { typeMap[t.uuid] = t; });
+
+  /* ── DOM refs ─────────────────────────────────────────────────────────── */
+  const typeSelect      = document.getElementById('booking-type-select');
+  const typeDetails     = document.getElementById('type-details');
+  const typeDuration    = document.getElementById('type-duration');
+  const typePrice       = document.getElementById('type-price');
+  const typeDescWrap    = document.getElementById('type-desc-wrap');
+  const typeDesc        = document.getElementById('type-desc');
+  const actionText      = document.getElementById('action-text');
+  const confirmBtn      = document.getElementById('confirmBookingBtn');
+  const filterBar       = document.getElementById('type-filter-bar').querySelector('.d-flex');
+  const legend          = document.getElementById('legend');
+
+  /* ── state ────────────────────────────────────────────────────────────── */
+  let activeFilterUUID = 'all';
+
+  /* ── build filter buttons + legend ───────────────────────────────────── */
+  bookingTypes.forEach(t => {
+    // filter button
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-sm btn-outline-secondary';
+    btn.dataset.uuid = t.uuid;
+    btn.style.borderColor = t.color;
+    btn.style.color = t.color;
+    btn.textContent = t.name;
+    filterBar.appendChild(btn);
+
+    // legend dot
+    const dot = document.createElement('span');
+    dot.className = 'badge rounded-pill';
+    dot.style.background = t.color;
+    dot.style.opacity = '0.85';
+    dot.textContent = t.name;
+    legend.appendChild(dot);
+
+    // type dropdown option
+    const opt = document.createElement('option');
+    opt.value = t.uuid;
+    opt.textContent = `${t.name} (${t.duration} min)`;
+    opt.dataset.price    = t.price;
+    opt.dataset.currency = t.currency;
+    opt.dataset.duration = t.duration;
+    opt.dataset.desc     = t.description;
+    opt.dataset.isMultiple = t.is_multiple ? '1' : '0';
+    opt.dataset.isHybrid = t.is_hybrid ? '1' : '0';
+    opt.dataset.location = t.location || '';
+    opt.dataset.hasVirtual = t.has_virtual ? '1' : '0';
+    opt.dataset.color    = t.color;
+    typeSelect.appendChild(opt);
+  });
+
+  /* ── filter bar click handler ─────────────────────────────────────────── */
+  filterBar.addEventListener('click', function(e) {
+    const btn = e.target.closest('[data-uuid]');
+    if (!btn) return;
+    activeFilterUUID = btn.dataset.uuid;
+    filterBar.querySelectorAll('[data-uuid]').forEach(b => b.classList.remove('active-filter', 'btn-primary'));
+    btn.classList.add('active-filter');
+    if (activeFilterUUID === 'all') {
+      btn.classList.add('btn-primary');
+      btn.style.background = '';
+      btn.style.color = '';
+    } else {
+      const t = typeMap[activeFilterUUID];
+      btn.style.background = t.color;
+      btn.style.color = '#fff';
+      btn.style.borderColor = t.color;
+    }
+    refreshCalendar();
+  });
+
+  /* ── slot filtering + event building ─────────────────────────────────── */
+  function filteredSlots() {
+    if (activeFilterUUID === 'all') return allSlots;
+    return allSlots.filter(s => s.booking_type_uuid === activeFilterUUID);
+  }
+
+  function dedupeByStart(slots) {
+    const map = new Map();
+    slots.forEach(s => {
+      if (!map.has(s.start)) {
+        map.set(s.start, { ...s });
+      } else {
+        const ex = map.get(s.start);
+        ex.available = ex.available && s.available;
+      }
+    });
+    return Array.from(map.values());
+  }
+
+  function buildEvents(viewType) {
+    const isMonth = viewType === 'dayGridMonth';
+    const source  = isMonth ? dedupeByStart(filteredSlots()) : filteredSlots();
+
+    return source.map(s => {
+      const color = s.color || '#28a745';
+      const alpha = s.available ? '0.18' : '0.08';
+
+      if (isMonth) {
+        return {
+          start: s.start,
+          end:   s.end,
+          title: s.available ? (s.booking_type_name || 'Available') : '–',
+          display: 'auto',
+          color: s.available ? color : '#aaa',
+          backgroundColor: s.available
+            ? hexToRgba(color, 0.15)
+            : 'rgba(170,170,170,0.1)',
+          borderColor: s.available ? color : '#ccc',
+          textColor: s.available ? color : '#999',
+          extendedProps: { available: s.available, booking_type_uuid: s.booking_type_uuid, booking_type_name: s.booking_type_name }
+        };
+      } else {
+        return {
+          start: s.start,
+          end:   s.end,
+          title: s.available ? (s.booking_type_name || 'Available') : '',
+          display: 'block',
+          backgroundColor: s.available ? hexToRgba(color, 0.18) : 'rgba(220,53,69,0.08)',
+          borderColor:     s.available ? color : 'rgba(220,53,69,0.3)',
+          textColor:       s.available ? color : '#dc3545',
+          classNames:      s.available ? ['fc-slot-available'] : ['fc-slot-unavailable'],
+          extendedProps: { available: s.available, booking_type_uuid: s.booking_type_uuid, booking_type_name: s.booking_type_name }
+        };
+      }
+    });
+  }
+
+  /* ── calendar init ─────────────────────────────────────────────────────── */
+  const calendar = new FullCalendar.Calendar(calendarEl, {
+    initialView: 'timeGridWeek',
+    initialDate: '{{ today|date:"Y-m-d" }}',
+    //timeZone: '{{ user_timezone|default:"Africa/Lagos" }}',
+    slotMinTime: '07:00:00',
+    slotMaxTime: '22:00:00',
+    height: 'auto',
+    headerToolbar: {
+      left:   'prev,next today',
+      center: 'title',
+      right:  'dayGridMonth,timeGridWeek,timeGridDay'
+    },
+    events: buildEvents('timeGridWeek'),
+    dayMaxEventRows: 4,
+
+    datesSet: function(info) {
+      calendar.removeAllEvents();
+      calendar.addEventSource(buildEvents(info.view.type));
+    },
+
+    eventClick: function(info) {
+      if (!info.event.extendedProps.available) return;
+
+      const start = info.event.start;
+      const end   = info.event.end;
+
+      document.getElementById('selected-time').textContent =
+        start.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) +
+        ' – ' +
+        end.toLocaleTimeString([], { timeStyle: 'short' });
+
+      document.getElementById('booking-start').value = info.event.startStr;
+
+      // Pre-select type from slot
+      const slotTypeUUID = info.event.extendedProps.booking_type_uuid || '';
+      typeSelect.value = slotTypeUUID;
+      updateTypeDetails();
+
+      // Re-enable confirm button
+      confirmBtn.disabled = false;
+      document.getElementById('selected-time-block')
+              .classList.replace('alert-warning', 'alert-info');
+
+      new bootstrap.Modal(document.getElementById('bookingModal')).show();
+    },
+
+    // Style available vs unavailable slots differently in week/day views
+    eventDidMount: function(info) {
+      if (!info.event.extendedProps.available) {
+        info.el.style.cursor = 'not-allowed';
+        info.el.title = 'Not available';
+      } else {
+        info.el.style.cursor = 'pointer';
+        info.el.title = `Book: ${info.event.title}`;
+      }
+    },
+  });
+
+  calendar.render();
+
+  function refreshCalendar() {
+    calendar.removeAllEvents();
+    calendar.addEventSource(buildEvents(calendar.view.type));
+  }
+
+  /* ── type dropdown change ──────────────────────────────────────────────── */
+  typeSelect.addEventListener('change', function () {
+    updateTypeDetails();
+
+    // Reset slot selection, force user to click again
+    document.getElementById('booking-start').value = '';
+    document.getElementById('selected-time').textContent = 'Please select a time slot again';
+    document.getElementById('selected-time-block')
+            .classList.replace('alert-info', 'alert-warning');
+    confirmBtn.disabled = true;
+
+    // Sync filter bar with chosen type so calendar highlights only that type
+    activeFilterUUID = this.value || 'all';
+    filterBar.querySelectorAll('[data-uuid]').forEach(b => {
+      b.classList.remove('active-filter', 'btn-primary');
+      b.style.background = '';
+      b.style.color = '';
+      b.style.borderColor = '';
+    });
+    const matchingBtn = filterBar.querySelector(`[data-uuid="${activeFilterUUID}"]`);
+    if (matchingBtn) {
+      matchingBtn.classList.add('active-filter');
+      const t = typeMap[activeFilterUUID];
+      if (t) {
+        matchingBtn.style.background = t.color;
+        matchingBtn.style.color = '#fff';
+        matchingBtn.style.borderColor = t.color;
+      }
+    }
+    refreshCalendar();
+  });
+
+  function updateTypeDetails() {
+    const opt = typeSelect.options[typeSelect.selectedIndex];
+    if (!opt || !opt.value) {
+      typeDetails.classList.add('d-none');
+      actionText.textContent = 'Book Now';
+      hideIsMultipleUI();
+      hideAttendanceUI();
+      return;
+    }
+    typeDuration.textContent = opt.dataset.duration;
+    const price = parseFloat(opt.dataset.price);
+    typePrice.innerHTML = price > 0
+      ? `${price.toLocaleString()} ${opt.dataset.currency}`
+      : '<span class="text-success fw-semibold">Free</span>';
+
+    if (opt.dataset.desc) {
+      typeDesc.textContent = opt.dataset.desc;
+      typeDescWrap.classList.remove('d-none');
+    } else {
+      typeDescWrap.classList.add('d-none');
+    }
+
+    typeDetails.classList.remove('d-none');
+    actionText.textContent = price > 0 ? 'Pay & Book' : 'Book Now';
+
+    // Update is_multiple
+    updateIsMultipleUI({is_multiple: opt.dataset.isMultiple === '1'});
+
+    // Attendance mode
+    updateAttendanceUI({
+      is_hybrid:   opt.dataset.isHybrid === '1',
+      location:    opt.dataset.location,
+      has_virtual: opt.dataset.hasVirtual === '1',
+    });
+  }
+
+  /* ── attendance mode logic ─────────────────────────────────────────────── */
+  function hideAttendanceUI() {
+    document.getElementById('attendance-mode-section').style.display = 'none';
+    document.getElementById('location-info').classList.add('d-none');
+    document.getElementById('physical-location-block').classList.add('d-none');
+    document.getElementById('virtual-link-info').classList.add('d-none');
+  }
+
+  function updateIsMultipleUI({ is_multiple }) {
+    document.getElementById('is-multiple-section').style.display = is_multiple ? 'block' : 'none';
+    document.getElementById('is-single-section').style.display  = is_multiple ? 'none'  : 'block';
+  }
+
+  function hideIsMultipleUI() {
+    document.getElementById('is-multiple-section').style.display = 'none';
+    document.getElementById('is-single-section').style.display  = 'none';
+  }
+
+  function updateAttendanceUI({ is_hybrid, location, has_virtual }) {
+    const modeSection  = document.getElementById('attendance-mode-section');
+    const modeSelect   = document.getElementById('attendance-mode-select');
+    const locationInfo = document.getElementById('location-info');
+    const physBlock    = document.getElementById('physical-location-block');
+    const virtInfo     = document.getElementById('virtual-link-info');
+
+    // Reset
+    modeSection.style.display = 'none';
+    locationInfo.classList.add('d-none');
+    physBlock.classList.add('d-none');
+    virtInfo.classList.add('d-none');
+    modeSelect.required = false;
+
+    if (is_hybrid) {
+      modeSection.style.display = 'block';
+      modeSelect.required = true;
+
+      // Show only applicable options
+      modeSelect.querySelector('option[value="online"]').style.display = has_virtual ? '' : 'none';
+      modeSelect.querySelector('option[value="offline"]').style.display = location   ? '' : 'none';
+
+      // If only one option → auto-select and hide
+      const visible = Array.from(modeSelect.options).filter(o => o.value && o.style.display !== 'none');
+      if (visible.length === 1) {
+        modeSelect.value = visible[0].value;
+        modeSection.style.display = 'none';
+        showLocationForMode(visible[0].value, location, has_virtual);
+      }
+    } else {
+      // Fixed mode
+      const mode = has_virtual ? 'online' : (location ? 'offline' : null);
+      if (mode) showLocationForMode(mode, location, has_virtual);
+    }
+  }
+
+  function showLocationForMode(mode, location, has_virtual) {
+    const locationInfo = document.getElementById('location-info');
+    const physBlock    = document.getElementById('physical-location-block');
+    const virtInfo     = document.getElementById('virtual-link-info');
+
+    locationInfo.classList.remove('d-none');
+    if (mode === 'offline' && location) {
+      physBlock.classList.remove('d-none');
+      document.getElementById('display-location').textContent = location;
+    }
+    if (mode === 'online' && has_virtual) {
+      virtInfo.classList.remove('d-none');
+    }
+  }
+
+  document.getElementById('attendance-mode-select').addEventListener('change', function() {
+    const opt = typeSelect.options[typeSelect.selectedIndex];
+    if (!opt) return;
+    showLocationForMode(this.value, opt.dataset.location, opt.dataset.hasVirtual === '1');
+  });
+
+  /* ── submit ────────────────────────────────────────────────────────────── */
+  confirmBtn.addEventListener('click', async function () {
+    const form = document.getElementById('bookingForm');
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      return;
+    }
+
+    const startVal = document.getElementById('booking-start').value;
+    if (!startVal) {
+      alert('Please select a time slot on the calendar first.');
+      return;
+    }
+
+    confirmBtn.disabled = true;
+    confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Processing…';
+
+    const data = {
+      start:             startVal,
+      booking_type_uuid: typeSelect.value,
+      first_name:        form.querySelector('[name="first_name"]').value.trim(),
+      last_name:         form.querySelector('[name="last_name"]').value.trim(),
+      email:             form.querySelector('[name="email"]').value.trim(),
+      phone:             form.querySelector('[name="phone"]').value.trim(),
+      attendance_mode:   document.getElementById('attendance-mode-select')?.value || null,
+      notes:             form.querySelector('[name="notes"]').value.trim(),
+    };
+
+    try {
+      const resp   = await fetch('/api/bookings/public-create/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+        body: JSON.stringify(data)
+      });
+      const result = await resp.json();
+
+      if (!result.success) {
+        alert(result.error || 'Something went wrong. Please try again.');
+        return;
+      }
+      window.location.href = result.status === 'redirect_to_payment'
+        ? result.payment_url
+        : result.redirect;
+
+    } catch (err) {
+      console.error(err);
+      alert('Network error. Please try again.');
+    } finally {
+      const opt = typeSelect.options[typeSelect.selectedIndex];
+      const price = opt ? parseFloat(opt.dataset.price) : 0;
+      confirmBtn.disabled = false;
+      confirmBtn.innerHTML = price > 0 ? 'Pay & Book' : 'Book Now';
+    }
+  });
+
+  /* ── utility: hex → rgba ───────────────────────────────────────────────── */
+  function hexToRgba(hex, alpha) {
+    const r = parseInt(hex.slice(1,3), 16);
+    const g = parseInt(hex.slice(3,5), 16);
+    const b = parseInt(hex.slice(5,7), 16);
+    return `rgba(${r},${g},${b},${alpha})`;
+  }
+});
+</script>
+
+<style>
+  .active-filter { font-weight: 600 !important; }
+
+  /* Week/day view: make available slots look like solid time blocks */
+  .fc-slot-available {
+    border-left-width: 3px !important;
+    border-left-style: solid !important;
+    border-radius: 4px;
+    font-size: 0.78rem;
+  }
+  .fc-slot-unavailable {
+    opacity: 0.4;
+    border-left: 2px dashed #dc3545 !important;
+    border-radius: 4px;
+  }
+
+  /* Month view: nicer dot events */
+  .fc-daygrid-dot-event.fc-event-mirror,
+  .fc-daygrid-dot-event:hover { opacity: 0.9; }
+
+  .fc .fc-daygrid-day-events { overflow: visible; }
+
+  /* Legend badges */
+  #legend .badge { font-size: 0.72rem; padding: 4px 8px; }
+</style>
+{% endblock %}

@@ -1,0 +1,536 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+    Interview: {{ interview.vacancy.title }} – {{ interview.schedule_start|date:"M d, Y" }}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-start mb-4">
+        <div>
+            <h1 class="h3 mb-2 text-gray-800">
+                Interview Details
+            </h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'interview_list' %}">Interviews</a></li>
+                    <li class="breadcrumb-item active">{{ interview.vacancy.title }}</li>
+                </ol>
+            </nav>
+        </div>
+
+        <div class="text-end">
+            {% if interview.status in 'scheduled,rescheduled' %}
+                <a href="{% url 'update_interview' interview.id %}" class="btn btn-outline-secondary me-2">
+                    Edit Interview
+                </a>
+                <form method="post"
+                    action="{% url 'complete_interview' interview.id %}"
+                    class="d-inline">
+                {% csrf_token %}
+                <button class="btn btn-outline-success">
+                    Mark as Completed
+                </button>
+                </form>
+                <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cancelModal">
+                    Cancel Interview
+                </button>
+            {% endif %}
+
+            {% if interview.status in 'scheduled,rescheduled' and interview.is_virtual and interview.virtual_link or interview.google_meet and interview.google_meet_link %}
+                <a href="{{ interview.virtual_link|default:interview.google_meet_link }}" target="_blank" class="btn btn-success ms-2">
+                    Join Meeting
+                </a>
+            {% endif %}
+
+            {% if interview.status == 'cancelled' %}
+            <button class="btn btn-outline-primary"
+                    data-bs-toggle="modal"
+                    data-bs-target="#rescheduleModal">
+                Reschedule Interview
+            </button>
+            {% endif %}
+
+        </div>
+    </div>
+
+    <!-- Main Card -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">Interview Information</h6>
+                    <span class="badge
+                        {% if interview.status == 'scheduled' %}bg-warning text-dark
+                        {% elif interview.status == 'completed' %}bg-success
+                        {% elif interview.status == 'rescheduled' %}bg-info text-dark
+                        {% elif interview.status == 'cancelled' %}bg-danger
+                        {% endif %} fs-6">
+                        {{ interview.get_status_display }}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <h5 class="text-primary">Vacancy</h5>
+                            <p class="mb-1">
+                                <a href="{% url 'vacancy_detail' interview.vacancy.pk %}" class="fw-bold text-decoration-none">
+                                    {{ interview.vacancy.title }}
+                                </a>
+                            </p>
+                            {% if interview.vacancy.department %}
+                                <small class="text-muted">{{ interview.vacancy.department.name }}</small>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-6 mb-4">
+                            <h5 class="text-primary">Scheduled By</h5>
+                            <p class="mb-0">
+                                {% if interview.scheduled_by %}
+                                    <span class="d-inline-flex align-items-center">
+                                        <div class="bg-primary text-white rounded-circle me-2" style="width:32px;height:32px;font-size:12px;line-height:32px;text-align:center;">
+                                            {{ interview.scheduled_by.staff_profile.get_full_name|slice:":2"|upper }}
+                                        </div>
+                                        {{ interview.scheduled_by.staff_profile.get_full_name|default:interview.scheduled_by.email }}
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted">System / Deleted User</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <h5 class="text-primary">Date & Time</h5>
+                            <p class="mb-1 fs-5">
+                                <strong>{{ interview.schedule_start|date:"l, F d, Y" }}</strong>
+                            </p>
+                            <p class="mb-1">
+                                {{ interview.schedule_start|time:"h:i A" }}
+                                <span class="text-muted">→</span>
+                                {{ interview.schedule_end|time:"h:i A" }}
+                            </p>
+                            <small class="text-success">
+                                {{ interview.get_timezone_display }} ({{ interview.timezone }})
+                            </small>
+                        </div>
+
+                        <div class="col-md-6 mb-4">
+                            <h5 class="text-primary">Type & Location</h5>
+                            {% if interview.is_virtual %}
+                                <span class="badge bg-info text-dark mb-2">Virtual Interview</span>
+                                {% if interview.google_meet and interview.google_meet_link %}
+                                    <p class="mb-2">
+                                        <a href="{{ interview.google_meet_link }}" target="_blank" class="btn btn-sm btn-outline-success">
+                                            Open Google Meet
+                                        </a>
+                                    </p>
+                                {% endif %}
+                                {% if interview.virtual_link and not interview.google_meet %}
+                                    <p class="mb-0">
+                                        <a href="{{ interview.virtual_link }}" target="_blank">
+                                            {{ interview.virtual_link }}
+                                        </a>
+                                    </p>
+                                {% endif %}
+                            {% else %}
+                                <span class="badge bg-secondary mb-2">Physical Interview</span>
+                                <p class="mb-0 fw-bold text-danger">
+                                    {{ interview.physical_location|default:"Location not specified" }}
+                                </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Candidates -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        Candidates ({{ interview.applications.count }})
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% for application in interview.applications.all %}
+                    <div class="d-flex align-items-center mb-3 pb-3 border-bottom">
+                        <div class="me-3">
+                            {% if application.profile_picture %}
+                                <img src="{{ application.profile_picture.url }}" class="rounded-circle" width="50" height="50">
+                            {% else %}
+                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width:50px;height:50px;">
+                                    {{ application.get_full_name|slice:":2"|upper }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="flex-grow-1">
+                            <h6 class="mb-1">
+                                <a href="{% url 'vacancy_application_detail' application.vacancy.id application.id %}" class="text-decoration-none">
+                                    {{ application.get_full_name|default:application.email }}
+                                </a>
+                            </h6>
+                            <small class="text-muted">
+                                Applied on {{ application.created_at|date:"M d, Y" }}
+                                {% if application.cv %}
+                                    • <a href="#" 
+                                        data-media-url="{{ application.cv.url }}" 
+                                        data-media-type="pdf" 
+                                        data-media-name="{{ application.get_full_name }} PDF" 
+                                        class="text-primary">
+                                        <i class="fas fa-file-pdf"></i> CV/Resume
+                                    </a>
+                                    {% comment %} <a href="{{ application.cv.url }}" target="_blank">CV/Resume</a> {% endcomment %}
+                                {% endif %}
+                            </small>
+                            {% if interview.status == 'completed' and not application.offer %}
+                            <button type="button"
+                                    class="btn btn-sm btn-primary ms-2 send-offer-btn"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#sendOfferModal"
+                                    data-application-id="{{ application.id }}"
+                                    data-applicant-name="{{ application.get_full_name|default:application.email }}">
+                                Send Offer
+                            </button>
+                            {% endif %}
+                            {% if application.offer.status == 'accepted' and application.offer and not application.onboarding_status == 'onboarded' %}
+                                <a href={% url 'onboard_employee' application.id interview.id %} class="btn btn-primary">Onboard Employee</a>
+                            {% endif %}
+                        </div>
+
+                        <div>
+                            <span class="badge">
+                                {% if application.status == 'shortlisted' %}bg-success
+                                {% elif application.status == 'rejected' %}bg-danger
+                                {% elif application.offer.status == 'sent' %}
+                                    <span class="badge bg-secondary">Offer sent</span>
+                                {% elif application.offer.status == 'accepted' and not application.onboarding_status == 'onboarded'%}
+                                    <span class="badge bg-primary">Offer accepted</span>
+                                {% elif application.offer.status == 'declined' %}
+                                    <span class="badge bg-danger">Offer declined</span>
+                                {% elif application.onboarding_status == 'onboarded' %}
+                                    <span class="badge bg-success">Onboarded</span>
+                                {% else %}bg-secondary
+                                {% endif %}
+                                {{ application.get_status_display }}
+                            </span>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted text-center py-4">No candidates assigned to this interview.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Interviewers -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Interviewers</h6>
+                </div>
+                <div class="card-body">
+                    {% for user in interview.interviewers.all %}
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="me-3">
+                            {% if user.staff_profile.photo %}
+                                <img src="{{ user.staff_profile.photo.url }}" class="rounded-circle" width="40" height="40">
+                            {% else %}
+                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width:40px;height:40px;font-size:11px;">
+                                    {{ user.staff_profile.get_full_name|slice:":2"|upper }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <div class="fw-bold">{{ user.staff_profile.get_full_name|default:user.email }}</div>
+                            <small class="text-muted">{{ user.get_roles_display }}</small>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted mb-0">No interviewers assigned yet.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Timeline / Metadata -->
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Activity</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="timeline">
+                        <li class="timeline-item">
+                            <span class="timeline-date">{{ interview.created_at|date:"M d, Y h:i A" }}</span>
+                            <p class="mb-0">Interview scheduled</p>
+                        </li>
+                        {% if interview.updated_at != interview.created_at %}
+                        <li class="timeline-item">
+                            <span class="timeline-date">{{ interview.updated_at|date:"M d, Y h:i A" }}</span>
+                            <p class="mb-0">Last updated</p>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Send Offer Modal -->
+    <div class="modal fade" id="sendOfferModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+
+            <form method="post" id="sendOfferForm" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                <div class="modal-header">
+                <h5 class="modal-title">
+                    Send Job Offer to <span id="offerCandidateName"></span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+
+                {{ job_offer_form.non_field_errors }}
+
+                {{ job_offer_form.proposed_start_date.label_tag }}
+                {{ job_offer_form.proposed_start_date }}
+
+                {{ job_offer_form.department.label_tag }}
+                {{ job_offer_form.department }}
+
+                {{ job_offer_form.offer_letter.label_tag }}
+                {{ job_offer_form.offer_letter }}
+
+                <small class="text-muted">PDF or DOCX, max 5MB</small>
+
+                </div>
+
+                <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Cancel
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    Send Offer
+                </button>
+                </div>
+
+            </form>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Cancel Confirmation Modal -->
+    {% if interview.status == 'scheduled' %}
+    <div class="modal fade" id="cancelModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title text-danger">Cancel Interview</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to <strong>cancel</strong> this interview?</p>
+                    <ul class="mb-0">
+                        <li><strong>Vacancy:</strong> {{ interview.vacancy.title }}</li>
+                        <li><strong>Date:</strong> {{ interview.schedule_start|date:"M d, Y h:i A" }}</li>
+                        <li><strong>Candidates:</strong> {{ interview.applications.count }}</li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <form action="{% url 'cancel_interview' interview.id %}" method="post" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">Yes, Cancel Interview</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Reschedule Modal-->
+{% if interview.status == 'cancelled' %}
+<div class="modal fade" id="rescheduleModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <form method="post" action="{% url 'reschedule_interview' interview.id %}">
+        {% csrf_token %}
+
+         {{ reschedule_form.non_field_errors }}
+
+        <div class="modal-header">
+          <h5 class="modal-title text-primary">Reschedule Interview</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="row g-3">
+
+            <div class="col-md-6">
+              <label class="form-label">Start Time</label>
+              {{ reschedule_form.schedule_start }}
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">End Time</label>
+              {{ reschedule_form.schedule_end }}
+            </div>
+
+            <div class="col-12">
+              <div class="form-check mt-2">
+                {{ reschedule_form.is_virtual }}
+                <label class="form-check-label">Virtual Interview</label>
+              </div>
+            </div>
+
+            <div class="col-md-6 virtual-fields">
+              <label class="form-label">Meeting Link</label>
+              {{ reschedule_form.virtual_link }}
+            </div>
+
+            <div class="col-md-6 physical-fields">
+              <label class="form-label">Physical Location</label>
+              {{ reschedule_form.physical_location }}
+            </div>
+
+            <div class="col-12">
+              <label class="form-label">Interviewers (optional)</label>
+              {{ reschedule_form.interviewers }}
+            </div>
+
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            Cancel
+          </button>
+          <button type="submit" class="btn btn-primary">
+            Reschedule Interview
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% if open_reschedule_modal %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const modal = new bootstrap.Modal(
+    document.getElementById("rescheduleModal")
+  );
+  modal.show();
+});
+</script>
+{% endif %}
+
+{% if open_send_offer_modal_for %}
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const modal = new bootstrap.Modal(
+    document.getElementById('sendOfferModal-{{ open_send_offer_modal_for }}')
+  );
+  modal.show();
+});
+</script>
+{% endif %}
+{% endblock %}
+
+{% block extra_js%}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const isVirtual = document.querySelector("#id_is_virtual");
+  const virtualFields = document.querySelector(".virtual-fields");
+  const physicalFields = document.querySelector(".physical-fields");
+
+  function toggleFields() {
+    if (isVirtual.checked) {
+      virtualFields.style.display = "block";
+      physicalFields.style.display = "none";
+    } else {
+      virtualFields.style.display = "none";
+      physicalFields.style.display = "block";
+    }
+  }
+
+  toggleFields();
+  isVirtual.addEventListener("change", toggleFields);
+});
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+
+        const modal = document.getElementById('sendOfferModal');
+
+        modal.addEventListener('show.bs.modal', function (event) {
+
+            const button = event.relatedTarget;
+
+            const applicationId = button.getAttribute('data-application-id');
+            const applicantName = button.getAttribute('data-applicant-name');
+
+            const form = document.getElementById('sendOfferForm');
+
+            form.action = `/vacancy/application/send-offer/${applicationId}/{{ interview.id }}/`;
+
+            document.getElementById('offerCandidateName').textContent = applicantName;
+
+        });
+
+    });
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .timeline {
+        list-style: none;
+        padding: 0;
+        position: relative;
+    }
+    .timeline:before {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #e9ecef;
+        left: 8px;
+    }
+    .timeline-item {
+        position: relative;
+        padding-left: 30px;
+        margin-bottom: 15px;
+    }
+    .timeline-item:before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 5px;
+        width: 14px;
+        height: 14px;
+        background: #007bff;
+        border: 3px solid white;
+        border-radius: 50%;
+        box-shadow: 0 0 0 3px #007bff;
+    }
+    .timeline-date {
+        font-size: 0.85rem;
+        color: #6c757d;
+        display: block;
+        margin-bottom: 4px;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Pending Approval</title>
+    <style type="text/css">
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+        .header {
+            background-color: #2c7a7b;
+            color: #ffffff;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .content {
+            padding: 30px;
+            color: #333333;
+            line-height: 1.6;
+        }
+        .content p {
+            margin: 0 0 16px 0;
+        }
+        .highlight {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-left: 4px solid #2c7a7b;
+            margin: 20px 0;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            font-size: 14px;
+            color: #666666;
+        }
+        a {
+            color: #319795;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>Welcome to TeamManager</h1>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content">
+            <p>Dear {% if user.get_full_name %}{{ user.get_full_name }}{% else %}{{ user.username }}{% endif %},</p>
+
+            <p>Thank you for registering with <strong>{{ tenant_name }} on TeamManager</strong>. We're excited to have you on board!</p>
+
+            <p>Your account has been successfully created with the email address: <strong>{{ user.email }}</strong>.</p>
+
+            <div class="highlight">
+                <p><strong>Your account is currently pending approval.</strong></p>
+                <p>It will be reviewed by your Organization's administrator ({% if admin_user.get_full_name %}{{ admin_user.get_full_name }}{% else %}{{ admin_user.username }}{% endif %}). Once approved, you will receive a follow-up email confirming that you can log in and start using your account.</p>
+            </div>
+
+            <p>If you have any questions in the meantime, contact the administrator directly at <a href="mailto:{{ admin_user.email }}">{{ admin_user.email }}</a>.</p>
+
+            <p>We look forward to welcoming you fully soon!</p>
+
+            <p>Best regards,<br>The TeamManager Team</p>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>&copy; TeamManager. All rights reserved.</p>
+            <p>This is an automated message. Please do not reply directly to this email.</p>
+        </div>
+    </div>
+</body>
+</html>

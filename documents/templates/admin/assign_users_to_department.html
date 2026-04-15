@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-5">
+    <h1>Assign Users to {{ department.name }}</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-success">Assign Users</button>
+        <a href="{% url 'department_list' %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+<style>
+    .card {
+        border-radius: 12px;
+        transition: all 0.3s ease;
+    }
+    body.dark-mode .card {
+        background: #2d3748;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    .card-header {
+        cursor: default;
+        transition: background-color 0.2s ease;
+    }
+    body.dark-mode .card-header {
+        background: #3b4a6b !important;
+    }
+    .form-label {
+        font-weight: 500;
+        color: #2d3748;
+    }
+    body.dark-mode .form-label {
+        color: #e2e8f0;
+    }
+    .form-control, .form-select {
+        border-radius: 8px;
+    }
+    body.dark-mode .form-control, body.dark-mode .form-select {
+        background: #3b4a6b;
+        color: #000000;
+        border-color: #4a5568;
+    }
+    .select2-container .select2-selection--multiple {
+        border-radius: 8px;
+        border: 1px solid #ced4da;
+        color: #000000;
+    }
+    body.dark-mode .select2-container .select2-selection--multiple {
+        border-color: #4a5568;
+        background: #3b4a6b;
+        color: #000000;
+    }
+    .select2-container--default .select2-selection--multiple .select2-selection__choice {
+        background-color: #319795;
+        color: #000000;
+    }
+    body.dark-mode .select2-results__options {
+        color: #000000;
+    }
+</style>
+<script>
+$(document).ready(function() {
+    $('.select2').each(function() {
+        var $select = $(this);
+        $select.select2({
+            tags: true,
+            tokenSeparators: [',', ' '],
+            placeholder: $select.data('placeholder') || 'Select users',
+            allowClear: true,
+            width: '100%',
+            multiple: true,
+            ajax: {
+                url: "{% url 'user_search' %}",
+                dataType: 'json',
+                delay: 250,
+                data: function(params) {
+                    return {
+                        q: params.term
+                    };
+                },
+                processResults: function(data) {
+                    return {
+                        results: data.map(function(user) {
+                            return {
+                                id: user.id,
+                                text: user.name,
+                                email: user.email
+                            };
+                        })
+                    };
+                },
+                cache: true,
+                error: function(jqXHR, textStatus, errorThrown) {
+                    console.error('AJAX error:', textStatus, errorThrown);
+                }
+            },
+            templateResult: function(data) {
+                return data.text || data.email || data.id;
+            },
+            templateSelection: function(data) {
+                console.log('Rendering selection:', data);
+                console.log('Rendering selection email:', data.email);
+                return data.text || data.email || data.id;
+            },
+            createTag: function(params) {
+                var term = $.trim(params.term);
+                if (term === '') {
+                    return null;
+                }
+                var exists = $select.find('option').filter(function() {
+                    return $.trim($(this).val()).toLowerCase() === term.toLowerCase();
+                }).length > 0;
+                if (exists) {
+                    return null;
+                }
+                return {
+                    id: term,
+                    text: term,
+                    email: term,
+                    newTag: true
+                };
+            }
+        });
+
+        // Initialize pre-filled values
+        {% if form.users.value %}
+            const $select = $('.select2');
+            {{ form.users.value|safe }}.forEach(email => {
+                const user = $select.find(`option[value="${email}"]`);
+                if (user.length === 0) {
+                    const opt = new Option(email, email, true, true);
+                    $select.append(opt);
+                }
+            });
+            $select.trigger('change');
+        {% endif %}
+
+        // Debug: Log selections and value updates
+        $select.on('select2:select', function(e) {
+            console.log('Selected:', e.params.data);
+            console.log('Current select value:', $select.val());
+            console.log('Options:', $select.find('option').map(function() { return $(this).val(); }).get());
+            console.log('Form data:', $select.closest('form').serialize());
+        });
+        $select.on('select2:unselect', function(e) {
+            console.log('Unselected:', e.params.data);
+            console.log('Current select value:', $select.val());
+            console.log('Options:', $select.find('option').map(function() { return $(this).val(); }).get());
+            console.log('Form data:', $select.closest('form').serialize());
+        });
+    });
+});
+</script>
+{% endblock %}

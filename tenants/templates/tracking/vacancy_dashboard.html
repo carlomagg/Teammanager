@@ -1,0 +1,290 @@
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-teal-600">
+            <i class="fas fa-briefcase me-2 text-primary"></i> Vacancy & Application Dashboard
+        </h2>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card shadow-sm border-0 text-center" style="background:#319795; color:white;">
+                <div class="card-body">
+                    <i class="fas fa-list fa-2x mb-2"></i>
+                    <h5>Total Vacancies</h5>
+                    <h3>{{ total_vacancies }}</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card shadow-sm border-0 text-center" style="background:#2c7a7b; color:white;">
+                <div class="card-body">
+                    <i class="fas fa-share-alt fa-2x mb-2"></i>
+                    <h5>Shared Vacancies</h5>
+                    <h3>{{ total_shared_vacancies }}</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card shadow-sm border-0 text-center" style="background:#319795; color:white;">
+                <div class="card-body">
+                    <i class="fas fa-users fa-2x mb-2"></i>
+                    <h5>Total Applications</h5>
+                    <h3>{{ total_applications }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="row g-4">
+        <!-- Vacancies per Tenant -->
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white fw-bold">
+                    Top 20 Tenants by Vacancy Count
+                </div>
+                <div class="card-body">
+                    <canvas id="vacanciesPerTenantChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Shared Vacancies per Tenant -->
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white fw-bold">
+                    Top 20 Tenants by Shared Vacancies
+                </div>
+                <div class="card-body">
+                    <canvas id="sharedVacanciesChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- General Work Mode -->
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white fw-bold">
+                    Vacancy Work Modes (General)
+                </div>
+                <div class="card-body">
+                    <canvas id="generalWorkModeChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vacancy Status -->
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white fw-bold">
+                    Vacancy Status (General)
+                </div>
+                <div class="card-body">
+                    <canvas id="vacancyStatusChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Application Status -->
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white fw-bold">
+                    Vacancy Applications (Accepted / Rejected / Pending)
+                </div>
+                <div class="card-body">
+                    <canvas id="appStatusChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Applications per Tenant -->
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white fw-bold">
+                    Top 20 Tenants by Application Count
+                </div>
+                <div class="card-body">
+                    <canvas id="applicationsPerTenantChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Shared vs Non-Shared -->
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white fw-bold">
+                    Shared vs Non-Shared Vacancies
+                </div>
+                <div class="card-body">
+                    <canvas id="sharedVsNonSharedChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <!-- New Table: Top 20 Vacancies by Application Count -->
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card border-0 shadow" style="background-color: #fff;">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">Top 20 Vacancies by Application Count</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th scope="col" style="color: #319795;">Vacancy Name</th>
+                                        <th scope="col" style="color: #319795;">Tenant</th>
+                                        <th scope="col" style="color: #319795;">Applications</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in top_vacancies_by_applications %}
+                                        <tr>
+                                            <td>{{ item.vacancy__title }}</td>
+                                            <td>{{ item.tenant__name }}</td>
+                                            <td>{{ item.application_count }}</td>
+                                        </tr>
+                                    {% empty %}
+                                        <tr>
+                                            <td colspan="3" class="text-center text-muted">No applications found.</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{ vacancies_per_tenant|json_script:"vacanciesPerTenantData" }}
+{{ shared_vacancies_per_tenant|json_script:"sharedVacanciesPerTenantData" }}
+{{ general_work_mode_counts|json_script:"generalWorkModeCountsData" }}
+{{ general_status_counts|json_script:"generalStatusCountsData" }}
+{{ applications_per_tenant|json_script:"applicationsPerTenantData" }}
+{{ general_app_status_counts|json_script:"generalAppStatusCountsData" }}
+{{ general_vacancy_shared|json_script:"generalVacancySharedData" }}
+
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    const teal = '#319795';
+    const darkTeal = '#2c7a7b';
+    const lightTeal = '#4fd1c5';
+    const white = '#f7fafc';
+
+    function extractData(data, labelKey, valueKey) {
+        return {
+            labels: data.map(item => item[labelKey]),
+            counts: data.map(item => item[valueKey]),
+        };
+    }
+
+    // ✅ Use Django’s json_script-generated data safely
+    const vacanciesPerTenant = JSON.parse(document.getElementById('vacanciesPerTenantData').textContent);
+    const sharedVacanciesPerTenant = JSON.parse(document.getElementById('sharedVacanciesPerTenantData').textContent);
+    const generalWorkModeCounts = JSON.parse(document.getElementById('generalWorkModeCountsData').textContent);
+    const generalStatusCounts = JSON.parse(document.getElementById('generalStatusCountsData').textContent);
+    const applicationsPerTenant = JSON.parse(document.getElementById('applicationsPerTenantData').textContent);
+    const generalAppStatusCounts = JSON.parse(document.getElementById('generalAppStatusCountsData').textContent);
+    const generalVacancyShared = JSON.parse(document.getElementById('generalVacancySharedData').textContent);
+
+    // ---- Charts ----
+
+    const vacTenant = extractData(vacanciesPerTenant, 'tenant__name', 'vacancy_count');
+    new Chart(document.getElementById('vacanciesPerTenantChart'), {
+        type: 'bar',
+        data: {
+            labels: vacTenant.labels,
+            datasets: [{
+                label: 'Vacancies',
+                data: vacTenant.counts,
+                backgroundColor: teal,
+            }]
+        },
+        options: { responsive: true, plugins: { legend: { display: false } } }
+    });
+
+    const sharedVac = extractData(sharedVacanciesPerTenant, 'tenant__name', 'shared_vacancy_count');
+    new Chart(document.getElementById('sharedVacanciesChart'), {
+        type: 'bar',
+        data: {
+            labels: sharedVac.labels,
+            datasets: [{
+                label: 'Shared Vacancies',
+                data: sharedVac.counts,
+                backgroundColor: darkTeal,
+            }]
+        },
+        options: { responsive: true, plugins: { legend: { display: false } } }
+    });
+
+    const workMode = extractData(generalWorkModeCounts, 'work_mode', 'count');
+    new Chart(document.getElementById('generalWorkModeChart'), {
+        type: 'pie',
+        data: {
+            labels: workMode.labels,
+            datasets: [{
+                data: workMode.counts,
+                backgroundColor: [teal, darkTeal, lightTeal],
+            }]
+        }
+    });
+
+    const status = extractData(generalStatusCounts, 'status', 'count');
+    new Chart(document.getElementById('vacancyStatusChart'), {
+        type: 'doughnut',
+        data: {
+            labels: status.labels,
+            datasets: [{
+                data: status.counts,
+                backgroundColor: [darkTeal, teal, lightTeal],
+            }]
+        }
+    });
+
+    const appStatus = extractData(generalAppStatusCounts, 'status', 'count');
+    new Chart(document.getElementById('appStatusChart'), {
+        type: 'pie',
+        data: {
+            labels: appStatus.labels,
+            datasets: [{
+                data: appStatus.counts,
+                backgroundColor: [teal, darkTeal, lightTeal],
+            }]
+        }
+    });
+
+    const appTenant = extractData(applicationsPerTenant, 'tenant__name', 'application_count');
+    new Chart(document.getElementById('applicationsPerTenantChart'), {
+        type: 'bar',
+        data: {
+            labels: appTenant.labels,
+            datasets: [{
+                label: 'Applications',
+                data: appTenant.counts,
+                backgroundColor: teal,
+            }]
+        },
+        options: { responsive: true, plugins: { legend: { display: false } } }
+    });
+
+    const sharedVs = extractData(generalVacancyShared, 'shared', 'count');
+    new Chart(document.getElementById('sharedVsNonSharedChart'), {
+        type: 'doughnut',
+        data: {
+            labels: sharedVs.labels,
+            datasets: [{
+                data: sharedVs.counts,
+                backgroundColor: [teal, darkTeal],
+            }]
+        }
+    });
+</script>

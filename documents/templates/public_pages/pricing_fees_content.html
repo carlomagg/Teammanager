@@ -1,0 +1,457 @@
+<!-- Pricing & Fees Tab -->
+    <div id="pricing" class="tab-content">
+        <div class="policy-section">
+            <h2><i class="fas fa-tags text-primary"></i>Pricing & Fees</h2>
+    <p>Conference registration fees are set and managed by the conference organizer (“Organizer”) using the TeamManager platform. TeamManager provides the tools required to configure pricing tiers and manage registration deadlines.</p>
+    
+    <h3>Conference Feature</h3>
+    <h4>Pricing Tiers</h4>
+    <p>Organizers may, at their discretion, enable one or more of the following pricing options:</p>
+    <ul>
+        <li>Early Bird Registration – A discounted rate available for a limited period before the standard registration opens.</li>
+        <li>Standard Registration – The base registration fee applicable during the main registration period.</li>
+        <li>Late Registration – A higher rate applicable after the standard registration deadline, subject to availability.</li>
+    </ul>
+    <p>The availability, pricing, and deadlines for Early Bird and Late Registration are optional and determined solely by the Organizer.</p>
+
+    <h4>Platform Service Fee</h4>
+    <p>For every successful conference registration processed through TeamManager, a platform service fee is applied. This fee consists of:</p>
+    <ul>
+        <li>10% of the conference registration fee, plus</li>
+        <li>₦100 (One Hundred Naira) per transaction.</li>
+    </ul>
+    <p>This service fee covers payment processing, platform maintenance, and administrative support and is calculated automatically at checkout.</p>
+
+    <h4>Fee Transparency</h4>
+    <p>All applicable fees, including the platform service fee, are displayed to participants before payment is completed.</p>
+    <p>The total payable amount includes the conference registration fee set by the Organizer and the TeamManager service fee.</p>
+
+    <h4>General Conditions</h4>
+    <p>Registration fees are applied based on the date and time the registration is successfully completed.</p>
+    <p>Once a pricing deadline has passed, the system automatically applies the next available pricing tier.</p>
+    <p>TeamManager does not control or determine conference pricing and is not responsible for pricing decisions made by Organizers.</p>
+
+    <h3>Subscription (Coming Soon)</h3>
+    <div class="subscription-plans-container">
+    <div class="section-header text-center mb-5">
+        <!-- <h3 class="fw-bold mb-2">Choose Your Plan</h3> -->
+        <p class="text-muted">We have a variety of plans for your team management needs</p>
+    </div>
+    
+    <div class="plans-grid">
+        {% for plan in plans %}
+            <div class="plan-card {% if plan.is_popular or plan.recommended %}popular-plan{% endif %}">
+                {% if plan.is_popular or plan.recommended %}
+                    <div class="popular-badge">
+                        <i class="fas fa-star"></i> Most Popular
+                    </div>
+                {% endif %}
+                
+                <div class="plan-icon">
+                    <i class="fas fa-{% if plan.name|lower == 'base' or plan.name|lower == 'basic' %}rocket{% elif plan.name|lower == 'professional' or plan.name|lower == 'pro' %}briefcase{% elif plan.name|lower == 'enterprise' %}crown{% else %}chart-line{% endif %}"></i>
+                </div>
+                
+                <h4 class="plan-name">{{ plan.name }}</h4>
+                
+                <div class="plan-price">
+                    <span class="currency">₦</span>
+                    <span class="amount">{{ plan.price|floatformat:0|intcomma }}</span>
+                    <span class="period">/month</span>
+                </div>
+                
+                {% if plan.discount_percentage > 0 %}
+                    <div class="plan-discount">
+                        <span class="badge-discount">{{ plan.discount_percentage }}% OFF</span>
+                        <div class="original-price">
+                            <s>₦{{ plan.price|add:plan.price|floatformat:0|intcomma }}</s>
+                            <span class="savings">Save ₦{{ plan.price|multiply:plan.discount_percentage|divide:100|floatformat:0|intcomma }}</span>
+                        </div>
+                    </div>
+                {% endif %}
+                
+                <ul class="plan-features">
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        <span><strong>{{ plan.duration }}</strong> days access</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        <span>
+                            {% if plan.max_users %}
+                                <strong>Up to {{ plan.max_users }}</strong> users
+                            {% else %}
+                                <strong>Unlimited</strong> users
+                            {% endif %}
+                        </span>
+                    </li>
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        <span><strong>24/7</strong> Priority Support</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        <span><strong>Enterprise-grade</strong> Security</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        <span><strong>Free</strong> updates &amp; upgrades</span>
+                    </li>
+                    {% if plan.max_projects %}
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        <span><strong>{{ plan.max_projects }}</strong> active projects</span>
+                    </li>
+                    {% endif %}
+                    {% if plan.storage_gb %}
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        <span><strong>{{ plan.storage_gb }}GB</strong> cloud storage</span>
+                    </li>
+                    {% endif %}
+                </ul>
+                
+                <div class="plan-action">
+                    <a href="{% url 'create_subscription' %}" class="btn-subscribe">
+                        Get Started <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    
+    <div class="text-center mt-5 pt-3">
+        <p class="text-muted small">
+            <i class="fas fa-lock me-1"></i> Secure payment processing • No hidden fees • Cancel anytime
+        </p>
+        <p class="text-muted small mt-2">
+            Need a custom plan for your organization? 
+            <a href="#" class="text-decoration-none">Contact our sales team</a>
+        </p>
+    </div>
+</div>
+        </div>
+    </div>
+
+    <style>
+        /* Subscription Plans Styling */
+    .subscription-plans-container {
+        padding: 1rem 0;
+    }
+
+    .section-header h3 {
+        font-size: 1.75rem;
+        color: #1a202c;
+    }
+
+    body.dark-mode .section-header h3 {
+        color: #f7fafc;
+    }
+
+    .plans-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+        margin-top: 1rem;
+    }
+
+    .plan-card {
+        background: #ffffff;
+        border-radius: 20px;
+        padding: 2rem 1.5rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        border: 1px solid #e2e8f0;
+        position: relative;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    body.dark-mode .plan-card {
+        background: #1e293b;
+        border-color: #334155;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+    }
+
+    .plan-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+        border-color: #cbd5e0;
+    }
+
+    body.dark-mode .plan-card:hover {
+        border-color: #4a5568;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+    }
+
+    .popular-plan {
+        border: 2px solid #319795;
+        box-shadow: 0 10px 15px -3px rgba(49, 151, 149, 0.15);
+        transform: scale(1.02);
+    }
+
+    .popular-plan:hover {
+        transform: scale(1.02) translateY(-8px);
+    }
+
+    body.dark-mode .popular-plan {
+        border-color: #4fd1c5;
+    }
+
+    .popular-badge {
+        position: absolute;
+        top: -12px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(135deg, #319795 0%, #2c7a7b 100%);
+        color: white;
+        padding: 0.35rem 1rem;
+        border-radius: 40px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .popular-badge i {
+        margin-right: 0.25rem;
+        font-size: 0.7rem;
+    }
+
+    .plan-icon {
+        width: 70px;
+        height: 70px;
+        margin: 0 auto 1.25rem;
+        background: linear-gradient(135deg, #e6fffa 0%, #b2f5ea 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    body.dark-mode .plan-icon {
+        background: linear-gradient(135deg, #234e52 0%, #285e61 100%);
+    }
+
+    .plan-icon i {
+        font-size: 2rem;
+        color: #319795;
+    }
+
+    body.dark-mode .plan-icon i {
+        color: #81e6d9;
+    }
+
+    .plan-name {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        color: #1a202c;
+    }
+
+    body.dark-mode .plan-name {
+        color: #f7fafc;
+    }
+
+    .plan-price {
+        margin-bottom: 0.75rem;
+    }
+
+    .plan-price .currency {
+        font-size: 1.25rem;
+        font-weight: 600;
+        vertical-align: top;
+        color: #4a5568;
+    }
+
+    body.dark-mode .plan-price .currency {
+        color: #cbd5e0;
+    }
+
+    .plan-price .amount {
+        font-size: 3rem;
+        font-weight: 800;
+        color: #1a202c;
+        line-height: 1;
+    }
+
+    body.dark-mode .plan-price .amount {
+        color: #f7fafc;
+    }
+
+    .plan-price .period {
+        font-size: 0.875rem;
+        color: #718096;
+    }
+
+    body.dark-mode .plan-price .period {
+        color: #a0aec0;
+    }
+
+    .plan-discount {
+        margin: 0.5rem 0 1rem;
+    }
+
+    .badge-discount {
+        display: inline-block;
+        background: #c6f6d5;
+        color: #22543d;
+        font-size: 0.7rem;
+        font-weight: 700;
+        padding: 0.25rem 0.6rem;
+        border-radius: 20px;
+        margin-bottom: 0.5rem;
+    }
+
+    body.dark-mode .badge-discount {
+        background: #2f855a;
+        color: #f0fff4;
+    }
+
+    .original-price {
+        font-size: 0.8rem;
+        color: #718096;
+    }
+
+    .original-price s {
+        margin-right: 0.5rem;
+    }
+
+    .savings {
+        color: #38a169;
+        font-weight: 500;
+    }
+
+    .plan-features {
+        list-style: none;
+        padding: 0;
+        margin: 1.5rem 0;
+        text-align: left;
+    }
+
+    .plan-features li {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
+        font-size: 0.9rem;
+        color: #4a5568;
+    }
+
+    body.dark-mode .plan-features li {
+        color: #cbd5e0;
+    }
+
+    .plan-features li i {
+        color: #319795;
+        font-size: 0.9rem;
+        flex-shrink: 0;
+    }
+
+    body.dark-mode .plan-features li i {
+        color: #4fd1c5;
+    }
+
+    .plan-features li span {
+        line-height: 1.4;
+    }
+
+    .plan-action {
+        margin-top: 1.5rem;
+    }
+
+    .btn-subscribe {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        background: #f7fafc;
+        color: #319795;
+        padding: 0.75rem 1.5rem;
+        border-radius: 40px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        border: 1px solid #e2e8f0;
+        width: 100%;
+    }
+
+    body.dark-mode .btn-subscribe {
+        background: #2d3748;
+        border-color: #4a5568;
+        color: #4fd1c5;
+    }
+
+    .btn-subscribe:hover {
+        background: #319795;
+        color: white;
+        border-color: #319795;
+        transform: translateY(-2px);
+    }
+
+    body.dark-mode .btn-subscribe:hover {
+        background: #4fd1c5;
+        color: #1a202c;
+        border-color: #4fd1c5;
+    }
+
+    .btn-subscribe i {
+        transition: transform 0.3s ease;
+    }
+
+    .btn-subscribe:hover i {
+        transform: translateX(4px);
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+        .plans-grid {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+        
+        .plan-card {
+            padding: 1.5rem 1.25rem;
+        }
+        
+        .popular-plan {
+            transform: scale(1);
+        }
+        
+        .popular-plan:hover {
+            transform: translateY(-8px);
+        }
+        
+        .plan-price .amount {
+            font-size: 2.5rem;
+        }
+        
+        .plan-name {
+            font-size: 1.3rem;
+        }
+        
+        .section-header h3 {
+            font-size: 1.4rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .plan-features li {
+            font-size: 0.8rem;
+            gap: 0.5rem;
+        }
+        
+        .btn-subscribe {
+            padding: 0.6rem 1.2rem;
+            font-size: 0.9rem;
+        }
+        
+        .plan-icon {
+            width: 55px;
+            height: 55px;
+        }
+        
+        .plan-icon i {
+            font-size: 1.5rem;
+        }
+    }
+    </style>

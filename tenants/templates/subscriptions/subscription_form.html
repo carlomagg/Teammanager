@@ -1,0 +1,2604 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+
+{% block title %}{% if is_create %}Create{% else %}Edit{% endif %} Subscription{% endblock %}
+
+{% block extra_css %}
+<style>
+    .pricing-card {
+        transition: all 0.3s ease;
+        cursor: pointer;
+        border: 2px solid transparent;
+    }
+    
+    .pricing-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    
+    .pricing-card.selected-plan {
+        border-color: var(--primary-color);
+        background-color: rgba(52, 152, 219, 0.05);
+    }
+    
+    .bg-primary-soft {
+        background-color: rgba(52, 152, 219, 0.1);
+    }
+    
+    /* User Selection Styles */
+    .user-select-item {
+        transition: background-color 0.2s ease;
+        cursor: pointer;
+        border-left: 3px solid transparent;
+    }
+    
+    .user-select-item:hover {
+        background-color: #f8f9fa;
+        transform: translateX(2px);
+    }
+    
+    .user-select-item.selected {
+        background-color: rgba(52, 152, 219, 0.1) !important;
+        border-left-color: var(--primary-color);
+    }
+    
+    .user-select-item .form-check-input {
+        width: 1.2em;
+        height: 1.2em;
+        cursor: pointer;
+        margin-top: 0.15em;
+    }
+    
+    .user-select-item .form-check-input:checked {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+    
+    /* User Avatar */
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 16px;
+        flex-shrink: 0;
+        transition: transform 0.2s ease;
+    }
+    
+    .user-select-item:hover .user-avatar {
+        transform: scale(1.05);
+    }
+    
+    /* Status Badge Styles */
+    .badge {
+        font-size: 0.75rem;
+        padding: 0.35rem 0.65rem;
+        font-weight: 500;
+    }
+    
+    .badge i {
+        font-size: 0.7rem;
+    }
+    
+    /* Background Soft Colors */
+    .bg-success-soft {
+        background-color: rgba(72, 187, 120, 0.1);
+    }
+    
+    .bg-warning-soft {
+        background-color: rgba(236, 201, 75, 0.1);
+    }
+    
+    .bg-info-soft {
+        background-color: rgba(66, 153, 225, 0.1);
+    }
+    
+    .bg-secondary-soft {
+        background-color: rgba(160, 174, 192, 0.1);
+    }
+    
+    .bg-danger-soft {
+        background-color: rgba(245, 101, 101, 0.1);
+    }
+    
+    /* User List Container */
+    .user-list-container {
+        max-height: 400px;
+        overflow-y: auto;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 0;
+    }
+    
+    .user-list-container .list-group {
+        border-radius: 8px;
+    }
+    
+    .user-list-container .list-group-item {
+        border-left: none;
+        border-right: none;
+        padding: 1rem;
+    }
+    
+    .user-list-container .list-group-item:first-child {
+        border-top: none;
+    }
+    
+    .user-list-container .list-group-item:last-child {
+        border-bottom: none;
+    }
+    
+    /* Custom Scrollbar */
+    .user-list-container::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    .user-list-container::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+    }
+    
+    .user-list-container::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 4px;
+    }
+    
+    .user-list-container::-webkit-scrollbar-thumb:hover {
+        background: #a8a8a8;
+    }
+    
+    /* Search Input */
+    #userSearchInput {
+        border-right: none;
+    }
+    
+    #userSearchInput:focus {
+        border-color: var(--primary-color);
+        box-shadow: none;
+    }
+    
+    #clearSearchBtn {
+        border-left: none;
+    }
+    
+    #clearSearchBtn:hover {
+        background-color: #f8f9fa;
+    }
+    
+    /* Selected Users Alert */
+    #selectedUsersAlert {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.75rem 1rem;
+    }
+    
+    #selectedUsersAlert .btn-close {
+        font-size: 0.75rem;
+        padding: 0.5rem;
+        margin: -0.5rem -0.5rem -0.5rem auto;
+    }
+    
+    /* Pagination Styles */
+    #paginationControls {
+        margin-top: 1rem;
+    }
+    
+    .pagination {
+        margin-bottom: 0;
+        gap: 0.25rem;
+    }
+    
+    .pagination .page-link {
+        cursor: pointer;
+        border-radius: 6px;
+        padding: 0.5rem 0.75rem;
+        color: var(--primary-color);
+        border: 1px solid #dee2e6;
+        transition: all 0.2s ease;
+    }
+    
+    .pagination .page-link:hover {
+        background-color: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+        transform: translateY(-1px);
+    }
+    
+    .pagination .page-item.active .page-link {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+        color: white;
+    }
+    
+    .pagination .page-item.disabled .page-link {
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+    
+    /* Loading Spinner */
+    .spinner-border {
+        width: 2rem;
+        height: 2rem;
+    }
+    
+    /* Select All Card */
+    .select-all-card {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 12px 15px;
+        margin-bottom: 15px;
+        transition: all 0.2s ease;
+    }
+    
+    .select-all-card:hover {
+        background-color: #e9ecef;
+    }
+    
+    .select-all-card .form-check-input {
+        width: 1.1em;
+        height: 1.1em;
+        cursor: pointer;
+    }
+    
+    .select-all-card .form-check-input:checked {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+    
+    .select-all-card .form-check-label {
+        cursor: pointer;
+        margin-left: 8px;
+    }
+    
+    /* Summary Box */
+    .summary-box {
+        background-color: #f8f9fa;
+        border-radius: 12px;
+        padding: 1.5rem;
+    }
+    
+    .summary-box table {
+        margin-bottom: 0;
+    }
+    
+    .summary-box table td,
+    .summary-box table th {
+        padding: 0.5rem 0;
+    }
+    
+    /* Alert Styles */
+    .alert {
+        border-radius: 10px;
+        border: none;
+    }
+    
+    .alert-info {
+        background-color: rgba(66, 153, 225, 0.1);
+        color: #2c5282;
+        border-left: 4px solid #4299e1;
+    }
+    
+    .alert-success {
+        background-color: rgba(72, 187, 120, 0.1);
+        color: #2f855a;
+        border-left: 4px solid #48bb78;
+    }
+    
+    .alert-warning {
+        background-color: rgba(236, 201, 75, 0.1);
+        color: #975a16;
+        border-left: 4px solid #ecc94b;
+    }
+    
+    .alert-danger {
+        background-color: rgba(245, 101, 101, 0.1);
+        color: #c53030;
+        border-left: 4px solid #f56565;
+    }
+    
+    /* Button Styles */
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+        border: none;
+        padding: 0.5rem 1.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(49, 151, 149, 0.3);
+    }
+    
+    .btn-outline-primary {
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+    }
+    
+    .btn-outline-primary:hover {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+        color: white;
+    }
+    
+    /* Card Styles */
+    .card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    .card:hover {
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+    }
+    
+    .card-header {
+        background-color: white;
+        border-bottom: 1px solid #e9ecef;
+        padding: 1rem 1.5rem;
+        font-weight: 600;
+    }
+    
+    .card-header.light-header {
+        background-color: #f8f9fa;
+    }
+    
+    /* Form Controls */
+    .form-control:focus,
+    .form-select:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.2rem rgba(49, 151, 149, 0.25);
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            font-size: 12px;
+        }
+        
+        .user-select-item {
+            padding: 0.75rem;
+        }
+        
+        .user-select-item .d-flex {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .user-select-item .ms-2 {
+            margin-left: 0 !important;
+            margin-top: 0.5rem;
+        }
+        
+        .badge {
+            font-size: 0.7rem;
+            padding: 0.25rem 0.5rem;
+        }
+        
+        .pagination .page-link {
+            padding: 0.35rem 0.6rem;
+            font-size: 0.875rem;
+        }
+        
+        .summary-box {
+            padding: 1rem;
+        }
+        
+        .btn-primary {
+            padding: 0.4rem 1.2rem;
+        }
+    }
+    
+    /* Dark Mode Support (if needed) */
+    @media (prefers-color-scheme: dark) {
+        .bg-primary-soft {
+            background-color: rgba(49, 151, 149, 0.2);
+        }
+        
+        .select-all-card {
+            background-color: #2d3748;
+            border-color: #4a5568;
+        }
+        
+        .user-select-item:hover {
+            background-color: #2d3748;
+        }
+        
+        .user-list-container {
+            border-color: #4a5568;
+        }
+        
+        .user-list-container::-webkit-scrollbar-track {
+            background: #2d3748;
+        }
+        
+        .user-list-container::-webkit-scrollbar-thumb {
+            background: #4a5568;
+        }
+        
+        .summary-box {
+            background-color: #2d3748;
+        }
+        
+        .card-header {
+            background-color: #1a202c;
+            border-bottom-color: #2d3748;
+        }
+        
+        .card-header.light-header {
+            background-color: #2d3748;
+        }
+    }
+    
+    /* Animation Classes */
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .fade-in {
+        animation: fadeIn 0.3s ease-out;
+    }
+    
+    /* Tooltip Styles */
+    [data-tooltip] {
+        position: relative;
+        cursor: help;
+    }
+    
+    [data-tooltip]:before {
+        content: attr(data-tooltip);
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 4px 8px;
+        background-color: #333;
+        color: white;
+        font-size: 12px;
+        border-radius: 4px;
+        white-space: nowrap;
+        display: none;
+        z-index: 1000;
+    }
+    
+    [data-tooltip]:hover:before {
+        display: block;
+    }
+    
+    /* Status Indicators */
+    .status-indicator {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 6px;
+    }
+    
+    .status-indicator.active {
+        background-color: #48bb78;
+        box-shadow: 0 0 0 2px rgba(72, 187, 120, 0.2);
+    }
+    
+    .status-indicator.pending {
+        background-color: #ecc94b;
+        box-shadow: 0 0 0 2px rgba(236, 201, 75, 0.2);
+    }
+    
+    .status-indicator.trial {
+        background-color: #4299e1;
+        box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.2);
+    }
+    
+    .status-indicator.inactive {
+        background-color: #a0aec0;
+        box-shadow: 0 0 0 2px rgba(160, 174, 192, 0.2);
+    }
+    
+    /* Loading Skeleton */
+    .skeleton {
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: loading 1.5s infinite;
+        border-radius: 4px;
+    }
+    
+    @keyframes loading {
+        0% {
+            background-position: 200% 0;
+        }
+        100% {
+            background-position: -200% 0;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Header -->
+            <div class="d-flex align-items-center mb-4">
+                <a href="{% url 'client_subscriptions' %}" class="btn btn-outline-secondary me-3">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+                <div>
+                    <h1 class="display-6 fw-bold" style="color: var(--primary-dark);">
+                        <i class="fas fa-{% if is_create %}plus-circle{% else %}edit{% endif %} me-2"></i>
+                        {% if is_create %}Choose A Subscription Plan{% else %}Edit Subscription{% endif %}
+                    </h1>
+                    <p class="text-muted">
+                        {% if is_create %}
+                            Select a plan that fits your needs.
+                        {% else %}
+                            Update your subscription details.
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Plan Selection Cards (for create) -->
+            {% if is_create %}
+            <div class="row mb-4">
+                {% for plan in plans %}
+                <div class="col-md-12 mb-3">
+                    <div class="card pricing-card {% if plans|length == 1 %}featured selected-plan{% endif %}" 
+                         data-plan-id="{{ plan.id }}"
+                         data-plan-price="{{ plan.price }}"
+                         data-plan-name="{{ plan.name|escapejs }}"
+                         data-plan-max-users="{{ plan.max_users|default:'unlimited' }}"
+                         {% if plans|length > 1 %}onclick="selectPlan({{ plan.id }}, {{ plan.price }}, '{{ plan.name|escapejs }}')"{% endif %}
+                         style="cursor: {% if plans|length > 1 %}pointer{% else %}default{% endif %}; 
+                                {% if plans|length == 1 %}border: 3px solid var(--primary-color);{% endif %}">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-md-8">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-crown fa-3x me-4" style="color: var(--primary-color);"></i>
+                                        <div>
+                                            <h3 class="card-title mb-2">{{ plan.name }} Plan</h3>
+                                            <div class="d-flex align-items-center gap-3">
+                                                <span class="pricing-price">
+                                                    ₦{{ plan.price|floatformat:0 }}
+                                                    <span class="pricing-period">/user/month</span>
+                                                </span>
+                                                {% if plan.discount_percentage > 0 %}
+                                                <span class="badge bg-success">{{ plan.discount_percentage }}% OFF</span>
+                                                {% endif %}
+                                            </div>
+                                            <small class="text-muted">Billed monthly</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <ul class="list-unstyled mb-0">
+                                        <li><i class="fas fa-check text-success me-2"></i> {{ plan.duration }} days access</li>
+                                        <li><i class="fas fa-check text-success me-2"></i> 
+                                            {% if plan.max_users %}
+                                                Up to {{ plan.max_users }} users
+                                            {% else %}
+                                                Unlimited users
+                                            {% endif %}
+                                        </li>
+                                        <li><i class="fas fa-check text-success me-2"></i> 24/7 Support</li>
+                                        <!-- <li><i class="fas fa-gift text-warning me-2"></i> <strong>7-day free trial</strong></li> -->
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Subscription Form -->
+            <div class="card">
+                <div class="card-header bg-white">
+                    <i class="fas fa-{% if is_create %}plus{% else %}pen{% endif %} me-2"></i>
+                    Subscription Details
+                </div>
+                <div class="card-body">
+                    <form method="post" id="subscriptionForm">
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                            <i class="fas fa-exclamation-circle me-2"></i>{{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <!-- Plan Selection (hidden field) -->
+                        <div class="mb-4" id="planSelection">
+                            {% if plans|length > 1 %}
+                            <label class="form-label fw-bold">Selected Plan</label>
+                            <div class="selected-plan-display p-3 bg-primary-soft rounded" id="selectedPlanDisplay" style="display: none;">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h5 class="mb-1" id="selectedPlanName"></h5>
+                                        <span class="text-primary-custom fw-bold" id="selectedPlanPrice"></span>
+                                        <div class="small text-muted mt-1" id="selectedPlanMaxUsers"></div>
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="resetPlanSelection()">
+                                        <i class="fas fa-redo"></i> Change
+                                    </button>
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% render_field form.plan class="form-select" id="id_plan" style="display: none;" %}
+                            {% if form.plan.errors %}
+                            <div class="text-danger mt-1">
+                                {% for error in form.plan.errors %}{{ error }}{% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="row">
+                            <!-- Tenant Field -->
+                            {% if form.tenant %}
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.tenant.id_for_label }}" class="form-label">
+                                    <i class="fas fa-building me-2"></i>Organization
+                                </label>
+                                {% render_field form.tenant class="form-select" id="id_tenant" %}
+                                {% if form.tenant.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.tenant.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+
+                            <!-- User Field -->
+                            {% if form.user %}
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.user.id_for_label }}" class="form-label">
+                                    <i class="fas fa-user me-2"></i>User
+                                </label>
+                                {% render_field form.user class="form-select" id="id_user" %}
+                                {% if form.user.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.user.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- User Scope Selection (for tenant subscriptions) -->
+                        {% if form.user_scope %}
+                        <div class="mb-4" id="userScopeSection" style="display: none;">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-users me-2"></i>Who should this subscription cover?
+                            </label>
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="radio" name="user_scope" id="scope_all" value="all" 
+                                               {% if form.user_scope.value == 'all' %}checked{% endif %}>
+                                        <label class="form-check-label fw-bold" for="scope_all">
+                                            All Users
+                                        </label>
+                                        <div class="text-muted small mt-1 ms-4">
+                                            This subscription will cover all users in the organization.
+                                            <br>New users added later would have to be subscribed for.
+                                        </div>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="user_scope" id="scope_selected" value="selected"
+                                               {% if form.user_scope.value == 'selected' %}checked{% endif %}>
+                                        <label class="form-check-label fw-bold" for="scope_selected">
+                                            Selected Users Only
+                                        </label>
+                                        <div class="text-muted small mt-1 ms-4">
+                                            Choose specific users who will have access to this subscription.
+                                            <br>Additional users will need their own subscriptions.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% if form.user_scope.errors %}
+                            <div class="text-danger mt-1">
+                                {% for error in form.user_scope.errors %}{{ error }}{% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {%comment%}
+                        <!-- User Selection Field (for selected users) -->
+                        <div class="mb-4" id="userSelectionSection" style="display: none;">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-user-check me-2"></i>Select Users
+                            </label>
+                            <div id="userSelectionList">
+                                <!-- Users will be loaded dynamically via AJAX -->
+                                <div class="text-center py-3">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading users...</span>
+                                    </div>
+                                    <p class="mt-2 text-muted">Loading users...</p>
+                                </div>
+                            </div>
+                            <small class="form-text text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Select the users who should have access to this subscription.
+                                Users not selected will not be able to access subscription features.
+                            </small>
+                            <div id="selectedUsersCount" class="mt-2 text-primary fw-bold" style="display: none;"></div>
+                        </div>
+                        {%endcomment%}
+                        <!-- User Selection Field (for selected users) - REPLACE the existing user selection section -->
+                        <div class="mb-4" id="userSelectionSection" style="display: none;">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-user-check me-2"></i>Select Users
+                            </label>
+                            
+                            <!-- Search Box -->
+                            <div class="mb-3">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white">
+                                        <i class="fas fa-search text-muted"></i>
+                                    </span>
+                                    <input type="text" 
+                                        id="userSearchInput" 
+                                        class="form-control" 
+                                        placeholder="Search users by name or email..."
+                                        autocomplete="off">
+                                    <button class="btn btn-outline-secondary" type="button" id="clearSearchBtn">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Selected Users Counter -->
+                            <div class="alert alert-info mb-3" id="selectedUsersAlert" style="display: none;">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <span id="selectedUsersCountText">0</span> user(s) selected
+                                <button type="button" class="btn-close float-end" id="clearAllUsersBtn" style="font-size: 12px;"></button>
+                            </div>
+                            
+                            <!-- Users List with Scroll -->
+                            <div id="userListContainer" class="border rounded" style="max-height: 500px; overflow-y: auto;">
+                                <div class="text-center py-4">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading users...</span>
+                                    </div>
+                                    <p class="mt-2 text-muted">Loading users...</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Pagination Controls -->
+                            <div class="mt-3" id="paginationControls" style="display: none;">
+                                <nav>
+                                    <ul class="pagination justify-content-center" id="paginationList">
+                                    </ul>
+                                </nav>
+                            </div>
+                            
+                            <small class="form-text text-muted mt-2">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Search for users by name or email. Select users who should have access to this subscription.
+                                Users not selected will not be able to access subscription features.
+                            </small>
+                        </div>
+                        {% endif %}
+
+                        <!-- Duration Selection (Custom Months) -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-calendar-alt me-2"></i>Subscription Duration
+                            </label>
+                            <div class="row g-3">
+                                <div class="col-md-8">
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-primary-soft">
+                                            <i class="fas fa-clock text-primary"></i>
+                                        </span>
+                                        <input type="number" 
+                                            name="duration_months" 
+                                            id="duration_months"
+                                            class="form-control" 
+                                            value="{% if form.duration_months.value %}{{ form.duration_months.value }}{% else %}12{% endif %}"
+                                            min="1" 
+                                            max="24" 
+                                            step="1"
+                                            required>
+                                        <span class="input-group-text">month(s)</span>
+                                    </div>
+                                    <small class="form-text text-muted mt-1">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Choose how many months you want to subscribe for (1-24 months). 
+                                        <!-- <strong class="text-success">Save up to 15% with longer commitments!</strong> -->
+                                    </small>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card bg-light border-0 h-100">
+                                        <div class="card-body p-2 text-center">
+                                            <small class="text-muted">Monthly equivalent</small>
+                                            <div class="fw-bold text-primary" id="monthlyEquivalent">₦0.00</div>
+                                            <div class="text-muted"><small>For {{ no_of_tenant_users }} users</small></div>
+                                            <small class="text-success" id="savingsBadge" style="display: none;"></small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-2" id="durationHelp"></div>
+                            {% if form.duration_months.errors %}
+                            <div class="text-danger mt-1">
+                                {% for error in form.duration_months.errors %}{{ error }}{% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Quick selection buttons for common durations
+                        <div class="mb-4">
+                            <label class="form-label small text-muted">Quick Select:</label>
+                            <div class="btn-group btn-group-sm flex-wrap gap-2" role="group">
+                                <button type="button" class="btn btn-outline-primary duration-quick-btn" data-months="1">1 month</button>
+                                <button type="button" class="btn btn-outline-primary duration-quick-btn" data-months="3">3 months <span class="badge bg-success ms-1">Save 5%</span></button>
+                                <button type="button" class="btn btn-outline-primary duration-quick-btn" data-months="6">6 months <span class="badge bg-success ms-1">Save 10%</span></button>
+                                <button type="button" class="btn btn-outline-primary duration-quick-btn" data-months="12">12 months <span class="badge bg-success ms-1">Save 15%</span></button>
+                                <button type="button" class="btn btn-outline-primary duration-quick-btn" data-months="24">24 months <span class="badge bg-success ms-1">Save 20%</span></button>
+                            </div>
+                        </div> -->
+
+                        <!-- Quick selection buttons for common durations -->
+                        <div class="mb-4">
+                            <label class="form-label small text-muted">Quick Select:</label>
+                            <div class="btn-group btn-group-sm flex-wrap gap-2" role="group" id="durationQuickSelect">
+                                <button type="button" class="btn btn-outline-primary duration-quick-btn" data-months="1">1 month</button>
+                                <button type="button" class="btn btn-outline-primary duration-quick-btn" data-months="3">3 months</button>
+                                <button type="button" class="btn btn-outline-primary duration-quick-btn" data-months="6">6 months</button>
+                                <button type="button" class="btn btn-outline-primary duration-quick-btn" data-months="12">12 months</button>
+                                <button type="button" class="btn btn-outline-primary duration-quick-btn" data-months="24">24 months</button>
+                            </div>
+                            <div id="planDiscountInfo" class="mt-2" style="display: none;">
+                                <small class="text-success">
+                                    <i class="fas fa-tag"></i> 
+                                    <span id="planDiscountText"></span>
+                                </small>
+                            </div>
+                        </div>
+
+                        <!-- Promo Code Section -->
+                        <div class="mb-3">
+                            <label for="{{ form.promo_code.id_for_label }}" class="form-label fw-bold">
+                                <i class="fas fa-tag me-2"></i>Promo Code (Optional)
+                            </label>
+                            <div class="input-group">
+                                {% render_field form.promo_code class="form-control" placeholder="Enter promo code" id="promo_code_input" %}
+                                <button class="btn btn-outline-primary" type="button" onclick="applyPromoCode()" id="applyPromoBtn">
+                                    <i class="fas fa-check"></i> Apply
+                                </button>
+                            </div>
+                            <div class="mt-2">
+                                <span class="badge bg-success" id="promoApplied" style="display: none;">
+                                    <i class="fas fa-check-circle"></i> 
+                                    Promo applied: <span id="promoDiscount">0</span>% off 
+                                </span>
+                            </div>
+                            <div id="promoError" class="text-danger mt-1" style="display: none;"></div>
+                        </div>
+                        <input type="hidden" name="duration_months" id="duration_months_hidden" value="12">
+                        <input type="hidden" id="total_tenant_users" value="{{ no_of_tenant_users|default:0 }}">
+
+
+                        <!-- Summary -->
+                        <div class="summary-box p-4 bg-primary-soft rounded mb-4">
+                            <h5 class="mb-3"><i class="fas fa-receipt me-2"></i>Order Summary</h5>
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <table class="table table-sm table-borderless">
+                                        <tr>
+                                            <td>Monthly Price (per user):</td>
+                                            <td class="text-end fw-bold" id="summaryBasePrice">₦0.00</td>
+                                        </tr>
+                                        <tr id="userCountRow" style="display: none;">
+                                            <td>Number of Users:</td>
+                                            <td class="text-end fw-bold" id="summaryUserCount">0</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Duration:</td>
+                                            <td class="text-end fw-bold" id="summaryDuration">1 month(s)</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Subtotal:</td>
+                                            <td class="text-end fw-bold" id="summarySubtotal">₦0.00</td>
+                                        </tr>
+                                        <!-- <tr id="durationDiscountRow" style="display: none;">
+                                            <td class="text-success">Duration Discount:</td>
+                                            <td class="text-end text-success" id="summaryDurationDiscount">-₦0.00</td>
+                                        </tr> -->
+                                        <!-- Plan Discount Row -->
+                                        <tr id="planDiscountRow" style="display: none;">
+                                            <td class="text-success">
+                                                <i class="fas fa-percent me-1"></i>
+                                                Plan Discount <span id="summaryPlanDiscountPercent"></span>:
+                                            </td>
+                                            <td class="text-end text-success" id="summaryPlanDiscount">-₦0.00</td>
+                                        </tr>
+                                        <tr id="promoDiscountRow" style="display: none;">
+                                            <td class="text-success">Promo Discount:</td>
+                                            <td class="text-end text-success" id="summaryPromoDiscount">-₦0.00</td>
+                                        </tr>
+                                        <tr class="border-top">
+                                            <td class="h6 mb-0">Total (one-time payment):</td>
+                                            <td class="text-end h5 mb-0 text-primary-custom" id="summaryTotal">₦0.00</td>
+                                        </tr>
+                                        <tr id="monthlyEquivalentRow">
+                                            <td class="small text-muted">Monthly equivalent:</td>
+                                            <td class="text-end small text-muted" id="summaryMonthlyEquivalent">₦0.00/month</td>
+                                        </tr>
+                                    </table>
+                                    
+                                    <!-- Savings Alert -->
+                                    <div id="savingsAlert" class="alert alert-success mt-3" style="display: none;">
+                                        <i class="fas fa-gift me-2"></i>
+                                        <strong>Great savings!</strong> You're saving <span id="savingsPercentage">0</span>% 
+                                        by choosing a <span id="savingsDuration">0</span>-month subscription.
+                                        That's <strong>₦<span id="savingsAmount">0</span></strong> off the monthly price!
+                                    </div>
+                                    
+                                    <div class="alert alert-info mt-3 mb-0">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        <strong>One-time payment:</strong> You'll be charged the total amount today for the entire subscription period.
+                                        No recurring charges until your subscription expires.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-end">
+                            <a href="{% url 'client_subscriptions' %}" class="btn btn-outline-secondary me-2">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary" id="submitBtn" disabled>
+                                <i class="fas fa-{% if is_create %}rocket{% else %}save{% endif %} me-2"></i>
+                                {% if is_create %}Continue to Payment{% else %}Save Changes{% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {%comment%}
+            <!-- FAQ Section -->
+            {% if is_create %}
+            <div class="card mt-4">
+                <div class="card-header bg-white">
+                    <i class="fas fa-question-circle me-2"></i>Frequently Asked Questions
+                </div>
+                <div class="card-body">
+                    <div class="accordion" id="faqAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                                    How does the 7-day free trial work?
+                                </button>
+                            </h2>
+                            <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    When you start your subscription, you'll have full access to all features for 7 days at no cost. 
+                                    Your card won't be charged until after the trial period ends. You can cancel anytime during the trial 
+                                    and never be charged.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                                    Can I add more users later?
+                                </button>
+                            </h2>
+                            <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    Yes! For subscriptions covering all users, new users are automatically covered. For selected users subscriptions, 
+                                    you can add more users at any time from your subscription management page. You'll only be charged a prorated amount 
+                                    for the remaining period.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                                    What happens if I remove users?
+                                </button>
+                            </h2>
+                            <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    If you remove users from your subscription, you'll receive a credit for the unused portion of their subscription. 
+                                    This credit will be applied to your next billing cycle.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            {%endcomment%}
+        </div>
+    </div>
+</div>
+
+<!-- Toastr for notifications -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
+<script>
+// Global variables
+let selectedPlan = null;
+let selectedUsers = new Set();
+let tenantUsers = [];
+let plans = {};
+let currentPage = 1;
+let totalPages = 1;
+let currentSearch = '';
+let isLoadingUsers = false;
+
+// Initialize on page load
+$(document).ready(function() {
+    console.log('Document ready - initializing...');
+    
+    // Load plans data
+    {% for plan in plans %}
+    plans[{{ plan.id }}] = {
+        name: "{{ plan.name|escapejs }}",
+        price: {{ plan.price }},
+        discount: {{ plan.discount_percentage }},
+        max_users: {% if plan.max_users %}{{ plan.max_users }}{% else %}null{% endif %}
+    };
+    {% endfor %}
+    
+    console.log('Plans:', plans);
+    
+    // Auto-select the plan if only one exists
+    {% if is_create %}
+        {% if plans|length == 1 %}
+            {% for plan in plans %}
+            selectPlan({{ plan.id }}, {{ plan.price }}, '{{ plan.name|escapejs }}');
+            {% endfor %}
+        {% elif request.GET.plan %}
+            const urlPlanId = parseInt('{{ request.GET.plan }}');
+            if (plans[urlPlanId]) {
+                selectPlan(urlPlanId, plans[urlPlanId].price, plans[urlPlanId].name);
+            }
+        {% endif %}
+    {% endif %}
+    
+    // If editing existing subscription
+    {% if not is_create and form.plan.value %}
+        const editPlanId = {{ form.plan.value }};
+        if (plans[editPlanId]) {
+            selectPlan(editPlanId, plans[editPlanId].price, plans[editPlanId].name);
+        }
+    {% endif %}
+    
+    // Get initial selected users from hidden fields
+    const initialSelectedUsers = $('input[name="selected_users"]').map(function() {
+        return parseInt($(this).val());
+    }).get();
+    
+    if (initialSelectedUsers.length > 0) {
+        console.log('Initial selected users found:', initialSelectedUsers);
+        initialSelectedUsers.forEach(userId => {
+            if (!isNaN(userId)) {
+                selectedUsers.add(userId);
+            }
+        });
+    }
+    
+    // Handle tenant selection change
+    $('#id_tenant').on('change', function() {
+        const tenantId = $(this).val();
+        if (tenantId) {
+            selectedUsers.clear(); // Clear previous selections
+            currentSearch = '';
+            $('#userSearchInput').val('');
+            loadTenantUsers(tenantId, true, 1, '');
+        }
+    });
+    
+    // Handle user scope change
+    $('input[name="user_scope"]').on('change', function() {
+        if ($(this).val() === 'selected') {
+            $('#userSelectionSection').show();
+            const tenantId = $('#id_tenant').val();
+            if (tenantId) {
+                loadTenantUsers(tenantId, true, 1, currentSearch);
+            }
+        } else {
+            $('#userSelectionSection').hide();
+            updateSummary();
+        }
+    });
+    
+    // Initial load if tenant is preselected
+    const initialTenantId = $('#id_tenant').val();
+    if (initialTenantId) {
+        loadTenantUsers(initialTenantId, true, 1, '');
+    }
+    
+    // Show user scope section if tenant is selected
+    if ($('#id_tenant').val()) {
+        $('#userScopeSection').show();
+        if ($('input[name="user_scope"]:checked').val() === 'selected') {
+            $('#userSelectionSection').show();
+        }
+    }
+    
+    // Search functionality with debounce
+    let searchTimeout;
+    $('#userSearchInput').on('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            const searchTerm = $(this).val();
+            currentSearch = searchTerm;
+            const tenantId = $('#id_tenant').val();
+            if (tenantId) {
+                loadTenantUsers(tenantId, true, 1, searchTerm);
+            }
+        }, 300);
+    });
+    
+    // Clear search button
+    $('#clearSearchBtn').click(function() {
+        $('#userSearchInput').val('');
+        currentSearch = '';
+        const tenantId = $('#id_tenant').val();
+        if (tenantId) {
+            loadTenantUsers(tenantId, true, 1, '');
+        }
+    });
+    
+    // Clear all selected users button
+    $('#clearAllUsersBtn').click(function() {
+        selectedUsers.clear();
+        $('.user-checkbox').prop('checked', false);
+        $('.user-select-item').removeClass('selected bg-primary-soft');
+        updateSelectedUsersCount();
+        updateSummary();
+        updateSelectedUsersHiddenField();
+    });
+
+    const initialDuration = $('#duration_months').val();
+    if (!initialDuration || parseInt(initialDuration) === 1) {
+        $('#duration_months').val(12);
+        $('#duration_months_hidden').val(12);
+    }
+    
+    // Update summary after setting default duration
+    updateSummary();
+    
+    // Highlight the 12-month quick select button
+    $('.duration-quick-btn[data-months="12"]').removeClass('btn-outline-primary').addClass('btn-primary');
+});
+
+
+// Call restore on page load
+$(document).ready(function() {
+    // Call restore function after initial setup
+    setTimeout(restoreSubscriptionData, 1000);
+});
+
+// Update quick select buttons with plan discount info
+function updateQuickSelectButtons() {
+    if (selectedPlan && plans[selectedPlan]) {
+        const planDiscount = plans[selectedPlan].discount || 0;
+        
+        if (planDiscount > 0) {
+            // Show discount info
+            $('#planDiscountInfo').show();
+            $('#planDiscountText').html(`${planDiscount}% discount applied to this plan!`);
+            
+            // Update quick select buttons with discount info
+            $('.duration-quick-btn').each(function() {
+                const months = $(this).data('months');
+                const originalText = $(this).text().split(' ')[0] + ' ' + $(this).text().split(' ')[1];
+                
+                if (months >= 3) {
+                    $(this).html(`${originalText} <span class="badge bg-success ms-1">${planDiscount}% off</span>`);
+                } else {
+                    $(this).html(originalText);
+                }
+            });
+        } else {
+            $('#planDiscountInfo').hide();
+            // Remove discount badges if no plan discount
+            $('.duration-quick-btn').each(function() {
+                const months = $(this).data('months');
+                const originalText = $(this).text().split(' ')[0] + ' ' + $(this).text().split(' ')[1];
+                $(this).html(originalText);
+            });
+        }
+    }
+}
+
+// Call this when a plan is selected
+function selectPlan(planId, price, name) {
+    console.log('selectPlan called:', planId, price, name);
+    
+    selectedPlan = planId;
+    $('#id_plan').val(planId);
+    
+    // Update selected plan display
+    $('#selectedPlanName').text(name);
+    $('#selectedPlanPrice').text('₦' + price.toFixed(2) + '/user/month');
+    
+    const plan = plans[planId];
+    if (plan && plan.max_users) {
+        $('#selectedPlanMaxUsers').text(`Maximum ${plan.max_users} users allowed`);
+    } else {
+        $('#selectedPlanMaxUsers').text('Unlimited users allowed');
+    }
+    
+    // Update quick select buttons with plan discount
+    updateQuickSelectButtons();
+    
+    {% if plans|length > 1 %}
+    $('#selectedPlanDisplay').show();
+    
+    // Remove highlight from all cards and add to selected
+    $('.pricing-card').removeClass('border-primary-custom selected-plan');
+    $(`.pricing-card[data-plan-id="${planId}"]`).addClass('border-primary-custom selected-plan');
+    {% endif %}
+    
+    // Enable submit button
+    $('#submitBtn').prop('disabled', false);
+    
+    // Update summary
+    updateSummary();
+    
+    // Scroll to form
+    $('html, body').animate({
+        scrollTop: $('#subscriptionForm').offset().top - 100
+    }, 500);
+}
+
+// function resetPlanSelection() {
+//     selectedPlan = null;
+//     $('#id_plan').val('');
+//     $('#selectedPlanDisplay').hide();
+//     $('.pricing-card').removeClass('border-primary-custom selected-plan');
+//     $('#submitBtn').prop('disabled', true);
+//     updateSummary();
+// }
+
+// Function to load users with pagination and search
+function loadTenantUsers(tenantId, preserveSelectedUsers = true, page = 1, search = '') {
+    if (isLoadingUsers) return;
+    isLoadingUsers = true;
+    
+    currentPage = page;
+    currentSearch = search;
+    
+    // Show loading state
+    $('#userListContainer').html(`
+        <div class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading users...</span>
+            </div>
+            <p class="mt-2 text-muted">Loading users...</p>
+        </div>
+    `);
+    
+    $.ajax({
+        url: "{% url 'get_tenant_users_with_subscription' %}",
+        method: 'GET',
+        data: {
+            tenant_id: tenantId,
+            page: page,
+            search: search
+        },
+        success: function(response) {
+            tenantUsers = response.users;
+            totalPages = response.total_pages;
+            
+            // Preserve selected users if needed
+            if (preserveSelectedUsers && response.users) {
+                // Ensure selected users are still in the set
+                response.users.forEach(user => {
+                    if (selectedUsers.has(user.id)) {
+                        // User is still selected, keep them
+                    }
+                });
+            }
+            
+            renderUserSelectionList(tenantUsers);
+            renderPaginationControls(response);
+            isLoadingUsers = false;
+        },
+        error: function(xhr) {
+            console.error('Error loading users:', xhr);
+            $('#userListContainer').html(`
+                <div class="alert alert-danger m-3">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    Failed to load users. Please refresh and try again.
+                </div>
+            `);
+            isLoadingUsers = false;
+        }
+    });
+}
+
+// Render user selection list with subscription info
+function renderUserSelectionList(users) {
+    if (!users || users.length === 0) {
+        $('#userListContainer').html(`
+            <div class="text-center py-4">
+                <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                <p class="text-muted">No users found</p>
+                ${currentSearch ? '<p class="small text-muted">Try a different search term</p>' : ''}
+            </div>
+        `);
+        return;
+    }
+    
+    let html = '<div class="list-group list-group-flush">';
+    
+    users.forEach(user => {
+        const isChecked = selectedUsers.has(user.id);
+        const subscription = user.subscription;
+        
+        // Status badge based on subscription
+        let statusBadge = '';
+        let statusClass = '';
+        
+        if (subscription) {
+            if (subscription.subscription_status === 'active') {
+                statusBadge = '<span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Active</span>';
+                statusClass = 'bg-success-soft';
+            } else if (subscription.subscription_status === 'pending') {
+                statusBadge = '<span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i>Pending</span>';
+                statusClass = 'bg-warning-soft';
+            } else if (subscription.subscription_status === 'trial') {
+                statusBadge = '<span class="badge bg-info"><i class="fas fa-flask me-1"></i>Trial</span>';
+                statusClass = 'bg-info-soft';
+            } else {
+                statusBadge = '<span class="badge bg-secondary">Inactive</span>';
+                statusClass = 'bg-secondary-soft';
+            }
+        } else {
+            statusBadge = '<span class="badge bg-secondary">No Subscription</span>';
+            statusClass = '';
+        }
+        
+        // Plan info
+        let planInfo = '';
+        if (subscription) {
+            planInfo = `
+                <div class="mt-1">
+                    <small class="text-muted">
+                        <i class="fas fa-crown me-1"></i>
+                        ${subscription.plan}
+                        ${subscription.days_left !== null && subscription.days_left > 0 ? ` • ${subscription.days_left} days left` : ''}
+                        ${subscription.end_date && subscription.days_left > 0? ` • Ends ${new Date(subscription.end_date).toLocaleDateString()}` : ''}
+                        ${subscription.days_left <= 0 ? ` • Ended on ${new Date(subscription.end_date).toLocaleDateString()}` : ''}
+                    </small>
+                </div>
+            `;
+        }
+        
+        html += `
+            <div class="list-group-item user-select-item ${isChecked ? 'selected bg-primary-soft' : ''} ${statusClass}" data-user-id="${user.id}">
+                <div class="d-flex align-items-start">
+                    <div class="form-check me-3 mt-1">
+                        <input class="form-check-input user-checkbox" 
+                               type="checkbox" 
+                               id="user_${user.id}" 
+                               value="${user.id}"
+                               data-user-name="${(user.name || user.email).replace(/'/g, "\\'")}"
+                               ${isChecked ? 'checked' : ''}
+                               onchange="toggleUserSelection(this, ${user.id}, '${(user.name || user.email).replace(/'/g, "\\'")}')">
+                    </div>
+                    <div class="user-avatar me-3">
+                        ${(user.name || user.email).charAt(0).toUpperCase()}
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-start flex-wrap">
+                            <div>
+                                <div class="fw-bold">${escapeHtml(user.name || 'No name')}</div>
+                                <div class="small text-muted">${escapeHtml(user.email)}</div>
+                                ${planInfo}
+                            </div>
+                            <div class="ms-2">
+                                ${statusBadge}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    $('#userListContainer').html(html);
+    
+    // Update selected users count
+    updateSelectedUsersCount();
+    
+    // Show/hide pagination controls
+    if (totalPages > 1) {
+        $('#paginationControls').show();
+    } else {
+        $('#paginationControls').hide();
+    }
+}
+
+// Escape HTML to prevent XSS
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Render pagination controls
+function renderPaginationControls(response) {
+    if (response.total_pages <= 1) {
+        $('#paginationControls').hide();
+        return;
+    }
+    
+    let paginationHtml = '';
+    
+    // Previous button
+    if (response.has_previous) {
+        paginationHtml += `
+            <li class="page-item">
+                <a class="page-link" href="#" data-page="${response.current_page - 1}">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+            </li>
+        `;
+    } else {
+        paginationHtml += `
+            <li class="page-item disabled">
+                <span class="page-link"><i class="fas fa-chevron-left"></i></span>
+            </li>
+        `;
+    }
+    
+    // Page numbers
+    const startPage = Math.max(1, response.current_page - 2);
+    const endPage = Math.min(response.total_pages, response.current_page + 2);
+    
+    for (let i = startPage; i <= endPage; i++) {
+        if (i === response.current_page) {
+            paginationHtml += `
+                <li class="page-item active">
+                    <span class="page-link">${i}</span>
+                </li>
+            `;
+        } else {
+            paginationHtml += `
+                <li class="page-item">
+                    <a class="page-link" href="#" data-page="${i}">${i}</a>
+                </li>
+            `;
+        }
+    }
+    
+    // Next button
+    if (response.has_next) {
+        paginationHtml += `
+            <li class="page-item">
+                <a class="page-link" href="#" data-page="${response.current_page + 1}">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            </li>
+        `;
+    } else {
+        paginationHtml += `
+            <li class="page-item disabled">
+                <span class="page-link"><i class="fas fa-chevron-right"></i></span>
+            </li>
+        `;
+    }
+    
+    $('#paginationList').html(paginationHtml);
+    
+    // Attach click handlers for pagination
+    $('.page-link').off('click').on('click', function(e) {
+        e.preventDefault();
+        const page = $(this).data('page');
+        if (page) {
+            const tenantId = $('#id_tenant').val();
+            loadTenantUsers(tenantId, true, page, currentSearch);
+            // Scroll to top of user list
+            $('#userListContainer').animate({ scrollTop: 0 }, 300);
+        }
+    });
+}
+
+function toggleUserSelection(checkbox, userId, userName) {
+    if (checkbox.checked) {
+        selectedUsers.add(userId);
+        $(checkbox).closest('.user-select-item').addClass('selected bg-primary-soft');
+    } else {
+        selectedUsers.delete(userId);
+        $(checkbox).closest('.user-select-item').removeClass('selected bg-primary-soft');
+        // Uncheck select all if it was checked
+        $('#selectAllUsers').prop('checked', false);
+    }
+    
+    updateSelectedUsersCount();
+    updateSummary();
+    
+    // Update hidden field for form submission
+    updateSelectedUsersHiddenField();
+}
+
+function toggleSelectAllUsers(checkbox) {
+    const isChecked = checkbox.checked;
+    
+    if (isChecked) {
+        // Select all users currently visible
+        $('.user-checkbox').each(function() {
+            if (!$(this).prop('checked')) {
+                $(this).prop('checked', true);
+                const userId = parseInt($(this).val());
+                selectedUsers.add(userId);
+                $(this).closest('.user-select-item').addClass('selected bg-primary-soft');
+            }
+        });
+    } else {
+        // Deselect all users
+        $('.user-checkbox').each(function() {
+            if ($(this).prop('checked')) {
+                $(this).prop('checked', false);
+                const userId = parseInt($(this).val());
+                selectedUsers.delete(userId);
+                $(this).closest('.user-select-item').removeClass('selected bg-primary-soft');
+            }
+        });
+    }
+    
+    updateSelectedUsersCount();
+    updateSummary();
+    updateSelectedUsersHiddenField();
+}
+
+function updateSelectedUsersCount() {
+    const count = selectedUsers.size;
+    if (count > 0) {
+        $('#selectedUsersAlert').show();
+        $('#selectedUsersCountText').text(count);
+    } else {
+        $('#selectedUsersAlert').hide();
+    }
+}
+
+function updateSelectedUsersHiddenField() {
+    // Remove existing hidden fields if any
+    $('input[name="selected_users"]').remove();
+    
+    // Add each selected user as a separate hidden field
+    const selectedUsersArray = Array.from(selectedUsers);
+    if (selectedUsersArray.length > 0) {
+        selectedUsersArray.forEach(userId => {
+            $('<input>').attr({
+                type: 'hidden',
+                name: 'selected_users',
+                value: userId
+            }).appendTo('#subscriptionForm');
+        });
+        console.log('Added hidden fields for users:', selectedUsersArray);
+    } else {
+        console.log('No users selected');
+    }
+}
+
+
+function applyPromoCode() {
+    const promoCode = $('#promo_code_input').val();
+    const planId = selectedPlan || $('#id_plan').val();
+    const durationMonths = parseInt($('#duration_months').val()) || 1;
+    
+    if (!promoCode) {
+        toastr.warning('Please enter a promo code');
+        return;
+    }
+    
+    if (!planId) {
+        toastr.warning('Please select a plan first');
+        return;
+    }
+    
+    // Show loading state
+    const $button = $('#applyPromoBtn');
+    const originalText = $button.html();
+    $button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Validating...');
+    
+    $.ajax({
+        url: "{% url 'validate_promo_code' %}",
+        method: 'POST',
+        data: {
+            promo_code: promoCode,
+            plan_id: planId,
+            duration_months: durationMonths,
+            csrfmiddlewaretoken: '{{ csrf_token }}'
+        },
+        success: function(response) {
+            if (response.valid) {
+                $('#promoApplied').show();
+                $('#promoDiscount').text(response.discount_value);
+                updateSummary();
+                toastr.success(`${response.message} Applied to your ${durationMonths}-month subscription!`);
+                $('#promoError').hide();
+            } else {
+                $('#promoApplied').hide();
+                $('#promoError').text(response.message).show();
+                toastr.error(response.message);
+            }
+        },
+        error: function(xhr) {
+            $('#promoApplied').hide();
+            let errorMsg = 'Error validating promo code';
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                errorMsg = xhr.responseJSON.message;
+            }
+            $('#promoError').text(errorMsg).show();
+            toastr.error(errorMsg);
+        },
+        complete: function() {
+            $button.prop('disabled', false).html(originalText);
+        }
+    });
+}
+
+
+// New function that uses the plan's discount percentage
+function getPlanDiscountPercentage() {
+    if (selectedPlan && plans[selectedPlan]) {
+        return plans[selectedPlan].discount || 0;
+    }
+    return 0;
+}
+
+// Calculate discount amount based on plan's discount percentage
+function calculateDiscount(total_base, planDiscountPercent) {
+    if (planDiscountPercent <= 0) return 0;
+    return total_base * (planDiscountPercent / 100);
+}
+
+// Get savings message based on duration
+function getSavingsMessage(months, savingsAmount, savingsPercent) {
+    if (months >= 3) {
+        return `You're saving ${savingsPercent}% (₦${savingsAmount.toFixed(2)}) by choosing a ${months}-month subscription.`;
+    }
+    return null;
+}
+
+// // Update the main updateSummary function
+// function updateSummary() {
+//     console.log('updateSummary called, selectedPlan:', selectedPlan);
+    
+//     if (selectedPlan && plans[selectedPlan]) {
+//         const plan = plans[selectedPlan];
+//         const basePrice = plan.price;
+//         const planDiscountPercent = plan.discount || 0; // Get plan's discount
+//         const userCount = selectedUsers.size > 0 ? selectedUsers.size : 1;
+        
+//         // Get duration months
+//         let durationMonths = parseInt($('#duration_months').val()) || 1;
+//         durationMonths = Math.min(Math.max(durationMonths, 1), 24);
+        
+//         // Calculate base total (monthly price * users * months)
+//         const baseTotal = basePrice * userCount * durationMonths;
+        
+//         // Calculate plan discount (based on the plan's discount percentage)
+//         const planDiscountAmount = baseTotal * (planDiscountPercent / 100);
+        
+//         // Get promo discount if applied
+//         let promoDiscountPercent = 0;
+//         let promoDiscountAmount = 0;
+        
+//         if ($('#promoApplied').is(':visible')) {
+//             promoDiscountPercent = parseFloat($('#promoDiscount').text());
+//             if (!isNaN(promoDiscountPercent)) {
+//                 // Apply promo discount to the total after plan discount
+//                 const afterPlanDiscount = baseTotal - planDiscountAmount;
+//                 promoDiscountAmount = afterPlanDiscount * (promoDiscountPercent / 100);
+//             }
+//         }
+        
+//         // Calculate final total
+//         const finalTotal = baseTotal - planDiscountAmount - promoDiscountAmount;
+        
+//         // Calculate monthly equivalent
+//         const monthlyEquivalent = finalTotal / durationMonths;
+        
+//         // Calculate savings compared to no discount
+//         const totalSavings = planDiscountAmount + promoDiscountAmount;
+//         const savingsPercent = (totalSavings / baseTotal) * 100;
+        
+//         // Update display
+//         $('#summaryBasePrice').text('₦' + basePrice.toFixed(2));
+        
+//         if (userCount > 1) {
+//             $('#userCountRow').show();
+//             $('#summaryUserCount').text(userCount);
+//         } else {
+//             $('#userCountRow').hide();
+//         }
+        
+//         $('#summaryDuration').text(durationMonths + ' month' + (durationMonths > 1 ? 's' : ''));
+//         $('#summarySubtotal').text('₦' + baseTotal.toFixed(2));
+        
+//         // Show/hide plan discount row
+//         if (planDiscountAmount > 0) {
+//             $('#planDiscountRow').show();
+//             $('#summaryPlanDiscount').text('-₦' + planDiscountAmount.toFixed(2));
+//             $('#summaryPlanDiscountPercent').text(`(${planDiscountPercent}% off)`);
+//         } else {
+//             $('#planDiscountRow').hide();
+//         }
+        
+//         // Show/hide promo discount row
+//         if (promoDiscountAmount > 0) {
+//             $('#promoDiscountRow').show();
+//             $('#summaryPromoDiscount').text('-₦' + promoDiscountAmount.toFixed(2));
+//         } else {
+//             $('#promoDiscountRow').hide();
+//         }
+        
+//         $('#summaryTotal').text('₦' + finalTotal.toFixed(2));
+//         $('#summaryMonthlyEquivalent').text('₦' + monthlyEquivalent.toFixed(2) + '/month');
+        
+//         // Update monthly equivalent in the quick select card
+//         $('#monthlyEquivalent').text('₦' + monthlyEquivalent.toFixed(2) + '/month');
+        
+//         // Update savings alert
+//         if (totalSavings > 0) {
+//             $('#savingsAlert').show();
+//             $('#savingsPercentage').text(savingsPercent.toFixed(1));
+//             $('#savingsDuration').text(durationMonths);
+//             $('#savingsAmount').text(totalSavings.toFixed(2));
+            
+//             if (planDiscountPercent > 0) {
+//                 $('#savingsBadge').show();
+//                 $('#savingsBadge').html(`<i class="fas fa-tag"></i> ${planDiscountPercent}% off plan discount`);
+//             } else {
+//                 $('#savingsBadge').hide();
+//             }
+//         } else {
+//             $('#savingsAlert').hide();
+//             $('#savingsBadge').hide();
+//         }
+        
+//         // Update hidden field for form submission
+//         $('#duration_months_hidden').val(durationMonths);
+        
+//         console.log('Summary updated:', {
+//             basePrice, userCount, durationMonths, baseTotal,
+//             planDiscountPercent, planDiscountAmount,
+//             promoDiscountPercent, promoDiscountAmount,
+//             finalTotal, monthlyEquivalent, totalSavings
+//         });
+//     } else {
+//         $('#summaryBasePrice').text('₦0.00');
+//         $('#userCountRow').hide();
+//         $('#summaryDuration').text('1 month');
+//         $('#summarySubtotal').text('₦0.00');
+//         $('#planDiscountRow').hide();
+//         $('#promoDiscountRow').hide();
+//         $('#summaryTotal').text('₦0.00');
+//         $('#summaryMonthlyEquivalent').text('₦0.00/month');
+//         $('#monthlyEquivalent').text('₦0.00/month');
+//         $('#savingsAlert').hide();
+//         $('#savingsBadge').hide();
+//     }
+// }
+
+// Update the main updateSummary function
+function updateSummary() {
+    console.log('updateSummary called, selectedPlan:', selectedPlan);
+    
+    if (selectedPlan && plans[selectedPlan]) {
+        const plan = plans[selectedPlan];
+        const basePrice = plan.price;
+        const planDiscountPercent = plan.discount || 0;
+        
+        // Determine user count based on scope
+        let userCount = 1;
+        const userScope = $('input[name="user_scope"]:checked').val();
+        
+        console.log('Current user scope:', userScope);
+        
+        if (userScope === 'all') {
+            // For "All Users", get the total number of users in the tenant
+            const totalTenantUsers = parseInt($('#total_tenant_users').val()) || 0;
+            userCount = totalTenantUsers > 0 ? totalTenantUsers : 1;
+            console.log('All Users scope - Total tenant users from hidden field:', userCount);
+            
+            // Show the user count row
+            $('#userCountRow').show();
+            $('#summaryUserCount').text(userCount);
+        } else if (userScope === 'selected') {
+            // For "Selected Users", use the selected users count
+            userCount = selectedUsers.size > 0 ? selectedUsers.size : 1;
+            console.log('Selected Users scope - Selected count:', userCount);
+            
+            if (userCount > 1) {
+                $('#userCountRow').show();
+                $('#summaryUserCount').text(userCount);
+            } else {
+                $('#userCountRow').hide();
+            }
+        } else {
+            // Personal user or no scope selected
+            userCount = 1;
+            $('#userCountRow').hide();
+        }
+        
+        // Get duration months
+        let durationMonths = parseInt($('#duration_months').val()) || 1;
+        durationMonths = Math.min(Math.max(durationMonths, 1), 24);
+        
+        // Calculate base total (monthly price * users * months)
+        const baseTotal = basePrice * userCount * durationMonths;
+        
+        // Calculate plan discount (based on the plan's discount percentage)
+        const planDiscountAmount = baseTotal * (planDiscountPercent / 100);
+        
+        // Get promo discount if applied
+        let promoDiscountPercent = 0;
+        let promoDiscountAmount = 0;
+        
+        if ($('#promoApplied').is(':visible')) {
+            promoDiscountPercent = parseFloat($('#promoDiscount').text());
+            if (!isNaN(promoDiscountPercent)) {
+                // Apply promo discount to the total after plan discount
+                const afterPlanDiscount = baseTotal - planDiscountAmount;
+                promoDiscountAmount = afterPlanDiscount * (promoDiscountPercent / 100);
+            }
+        }
+        
+        // Calculate final total
+        const finalTotal = baseTotal - planDiscountAmount - promoDiscountAmount;
+        
+        // Calculate monthly equivalent
+        const monthlyEquivalent = finalTotal / durationMonths;
+        
+        // Calculate savings compared to no discount
+        const totalSavings = planDiscountAmount + promoDiscountAmount;
+        const savingsPercent = (totalSavings / baseTotal) * 100;
+        
+        // Update display
+        $('#summaryBasePrice').text('₦' + basePrice.toFixed(2));
+        $('#summaryDuration').text(durationMonths + ' month' + (durationMonths > 1 ? 's' : ''));
+        $('#summarySubtotal').text('₦' + baseTotal.toFixed(2));
+        
+        // Show/hide plan discount row
+        if (planDiscountAmount > 0) {
+            $('#planDiscountRow').show();
+            $('#summaryPlanDiscount').text('-₦' + planDiscountAmount.toFixed(2));
+            $('#summaryPlanDiscountPercent').text(`(${planDiscountPercent}% off)`);
+        } else {
+            $('#planDiscountRow').hide();
+        }
+        
+        // Show/hide promo discount row
+        if (promoDiscountAmount > 0) {
+            $('#promoDiscountRow').show();
+            $('#summaryPromoDiscount').text('-₦' + promoDiscountAmount.toFixed(2));
+        } else {
+            $('#promoDiscountRow').hide();
+        }
+        
+        $('#summaryTotal').text('₦' + finalTotal.toFixed(2));
+        $('#summaryMonthlyEquivalent').text('₦' + monthlyEquivalent.toFixed(2) + '/month');
+        
+        // Update monthly equivalent in the quick select card
+        $('#monthlyEquivalent').text('₦' + monthlyEquivalent.toFixed(2) + '/month');
+        
+        // Update savings alert
+        if (totalSavings > 0) {
+            $('#savingsAlert').show();
+            $('#savingsPercentage').text(savingsPercent.toFixed(1));
+            $('#savingsDuration').text(durationMonths);
+            $('#savingsAmount').text(totalSavings.toFixed(2));
+            
+            if (planDiscountPercent > 0) {
+                $('#savingsBadge').show();
+                $('#savingsBadge').html(`<i class="fas fa-tag"></i> ${planDiscountPercent}% off plan discount`);
+            } else {
+                $('#savingsBadge').hide();
+            }
+        } else {
+            $('#savingsAlert').hide();
+            $('#savingsBadge').hide();
+        }
+        
+        // Update hidden field for form submission
+        $('#duration_months_hidden').val(durationMonths);
+        
+        console.log('Summary updated:', {
+            userScope: userScope,
+            userCount: userCount,
+            basePrice: basePrice,
+            durationMonths: durationMonths,
+            baseTotal: baseTotal,
+            planDiscountPercent: planDiscountPercent,
+            planDiscountAmount: planDiscountAmount,
+            finalTotal: finalTotal,
+            monthlyEquivalent: monthlyEquivalent
+        });
+    } else {
+        $('#summaryBasePrice').text('₦0.00');
+        $('#userCountRow').hide();
+        $('#summaryDuration').text('12 months');
+        $('#summarySubtotal').text('₦0.00');
+        $('#planDiscountRow').hide();
+        $('#promoDiscountRow').hide();
+        $('#summaryTotal').text('₦0.00');
+        $('#summaryMonthlyEquivalent').text('₦0.00/month');
+        $('#monthlyEquivalent').text('₦0.00/month');
+        $('#savingsAlert').hide();
+        $('#savingsBadge').hide();
+    }
+}
+
+
+// // Duration change handler
+// function initDurationSelector() {
+//     const durationInput = $('#duration_months');
+//     const hiddenDuration = $('#duration_months_hidden');
+    
+//     // Handle manual input
+//     durationInput.on('input', function() {
+//         let value = parseInt($(this).val()) || 1;
+//         value = Math.min(Math.max(value, 1), 24);
+//         $(this).val(value);
+//         hiddenDuration.val(value);
+//         updateSummary();
+        
+//         // Show warning for long durations
+//         if (value >= 12) {
+//             $('#durationHelp').html(`
+//                 <div class="alert alert-success alert-sm py-1 px-2 mb-0">
+//                     <small><i class="fas fa-check-circle"></i> Great choice! You're saving ${getDurationDiscountPercentage(value)}% with this ${value}-month commitment.</small>
+//                 </div>
+//             `);
+//         } else if (value >= 6) {
+//             $('#durationHelp').html(`
+//                 <div class="alert alert-info alert-sm py-1 px-2 mb-0">
+//                     <small><i class="fas fa-info-circle"></i> Good choice! You're saving ${getDurationDiscountPercentage(value)}% with this ${value}-month commitment.</small>
+//                 </div>
+//             `);
+//         } else if (value >= 3) {
+//             $('#durationHelp').html(`
+//                 <div class="alert alert-info alert-sm py-1 px-2 mb-0">
+//                     <small><i class="fas fa-info-circle"></i> You're saving ${getDurationDiscountPercentage(value)}% with this ${value}-month commitment.</small>
+//                 </div>
+//             `);
+//         } else {
+//             $('#durationHelp').html('');
+//         }
+//     });
+    
+//     // Handle quick select buttons
+//     $('.duration-quick-btn').on('click', function() {
+//         const months = parseInt($(this).data('months'));
+//         durationInput.val(months);
+//         hiddenDuration.val(months);
+//         updateSummary();
+        
+//         // Scroll to duration section
+//         $('html, body').animate({
+//             scrollTop: durationInput.offset().top - 100
+//         }, 300);
+        
+//         // Highlight the selected button
+//         $('.duration-quick-btn').removeClass('btn-primary').addClass('btn-outline-primary');
+//         $(this).removeClass('btn-outline-primary').addClass('btn-primary');
+        
+//         // Show toast notification
+//         const discount = getDurationDiscountPercentage(months);
+//         if (discount > 0) {
+//             toastr.success(`${months}-month subscription selected! You save ${discount}% on this commitment.`);
+//         } else {
+//             toastr.info(`${months}-month subscription selected.`);
+//         }
+//     });
+// }
+
+// Duration change handler
+function initDurationSelector() {
+    const durationInput = $('#duration_months');
+    const hiddenDuration = $('#duration_months_hidden');
+    
+    // Handle manual input
+    durationInput.on('input', function() {
+        let value = parseInt($(this).val()) || 1;
+        value = Math.min(Math.max(value, 1), 24);
+        $(this).val(value);
+        hiddenDuration.val(value);
+        updateSummary(); // This will now work with 'all' scope
+    });
+    
+    // Handle quick select buttons
+    $('.duration-quick-btn').on('click', function() {
+        const months = parseInt($(this).data('months'));
+        durationInput.val(months);
+        hiddenDuration.val(months);
+        updateSummary(); // This will now work with 'all' scope
+        
+        // Scroll to duration section
+        $('html, body').animate({
+            scrollTop: durationInput.offset().top - 100
+        }, 300);
+        
+        // Highlight the selected button
+        $('.duration-quick-btn').removeClass('btn-primary').addClass('btn-outline-primary');
+        $(this).removeClass('btn-outline-primary').addClass('btn-primary');
+        
+        toastr.info(`${months}-month subscription selected.`);
+    });
+}
+
+
+// Add this function to clear all selected users
+function clearAllSelectedUsers() {
+    selectedUsers.clear();
+    $('.user-checkbox').prop('checked', false);
+    $('.user-select-item').removeClass('selected bg-primary-soft');
+    updateSelectedUsersCount();
+    updateSummary();
+    updateSelectedUsersHiddenField();
+    console.log('Cleared all selected users');
+}
+
+// Update the user scope change handler
+// function initUserScopeHandler() {
+//     $('input[name="user_scope"]').on('change', function() {
+//         const selectedScope = $(this).val();
+//         console.log('User scope changed to:', selectedScope);
+        
+//         if (selectedScope === 'selected') {
+//             $('#userSelectionSection').show();
+//             const tenantId = $('#id_tenant').val();
+//             if (tenantId) {
+//                 // Don't clear selected users here - they will be restored from session if needed
+//                 loadTenantUsers(tenantId, true, 1, currentSearch);
+//             }
+//         } else {
+//             // When switching to 'All Users', clear all selected users
+//             $('#userSelectionSection').hide();
+//             clearAllSelectedUsers();
+//         }
+//         updateSummary();
+//     });
+// }
+
+// Update the user scope change handler
+function initUserScopeHandler() {
+    $('input[name="user_scope"]').on('change', function() {
+        const selectedScope = $(this).val();
+        console.log('User scope changed to:', selectedScope);
+        
+        if (selectedScope === 'selected') {
+            $('#userSelectionSection').show();
+            const tenantId = $('#id_tenant').val();
+            if (tenantId) {
+                loadTenantUsers(tenantId, true, 1, currentSearch);
+            }
+        } else if (selectedScope === 'all') {
+            // When switching to 'All Users', hide the selection section
+            $('#userSelectionSection').hide();
+            // Clear selected users since they're not needed for 'All Users'
+            clearAllSelectedUsers();
+        }
+        // IMPORTANT: Always update summary when scope changes
+        updateSummary();
+    });
+}
+
+// // Update resetPlanSelection function
+// function resetPlanSelection() {
+//     console.log('resetPlanSelection called - clearing selections');
+//     selectedPlan = null;
+//     $('#id_plan').val('');
+//     $('#selectedPlanDisplay').hide();
+//     $('.pricing-card').removeClass('border-primary-custom selected-plan');
+//     $('#submitBtn').prop('disabled', true);
+    
+//     // Clear selected users when changing plan
+//     clearAllSelectedUsers();
+    
+//     // Reset user scope to 'all' if it was 'selected'
+//     if ($('input[name="user_scope"]:checked').val() === 'selected') {
+//         $('#scope_all').prop('checked', true);
+//         $('#userSelectionSection').hide();
+//     }
+    
+//     updateSummary();
+// }
+
+function resetPlanSelection() {
+    console.log('resetPlanSelection called - resetting to beginning');
+    
+    // Reset all global variables
+    selectedPlan = null;
+    selectedUsers.clear();
+    tenantUsers = [];
+    currentPage = 1;
+    totalPages = 1;
+    currentSearch = '';
+    
+    // Reset form fields
+    $('#id_plan').val('');
+    $('#duration_months').val(1);
+    $('#duration_months_hidden').val(1);
+    $('#promo_code_input').val('');
+    $('#promoApplied').hide();
+    $('#promoError').hide();
+    
+    // Reset user scope to 'all' (default)
+    $('#scope_all').prop('checked', true);
+    $('#scope_selected').prop('checked', false);
+    $('#userSelectionSection').hide();
+    
+    // Clear any selected users in the UI
+    $('.user-checkbox').prop('checked', false);
+    $('.user-select-item').removeClass('selected bg-primary-soft');
+    $('#selectedUsersAlert').hide();
+    
+    // Hide the selected plan display
+    $('#selectedPlanDisplay').hide();
+    
+    // Remove highlight from all pricing cards
+    $('.pricing-card').removeClass('border-primary-custom selected-plan');
+    
+    // Disable submit button
+    $('#submitBtn').prop('disabled', true);
+    
+    // Reset the order summary
+    updateSummary();
+    
+    // Scroll back to the top of the page (to the plan selection cards)
+    $('html, body').animate({
+        scrollTop: $('.pricing-card:first').offset().top - 100
+    }, 500);
+    
+    // Show a notification
+    toastr.info('Selection reset. Please choose a new plan.');
+    
+    // Clear any session storage data
+    sessionStorage.removeItem('restore_subscription_data');
+    sessionStorage.removeItem('returning_from_payment');
+    
+    // Optionally, reload the page to ensure clean state
+    // Uncomment the line below if you want a full page reload
+    window.location.href =   "{% url 'create_subscription' %}";
+    window.location.href = window.location.pathname;
+
+}
+
+// Update the tenant change handler to clear selections
+function initTenantHandler() {
+    $('#id_tenant').on('change', function() {
+        const tenantId = $(this).val();
+        console.log('Tenant changed to:', tenantId);
+        
+        if (tenantId) {
+            // Clear all previous selections
+            clearAllSelectedUsers();
+            currentSearch = '';
+            $('#userSearchInput').val('');
+            
+            // Reset user scope to 'all' by default
+            $('#scope_all').prop('checked', true);
+            $('#userSelectionSection').hide();
+            
+            // Load users for the new tenant
+            loadTenantUsers(tenantId, true, 1, '');
+        }
+    });
+}
+
+// Update the clear all users button handler
+function initClearAllUsersHandler() {
+    $('#clearAllUsersBtn').off('click').on('click', function() {
+        console.log('Clear all users button clicked');
+        clearAllSelectedUsers();
+        toastr.info('All users deselected');
+    });
+}
+
+// Update the restore function to handle scope changes properly
+function restoreSubscriptionData() {
+    console.log('Checking for subscription data to restore...');
+    
+    // Check for restore flag from server
+    {% if restoring %}
+    console.log('Restore flag detected!');
+    
+    // First, clear any existing selections
+    clearAllSelectedUsers();
+    
+    // Restore plan selection
+    {% if restore_plan_id %}
+    const restorePlanId = {{ restore_plan_id }};
+    console.log('Restoring plan:', restorePlanId);
+    if (plans[restorePlanId]) {
+        selectPlan(restorePlanId, plans[restorePlanId].price, plans[restorePlanId].name);
+    }
+    {% endif %}
+    
+    // Restore duration
+    {% if restore_duration_months %}
+    const restoreDuration = {{ restore_duration_months }};
+    console.log('Restoring duration:', restoreDuration);
+    $('#duration_months').val(restoreDuration);
+    $('#duration_months_hidden').val(restoreDuration);
+    {% endif %}
+    
+    // Restore user scope
+    {% if restore_user_scope %}
+    const restoreUserScope = "{{ restore_user_scope }}";
+    console.log('Restoring user scope:', restoreUserScope);
+    $(`input[name="user_scope"][value="${restoreUserScope}"]`).prop('checked', true);
+    
+    // If selected users, restore them
+    {% if restore_selected_users and restore_user_scope == 'selected' %}
+    const restoreSelectedUsers = {{ restore_selected_users|safe }};
+    console.log('Restoring selected users:', restoreSelectedUsers);
+    
+    // Show user selection section
+    $('#userSelectionSection').show();
+    
+    // Function to wait for users to load and then select them
+    let retryCount = 0;
+    const maxRetries = 20;
+    
+    const waitForUsersAndSelect = setInterval(function() {
+        if (tenantUsers.length > 0) {
+            clearInterval(waitForUsersAndSelect);
+            // Clear any existing selections first
+            clearAllSelectedUsers();
+            // Then add the restored users
+            restoreSelectedUsers.forEach(userId => {
+                if (!selectedUsers.has(userId)) {
+                    selectedUsers.add(userId);
+                    $(`.user-checkbox[value="${userId}"]`).prop('checked', true);
+                    $(`.user-select-item[data-user-id="${userId}"]`).addClass('selected bg-primary-soft');
+                }
+            });
+            updateSelectedUsersCount();
+            updateSummary();
+            
+            // Show success message
+            toastr.success('Subscription data restored successfully!');
+            
+            // Clear the restore flag via AJAX
+            $.ajax({
+                url: "{% url 'clear_subscription_restore' %}",
+                method: 'POST',
+                data: {
+                    csrfmiddlewaretoken: '{{ csrf_token }}'
+                },
+                success: function() {
+                    console.log('Restore flag cleared');
+                }
+            });
+        } else {
+            retryCount++;
+            if (retryCount >= maxRetries) {
+                clearInterval(waitForUsersAndSelect);
+                console.log('Timeout waiting for users to load');
+                const tenantId = $('#id_tenant').val();
+                if (tenantId) {
+                    loadTenantUsers(tenantId, true, 1, '');
+                }
+            }
+        }
+    }, 500);
+    {% else %}
+    updateSummary();
+    {% endif %}
+    {% else %}
+    updateSummary();
+    {% endif %}
+    {% endif %}
+    
+    // Also check sessionStorage for any data (backup method)
+    const sessionData = sessionStorage.getItem('restore_subscription_data');
+    if (sessionData && !{% if restoring %}true{% else %}false{% endif %}) {
+        console.log('Found sessionStorage data:', sessionData);
+        try {
+            const data = JSON.parse(sessionData);
+            
+            // Clear existing selections first
+            clearAllSelectedUsers();
+            
+            // Restore plan
+            if (data.plan_id && plans[data.plan_id]) {
+                selectPlan(data.plan_id, data.plan_price, data.plan_name);
+            }
+            
+            // Restore duration
+            if (data.duration_months) {
+                $('#duration_months').val(data.duration_months);
+                $('#duration_months_hidden').val(data.duration_months);
+            }
+            
+            // Restore user scope
+            if (data.user_scope) {
+                $(`input[name="user_scope"][value="${data.user_scope}"]`).prop('checked', true);
+                
+                if (data.user_scope === 'selected' && data.selected_users && data.selected_users.length > 0) {
+                    $('#userSelectionSection').show();
+                    
+                    // Wait for users to load
+                    const waitForUsers = setInterval(function() {
+                        if (tenantUsers.length > 0) {
+                            clearInterval(waitForUsers);
+                            data.selected_users.forEach(userId => {
+                                selectedUsers.add(userId);
+                                $(`.user-checkbox[value="${userId}"]`).prop('checked', true);
+                                $(`.user-select-item[data-user-id="${userId}"]`).addClass('selected bg-primary-soft');
+                            });
+                            updateSelectedUsersCount();
+                            updateSummary();
+                            toastr.success('Subscription data restored from session!');
+                        }
+                    }, 500);
+                }
+            }
+            
+            // Clear sessionStorage after restore
+            sessionStorage.removeItem('restore_subscription_data');
+            sessionStorage.removeItem('returning_from_payment');
+            
+            updateSummary();
+        } catch(e) {
+            console.error('Error restoring from sessionStorage:', e);
+        }
+    }
+}
+
+// Update the form submission validation
+$('#subscriptionForm').on('submit', function(e) {
+    console.log('Form submitting...');
+    
+    // Validate that a plan is selected
+    if (!selectedPlan) {
+        e.preventDefault();
+        toastr.error('Please select a subscription plan');
+        return false;
+    }
+    
+    // Validate duration
+    const durationMonths = parseInt($('#duration_months').val()) || 0;
+    if (durationMonths < 1 || durationMonths > 24) {
+        e.preventDefault();
+        toastr.error('Please select a valid duration between 1 and 24 months');
+        return false;
+    }
+    
+    // Validate that users are selected if scope is 'selected'
+    const userScope = $('input[name="user_scope"]:checked').val();
+    console.log('User scope selected:', userScope);
+    console.log('Selected users size:', selectedUsers.size);
+    console.log('Selected users:', Array.from(selectedUsers));
+    
+    if (userScope === 'selected' && selectedUsers.size === 0) {
+        e.preventDefault();
+        toastr.error('Please select at least one user for this subscription');
+        return false;
+    }
+    
+    // Update the hidden duration field
+    $('#duration_months_hidden').val(durationMonths);
+    
+    // IMPORTANT: Update the hidden fields right before submission
+    updateSelectedUsersHiddenField();
+    
+    // Log what we're submitting
+    const formData = new FormData(this);
+    console.log('=== Form data being submitted ===');
+    for (let pair of formData.entries()) {
+        console.log(pair[0] + ':', pair[1]);
+    }
+    
+    return true;
+});
+
+// // Initialize duration selector on page load
+// $(document).ready(function() {
+//     // ... existing initialization code ...
+    
+//     // Initialize duration selector
+//     initDurationSelector();
+    
+//     // Set initial duration value
+//     const initialDuration = $('#duration_months').val();
+//     if (initialDuration && parseInt(initialDuration) > 1) {
+//         updateSummary();
+//         // Highlight corresponding quick button
+//         const months = parseInt(initialDuration);
+//         $(`.duration-quick-btn[data-months="${months}"]`).removeClass('btn-outline-primary').addClass('btn-primary');
+//     }
+    
+//     // Update summary when duration changes via other means
+//     $('#duration_months').trigger('input');
+// });
+
+
+// Initialize on page load
+$(document).ready(function() {
+    console.log('Document ready - initializing...');
+    
+    // Load plans data
+    {% for plan in plans %}
+    plans[{{ plan.id }}] = {
+        name: "{{ plan.name|escapejs }}",
+        price: {{ plan.price }},
+        discount: {{ plan.discount_percentage }},
+        max_users: {% if plan.max_users %}{{ plan.max_users }}{% else %}null{% endif %}
+    };
+    {% endfor %}
+    
+    console.log('Plans:', plans);
+    
+    // Auto-select the plan if only one exists
+    {% if is_create %}
+        {% if plans|length == 1 %}
+            {% for plan in plans %}
+            selectPlan({{ plan.id }}, {{ plan.price }}, '{{ plan.name|escapejs }}');
+            {% endfor %}
+        {% elif request.GET.plan %}
+            const urlPlanId = parseInt('{{ request.GET.plan }}');
+            if (plans[urlPlanId]) {
+                selectPlan(urlPlanId, plans[urlPlanId].price, plans[urlPlanId].name);
+            }
+        {% endif %}
+    {% endif %}
+    
+    // If editing existing subscription
+    {% if not is_create and form.plan.value %}
+        const editPlanId = {{ form.plan.value }};
+        if (plans[editPlanId]) {
+            selectPlan(editPlanId, plans[editPlanId].price, plans[editPlanId].name);
+        }
+    {% endif %}
+    
+    // Initialize all handlers
+    initUserScopeHandler();
+    initTenantHandler();
+    initClearAllUsersHandler();
+    initDurationSelector();
+    
+    // Get initial selected users from hidden fields
+    // const initialSelectedUsers = $('input[name="selected_users"]').map(function() {
+    //     return parseInt($(this).val());
+    // }).get();
+    
+    // if (initialSelectedUsers.length > 0) {
+    //     console.log('Initial selected users found:', initialSelectedUsers);
+    //     initialSelectedUsers.forEach(userId => {
+    //         if (!isNaN(userId)) {
+    //             selectedUsers.add(userId);
+    //         }
+    //     });
+    // }
+    
+    // Handle tenant selection change (additional handler)
+    $('#id_tenant').on('change', function() {
+        const tenantId = $(this).val();
+        if (tenantId) {
+            clearAllSelectedUsers();
+            currentSearch = '';
+            $('#userSearchInput').val('');
+            loadTenantUsers(tenantId, true, 1, '');
+        }
+    });
+    
+    // Initial load if tenant is preselected
+    // const initialTenantId = $('#id_tenant').val();
+    // if (initialTenantId) {
+    //     loadTenantUsers(initialTenantId, true, 1, '');
+    // }
+    
+    // Show user scope section if tenant is selected
+    if ($('#id_tenant').val()) {
+        $('#userScopeSection').show();
+        if ($('input[name="user_scope"]:checked').val() === 'selected') {
+            $('#userSelectionSection').show();
+        }
+    }
+    
+    // Search functionality with debounce
+    // let searchTimeout;
+    $('#userSearchInput').on('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            const searchTerm = $(this).val();
+            currentSearch = searchTerm;
+            const tenantId = $('#id_tenant').val();
+            if (tenantId) {
+                loadTenantUsers(tenantId, true, 1, searchTerm);
+            }
+        }, 300);
+    });
+    
+    // Clear search button
+    $('#clearSearchBtn').click(function() {
+        $('#userSearchInput').val('');
+        currentSearch = '';
+        const tenantId = $('#id_tenant').val();
+        if (tenantId) {
+            loadTenantUsers(tenantId, true, 1, '');
+        }
+    });
+    
+    // Call restore function after initial setup
+    setTimeout(restoreSubscriptionData, 1000);
+
+    const totalUsers = $('#total_tenant_users').val();
+    console.log('Total tenant users from hidden field:', totalUsers);
+});
+
+// Configure toastr
+toastr.options = {
+    "closeButton": true,
+    "progressBar": true,
+    "positionClass": "toast-top-right",
+    "timeOut": "3000"
+};
+
+// Form submission validation
+$('#subscriptionForm').on('submit', function(e) {
+    console.log('Form submitting...');
+    
+    // Validate that a plan is selected
+    if (!selectedPlan) {
+        e.preventDefault();
+        toastr.error('Please select a subscription plan');
+        return false;
+    }
+    
+    // Validate that users are selected if scope is 'selected'
+    const userScope = $('input[name="user_scope"]:checked').val();
+    console.log('User scope selected:', userScope);
+    console.log('Selected users size:', selectedUsers.size);
+    console.log('Selected users:', Array.from(selectedUsers));
+    
+    if (userScope === 'selected' && selectedUsers.size === 0) {
+        e.preventDefault();
+        toastr.error('Please select at least one user for this subscription');
+        return false;
+    }
+    
+    // IMPORTANT: Update the hidden fields right before submission
+    updateSelectedUsersHiddenField();
+    
+    // Log what we're submitting
+    const formData = new FormData(this);
+    console.log('=== Form data being submitted ===');
+    for (let pair of formData.entries()) {
+        console.log(pair[0] + ':', pair[1]);
+    }
+    
+    return true;
+});
+</script>
+{% endblock %}

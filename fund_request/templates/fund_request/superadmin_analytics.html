@@ -1,0 +1,1108 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Superuser Dashboard - Fund Request Analytics{% endblock %}
+
+{% block content %}
+<style>
+    .superadmin-dashboard-wrapper {
+        background: linear-gradient(135deg,  #319795 0%, #2c7a7b 100%);
+        min-height: 100vh;
+        padding-bottom: 2rem;
+    }
+
+    .superadmin-header {
+        background: linear-gradient(135deg,  #319795 0%, #2c7a7b 100%);
+        color: white;
+        padding: 3rem 0;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+    }
+
+    .superadmin-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .superadmin-subtitle {
+        font-size: 1rem;
+        opacity: 0.9;
+        margin-bottom: 0;
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .btn-elegant {
+        background: rgba(255,255,255,0.15);
+        color: white;
+        border: 2px solid rgba(255,255,255,0.3);
+        border-radius: 8px;
+        padding: 0.6rem 1.5rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .btn-elegant:hover {
+        background: rgba(255,255,255,0.25);
+        border-color: rgba(255,255,255,0.5);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    }
+
+    .btn-elegant.btn-secondary {
+        background: rgba(255,255,255,0.1);
+    }
+
+    .dashboard-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 1rem;
+    }
+
+    /* KPI Grid */
+    .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .kpi-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        border-left: 5px solid #319795;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .kpi-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 100px;
+        height: 100px;
+        background: rgba(102, 126, 234, 0.05);
+        border-radius: 50% 0 0 50%;
+    }
+
+    .kpi-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+    }
+
+    .kpi-card.kpi-primary { border-left-color: #667eea; }
+    .kpi-card.kpi-success { border-left-color: #10b981; }
+    .kpi-card.kpi-warning { border-left-color: #f59e0b; }
+    .kpi-card.kpi-danger { border-left-color: #ef4444; }
+    .kpi-card.kpi-info { border-left-color: #0ea5e9; }
+
+    .kpi-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 50px;
+        height: 50px;
+        border-radius: 10px;
+        margin-bottom: 1rem;
+        font-size: 1.5rem;
+        color: white;
+        background: linear-gradient(135deg,  #319795 0%, #2c7a7b 100%);
+    }
+
+    .kpi-card.kpi-success .kpi-icon {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    }
+
+    .kpi-card.kpi-warning .kpi-icon {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    }
+
+    .kpi-card.kpi-danger .kpi-icon {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    }
+
+    .kpi-card.kpi-info .kpi-icon {
+        background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+    }
+
+    .kpi-value {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #111827;
+        line-height: 1;
+        margin-bottom: 0.5rem;
+    }
+
+    .kpi-label {
+        font-size: 0.875rem;
+        color: #6b7280;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .kpi-trend {
+        margin-top: 1rem;
+    }
+
+    .trend-badge {
+        display: inline-block;
+        background: rgba(102, 126, 234, 0.1);
+        color: #319795;
+        padding: 0.4rem 0.8rem;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    /* Charts Grid */
+    .charts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    @media (max-width: 1024px) {
+        .charts-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .chart-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        min-height: 400px;
+    }
+
+    .chart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #f3f4f6;
+    }
+
+    .chart-title {
+        margin: 0;
+        color: #111827;
+        font-weight: 700;
+        font-size: 1.1rem;
+    }
+
+    .chart-title i {
+        margin-right: 0.5rem;
+        color:  #319795;
+    }
+
+    .badge-soft {
+        background: rgba(102, 126, 234, 0.1);
+        color:  #319795;
+        border: none;
+        padding: 0.4rem 0.8rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .chart-body {
+        position: relative;
+    }
+
+    /* Data Tables */
+    .insights-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    @media (max-width: 768px) {
+        .insights-row {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .insight-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+
+    .insight-header {
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #f3f4f6;
+    }
+
+    .insight-title {
+        margin: 0;
+        color: #111827;
+        font-weight: 700;
+        font-size: 1.1rem;
+    }
+
+    .insight-title i {
+        margin-right: 0.5rem;
+        color:  #319795 0%, #2c7a7b;
+    }
+
+    .table-elegant {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .table-elegant thead {
+        background: #f9fafb;
+        border-bottom: 2px solid #e5e7eb;
+    }
+
+    .table-elegant th {
+        padding: 1rem;
+        text-align: left;
+        color: #6b7280;
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .table-elegant tbody tr {
+        border-bottom: 1px solid #f3f4f6;
+        transition: background 0.2s ease;
+    }
+
+    .table-elegant tbody tr:hover {
+        background: #fafbff;
+    }
+
+    .table-elegant td {
+        padding: 1rem;
+        color: #374151;
+    }
+
+    .user-cell {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 0.875rem;
+        background: linear-gradient(135deg,  #319795 0%, #2c7a7b);
+    }
+
+    .badge-status {
+        display: inline-block;
+        padding: 0.4rem 0.8rem;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .badge-primary { background: rgba(102, 126, 234, 0.15); color: #667eea; }
+    .badge-success { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+    .badge-warning { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+    .badge-danger { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+    .badge-info { background: rgba(14, 165, 233, 0.15); color: #0ea5e9; }
+
+    .progress-bar-elegant {
+        height: 6px;
+        background: #e5e7eb;
+        border-radius: 3px;
+        overflow: hidden;
+        margin-right: 0.5rem;
+    }
+
+    .progress-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg,  #319795 0%, #2c7a7b 100%);
+        border-radius: 3px;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #9ca3af;
+    }
+
+    @media (max-width: 768px) {
+        .superadmin-title { font-size: 1.8rem; }
+        .kpi-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; }
+        .header-actions { width: 100%; flex-direction: column; }
+        .btn-elegant { width: 100%; text-align: center; }
+        .charts-grid { grid-template-columns: 1fr; }
+    }
+</style>
+
+<div class="superadmin-dashboard-wrapper">
+    <!-- Header Section -->
+    <div class="superadmin-header">
+        <div class="container-fluid">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div>
+                    <h1 class="superadmin-title">
+                        <i class="fas fa-chart-line"></i> Fund Request Analytics
+                    </h1>
+                    <p class="superadmin-subtitle">System-wide fund_request management across all tenants</p>
+                </div>
+                <div class="header-actions">
+                    <a href="{% url 'fund_request:fund_request_list' %}" class="btn btn-elegant">
+                        <i class="fas fa-list"></i> Browse All
+                    </a>
+                    <div class="dropdown d-inline-block">
+                        <button class="btn btn-elegant dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-cogs"></i> Management
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{% url 'fund_request:categories' %}"><i class="fas fa-tags"></i> Categories</a></li>
+                            <li><a class="dropdown-item" href="{% url 'fund_request:settings' %}"><i class="fas fa-sliders-h"></i> Settings</a></li>
+                            <li><a class="dropdown-item" href="{% url 'fund_request:manage_receptionist' %}"><i class="fas fa-user-tie"></i> Receptionists</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'fund_request:dashboard' %}"><i class="fas fa-user"></i> My Dashboard</a></li>
+                        </ul>
+                    </div>
+                    <button class="btn btn-elegant btn-secondary" id="exportBtn">
+                        <i class="fas fa-download"></i> Export
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Dashboard Content -->
+    <div class="dashboard-container">
+        <!-- KPI Cards -->
+        <div class="kpi-grid">
+            <div class="kpi-card kpi-primary" onclick="location.href='{% url 'fund_request:fund_request_list' %}';" style="cursor: pointer;">
+                <div class="kpi-icon"><i class="fas fa-envelope"></i></div>
+                <div class="kpi-value">{{ stats.total|default:0 }}</div>
+                <div class="kpi-label">Total Fund Requests</div>
+                <div class="kpi-trend"><span class="trend-badge">↑ +{{ stats.today|default:0 }} today</span></div>
+            </div>
+
+            <div class="kpi-card kpi-success">
+                <div class="kpi-icon"><i class="fas fa-check-circle"></i></div>
+                <div class="kpi-value">{{ stats.completed|default:0 }}</div>
+                <div class="kpi-label">Completed</div>
+                <div class="kpi-trend"><span class="trend-badge">{{ stats.approved|default:0 }} approved</span></div>
+            </div>
+
+            <div class="kpi-card kpi-warning">
+                <div class="kpi-icon"><i class="fas fa-hourglass-half"></i></div>
+                <div class="kpi-value">{{ stats.pending|default:0 }}</div>
+                <div class="kpi-label">Pending</div>
+                <div class="kpi-trend"><span class="trend-badge">{{ stats.in_progress|default:0 }} in progress</span></div>
+            </div>
+
+            <div class="kpi-card kpi-info">
+                <div class="kpi-icon"><i class="fas fa-globe"></i></div>
+                <div class="kpi-value">{{ stats.external|default:0 }}</div>
+                <div class="kpi-label">External</div>
+                <div class="kpi-trend"><span class="trend-badge">{{ stats.internal|default:0 }} internal</span></div>
+            </div>
+
+            <div class="kpi-card kpi-success">
+                <div class="kpi-icon"><i class="fas fa-building"></i></div>
+                <div class="kpi-value">{{ tenant_stats|length|default:0 }}</div>
+                <div class="kpi-label">Active Tenants</div>
+                <div class="kpi-trend"><span class="trend-badge">Organization wide</span></div>
+            </div>
+
+            <div class="kpi-card kpi-primary">
+                <div class="kpi-icon"><i class="fas fa-clock"></i></div>
+                <div class="kpi-value">{% if avg_processing_hours %}{{ avg_processing_hours|floatformat:1 }}h{% else %}—{% endif %}</div>
+                <div class="kpi-label">Avg Processing</div>
+                <div class="kpi-trend"><span class="trend-badge">Completion time</span></div>
+            </div>
+
+            <div class="kpi-card {% if overdue_count > 0 %}kpi-danger{% else %}kpi-success{% endif %}">
+                <div class="kpi-icon"><i class="fas fa-exclamation-circle"></i></div>
+                <div class="kpi-value">{{ overdue_count|default:0 }}</div>
+                <div class="kpi-label">Overdue/Urgent</div>
+                <div class="kpi-trend">
+                    {% if overdue_count > 0 %}
+                        <span class="trend-badge" style="background: rgba(239, 68, 68, 0.15); color: #ef4444;">Needs attention</span>
+                    {% else %}
+                        <span class="trend-badge">All caught up</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Tracking KPI Cards -->
+        <h5 style="color: white; margin-top: 2rem; margin-bottom: 1.5rem; font-weight: 700;">
+            <i class="fas fa-tasks"></i> Fund Request Actions & Activities ({{ stats.total_actions|default:0 }} total)
+        </h5>
+        <div class="kpi-grid">
+            <div class="kpi-card kpi-primary">
+                <div class="kpi-icon"><i class="fas fa-pen-fancy"></i></div>
+                <div class="kpi-value">{{ action_stats.created|default:0 }}</div>
+                <div class="kpi-label">Created</div>
+            </div>
+
+            <div class="kpi-card kpi-info">
+                <div class="kpi-icon"><i class="fas fa-arrow-right"></i></div>
+                <div class="kpi-value">{{ action_stats.forwarded|default:0 }}</div>
+                <div class="kpi-label">Forwarded</div>
+            </div>
+
+            <div class="kpi-card kpi-success">
+                <div class="kpi-icon"><i class="fas fa-thumbs-up"></i></div>
+                <div class="kpi-value">{{ action_stats.approved|default:0 }}</div>
+                <div class="kpi-label">Approved</div>
+            </div>
+
+            <div class="kpi-card kpi-danger">
+                <div class="kpi-icon"><i class="fas fa-thumbs-down"></i></div>
+                <div class="kpi-value">{{ action_stats.rejected|default:0 }}</div>
+                <div class="kpi-label">Rejected</div>
+            </div>
+
+            <div class="kpi-card kpi-danger">
+                <div class="kpi-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                <div class="kpi-value">{{ action_stats.escalated|default:0 }}</div>
+                <div class="kpi-label">Escalated</div>
+            </div>
+
+            <div class="kpi-card kpi-warning">
+                <div class="kpi-icon"><i class="fas fa-undo-alt"></i></div>
+                <div class="kpi-value">{{ action_stats.returned|default:0 }}</div>
+                <div class="kpi-label">Returned</div>
+            </div>
+
+            <div class="kpi-card kpi-info">
+                <div class="kpi-icon"><i class="fas fa-envelope-open"></i></div>
+                <div class="kpi-value">{{ action_stats.received|default:0 }}</div>
+                <div class="kpi-label">Received (External)</div>
+            </div>
+
+            <div class="kpi-card kpi-success">
+                <div class="kpi-icon"><i class="fas fa-smile"></i></div>
+                <div class="kpi-value">{{ action_stats.positive_response|default:0 }}</div>
+                <div class="kpi-label">Positive Responses</div>
+            </div>
+
+            <div class="kpi-card kpi-danger">
+                <div class="kpi-icon"><i class="fas fa-frown"></i></div>
+                <div class="kpi-value">{{ action_stats.negative_response|default:0 }}</div>
+                <div class="kpi-label">Negative Responses</div>
+            </div>
+
+            <div class="kpi-card kpi-primary">
+                <div class="kpi-icon"><i class="fas fa-eye"></i></div>
+                <div class="kpi-value">{{ action_stats.kept_in_view|default:0 }}</div>
+                <div class="kpi-label">Kept In View</div>
+            </div>
+        </div>
+        <div class="charts-grid">
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h6 class="chart-title"><i class="fas fa-chart-area"></i> Activity Trend</h6>
+                    <span class="badge-soft">Last 30 Days</span>
+                </div>
+                <canvas id="activityTrendChart"></canvas>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h6 class="chart-title"><i class="fas fa-chart-pie"></i> Status Distribution</h6>
+                    <span class="badge-soft">All Time</span>
+                </div>
+                <div style="position: relative; height: 320px;">
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h6 class="chart-title"><i class="fas fa-exclamation-circle"></i> Priority Breakdown</h6>
+                    <span class="badge-soft">All Time</span>
+                </div>
+                <canvas id="priorityChart"></canvas>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h6 class="chart-title"><i class="fas fa-code-branch"></i> External vs Internal</h6>
+                    <span class="badge-soft">Last 30 Days</span>
+                </div>
+                <canvas id="externalTrendChart"></canvas>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h6 class="chart-title"><i class="fas fa-tags"></i> Category Distribution</h6>
+                    <span class="badge-soft">By Count</span>
+                </div>
+                <div style="position: relative; height: 300px;">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card" style="grid-column: 1 / -1;">
+                <div class="chart-header">
+                    <h6 class="chart-title"><i class="fas fa-tasks"></i> Fund Request Actions Distribution</h6>
+                    <span class="badge-soft">By Activity Type</span>
+                </div>
+                <div style="position: relative; height: 300px;">
+                    <canvas id="actionsChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card" style="grid-column: 1 / -1;">
+                <div class="chart-header">
+                    <h6 class="chart-title"><i class="fas fa-building"></i> Top Tenants by Fund Request Activity</h6>
+                    <span class="badge-soft">By Count</span>
+                </div>
+                <div style="position: relative; height: 300px;">
+                    <canvas id="topTenantsChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Overdue/Urgent Fund Requests Alert Section -->
+        {% if overdue_fund requests %}
+        <div class="insight-card" style="margin-bottom: 2rem; border-left: 4px solid #ef4444;">
+            <div class="insight-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <h6 class="insight-title" style="color: #ef4444;"><i class="fas fa-exclamation-triangle"></i> Overdue & Escalated Fund Requests Requiring Attention</h6>
+                <span class="badge-status badge-danger">{{ overdue_fund requests|length }} items</span>
+            </div>
+            <div style="overflow-x: auto;">
+                <table class="table-elegant">
+                    <thead>
+                        <tr>
+                            <th>Reference</th>
+                            <th>Title</th>
+                            <th>Tenant</th>
+                            <th>Status</th>
+                            <th>Priority</th>
+                            <th>Current Holder</th>
+                            <th style="text-align: right">Age</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for fund_request in overdue_fund requests %}
+                        <tr style="{% if fund_request.status == 'escalated' %}background: rgba(239, 68, 68, 0.05);{% endif %}">
+                            <td>
+                                <code style="font-size: 0.8rem; background: #f3f4f6; padding: 0.25rem 0.5rem; border-radius: 4px;">
+                                    {{ fund_request.reference_number }}
+                                </code>
+                            </td>
+                            <td>
+                                <a href="{% url 'fund_request:fund_request_detail' fund_request.pk %}" style="color: #667eea; text-decoration: none; font-weight: 500;">
+                                    {{ fund_request.title|truncatechars:30 }}
+                                </a>
+                            </td>
+                            <td>
+                                <small class="text-muted">{{ fund_request.tenant.name|default:"Personal" }}</small>
+                            </td>
+                            <td>
+                                {% if fund_request.status == 'escalated' %}
+                                    <span class="badge-status badge-danger"><i class="fas fa-fire"></i> Escalated</span>
+                                {% else %}
+                                    <span class="badge-status badge-warning">{{ fund_request.get_status_display|default:fund_request.status }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if fund_request.priority == 'urgent' %}
+                                    <span class="badge-status badge-danger">Urgent</span>
+                                {% elif fund_request.priority == 'high' %}
+                                    <span class="badge-status badge-warning">High</span>
+                                {% else %}
+                                    <span class="badge-status badge-primary">{{ fund_request.get_priority_display|default:fund_request.priority }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="user-cell">
+                                    {% if fund_request.current_holder %}
+                                        <div class="avatar">{{ fund_request.current_holder.username|slice:":1"|upper }}</div>
+                                        <span>{{ fund_request.current_holder.get_full_name|default:fund_request.current_holder.username }}</span>
+                                    {% else %}
+                                        <span class="text-muted">—</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td style="text-align: right">
+                                <small class="{% if fund_request.created_at|timesince > '3 days' %}text-danger fw-bold{% else %}text-muted{% endif %}">
+                                    {{ fund_request.created_at|timesince }}
+                                </small>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Data Tables -->
+        <div class="insights-row">
+            <!-- Most Active Creators -->
+            <div class="insight-card">
+                <div class="insight-header">
+                    <h6 class="insight-title"><i class="fas fa-user-plus"></i> Most Active Creators</h6>
+                </div>
+                <table class="table-elegant">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th style="text-align: right;">Count</th>
+                            <th style="text-align: right;">Tenant</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for creator in active_creators %}
+                        <tr>
+                            <td>
+                                <div class="user-cell">
+                                    <div class="avatar">{{ creator.username|slice:':1'|upper }}</div>
+                                    <span>{{ creator.get_full_name|default:creator.username }}</span>
+                                </div>
+                            </td>
+                            <td style="text-align: right;">
+                                <span class="badge-status badge-primary">{{ creator.fund request_count }}</span>
+                            </td>
+                            <td style="text-align: right;">
+                                <small class="text-muted">{{ creator.tenant.name|default:"Personal" }}</small>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="3" class="empty-state">No data</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Most Active Holders -->
+            <div class="insight-card">
+                <div class="insight-header">
+                    <h6 class="insight-title"><i class="fas fa-hand-holding"></i> Most Active Holders</h6>
+                </div>
+                <table class="table-elegant">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th style="text-align: right;">Count</th>
+                            <th style="text-align: right;">Tenant</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for holder in active_holders %}
+                        <tr>
+                            <td>
+                                <div class="user-cell">
+                                    <div class="avatar">{{ holder.username|slice:':1'|upper }}</div>
+                                    <span>{{ holder.get_full_name|default:holder.username }}</span>
+                                </div>
+                            </td>
+                            <td style="text-align: right;">
+                                <span class="badge-status badge-info">{{ holder.holding_count }}</span>
+                            </td>
+                            <td style="text-align: right;">
+                                <small class="text-muted">{{ holder.tenant.name|default:"Personal" }}</small>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="3" class="empty-state">No data</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Tenant Overview -->
+        <div class="insight-card" style="margin-bottom: 2rem;">
+            <div class="insight-header">
+                <h6 class="insight-title"><i class="fas fa-sitemap"></i> Tenant Overview</h6>
+            </div>
+            <div style="overflow-x: auto;">
+                <table class="table-elegant">
+                    <thead>
+                        <tr>
+                            <th>Tenant</th>
+                            <th style="text-align: center;">Total</th>
+                            <th style="text-align: center;">Pending</th>
+                            <th style="text-align: center;">Completed</th>
+                            <th style="text-align: center;">Escalated</th>
+                            <th style="text-align: center;">Completion %</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for tenant_stat in tenant_stats %}
+                        <tr>
+                            <td style="font-weight: 600;">{{ tenant_stat.tenant.name }}</td>
+                            <td style="text-align: center;">
+                                <span class="badge-status badge-primary">{{ tenant_stat.total }}</span>
+                            </td>
+                            <td style="text-align: center;">
+                                {% if tenant_stat.pending > 0 %}
+                                    <span class="badge-status badge-warning">{{ tenant_stat.pending }}</span>
+                                {% else %}<span class="text-muted">—</span>{% endif %}
+                            </td>
+                            <td style="text-align: center;">
+                                {% if tenant_stat.completed > 0 %}
+                                    <span class="badge-status badge-success">{{ tenant_stat.completed }}</span>
+                                {% else %}<span class="text-muted">—</span>{% endif %}
+                            </td>
+                            <td style="text-align: center;">
+                                {% if tenant_stat.escalated > 0 %}
+                                    <span class="badge-status badge-danger">{{ tenant_stat.escalated }}</span>
+                                {% else %}<span class="text-muted">—</span>{% endif %}
+                            </td>
+                            <td style="text-align: center;">
+                                {% if tenant_stat.total > 0 %}
+                                    {% widthratio tenant_stat.completed tenant_stat.total 100 as completion_rate %}
+                                    <div style="display: flex; align-items: center; justify-content: center; gap: 0.75rem;">
+                                        <div class="progress-bar-elegant" style="width: 60px;">
+                                            <div class="progress-bar-fill" style="width: {{ completion_rate }}%"></div>
+                                        </div>
+                                        <small style="font-weight: 600;">{{ completion_rate }}%</small>
+                                    </div>
+                                {% else %}<span class="text-muted">—</span>{% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="6" class="empty-state">No tenant data</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Recent Fund Requests -->
+        <div class="insight-card">
+            <div class="insight-header">
+                <h6 class="insight-title"><i class="fas fa-history"></i> Recent Fund Requests</h6>
+            </div>
+            <div style="overflow-x: auto;">
+                <table class="table-elegant">
+                    <thead>
+                        <tr>
+                            <th>Ref #</th>
+                            <th>Title</th>
+                            <th>Status</th>
+                            <th>Priority</th>
+                            <th>Type</th>
+                            <th style="text-align: right;">Created</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for fund_request in recent_fund requests %}
+                        <tr>
+                            <td>
+                                <code style="font-size: 0.8rem; background: #f3f4f6; padding: 0.25rem 0.5rem; border-radius: 4px;">
+                                    {{ fund_request.reference_number }}
+                                </code>
+                            </td>
+                            <td>
+                                <a href="{% url 'fund_request:fund_request_detail' fund_request.pk %}" style="color: #667eea; text-decoration: none; font-weight: 500;">
+                                    {{ fund_request.title|truncatechars:35 }}
+                                </a>
+                            </td>
+                            <td>
+                                {% with status=fund_request.status %}
+                                    {% if status == 'pending' %}<span class="badge-status badge-warning">Pending</span>
+                                    {% elif status == 'in_progress' %}<span class="badge-status badge-info">In Progress</span>
+                                    {% elif status == 'approved' %}<span class="badge-status badge-success">Approved</span>
+                                    {% elif status == 'rejected' or status == 'escalated' %}<span class="badge-status badge-danger">{{ status|title }}</span>
+                                    {% elif status == 'completed' %}<span class="badge-status badge-success">Completed</span>
+                                    {% else %}<span class="badge-status badge-primary">{{ status|title }}</span>
+                                    {% endif %}
+                                {% endwith %}
+                            </td>
+                            <td>
+                                {% with priority=fund_request.priority %}
+                                    {% if priority == 'urgent' %}<span class="badge-status badge-danger">Urgent</span>
+                                    {% elif priority == 'high' %}<span class="badge-status badge-warning">High</span>
+                                    {% elif priority == 'medium' %}<span class="badge-status badge-info">Medium</span>
+                                    {% else %}<span class="badge-status badge-primary">Low</span>
+                                    {% endif %}
+                                {% endwith %}
+                            </td>
+                            <td>
+                                {% if fund_request.is_external %}
+                                    <span class="badge-status" style="background: rgba(139, 92, 246, 0.15); color: #8b5cf6;">External</span>
+                                {% else %}
+                                    <span class="badge-status badge-primary">Internal</span>
+                                {% endif %}
+                            </td>
+                            <td style="text-align: right;">
+                                <small class="text-muted">{{ fund_request.created_at|timesince }} ago</small>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="6" class="empty-state">No recent fund requests</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js Library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+
+<script>
+    // Prepare chart data
+    const chartData = {
+        dailyTrend: {{ daily_trend|safe }},
+        statusLabels: {{ status_data.labels|safe }},
+        statusData: {{ status_data.data|safe }},
+        statusColors: {{ status_data.colors|safe }},
+        priorityData: {
+            low: {{ priority_stats.low|default:0 }},
+            medium: {{ priority_stats.medium|default:0 }},
+            high: {{ priority_stats.high|default:0 }},
+            urgent: {{ priority_stats.urgent|default:0 }}
+        },
+        actionData: {
+            created: {{ action_stats.created|default:0 }},
+            forwarded: {{ action_stats.forwarded|default:0 }},
+            approved: {{ action_stats.approved|default:0 }},
+            rejected: {{ action_stats.rejected|default:0 }},
+            escalated: {{ action_stats.escalated|default:0 }},
+            returned: {{ action_stats.returned|default:0 }},
+            received: {{ action_stats.received|default:0 }},
+            positive_response: {{ action_stats.positive_response|default:0 }},
+            negative_response: {{ action_stats.negative_response|default:0 }},
+            kept_in_view: {{ action_stats.kept_in_view|default:0 }}
+        },
+        externalTrend: {{ external_trend|safe }},
+        topTenants: {{ top_tenants|safe }},
+        categoryStats: {{ category_stats|safe }}
+    };
+
+    // Activity Trend Chart
+    const actCtx = document.getElementById('activityTrendChart').getContext('2d');
+    new Chart(actCtx, {
+        type: 'line',
+        data: {
+            labels: chartData.dailyTrend.map(d => d.date.split('-').slice(1, 3).join('/')),
+            datasets: [{
+                label: 'Daily Fund Requests',
+                data: chartData.dailyTrend.map(d => d.count),
+                borderColor: '#667eea',
+                backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                borderWidth: 3,
+                tension: 0.4,
+                fill: true,
+                pointRadius: 3,
+                pointBackgroundColor: '#667eea',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.03)' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    // Status Distribution
+    const statCtx = document.getElementById('statusChart').getContext('2d');
+    new Chart(statCtx, {
+        type: 'doughnut',
+        data: {
+            labels: chartData.statusLabels,
+            datasets: [{
+                data: chartData.statusData,
+                backgroundColor: chartData.statusColors,
+                borderColor: '#fff',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom', labels: { padding: 15, font: { size: 11 } } }
+            }
+        }
+    });
+
+    // Priority Chart
+    const priCtx = document.getElementById('priorityChart').getContext('2d');
+    new Chart(priCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Low', 'Medium', 'High', 'Urgent'],
+            datasets: [{
+                label: 'Fund Requests',
+                data: [chartData.priorityData.low, chartData.priorityData.medium, chartData.priorityData.high, chartData.priorityData.urgent],
+                backgroundColor: ['#6b7280', '#0ea5e9', '#f59e0b', '#ef4444'],
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.03)' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    // External vs Internal
+    const extCtx = document.getElementById('externalTrendChart').getContext('2d');
+    new Chart(extCtx, {
+        type: 'line',
+        data: {
+            labels: chartData.externalTrend.map(d => d.date.split('-').slice(1, 3).join('/')),
+            datasets: [
+                {
+                    label: 'External',
+                    data: chartData.externalTrend.map(d => d.external),
+                    borderColor: '#8b5cf6',
+                    backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    fill: true
+                },
+                {
+                    label: 'Internal',
+                    data: chartData.externalTrend.map(d => d.internal),
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    fill: true
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { position: 'top' } },
+            scales: {
+                y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.03)' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    // Category Chart
+    const catCtx = document.getElementById('categoryChart').getContext('2d');
+    new Chart(catCtx, {
+        type: 'doughnut',
+        data: {
+            labels: chartData.categoryStats.map(c => c.name.length > 20 ? c.name.slice(0, 20) + '…' : c.name),
+            datasets: [{
+                data: chartData.categoryStats.map(c => c.count),
+                backgroundColor: ['#667eea', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#0ea5e9', '#ec4899', '#6366f1'],
+                borderColor: '#fff',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'right', labels: { padding: 10, font: { size: 11 }, boxWidth: 12 } }
+            }
+        }
+    });
+
+    // Actions Distribution Chart
+    const actionsCtx = document.getElementById('actionsChart').getContext('2d');
+    new Chart(actionsCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Created', 'Forwarded', 'Approved', 'Rejected', 'Escalated', 'Returned', 'Received', 'Positive', 'Negative', 'Kept In View'],
+            datasets: [{
+                label: 'Actions Taken',
+                data: [
+                    chartData.actionData.created,
+                    chartData.actionData.forwarded,
+                    chartData.actionData.approved,
+                    chartData.actionData.rejected,
+                    chartData.actionData.escalated,
+                    chartData.actionData.returned,
+                    chartData.actionData.received,
+                    chartData.actionData.positive_response,
+                    chartData.actionData.negative_response,
+                    chartData.actionData.kept_in_view
+                ],
+                backgroundColor: [
+                    '#667eea', '#0ea5e9', '#10b981', '#b91c1c', '#dc2626',
+                    '#f59e0b', '#8b5cf6', '#10b981', '#ef4444', '#6366f1'
+                ],
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'top' } },
+            scales: {
+                y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.03)' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+    const tenCtx = document.getElementById('topTenantsChart').getContext('2d');
+    new Chart(tenCtx, {
+        type: 'bar',
+        data: {
+            labels: chartData.topTenants.map(t => t.tenant.name.length > 25 ? t.tenant.name.slice(0, 25) + '…' : t.tenant.name),
+            datasets: [
+                { label: 'Total', data: chartData.topTenants.map(t => t.total), backgroundColor: '#667eea', borderRadius: 6 },
+                { label: 'Completed', data: chartData.topTenants.map(t => t.completed), backgroundColor: '#10b981', borderRadius: 6 }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'top' } },
+            scales: {
+                y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.03)' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    // Export button
+    document.getElementById('exportBtn').addEventListener('click', function() {
+        const exportData = {
+            generatedAt: new Date().toLocaleString(),
+            stats: {{ stats|safe }},
+            tenantStats: {{ tenant_stats|safe }},
+            summary: `Total Fund Requests: {{ stats.total }}, Completed: {{ stats.completed }}, Pending: {{ stats.pending }}`
+        };
+        const csvContent = 'data:text/csv;charset=utf-8,' + encodeURIComponent(JSON.stringify(exportData, null, 2));
+        const link = document.createElement('a');
+        link.setAttribute('href', csvContent);
+        link.setAttribute('download', `fund_request-analytics-${new Date().getTime()}.json`);
+        link.click();
+    });
+</script>
+{% endblock %}

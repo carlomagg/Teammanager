@@ -1,0 +1,723 @@
+{% extends 'base.html' %}
+
+{% block title %}<strong>{{ company_group.name }}</strong>  {% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Success Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            {% if 'successfully' in message|lower or 'removed' in message|lower or 'updated' in message|lower %}
+            <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+                <i class="bi bi-check-circle-fill me-2"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+    
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0">
+                        <i class="bi bi-pencil text-warning"></i> <strong> {{ company_group.name }} Group</strong>
+                    </h1>
+                </div>
+                <div>
+                    <a href="{% url 'company_group_dashboard_admin' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Back to Groups
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Main Form Card -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3 class="mb-0">
+                        <i class="bi bi-pencil"></i> Edit Group Information
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="edit-group-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="update_group" value="1">
+                        
+                        {% for member in current_members %}
+                        <input type="hidden" name="members" value="{{ member.id }}">
+                        {% endfor %}
+
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.name.id_for_label }}" class="form-label">
+                                    Group Name <span class="text-danger">*</span>
+                                </label>
+                                {{ form.name }}
+                                {% if form.name.errors %}
+                                    <div class="text-danger small mt-1">{{ form.name.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.slug.id_for_label }}" class="form-label">
+                                    URL Slug <span class="text-danger">*</span>
+                                </label>
+                                {{ form.slug }}
+                                {% if form.slug.errors %}
+                                    <div class="text-danger small mt-1">{{ form.slug.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.owner.id_for_label }}" class="form-label">
+                                    Group Owner
+                                </label>
+                                {{ form.owner }}
+                                {% if form.owner.errors %}
+                                    <div class="text-danger small mt-1">{{ form.owner.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">
+                                    Status
+                                </label>
+                                <div class="form-check form-switch">
+                                    {{ form.is_active }}
+                                    <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                        Active Group
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-update">
+                                <i class="bi bi-save"></i> Update Group Info
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="row">
+                <!-- Left Column: Add Members Form -->
+                <!-- In your template, replace the entire "Add Members Form" section with this: -->
+<div class="col-md-6">
+    <div class="card mb-4">
+        <div class="card-header btn-update text-white">
+            <h4 class="mb-0">
+                <i class="bi bi-plus-circle"></i> Add New Members
+            </h4>
+            <p class="mb-0">Select from available companies</p>
+        </div>
+        <div class="card-body">
+            <form method="post" id="add-members-form">
+                {% csrf_token %}
+                <input type="hidden" name="add_members" value="1">
+                
+                <div class="mb-3">
+                    <label for="add_members_selection" class="form-label fw-bold">
+                        Available Companies
+                    </label>
+                    
+                    <!-- IMPORTANT: This is now the ONLY select for adding members -->
+                    <select name="add_members_selection" id="add_members_selection" 
+                            multiple class="form-control available-companies-select"
+                            style="min-height: 200px;">
+                        {% for tenant in all_tenants %}
+                            {% if tenant not in current_members %}
+                            <option value="{{ tenant.id }}" 
+                                    data-slug="{{ tenant.slug }}"
+                                    data-email="{{ tenant.admin.email|default:'' }}">
+                                {{ tenant.name }} ({{ tenant.slug }})
+                            </option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                    
+                    {% if available_count == 0 %}
+                    <div class="text-center py-3">
+                        <i class="bi bi-check-circle text-success"></i>
+                        <p class="mt-2 text-muted">All companies are already in this group.</p>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>Available:</strong> 
+                    Showing <strong>{{ available_count }}</strong> 
+                    companies not already in this group.
+                    <span class="badge bg-primary ms-2" id="selected-count-badge">0 selected</span>
+                </div>
+                
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-update" id="add-members-btn" disabled>
+                        <i class="bi bi-plus-circle"></i> Add Selected Companies to Group
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+                
+                <!-- Right Column: Current Members -->
+                <div class="col-md-6">
+                    <div class="card mb-4">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h4 class="mb-0">
+                                <i class="bi bi-people-fill"></i> Current Members
+                                <span class="badge bg-light text-primary ms-2">{{ current_members.count }}</span>
+                            </h4>
+                        </div>
+                        <div class="card-body">
+                            {% if current_members %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Company</th>
+                                            <th class="text-end">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for member in current_members %}
+                                        <tr>
+                                            <td>
+                                                {{ member.name }}
+                                                {% if member.admin %}
+                                                <br>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-end">
+                                                <button type="button" 
+                                                        class="btn btn-sm btn-outline-danger"
+                                                        onclick="showRemoveModal('{{ member.id }}', '{{ member.name|escapejs }}')">
+                                                    <i class="bi bi-trash"></i> Remove
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <div class="text-center py-4">
+                                <i class="bi bi-people display-1 text-muted"></i>
+                                <h5 class="mt-3">No Members Yet</h5>
+                                <p class="text-muted">This group doesn't have any companies yet.</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Group Info Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Group Information</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <dl class="mb-0">
+                                <dt>Group ID:</dt>
+                                <dd><code>#{{ company_group.id }}</code></dd>
+                                
+                                <dt>Current Slug:</dt>
+                                <dd><code>{{ company_group.slug }}</code></dd>
+                                
+                                <dt>Associated Tenant:</dt>
+                                <dd>{{ company_group.tenant.name }} (<code>{{ company_group.tenant.slug }}</code>)</dd>
+                            </dl>
+                        </div>
+                        <div class="col-md-6">
+                            <dl class="mb-0">
+                                <dt>Created:</dt>
+                                <dd>{{ company_group.created_at|date:"F j, Y, g:i a" }}</dd>
+                                
+                                <dt>Created By:</dt>
+                                <dd>{{ company_group.created_by|default:"System" }}</dd>
+                                
+                                <dt>Total Members:</dt>
+                                <dd><span class="badge bg-primary">{{ current_members.count }}</span> companies</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Remove Member Modal -->
+<div class="modal fade" id="removeMemberModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-exclamation-triangle"></i> Remove Member
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to remove <strong id="modal-member-name" class="text-danger"></strong> from this group?</p>
+                <div class="alert alert-warning">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>Note:</strong> This will only remove the company from the group. The company itself will not be deleted and can be added back later.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle"></i> Cancel
+                </button>
+                <form method="post" id="remove-member-form" style="display: inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="remove_member" id="modal-member-id">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash"></i> Yes, Remove
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden form for removing members (alternative method) -->
+<form method="post" id="hidden-remove-form" style="display: none;">
+    {% csrf_token %}
+    <input type="hidden" name="remove_member" id="hidden-member-id">
+</form>
+
+<style>
+/* Custom dropdown styling */
+.available-companies-select {
+    width: 100%;
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+    padding: 10px;
+}
+
+.available-companies-select option {
+    padding: 10px 15px;
+    margin: 5px 0;
+    border-radius: 5px;
+    border-left: 3px solid transparent;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    white-space: normal;
+}
+
+.available-companies-select option:hover {
+    background-color: #e9ecef;
+    border-left-color: #319795;
+    transform: translateX(3px);
+}
+
+.available-companies-select option:checked {
+    background: linear-gradient(135deg, #319795, #319795);
+    color: white;
+    border-left-color: #0a3622;
+}
+
+.available-companies-select option:checked .text-muted {
+    color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.available-companies-select option:checked code {
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    color: white !important;
+}
+.btn-update{
+    background-color: #319795;
+}
+
+/* Style for the table */
+.table-hover tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+/* Badge styling */
+.badge {
+    font-size: 0.75em;
+}
+
+/* Modal styling */
+.modal-header {
+    border-bottom: none;
+}
+
+/* Responsive table */
+.table-responsive {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+/* Make the active switch larger */
+.form-check-input {
+    width: 3em;
+    height: 1.5em;
+}
+
+/* Company option styling */
+.company-option {
+    display: inline-block;
+    padding: 2px 0;
+}
+
+/* Custom scrollbar */
+.available-companies-select::-webkit-scrollbar {
+    width: 8px;
+}
+
+.available-companies-select::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.available-companies-select::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 4px;
+}
+/* .card-header{
+    background-color: #319795;
+} */
+.btn-update:hover{
+    background-color: #319795;
+}
+
+.available-companies-select::-webkit-scrollbar-thumb:hover {
+    background: #aaa;
+}
+
+/* Select2 styling if you decide to use it */
+.select2-container--default .select2-selection--multiple {
+    min-height: 46px;
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+    padding: 2px 5px;
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__choice {
+    background-color: #319795;
+    border-color: #319795;
+    color: white;
+    padding: 2px 6px;
+    margin: 2px;
+}
+</style>
+
+<script>
+// Show remove confirmation modal
+function showRemoveModal(memberId, memberName) {
+    document.getElementById('modal-member-id').value = memberId;
+    document.getElementById('modal-member-name').textContent = memberName;
+    
+    // Also set for hidden form (backup)
+    document.getElementById('hidden-member-id').value = memberId;
+    
+    const modal = new bootstrap.Modal(document.getElementById('removeMemberModal'));
+    modal.show();
+}
+
+// document.addEventListener('DOMContentLoaded', function() {
+// //     const addMembersSelect = document.getElementById('add_members_selection');
+// //     const selectedCountBadge = document.getElementById('selected-count-badge');
+// //     const submitBtn = document.querySelector('#add-members-form button[type="submit"]');
+    
+// //     if (addMembersSelect && selectedCountBadge) {
+// //         // Function to update the selected count
+// //         function updateSelectedCount() {
+// //             // Get selected options
+// //             const selectedOptions = Array.from(addMembersSelect.options).filter(option => option.selected);
+// //             const selectedCount = selectedOptions.length;
+            
+// //             // Update badge
+// //             selectedCountBadge.textContent = `${selectedCount} selected`;
+            
+// //             // Update button state
+// //             if (submitBtn) {
+// //                 submitBtn.disabled = selectedCount === 0;
+// //                 submitBtn.classList.toggle('disabled', selectedCount === 0);
+// //             }
+            
+// //             // Debug logging
+// //             console.log('Selected count:', selectedCount);
+// //             console.log('Selected options:', selectedOptions.map(opt => opt.value));
+            
+// //             // Update visual styling for selected options
+// //             Array.from(addMembersSelect.options).forEach(option => {
+// //                 if (option.selected) {
+// //                     option.style.backgroundColor = '#198754';
+// //                     option.style.color = 'white';
+// //                 } else {
+// //                     option.style.backgroundColor = '';
+// //                     option.style.color = '';
+// //                 }
+// //             });
+            
+// //             return selectedCount;
+// //         }
+        
+// //         // Initialize
+// //         updateSelectedCount();
+        
+// //         // Add multiple event listeners to ensure detection
+// //         addMembersSelect.addEventListener('click', updateSelectedCount);
+// //         addMembersSelect.addEventListener('change', updateSelectedCount);
+// //         addMembersSelect.addEventListener('mouseup', updateSelectedCount);
+        
+// //         // Special handling for Ctrl/Cmd+Click (multi-select)
+// //         let isCtrlPressed = false;
+        
+// //         document.addEventListener('keydown', function(e) {
+// //             isCtrlPressed = e.ctrlKey || e.metaKey;
+// //         });
+        
+// //         document.addEventListener('keyup', function() {
+// //             isCtrlPressed = false;
+// //         });
+        
+// //         // Force update after a delay
+// //         setTimeout(updateSelectedCount, 500);
+        
+// //         // Debug button (optional - remove in production)
+// //         const debugBtn = document.createElement('button');
+// //         debugBtn.type = 'button';
+// //         debugBtn.textContent = 'Debug';
+// //         debugBtn.className = 'btn btn-sm btn-outline-info mt-2';
+// //         debugBtn.onclick = function() {
+// //             console.log('=== DEBUG INFO ===');
+// //             console.log('Select element:', addMembersSelect);
+// //             console.log('Options:', addMembersSelect.options.length);
+// //             console.log('Selected manually:', updateSelectedCount());
+// //             alert(`Debug: ${updateSelectedCount()} items selected`);
+// //         };
+// //         addMembersSelect.parentNode.appendChild(debugBtn);
+// //     }
+    
+// //     // Initialize Select2 for owner dropdown if available
+// //     if (typeof $.fn.select2 !== 'undefined') {
+// //         const ownerSelect = document.getElementById('{{ form.owner.id_for_label }}');
+// //         if (ownerSelect) {
+// //             $(ownerSelect).select2({
+// //                 placeholder: "Select an owner...",
+// //                 allowClear: false,
+// //                 width: '100%'
+// //             });
+// //         }
+        
+// //         // Optional: Initialize Select2 for add members dropdown too
+// //         const addMembersSelect = document.getElementById('add_members_selection');
+// //         if (addMembersSelect) {
+// //             $(addMembersSelect).select2({
+// //                 placeholder: "Search and select companies...",
+// //                 allowClear: true,
+// //                 width: '100%',
+// //                 closeOnSelect: false,
+// //                 templateResult: function(company) {
+// //                     if (!company.id) {
+// //                         return company.text;
+// //                     }
+// //                     // Just return the text content (strips HTML)
+// //                     return company.text;
+// //                 },
+// //                 templateSelection: function(company) {
+// //                     if (!company.id) {
+// //                         return company.text;
+// //                     }
+// //                     // Extract just the company name for selected items
+// //                     const text = company.text;
+// //                     const match = text.match(/<strong>(.*?)<\/strong>/);
+// //                     return match ? match[1] : text;
+// //                 },
+// //                 escapeMarkup: function(markup) {
+// //                     // Let the template function handle markup
+// //                     return markup;
+// //                 }
+// //             });
+// //         }
+// //     }
+    
+// //     // Auto-hide success alerts after 5 seconds
+// //     const alerts = document.querySelectorAll('.alert-success');
+// //     alerts.forEach(alert => {
+// //         setTimeout(() => {
+// //             if (alert.classList.contains('show')) {
+// //                 const bsAlert = new bootstrap.Alert(alert);
+// //                 bsAlert.close();
+// //             }
+// //         }, 5000);
+// //     });
+    
+// //     // Confirmation for slug changes in edit form
+// //     const originalSlug = '{{ company_group.slug }}';
+// //     const slugField = document.getElementById('{{ form.slug.id_for_label }}');
+// //     const editForm = document.getElementById('edit-group-form');
+    
+// //     if (editForm && slugField) {
+// //         editForm.addEventListener('submit', function(e) {
+// //             if (slugField.value !== originalSlug) {
+// //                 if (!confirm('Warning: Changing the slug may break existing links.\n\nAre you sure you want to change it from "' + originalSlug + '" to "' + slugField.value + '"?')) {
+// //                     e.preventDefault();
+// //                     slugField.focus();
+// //                     return false;
+// //                 }
+// //             }
+// //         });
+// //     }
+// // });
+
+document.addEventListener('DOMContentLoaded', function() {
+    const addMembersSelect = document.getElementById('add_members_selection');
+    const selectedCountBadge = document.getElementById('selected-count-badge');
+    const addMembersBtn = document.getElementById('add-members-btn');
+    
+    if (addMembersSelect && selectedCountBadge) {
+        // Function to update the selected count
+        function updateSelectedCount() {
+            // Get selected options
+            const selectedOptions = Array.from(addMembersSelect.selectedOptions);
+            const selectedCount = selectedOptions.length;
+            
+            // Update badge
+            selectedCountBadge.textContent = `${selectedCount} selected`;
+            selectedCountBadge.className = selectedCount > 0 ? 'badge bg-success ms-2' : 'badge bg-secondary ms-2';
+            
+            // Update button state
+            if (addMembersBtn) {
+                addMembersBtn.disabled = selectedCount === 0;
+                addMembersBtn.classList.toggle('disabled', selectedCount === 0);
+            }
+            
+            // Update visual styling for selected options
+            Array.from(addMembersSelect.options).forEach(option => {
+                if (option.selected) {
+                    option.style.backgroundColor = '#198754';
+                    option.style.color = 'white';
+                    option.style.fontWeight = 'bold';
+                } else {
+                    option.style.backgroundColor = '';
+                    option.style.color = '';
+                    option.style.fontWeight = '';
+                }
+            });
+            
+            console.log('Selected count:', selectedCount);
+            return selectedCount;
+        }
+        
+        // Initialize
+        updateSelectedCount();
+        
+        // Add multiple event listeners to ensure detection
+        addMembersSelect.addEventListener('click', function(e) {
+            console.log('Click event on select');
+            setTimeout(updateSelectedCount, 10); // Small delay to ensure selection is processed
+        });
+        
+        addMembersSelect.addEventListener('change', function(e) {
+            console.log('Change event fired');
+            updateSelectedCount();
+        });
+        
+        addMembersSelect.addEventListener('mouseup', function(e) {
+            console.log('Mouseup event');
+            setTimeout(updateSelectedCount, 10);
+        });
+        
+        // Also update on key events (for keyboard navigation)
+        addMembersSelect.addEventListener('keyup', updateSelectedCount);
+        addMembersSelect.addEventListener('keydown', updateSelectedCount);
+        
+        // Add a test function to verify selection works
+        window.testSelection = function() {
+            console.log('=== TESTING SELECTION ===');
+            console.log('Select element:', addMembersSelect);
+            console.log('Number of options:', addMembersSelect.options.length);
+            
+            // Try to select the first option programmatically
+            if (addMembersSelect.options.length > 0) {
+                addMembersSelect.options[0].selected = true;
+                const event = new Event('change');
+                addMembersSelect.dispatchEvent(event);
+                console.log('Programmatically selected first option');
+                updateSelectedCount();
+            }
+        };
+        
+        // Run test after page loads
+        setTimeout(window.testSelection, 1000);
+        
+        // Add debug info
+        console.log('Select element initialized:', addMembersSelect);
+        console.log('Has multiple attribute:', addMembersSelect.multiple);
+    }
+    
+    // Initialize Select2 for owner dropdown if available
+    if (typeof $.fn.select2 !== 'undefined') {
+        const ownerSelect = document.getElementById('{{ form.owner.id_for_label }}');
+        if (ownerSelect) {
+            $(ownerSelect).select2({
+                placeholder: "Select an owner...",
+                allowClear: false,
+                width: '100%'
+            });
+        }
+    }
+    
+    // Rest of your JavaScript...
+    // Auto-hide success alerts after 5 seconds
+    const alerts = document.querySelectorAll('.alert-success');
+    alerts.forEach(alert => {
+        setTimeout(() => {
+            if (alert.classList.contains('show')) {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            }
+        }, 5000);
+    });
+    
+    // Confirmation for slug changes in edit form
+    const originalSlug = '{{ company_group.slug }}';
+    const slugField = document.getElementById('{{ form.slug.id_for_label }}');
+    const editForm = document.getElementById('edit-group-form');
+    
+    if (editForm && slugField) {
+        editForm.addEventListener('submit', function(e) {
+            if (slugField.value !== originalSlug) {
+                if (!confirm('Warning: Changing the slug may break existing links.\n\nAre you sure you want to change it from "' + originalSlug + '" to "' + slugField.value + '"?')) {
+                    e.preventDefault();
+                    slugField.focus();
+                    return false;
+                }
+            }
+        });
+    }
+});
+
+// Show remove confirmation modal
+function showRemoveModal(memberId, memberName) {
+    document.getElementById('modal-member-id').value = memberId;
+    document.getElementById('modal-member-name').textContent = memberName;
+    document.getElementById('hidden-member-id').value = memberId;
+    
+    const modal = new bootstrap.Modal(document.getElementById('removeMemberModal'));
+    modal.show();
+}
+</script>
+{% endblock %}

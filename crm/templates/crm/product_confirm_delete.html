@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Delete Product - CRM{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-md-6 offset-md-3">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h4><i class="fas fa-exclamation-triangle"></i> Confirm Product Deletion</h4>
+                </div>
+                <div class="card-body">
+                    <p class="lead">Are you sure you want to delete this product?</p>
+                    
+                    <div class="alert alert-warning">
+                        <h5><i class="fas fa-box"></i> Product: <strong>{{ product.name }}</strong></h5>
+                        <hr>
+                        <ul class="mb-0">
+                            <li><strong>Category:</strong> {{ product.get_category_display|default:"N/A" }}</li>
+                            {% if product.unit_price %}
+                                <li><strong>Unit Price:</strong> ₦{{ product.unit_price|floatformat:2 }}</li>
+                            {% endif %}
+                            <li><strong>Status:</strong> {{ product.is_active|yesno:"Active,Inactive" }}</li>
+                        </ul>
+                    </div>
+
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Warning:</strong> This action cannot be undone.
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'crm:product_detail' product.pk %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash"></i> Yes, Delete Product
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

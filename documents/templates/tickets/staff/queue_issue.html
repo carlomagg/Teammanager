@@ -1,0 +1,404 @@
+{% extends 'base.html' %}
+{% block title %}Issue Queue Number{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* ── Radio-style ticket mode selector ── */
+  .ticket-radio-group { display: flex; gap: 12px; flex-wrap: wrap; }
+
+  .ticket-radio-label {
+    flex: 1; min-width: 140px;
+    border: 2px solid #dee2e6;
+    border-radius: 10px;
+    padding: 1rem .75rem .8rem;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+    text-align: center;
+    position: relative;
+    user-select: none;
+  }
+  .ticket-radio-label:hover { border-color: #0d6efd; background: #f0f7ff; }
+  .ticket-radio-label .radio-icon { font-size: 1.6rem; margin-bottom: .4rem; }
+  .ticket-radio-label .radio-title { font-weight: 600; font-size: .88rem; display: block; }
+  .ticket-radio-label .radio-desc  { font-size: .7rem; color: #6c757d; margin-top: .15rem; }
+
+  /* Hide native radio but keep it functional */
+  .ticket-radio-input { position: absolute; opacity: 0; width: 0; height: 0; }
+
+  /* Active state when radio is checked */
+  .ticket-radio-input:checked + .ticket-radio-label {
+    border-color: #0d6efd;
+    background: #e8f0fe;
+  }
+  .ticket-radio-input:checked + .ticket-radio-label::after {
+    content: '\f00c';
+    font-family: 'Font Awesome 5 Free';
+    font-weight: 900;
+    position: absolute;
+    top: 7px; right: 10px;
+    color: #0d6efd;
+    font-size: .85rem;
+  }
+
+  /* Collapsible sections */
+  .ticket-collapse {
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height .3s ease, opacity .2s ease;
+    opacity: 0;
+  }
+  .ticket-collapse.open {
+    max-height: 600px;
+    opacity: 1;
+  }
+
+  #ticketVerifyResult { font-size: .85rem; }
+
+  /* Category select fix */
+  #id_category { width: 100%; }
+</style>
+{% endblock %}
+
+
+{% block content %}
+<div class="container py-4" style="max-width:700px;">
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h4 class="mb-0"><i class="fas fa-list-ol me-2 text-success"></i>Issue Queue Number</h4>
+      <small class="text-muted">Assign a queue token for a walk-in customer</small>
+    </div>
+    <a href="{% url 'queue_dashboard' %}" class="btn btn-outline-secondary btn-sm">
+      <i class="fas fa-arrow-left me-1"></i>Dashboard
+    </a>
+  </div>
+
+  {# Non-field errors #}
+  {% if form.non_field_errors %}
+  <div class="alert alert-danger py-2 small mb-3">
+    {% for error in form.non_field_errors %}
+      <div><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <form method="post" novalidate id="queueForm">
+    {% csrf_token %}
+
+    {# ══ CATEGORY ════════════════════════════════════════════════════ #}
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-header bg-transparent border-bottom fw-semibold py-2">
+        <i class="fas fa-tags me-1 text-primary"></i>Category / Department
+      </div>
+      <div class="card-body">
+        <div class="mb-2">
+          <label class="form-label small fw-semibold" for="id_category">
+            Select Category <span class="text-danger">*</span>
+          </label>
+          {# Render category select manually to avoid double-wrapping #}
+          <select name="category" id="id_category" class="form-select"
+                  onchange="onCategoryChange(this)" required>
+            {% for value, label in form.category.field.choices %}
+            <option value="{{ value }}"
+              {% if form.category.value|stringformat:"s" == value|stringformat:"s" %}selected{% endif %}>
+              {{ label }}
+            </option>
+            {% endfor %}
+          </select>
+          {% if form.category.errors %}
+            <div class="invalid-feedback d-block">{{ form.category.errors|join:", " }}</div>
+          {% endif %}
+          <div class="form-text">e.g. HR-001 · TECH-003 · FIN-002</div>
+        </div>
+
+        {# Other free-text — shown only when "Other" selected #}
+        <div id="otherCategoryWrap" style="display:none;" class="mt-2">
+          <label class="form-label small fw-semibold">
+            Please specify <span class="text-danger">*</span>
+          </label>
+          {{ form.other_category }}
+          {% if form.other_category.errors %}
+            <div class="invalid-feedback d-block">{{ form.other_category.errors|join:", " }}</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    {# ══ CUSTOMER DETAILS ════════════════════════════════════════════ #}
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-header bg-transparent border-bottom fw-semibold py-2">
+        <i class="fas fa-user me-1 text-secondary"></i>Customer Details
+        <span class="text-muted fw-normal small ms-1">(optional)</span>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label small fw-semibold">Full Name</label>
+            {{ form.customer_name }}
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label small fw-semibold">Phone</label>
+            {{ form.customer_phone }}
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label small fw-semibold">Email</label>
+            {{ form.customer_email }}
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label small fw-semibold">Source</label>
+            {{ form.source }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# ══ TICKET MODE ═════════════════════════════════════════════════ #}
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-header bg-transparent border-bottom fw-semibold py-2">
+        <i class="fas fa-ticket-alt me-1 text-info"></i>Ticket
+      </div>
+      <div class="card-body">
+
+        {# ── Radio buttons styled as cards ── #}
+        <div class="ticket-radio-group mb-3">
+
+          {# None #}
+          <input type="radio" name="ticket_mode" value="none"
+                 id="mode_none" class="ticket-radio-input"
+                 checked onchange="onModeChange('none')">
+          <label for="mode_none" class="ticket-radio-label">
+            <div class="radio-icon text-muted"><i class="fas fa-ban"></i></div>
+            <span class="radio-title">No Ticket</span>
+            <div class="radio-desc">Queue token only</div>
+          </label>
+
+          {# Attach existing #}
+          <input type="radio" name="ticket_mode" value="existing"
+                 id="mode_existing" class="ticket-radio-input"
+                 onchange="onModeChange('existing')">
+          <label for="mode_existing" class="ticket-radio-label">
+            <div class="radio-icon text-primary"><i class="fas fa-link"></i></div>
+            <span class="radio-title">Attach Existing</span>
+            <div class="radio-desc">Link to an open ticket</div>
+          </label>
+
+          {# Create new #}
+          <input type="radio" name="ticket_mode" value="new"
+                 id="mode_new" class="ticket-radio-input"
+                 onchange="onModeChange('new')">
+          <label for="mode_new" class="ticket-radio-label">
+            <div class="radio-icon text-success"><i class="fas fa-plus-circle"></i></div>
+            <span class="radio-title">Create New Ticket</span>
+            <div class="radio-desc">New ticket + queue</div>
+          </label>
+
+        </div>
+
+        {# ── Collapse: Attach existing ── #}
+        <div id="section-existing" class="ticket-collapse">
+          <div class="p-3 bg-light rounded border mb-0">
+            <h6 class="fw-semibold mb-3 small text-uppercase text-muted" style="letter-spacing:.06em;">
+              <i class="fas fa-search me-1"></i>Find & Verify Existing Ticket
+            </h6>
+            <div class="row g-3 mb-2">
+              <div class="col-12 col-md-6">
+                <label class="form-label small fw-semibold">
+                  Ticket Number <span class="text-danger">*</span>
+                </label>
+                {{ form.existing_ticket_number }}
+                {% if form.existing_ticket_number.errors %}
+                  <div class="invalid-feedback d-block">
+                    {{ form.existing_ticket_number.errors|join:", " }}
+                  </div>
+                {% endif %}
+              </div>
+              <div class="col-12 col-md-6">
+                <label class="form-label small fw-semibold">
+                  Verify Identity <span class="text-danger">*</span>
+                </label>
+                {{ form.verify_email_or_phone }}
+                <div class="form-text">Email, phone, first name, or last name</div>
+                {% if form.verify_email_or_phone.errors %}
+                  <div class="invalid-feedback d-block">
+                    {{ form.verify_email_or_phone.errors|join:", " }}
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+            <button type="button" class="btn btn-outline-primary btn-sm"
+                    onclick="verifyTicket()">
+              <i class="fas fa-search me-1"></i>Verify Ticket
+            </button>
+            <div id="ticketVerifyResult" class="mt-2" style="display:none;"></div>
+          </div>
+        </div>
+
+        {# ── Collapse: Create new ticket ── #}
+        <div id="section-new" class="ticket-collapse">
+          <div class="p-3 bg-light rounded border">
+            <h6 class="fw-semibold mb-3 small text-uppercase text-muted" style="letter-spacing:.06em;">
+              <i class="fas fa-plus me-1"></i>New Ticket Details
+            </h6>
+            <div class="row g-3">
+              <div class="col-12">
+                <label class="form-label small fw-semibold">
+                  Issue Title <span class="text-danger">*</span>
+                </label>
+                {{ form.ticket_title }}
+                {% if form.ticket_title.errors %}
+                  <div class="invalid-feedback d-block">
+                    {{ form.ticket_title.errors|join:", " }}
+                  </div>
+                {% endif %}
+              </div>
+              <div class="col-12 col-md-6">
+                <label class="form-label small fw-semibold">Priority</label>
+                {# Pulled from TicketPriority model (Low / Medium / High) #}
+                <select name="{{ form.ticket_priority.html_name }}"
+                        id="{{ form.ticket_priority.id_for_label }}"
+                        class="form-select">
+                  <option value="">— Select priority —</option>
+                  {% for value, label in form.ticket_priority.field.choices %}
+                  {% if value %}
+                  <option value="{{ value }}"
+                    {% if form.ticket_priority.value|stringformat:"s" == value|stringformat:"s" %}selected{% endif %}>
+                    {{ label }}
+                  </option>
+                  {% endif %}
+                  {% endfor %}
+                </select>
+                <div class="form-text">Low · Medium · High</div>
+              </div>
+              <div class="col-12">
+                <label class="form-label small fw-semibold">
+                  Description <span class="text-muted fw-normal">(optional)</span>
+                </label>
+                {{ form.ticket_description }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    {# ── Submit ── #}
+    <button type="submit" class="btn btn-success w-100 btn-lg" id="issueBtn">
+      <i class="fas fa-ticket-alt me-2"></i>Issue Queue Number
+    </button>
+
+  </form>
+</div>
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+(function () {
+  "use strict";
+
+  /* ════════════════════════════════════════════════════════════
+     MODE SWITCHER — collapses/expands sections smoothly
+  ════════════════════════════════════════════════════════════ */
+  function onModeChange(mode) {
+    const sections = { existing: 'section-existing', new: 'section-new' };
+    Object.entries(sections).forEach(([key, id]) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (key === mode) {
+        el.classList.add('open');
+      } else {
+        el.classList.remove('open');
+      }
+    });
+  }
+  window.onModeChange = onModeChange;
+
+  // Restore state on page load (after form error re-render)
+  const checkedRadio = document.querySelector('input[name="ticket_mode"]:checked');
+  if (checkedRadio) onModeChange(checkedRadio.value);
+
+
+  /* ════════════════════════════════════════════════════════════
+     OTHER CATEGORY TOGGLE
+  ════════════════════════════════════════════════════════════ */
+  function onCategoryChange(sel) {
+    const wrap = document.getElementById('otherCategoryWrap');
+    if (!wrap) return;
+    const txt     = sel.options[sel.selectedIndex]?.text || '';
+    const isOther = txt.toLowerCase().includes('other');
+    wrap.style.display = isOther ? '' : 'none';
+    if (!isOther) {
+      const input = wrap.querySelector('input, textarea');
+      if (input) input.value = '';
+    }
+  }
+  window.onCategoryChange = onCategoryChange;
+
+  const catSel = document.getElementById('id_category');
+  if (catSel) {
+    catSel.addEventListener('change', function () { onCategoryChange(this); });
+    onCategoryChange(catSel);  // init on page load
+  }
+
+
+  /* ════════════════════════════════════════════════════════════
+     TICKET VERIFICATION
+  ════════════════════════════════════════════════════════════ */
+  window.verifyTicket = function () {
+    const ticketNum = document.querySelector('[name="existing_ticket_number"]')?.value.trim();
+    const verify    = document.querySelector('[name="verify_email_or_phone"]')?.value.trim();
+
+    if (!ticketNum || !verify) {
+      showVerifyResult('warning',
+        '<i class="fas fa-exclamation-triangle me-1"></i>Enter both ticket number and identity details first.');
+      return;
+    }
+
+    showVerifyResult('info',
+      '<span class="spinner-border spinner-border-sm me-1"></span> Verifying…');
+
+    const url = `{% url 'ajax_verify_ticket' %}` +
+                `?ticket_number=${encodeURIComponent(ticketNum)}` +
+                `&verify=${encodeURIComponent(verify)}`;
+
+    fetch(url)
+      .then(r => r.json())
+      .then(data => {
+        if (data.found) {
+          showVerifyResult('success',
+            `<i class="fas fa-check-circle me-1"></i>
+             <strong>${data.ticket_number}</strong> — ${data.title}
+             <span class="badge bg-secondary ms-1">${data.status}</span>
+             <div class="small text-muted mt-1">
+               Customer: ${data.guest_name} &nbsp;·&nbsp; Category: ${data.category}
+             </div>`);
+        } else {
+          showVerifyResult('danger',
+            `<i class="fas fa-times-circle me-1"></i>${data.error}`);
+        }
+      })
+      .catch(() => showVerifyResult('danger',
+        '<i class="fas fa-times-circle me-1"></i>Verification failed. Try again.'));
+  };
+
+  function showVerifyResult(type, html) {
+    const panel = document.getElementById('ticketVerifyResult');
+    panel.className = `alert alert-${type} py-2`;
+    panel.innerHTML = html;
+    panel.style.display = '';
+  }
+
+
+  /* ════════════════════════════════════════════════════════════
+     PREVENT DOUBLE SUBMIT
+  ════════════════════════════════════════════════════════════ */
+  document.getElementById('queueForm').addEventListener('submit', function () {
+    const btn = document.getElementById('issueBtn');
+    btn.disabled  = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Issuing…';
+  });
+
+})();
+</script>
+{% endblock %}

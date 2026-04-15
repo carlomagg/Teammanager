@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}My Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Welcome back, {{ guest_email }}!</h2>
+    <p class="text-muted">Here’s an overview of your activity across conferences and job opportunities.</p>
+
+    {% if not has_activity %}
+        <div class="alert alert-info">
+            No activity yet. Register for a conference or apply for jobs to see them here!
+        </div>
+    {% endif %}
+
+    <!-- Pending Conference Registrations -->
+    {% if pending_conferences %}
+    <h4 class="mt-5">Pending Conference Registrations</h4>
+    <div class="row">
+        {% for reg in pending_conferences %}
+        <div class="col-md-6 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">{{ reg.conference.title }}</h5>
+                    <p class="card-text">
+                        <strong>Status:</strong> <span class="badge bg-warning">Pending Approval</span><br>
+                        Registered: {{ reg.registered_at|date:"M d, Y" }}
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Upcoming Conferences -->
+    {% if upcoming_conferences %}
+    <h4 class="mt-5">Upcoming Conferences</h4>
+    <div class="row">
+        {% for reg in upcoming_conferences %}
+        <div class="col-md-6 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">{{ reg.conference.title }}</h5>
+                    <p class="card-text">
+                        {{ reg.conference.start_date|date:"M d, Y" }} – {{ reg.conference.end_date|date:"M d, Y" }}<br>
+                        {% if reg.conference.is_virtual %}Virtual{% else %}{{ reg.conference.venue }}{% endif %}
+                    </p>
+                    <a href="{% url 'conference_access' conference_id=reg.conference.id token=reg.unique_token %}" class="btn btn-primary btn-sm">
+                        View Details
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Past Conferences -->
+    {% if past_conferences %}
+    <h4 class="mt-5">Past Conferences</h4>
+    <div class="row">
+        {% for reg in past_conferences %}
+        <div class="col-md-6 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">{{ reg.conference.title }}</h5>
+                    <p class="card-text">
+                        {{ reg.conference.start_date|date:"M d, Y" }} – {{ reg.conference.end_date|date:"M d, Y" }}<br>
+                        {% if reg.conference.conference_type == 'virtual' %}Virtual{% else %}{{ reg.conference.venue }}{% endif %}
+                        <br>
+                        {% if reg.check_in_status %}
+                            <strong class="text-success">Attended ✓</strong>
+                        {% else %}
+                            <strong class="text-muted">Conference Ended</strong>
+                        {% endif %}
+                    </p>
+
+                    <div class="mt-2">
+                        <a href="{% url 'conference_access' conference_id=reg.conference.id token=reg.unique_token %}" class="btn btn-secondary btn-sm me-2">
+                            View Details
+                        </a>
+
+                        {% if reg.has_feedback %}
+                            <span class="text-success fw-bold">Feedback Submitted ✓</span>
+                        {% else %}
+                            <a href="{% url 'guest_give_feedback' reg.conference.id %}" class="btn btn-primary btn-sm">
+                                Give Feedback
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Job Applications -->
+    {% if applications %}
+    <h4 class="mt-5">Job Applications</h4>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Vacancy</th>
+                <th>Company</th>
+                <th>Applied On</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for app in applications %}
+            <tr>
+                <td>{{ app.vacancy.title }}</td>
+                <td>{{ app.tenant.name }}</td>
+                <td>{{ app.created_at|date:"M d, Y" }}</td>
+                <td>
+                    {% if app.status %}
+                        <span class="badge bg-{{ app.status|lower }}">{{ app.status }}</span>
+                    {% else %}
+                        <span class="text-muted">Under Review</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+
+    <!-- Interviews -->
+    {% if upcoming_interviews %}
+    <h4 class="mt-5">Upcoming Interviews</h4>
+    <div class="row">
+        {% for interview in upcoming_interviews %}
+        <div class="col-md-6 mb-3">
+            <div class="card border-primary">
+                <div class="card-body">
+                    <h5>{{ interview.vacancy.title }}</h5>
+                    <p>
+                        <strong>Date:</strong> {{ interview.schedule_start|date:"M d, Y \a\t h:i A" }} ({{ interview.timezone }})<br>
+                        {% if interview.is_virtual %}
+                            Virtual {% if interview.google_meet %} (Google Meet){% endif %}
+                        {% else %}
+                            Physical: {{ interview.physical_location }}
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if past_interviews %}
+    <h4 class="mt-5">Past Interviews</h4>
+    <div class="row">
+        {% for interview in past_interviews %}
+        <div class="col-md-6 mb-3">
+            <div class="card border-primary">
+                <div class="card-body">
+                    <h5>{{ interview.vacancy.title }}</h5>
+                    <p>
+                        <strong>Date:</strong> {{ interview.schedule_start|date:"M d, Y \a\t h:i A" }} ({{ interview.timezone }})<br>
+                        {% if interview.is_virtual %}
+                            Virtual {% if interview.google_meet %} (Google Meet){% endif %}
+                        {% else %}
+                            Physical: {{ interview.physical_location }}
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

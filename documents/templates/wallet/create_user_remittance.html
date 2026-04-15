@@ -1,0 +1,558 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Create Remittance for {{ user.username }}</h4>
+                </div>
+                <div class="card-body">
+                    <!-- Wallet Summary -->
+                    <div class="alert alert-info" style="background-color: #56b2b1; color: rgb(50, 47, 47);">
+                        <h5 class="alert-heading">Wallet Summary</h5>
+                        <ul class="mb-0">
+                            <li><strong>Available Balance:</strong> <span class="money-amount">{{ wallet.available_balance|floatformat:2|intcomma }}</span> NGN</li>
+                            <li><strong>Total Earned:</strong> <span class="money-amount">{{ wallet.total_earned|floatformat:2|intcomma }}</span> NGN</li>
+                            <li><strong>Total Remitted:</strong> <span class="money-amount">{{ wallet.total_remitted|floatformat:2|intcomma }}</span> NGN</li>
+                        </ul>
+                    </div>
+                    
+                    <form method="post" id="remittanceForm">
+                        {% csrf_token %}
+                        
+                        <!-- Amount Field -->
+                        <div class="mb-3">
+                            <label for="amount" class="form-label">Amount to Remit (NGN)</label>
+                            <div class="input-group">
+                                <span class="input-group-text">₦</span>
+                                <input type="text" 
+                                       class="form-control formatted-input" 
+                                       id="amount" 
+                                       name="amount" 
+                                       data-original-value="{{ wallet.available_balance|floatformat:2 }}"
+                                       data-max="{{ wallet.available_balance }}"
+                                       required>
+                            </div>
+                            <div class="form-text">
+                                Available balance: <span class="money-amount">{{ wallet.available_balance|floatformat:2|intcomma }}</span> NGN
+                                <input type="hidden" id="raw-amount" name="raw_amount">
+                            </div>
+                        </div>
+                        
+                        <!-- Description -->
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description (Optional)</label>
+                            <textarea class="form-control" 
+                                      id="description" 
+                                      name="description" 
+                                      rows="3" 
+                                      placeholder="e.g., Payment for conference fees for January 2026"></textarea>
+                        </div>
+                        
+                        <!-- Quick Amount Buttons -->
+                        <div class="mb-3">
+                            <label class="form-label">Quick Amount</label>
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="setAmount(5000)">₦5,000</button>
+                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="setAmount(10000)">₦10,000</button>
+                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="setAmount(50000)">₦50,000</button>
+                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="setAmount(100000)">₦100,000</button>
+                                <button type="button" class="btn btn-outline-success btn-sm" onclick="setAmount({{ wallet.available_balance }})">Full Balance</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Next Steps -->
+                        <div class="alert alert-light">
+                            <h6 class="alert-heading">Next Steps After Creating Remittance:</h6>
+                            <ol class="mb-0">
+                                <li>Contact the user for bank details</li>
+                                <li>Make the bank transfer</li>
+                                <li>Mark the remittance as completed with the bank reference</li>
+                                <li>The user's wallet will be automatically updated</li>
+                            </ol>
+                        </div>
+                        
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'admin_remittance_dashboard' %}" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="button" class="btn btn-primary" id="confirmBtn">
+                                <i class="fas fa-plus-circle me-2"></i>Create Remittance
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmationModalLabel">Confirm Remittance Creation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Please review the remittance details below before proceeding.
+                </div>
+                
+                <!-- Remittance Summary -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6 class="mb-0">Remittance Details</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>User:</strong> <span id="modal-tenant">{{ owner.username }}</span></p>
+                                <p><strong>Available Balance:</strong> <span id="modal-balance" class="money-amount">{{ wallet.available_balance|floatformat:2|intcomma }}</span> NGN</p>
+                                <p><strong>Remittance Amount:</strong> <span id="modal-amount" class="text-primary fw-bold money-amount">0.00</span> NGN</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>User Admin:</strong> <span id="modal-admin">{{ owner.get_full_name|default:owner.username }}</span></p>
+                                <p><strong>Admin Email:</strong> <span id="modal-email">{{ owner.email }}</span></p>
+                                <p><strong>Description:</strong> <span id="modal-description" class="fst-italic">No description provided</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Impact Summary -->
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">Impact Summary</h6>
+                    </div>
+                    <div class="card-body">
+                        <ul class="mb-0">
+                            <li>User's available balance will decrease by <span id="impact-amount" class="fw-bold money-amount">0.00</span> NGN</li>
+                            <li>New available balance will be: <span id="new-balance" class="fw-bold money-amount">0.00</span> NGN</li>
+                            <li>Remittance will be marked as <span class="badge bg-warning">Pending</span> until payment is made</li>
+                            <li>You will need to contact the user admin for bank details</li>
+                            <li>After making payment, remember to mark this remittance as completed</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="finalConfirmBtn">
+                    <i class="fas fa-check-circle me-2"></i>Confirm & Create Remittance
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Simplified formatNumber function - only adds commas, doesn't force decimals
+function formatNumber(num) {
+    if (!num && num !== 0) return '';
+    
+    // Handle both string and number inputs
+    const number = typeof num === 'string' ? parseFloat(num) : num;
+    
+    if (isNaN(number)) return '';
+    
+    // Split into integer and decimal parts
+    const [integerPart, decimalPart] = number.toString().split('.');
+    
+    // Add commas to integer part
+    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    
+    // Only add decimal part if it exists
+    return decimalPart ? `${formattedInteger}.${decimalPart}` : formattedInteger;
+}
+
+// Parse formatted number back to float
+function parseFormattedNumber(formatted) {
+    if (!formatted) return 0;
+    
+    // Remove thousand separators and parse
+    const clean = formatted.replace(/,/g, '');
+    return parseFloat(clean) || 0;
+}
+
+// Set amount with formatting - preserve user's decimal input
+function setAmount(amount) {
+    const amountInput = document.getElementById('amount');
+    // Don't force .00, just use the exact amount
+    amountInput.value = amount.toString();
+    amountInput.dispatchEvent(new Event('input'));
+}
+
+// Format input value on the fly - MUCH simpler
+function formatInputValue(input) {
+    const cursorPos = input.selectionStart;
+    const originalValue = input.value;
+    
+    // Don't format while user is typing decimals or deleting
+    if (originalValue.endsWith('.') || originalValue.endsWith('.')) {
+        return parseFormattedNumber(originalValue);
+    }
+    
+    // Get the raw number before formatting
+    const rawNumber = parseFormattedNumber(originalValue);
+    
+    // Only format if it's a valid number and not actively being edited
+    if (!isNaN(rawNumber) && rawNumber !== 0) {
+        // Format with commas but preserve decimal places exactly as typed
+        const formatted = rawNumber.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        
+        // Only update if formatting changed and it's not a decimal input
+        if (formatted !== originalValue && !originalValue.includes('.')) {
+            input.value = formatted;
+            
+            // Adjust cursor position
+            const diff = formatted.length - originalValue.length;
+            const newCursorPos = cursorPos + diff;
+            input.setSelectionRange(newCursorPos, newCursorPos);
+        }
+    }
+    
+    return rawNumber;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Format all money amounts on page load
+    formatAllMoneyAmounts();
+    
+    // Toggle payments list
+    const showPaymentsCheckbox = document.getElementById('showPayments');
+    const paymentsList = document.getElementById('paymentsList');
+    
+    if (showPaymentsCheckbox && paymentsList) {
+        showPaymentsCheckbox.addEventListener('change', function() {
+            paymentsList.style.display = this.checked ? 'block' : 'none';
+        });
+    }
+    
+    // Get form elements
+    const form = document.getElementById('remittanceForm');
+    const amountInput = document.getElementById('amount');
+    const rawAmountInput = document.getElementById('raw-amount');
+    const descriptionInput = document.getElementById('description');
+    const confirmBtn = document.getElementById('confirmBtn');
+    const finalConfirmBtn = document.getElementById('finalConfirmBtn');
+    const confirmationModal = new bootstrap.Modal(document.getElementById('confirmationModal'));
+    
+    // Store the last valid value
+    let lastValidValue = '';
+    
+    // Simple input handler - no aggressive formatting
+    amountInput.addEventListener('input', function(e) {
+        // Allow only numbers, decimal point, and delete/backspace
+        if (this.value === '') {
+            rawAmountInput.value = '';
+            updateModalData();
+            return;
+        }
+        
+        // Check if user is trying to delete
+        if (this.value.length < lastValidValue.length) {
+            // User is deleting, don't format
+            lastValidValue = this.value;
+            const rawNumber = parseFormattedNumber(this.value);
+            rawAmountInput.value = isNaN(rawNumber) ? '' : rawNumber;
+            updateModalData();
+            return;
+        }
+        
+        // Only allow numbers and decimal point
+        this.value = this.value.replace(/[^\d.]/g, '');
+        
+        // Ensure only one decimal point
+        const parts = this.value.split('.');
+        if (parts.length > 2) {
+            this.value = parts[0] + '.' + parts.slice(1).join('');
+        }
+        
+        // Store last valid value
+        lastValidValue = this.value;
+        
+        // Update raw amount
+        const rawNumber = parseFloat(this.value);
+        if (!isNaN(rawNumber)) {
+            rawAmountInput.value = rawNumber;
+        }
+        
+        // Add commas for thousands (but don't force format)
+        if (!this.value.includes('.') && this.value.length > 3) {
+            const formatted = this.value.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            if (formatted !== this.value) {
+                this.value = formatted;
+            }
+        }
+        
+        updateModalData();
+    });
+    
+    // Format on blur - add commas but preserve decimals
+    amountInput.addEventListener('blur', function() {
+        if (this.value.trim() === '') {
+            if (rawAmountInput) {
+                rawAmountInput.value = '';
+            }
+            updateModalData();
+            return;
+        }
+        
+        const rawNumber = parseFloat(this.value.replace(/,/g, ''));
+        if (!isNaN(rawNumber)) {
+            // Format with commas, preserve existing decimal places
+            const formatted = rawNumber.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            this.value = formatted;
+            rawAmountInput.value = rawNumber;
+        }
+        
+        updateModalData();
+    });
+    
+    // Focus event - remove commas for easier editing
+    amountInput.addEventListener('focus', function() {
+        const rawNumber = parseFloat(this.value.replace(/,/g, ''));
+        if (!isNaN(rawNumber)) {
+            this.value = rawNumber.toString();
+        }
+    });
+    
+    // Update modal with form data
+    function updateModalData() {
+        const rawAmountValue = rawAmountInput?.value || amountInput.value.replace(/,/g, '');
+        const rawAmount = rawAmountValue ? parseFloat(rawAmountValue) : 0;
+        const description = descriptionInput.value.trim();
+        const currentBalance = parseFloat("{{ wallet.available_balance }}");
+        const newBalance = currentBalance - rawAmount;
+        
+        // Format amounts with thousand separators
+        const formattedAmount = rawAmount > 0 ? rawAmount.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 2}) : '0';
+        const formattedNewBalance = newBalance.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 2});
+        
+        // Update modal display
+        document.getElementById('modal-amount').textContent = formattedAmount;
+        document.getElementById('modal-description').textContent = description || 'No description provided';
+        document.getElementById('impact-amount').textContent = formattedAmount;
+        document.getElementById('new-balance').textContent = formattedNewBalance;
+        
+        // Highlight if amount exceeds balance
+        if (rawAmount > currentBalance) {
+            document.getElementById('modal-amount').classList.add('text-danger');
+            document.getElementById('modal-amount').classList.remove('text-primary');
+        } else {
+            document.getElementById('modal-amount').classList.remove('text-danger');
+            document.getElementById('modal-amount').classList.add('text-primary');
+        }
+        
+        // Highlight if new balance is negative
+        if (newBalance < 0) {
+            document.getElementById('new-balance').classList.add('text-danger');
+            document.getElementById('new-balance').classList.remove('fw-bold');
+        } else {
+            document.getElementById('new-balance').classList.remove('text-danger');
+            document.getElementById('new-balance').classList.add('fw-bold');
+        }
+    }
+    
+    // Validate form data
+    function validateForm() {
+        const rawAmountValue = rawAmountInput?.value || amountInput.value.replace(/,/g, '');
+        
+        // Check if amount is empty
+        if (!rawAmountValue || rawAmountValue.trim() === '') {
+            alert('Please enter an amount');
+            amountInput.focus();
+            return false;
+        }
+        
+        const rawAmount = parseFloat(rawAmountValue) || 0;
+        const maxAmount = parseFloat(amountInput.getAttribute('data-max') || "0");
+        
+        if (rawAmount <= 0) {
+            alert('Amount must be greater than zero');
+            amountInput.focus();
+            return false;
+        }
+        
+        if (rawAmount > maxAmount) {
+            alert(`Amount cannot exceed available balance of ${maxAmount.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 2})} NGN`);
+            amountInput.focus();
+            return false;
+        }
+        
+        return true;
+    }
+    
+    // Show confirmation modal when "Create Remittance" is clicked
+    confirmBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        
+        // Ensure raw amount is updated
+        const rawAmount = parseFloat(amountInput.value.replace(/,/g, '')) || 0;
+        if (rawAmountInput) {
+            rawAmountInput.value = rawAmount;
+        }
+        
+        if (validateForm()) {
+            updateModalData();
+            confirmationModal.show();
+        }
+    });
+    
+    // Handle final confirmation
+    finalConfirmBtn.addEventListener('click', function() {
+        // Ensure raw amount is submitted
+        const rawAmount = parseFloat(amountInput.value.replace(/,/g, '')) || 0;
+        if (rawAmountInput) {
+            rawAmountInput.value = rawAmount;
+        }
+        
+        // Disable button to prevent double submission
+        finalConfirmBtn.disabled = true;
+        finalConfirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Creating...';
+        
+        // Submit the form
+        form.submit();
+    });
+    
+    // Update modal when description changes
+    descriptionInput.addEventListener('input', updateModalData);
+    
+    // Initialize modal data
+    updateModalData();
+    
+    // Add keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Ctrl+Enter to submit form
+        if (e.ctrlKey && e.key === 'Enter') {
+            if (!confirmationModal._isShown) {
+                confirmBtn.click();
+            } else {
+                finalConfirmBtn.click();
+            }
+            e.preventDefault();
+        }
+        
+        // Escape to close modal
+        if (e.key === 'Escape' && confirmationModal._isShown) {
+            confirmationModal.hide();
+        }
+    });
+    
+    // Add CSS for better styling
+    const style = document.createElement('style');
+    style.textContent = `
+        #confirmationModal .modal-content {
+            border: none;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        #confirmationModal .modal-header {
+            background-color: #319795;
+            color: white;
+            border-bottom: none;
+        }
+        
+        #confirmationModal .modal-header .btn-close {
+            filter: invert(1);
+        }
+        
+        #confirmationModal .card {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+        }
+        
+        #confirmationModal .card-header {
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        
+        #finalConfirmBtn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+        
+        .formatted-input {
+            font-weight: 600;
+            text-align: left;
+        }
+        
+        .form-text .money-amount {
+            font-weight: 700;
+            color: #319795;
+        }
+        
+        .alert-info .money-amount,
+        .alert-warning .money-amount {
+            font-weight: 700;
+        }
+        
+        .table .money-amount {
+            text-align: right;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .table tfoot .money-amount {
+            font-size: 1.1em;
+        }
+        
+        #modal-amount, #impact-amount, #new-balance {
+            font-family: 'Courier New', monospace;
+            font-size: 1.1em;
+        }
+        
+        .btn-group button {
+            font-weight: 600;
+        }
+        
+        .input-group .formatted-input {
+            border-top-right-radius: 0.375rem;
+            border-bottom-right-radius: 0.375rem;
+        }
+    `;
+    document.head.appendChild(style);
+});
+
+// Format all money amounts on the page
+function formatAllMoneyAmounts() {
+    // Format static amounts with .money-amount class
+    document.querySelectorAll('.money-amount').forEach(el => {
+        const text = el.textContent.trim();
+        const numberMatch = text.match(/(\d[\d,]*\.?\d*)/);
+        if (numberMatch) {
+            const number = parseFloat(numberMatch[1].replace(/,/g, ''));
+            if (!isNaN(number)) {
+                el.textContent = text.replace(numberMatch[1], number.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 2}));
+            }
+        }
+    });
+    
+    // Format quick amount buttons
+    document.querySelectorAll('.btn-group button').forEach(button => {
+        const text = button.textContent.trim();
+        const amountMatch = text.match(/₦([\d,]+)/);
+        if (amountMatch) {
+            const amount = parseInt(amountMatch[1].replace(/,/g, ''));
+            if (!isNaN(amount)) {
+                button.textContent = '₦' + amount.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+            }
+        }
+    });
+    
+    // Don't auto-format the amount input
+    const amountInput = document.getElementById('amount');
+    if (amountInput) {
+        amountInput.value = '';
+    }
+}
+</script>
+{% endblock %}

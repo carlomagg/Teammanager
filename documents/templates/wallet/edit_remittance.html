@@ -1,0 +1,428 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Edit Remittance: {{ remittance.reference }}</h4>
+                </div>
+                <div class="card-body">
+                    <!-- Remittance Summary -->
+                    <div class="alert alert-info" style="background-color: #56b2b1; color: black;">
+                        <h5 class="alert-heading">Remittance Summary</h5>
+                        <ul class="mb-0">
+                            <li><strong>Reference:</strong> {{ remittance.reference }}</li>
+                            <li><strong>Created:</strong> {{ remittance.created_at|date:"Y-m-d H:i" }}</li>
+                            <li><strong>Status:</strong> 
+                                <span class="badge bg-{% if remittance.status == 'pending' %}warning{% elif remittance.status == 'completed' %}success{% else %}info{% endif %}">
+                                    {{ remittance.get_status_display }}
+                                </span>
+                            </li>
+                            {% if remittance.completion_date %}
+                                <li><strong>Completed:</strong> {{ remittance.completion_date|date:"Y-m-d H:i" }}</li>
+                            {% endif %}
+                            {% if remittance.bank_reference %}
+                                <li><strong>Bank Reference:</strong> {{ remittance.bank_reference }}</li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                    
+                    <!-- Tenant Information -->
+                    <div class="alert alert-warning">
+                        <h5 class="alert-heading">Tenant Information</h5>
+                        <p class="mb-1"><strong>Tenant:</strong> {{ remittance.tenant.name }}</p>
+                        <p class="mb-1"><strong>Admin:</strong> {{ remittance.tenant.admin.get_full_name|default:remittance.tenant.admin.username }} ({{ remittance.tenant.admin.email }})</p>
+                        <p class="mb-0"><strong>Current Balance:</strong> 
+                            <span class="money-amount">{{ remittance.tenant.wallet.available_balance|floatformat:2|intcomma }}</span> NGN
+                        </p>
+                    </div>
+                    
+                    <!-- Associated Payments -->
+                    {% if remittance.payments.exists %}
+                    <div class="alert alert-light">
+                        <h6 class="alert-heading">Associated Payments ({{ remittance.payments.count }})</h6>
+                        <div class="table-responsive mt-2">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Conference</th>
+                                        <th>Participant</th>
+                                        <th>Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for payment in remittance.payments.all %}
+                                    <tr>
+                                        <td>{{ payment.payment_date|date:"Y-m-d" }}</td>
+                                        <td>{{ payment.conference_registration.conference.title|truncatechars:30 }}</td>
+                                        <td>{{ payment.conference_registration.full_name|truncatechars:20 }}</td>
+                                        <td class="money-amount">{{ payment.amount|floatformat:2|intcomma }} NGN</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                                <tfoot>
+                                    <tr class="table-secondary">
+                                        <td colspan="3" class="text-end"><strong>Total:</strong></td>
+                                        <td><strong class="money-amount">{{ remittance.amount|floatformat:2|intcomma }}</strong> NGN</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <form method="post" id="editRemittanceForm">
+                        {% csrf_token %}
+                        
+                        <!-- Amount Field -->
+                        <div class="mb-3">
+                            <label for="amount" class="form-label">Amount (NGN)</label>
+                            <div class="input-group">
+                                <span class="input-group-text">₦</span>
+                                <input type="text" 
+                                       class="form-control formatted-input" 
+                                       id="amount" 
+                                       name="amount" 
+                                       value="{{ remittance.amount|floatformat:2|intcomma }}"
+                                       data-original-value="{{ remittance.amount|floatformat:2 }}"
+                                       data-max="{{ remittance.tenant.wallet.total_earned }}"
+                                       required>
+                            </div>
+                            <div class="form-text">
+                                Original amount: <span class="money-amount">{{ remittance.amount|floatformat:2|intcomma }}</span> NGN
+                                <input type="hidden" id="raw-amount" name="raw_amount" value="{{ remittance.amount|floatformat:2 }}">
+                            </div>
+                        </div>
+                        
+                        <!-- Status Field -->
+                        <div class="mb-3">
+                            <label for="status" class="form-label">Status</label>
+                            <select class="form-select" id="status" name="status" required>
+                                {% for status_code, status_name in status_choices %}
+                                <option value="{{ status_code }}" 
+                                        {% if remittance.status == status_code %}selected{% endif %}
+                                        {% if status_code == 'completed' and not remittance.bank_reference %}disabled{% endif %}>
+                                    {{ status_name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            {% if remittance.status == 'completed' and not remittance.bank_reference %}
+                            <div class="form-text text-warning">
+                                <i class="fas fa-exclamation-triangle me-1"></i>
+                                Cannot revert from completed status without a bank reference.
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Description -->
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" 
+                                      id="description" 
+                                      name="description" 
+                                      rows="3">{{ remittance.description }}</textarea>
+                        </div>
+                        
+                        <!-- Remittance Date -->
+                        <div class="mb-3">
+                            <label for="remittance_date" class="form-label">Remittance Date</label>
+                            <input type="date" 
+                                   class="form-control" 
+                                   id="remittance_date" 
+                                   name="remittance_date" 
+                                   value="{{ remittance.remittance_date|date:'Y-m-d'|default:'' }}">
+                            <div class="form-text">
+                                Date when the payment was/will be made to the tenant
+                            </div>
+                        </div>
+                        
+                        <!-- Bank Reference -->
+                        <div class="mb-4">
+                            <label for="bank_reference" class="form-label">Bank Reference (Optional)</label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="bank_reference" 
+                                   name="bank_reference" 
+                                   value="{{ remittance.bank_reference|default:'' }}"
+                                   placeholder="e.g., NEFT/1234567890, Transfer ID, etc.">
+                            <div class="form-text">
+                                Required when marking as completed
+                            </div>
+                        </div>
+                        
+                        <!-- Warning if changing from completed status -->
+                        {% if remittance.status == 'completed' %}
+                        <div class="alert alert-warning">
+                            <h6 class="alert-heading"><i class="fas fa-exclamation-triangle me-2"></i>Important Note</h6>
+                            <p class="mb-2">This remittance is marked as completed. Changing the status or amount will:</p>
+                            <ul class="mb-0">
+                                <li>Update the tenant's wallet balance</li>
+                                <li>Change the status of associated payments</li>
+                                <li>Require re-verification if marked as completed again</li>
+                            </ul>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'admin_remittance_dashboard' %}" class="btn btn-outline-secondary">Cancel</a>
+                            <div class="btn-group">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i>Save Changes
+                                </button>
+                                <a href="{% url 'mark_remittance_completed' remittance.id %}" 
+                                   class="btn btn-success {% if remittance.status == 'completed' %}disabled{% endif %}">
+                                    <i class="fas fa-check-circle me-2"></i>Mark Completed
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Format number with thousand separators
+function formatNumber(num) {
+    if (!num && num !== 0) return '0.00';
+    
+    // Handle both string and number inputs
+    const number = typeof num === 'string' ? parseFloat(num) : num;
+    
+    if (isNaN(number)) return '0.00';
+    
+    // Format with thousand separators
+    return number.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+}
+
+// Parse formatted number back to float
+function parseFormattedNumber(formatted) {
+    if (!formatted) return 0;
+    
+    // Remove thousand separators and parse
+    const clean = formatted.replace(/,/g, '');
+    return parseFloat(clean) || 0;
+}
+
+// Format input value on the fly
+function formatInputValue(input) {
+    const cursorPos = input.selectionStart;
+    const originalValue = input.value;
+    
+    // Get the raw number before formatting
+    const rawNumber = parseFormattedNumber(originalValue);
+    
+    // Format the number
+    const formatted = formatNumber(rawNumber);
+    
+    // Only update if formatting changed
+    if (formatted !== originalValue) {
+        input.value = formatted;
+        
+        // Adjust cursor position
+        const diff = formatted.length - originalValue.length;
+        const newCursorPos = cursorPos + diff;
+        input.setSelectionRange(newCursorPos, newCursorPos);
+    }
+    
+    return rawNumber;
+}
+
+// Format all money amounts on the page
+function formatAllMoneyAmounts() {
+    // Format static amounts with .money-amount class
+    document.querySelectorAll('.money-amount').forEach(el => {
+        const text = el.textContent.trim();
+        const numberMatch = text.match(/(\d[\d,]*\.?\d*)/);
+        if (numberMatch) {
+            const number = parseFloat(numberMatch[1].replace(/,/g, ''));
+            if (!isNaN(number)) {
+                el.textContent = text.replace(numberMatch[1], formatNumber(number));
+            }
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Format all money amounts on page load
+    formatAllMoneyAmounts();
+    
+    // Get form elements
+    const form = document.getElementById('editRemittanceForm');
+    const amountInput = document.getElementById('amount');
+    const rawAmountInput = document.getElementById('raw-amount');
+    const statusSelect = document.getElementById('status');
+    const bankReferenceInput = document.getElementById('bank_reference');
+    const remittanceDateInput = document.getElementById('remittance_date');
+    
+    // Real-time formatting for amount input
+    let isFormatting = false;
+    
+    amountInput.addEventListener('input', function(e) {
+        if (isFormatting) return;
+        
+        isFormatting = true;
+        
+        // Allow only numbers and decimal point
+        this.value = this.value.replace(/[^\d.,]/g, '');
+        
+        // Ensure only one decimal point
+        const parts = this.value.split('.');
+        if (parts.length > 2) {
+            this.value = parts[0] + '.' + parts.slice(1).join('');
+        }
+        
+        // Format the input value
+        const rawNumber = formatInputValue(this);
+        
+        // Update hidden raw amount field
+        if (rawAmountInput) {
+            rawAmountInput.value = rawNumber.toFixed(2);
+        }
+        
+        isFormatting = false;
+    });
+    
+    // Format on blur
+    amountInput.addEventListener('blur', function() {
+        if (!isFormatting) {
+            isFormatting = true;
+            const rawNumber = formatInputValue(this);
+            if (rawAmountInput) {
+                rawAmountInput.value = rawNumber.toFixed(2);
+            }
+            isFormatting = false;
+        }
+    });
+    
+    // Validate form before submission
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Ensure raw amount is updated
+        const rawAmount = parseFloat(amountInput.value.replace(/,/g, '')) || 0;
+        if (rawAmountInput) {
+            rawAmountInput.value = rawAmount.toFixed(2);
+        }
+        
+        // Validate amount
+        if (rawAmount <= 0) {
+            alert('Amount must be greater than zero');
+            amountInput.focus();
+            return false;
+        }
+        
+        const maxAmount = parseFloat(amountInput.getAttribute('data-max') || "0");
+        if (rawAmount > maxAmount) {
+            if (!confirm(`Amount (${formatNumber(rawAmount)} NGN) exceeds tenant's total earnings (${formatNumber(maxAmount)} NGN). Continue anyway?`)) {
+                amountInput.focus();
+                return false;
+            }
+        }
+        
+        // Validate status change
+        const originalStatus = "{{ remittance.status }}";
+        const newStatus = statusSelect.value;
+        
+        if (originalStatus === 'completed' && newStatus !== 'completed') {
+            if (!confirm('Changing from completed status will update the tenant\'s wallet balance. Continue?')) {
+                return false;
+            }
+        }
+        
+        // Validate bank reference for completed status
+        if (newStatus === 'completed' && !bankReferenceInput.value.trim()) {
+            if (!confirm('Bank reference is recommended for completed remittances. Continue without bank reference?')) {
+                bankReferenceInput.focus();
+                return false;
+            }
+        }
+        
+        // Show loading state
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
+        
+        // Submit the form
+        this.submit();
+    });
+    
+    // Set max date for remittance date
+    const today = new Date().toISOString().split('T')[0];
+    if (remittanceDateInput) {
+        remittanceDateInput.max = today;
+    }
+    
+    // Add CSS for better styling
+    const style = document.createElement('style');
+    style.textContent = `
+        .money-amount {
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+        }
+        
+        .formatted-input {
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+            text-align: right;
+        }
+        
+        .alert-light .money-amount,
+        .alert-warning .money-amount,
+        .alert-info .money-amount {
+            font-weight: 700;
+        }
+        
+        .table .money-amount {
+            text-align: right;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .table tfoot .money-amount {
+            font-size: 1.1em;
+        }
+        
+        .input-group .formatted-input {
+            border-top-right-radius: 0.375rem;
+            border-bottom-right-radius: 0.375rem;
+        }
+        
+        .badge {
+            font-size: 0.85em;
+            padding: 0.4em 0.8em;
+        }
+        
+        .alert-warning {
+            border-left: 4px solid #ffc107;
+        }
+        
+        .alert-info {
+            border-left: 4px solid #0dcaf0;
+        }
+        
+        .btn-group .btn {
+            border-radius: 0.375rem;
+        }
+        
+        .btn-group .btn:first-child {
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+        }
+        
+        .btn-group .btn:last-child {
+            border-top-left-radius: 0;
+            border-bottom-left-radius: 0;
+            border-left: 1px solid rgba(255, 255, 255, 0.2);
+        }
+    `;
+    document.head.appendChild(style);
+});
+</script>
+{% endblock %}

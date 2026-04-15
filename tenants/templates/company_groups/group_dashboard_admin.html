@@ -1,0 +1,613 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+
+<style>
+
+.stat-card {
+    border-left: 4px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.card-footer a.stretched-link::after {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1;
+    content: "";
+}
+
+.display-6 {
+    font-size: 2.5rem;
+    font-weight: 300;
+    line-height: 1.2;
+}
+
+@media (max-width: 768px) {
+    .display-6 {
+        font-size: 2rem;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+}
+
+/* Dark mode adjustments */
+body.dark-mode .card {
+    background-color: #2d3748;
+    border-color: #4a5568;
+}
+
+body.dark-mode .table {
+    color: #e2e8f0;
+}
+
+body.dark-mode .table-hover tbody tr:hover {
+    background-color: #4a5568;
+    color: #ffffff;
+}
+
+body.dark-mode .text-muted {
+    color: #a0aec0 !important;
+}
+</style>
+<div class="container-fluid">
+    <!-- Dashboard Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2">{{ page_title }}</h1>
+            <p class="text-muted mb-0">
+                {% if is_superuser %}
+                    <i class="bi bi-shield-check text-danger"></i> Superuser: Viewing all oversight groups
+                {% else %}
+                    <i class="bi bi-person-badge text-info"></i> Your oversight groups dashboard
+                {% endif %}
+            </p>
+        </div>
+        <div class="btn-group">
+            <a href="{% url 'create_company_group_admin' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Create New Group
+            </a>
+            {%comment%}
+            {% if is_superuser %}
+            <a href="{% url 'company_groups_companygroup_changelist' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-gear"></i> Admin View
+            </a>
+            {% endif %}{%endcomment%}
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-4 col-md-6">
+            <div class="card bg-primary text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title">
+                                {% if is_superuser %}Total{% else %}My{% endif %} Groups
+                            </h5>
+                            <h2 class="mb-0">{{ total_groups }}</h2>
+                        </div>
+                        <i class="bi bi-collection display-6"></i>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="{% url 'company_group_list' %}">View All</a>
+                    <i class="bi bi-arrow-right-circle"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-4 col-md-6">
+            <div class="card bg-success text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title">Active Groups</h5>
+                            <h2 class="mb-0">{{ total_active_groups }}</h2>
+                        </div>
+                        <i class="bi bi-check-circle display-6"></i>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <span class="small">
+                        {% if total_groups > 0 %}
+                            {{ total_active_groups|floatformat:0 }} of {{ total_groups }} groups
+                        {% else %}
+                            No groups
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-4 col-md-6">
+            <div class="card bg-info text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title">Total Companies</h5>
+                            <h2 class="mb-0">{{ total_members }}</h2>
+                        </div>
+                        <i class="bi bi-buildings display-6"></i>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <span class="small">Under oversight</span>
+                </div>
+            </div>
+        </div>
+    
+    </div>
+
+    <!-- Second Row Stats -->
+    <div class="row mb-4">
+        {%comment%}<div class="col-xl-3 col-md-6">
+            <div class="card bg-secondary text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title">Inactive Groups</h5>
+                            <h2 class="mb-0">{{ total_inactive_groups }}</h2>
+                        </div>
+                        <i class="bi bi-x-circle display-6"></i>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <span class="small">
+                        {% if total_groups > 0 %}
+                            {{ total_inactive_groups|floatformat:0 }} of {{ total_groups }} groups
+                        {% else %}
+                            No inactive groups
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>{%endcomment%}
+        
+        <div class="col-xl-4 col-md-6">
+            <div class="card bg-danger text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title">New This Month</h5>
+                            <h2 class="mb-0">{{ groups_this_month }}</h2>
+                        </div>
+                        <i class="bi bi-calendar-month display-6"></i>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <span class="small">Groups created this month</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-6">
+            <div class="card bg-dark text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title">Overview Summary</h5>
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="bg-success rounded-circle me-2" style="width: 10px; height: 10px;"></div>
+                                        <span>Active: {{ total_active_groups }}</span>
+                                    </div>
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-secondary rounded-circle me-2" style="width: 10px; height: 10px;"></div>
+                                        <span>Inactive: </span>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="small">
+                                        <div>Total Groups: {{ total_groups }}</div>
+                                        <div>Total Companies: {{ total_members }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <i class="bi bi-pie-chart display-6"></i>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <span class="small">Dashboard updated just now</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Groups -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="bi bi-clock-history me-1"></i> Recent Groups
+                <span class="badge bg-secondary ms-2">{{ recent_groups|length }}</span>
+            </h5>
+            <div class="btn-group">
+                <a href="{% url 'company_group_list' %}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-list-ul"></i> View All Groups
+                </a>
+                <a href="{% url 'company_group_dashboard_admin' %}" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-arrow-clockwise"></i> Refresh
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            {% if recent_groups %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Group Name</th>
+                            <th>Companies</th>
+                            <th>Owner</th>
+                            <th>Created</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for group in recent_groups %}
+                        <tr>
+                            <td>
+                                <strong>{{ group.name }}</strong><br>
+                                <small class="text-muted">{{ group.slug }}</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-info">{{ group.members.count }}</span>
+                            </td>
+                            <td>
+                                {% if group.owner %}
+                                    <small>{{ group.owner.username }}</small>
+                                    {% if group.owner == request.user %}
+                                        <span class="badge bg-success ms-1">You</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-muted">Not set</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {{ group.created_at|date:"M d, Y" }}<br>
+                                <small class="text-muted">{{ group.created_at|timesince }} ago</small>
+                            </td>
+                            <td>
+                                {% if group.is_active %}
+                                    <span class="badge bg-success">Active</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'company_group_detail' group.id %}" class="btn btn-outline-primary" title="View Details">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    {% if is_superuser or group.owner == request.user %}
+                                    <a href="{% url 'edit_company_group_admin' group.id %}" class="btn btn-outline-warning" title="Edit Group">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    {% endif %}
+                                    {% if group.owner == request.user %}
+                                    <a href="{% url 'tenant_application_with_group' group.id %}" class="btn btn-outline-success" title="Add Company">
+                                        <i class="bi bi-plus"></i>
+                                    </a>
+
+                                    <a href="{% url 'edit_company_group' group.id %}" class="btn btn-outline-warning" title="Edit Group">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-inbox display-1 text-muted"></i>
+                <h4 class="mt-3">No groups yet</h4>
+                <p class="text-muted">
+                    {% if is_superuser %}
+                        There are no company groups in the system yet.
+                    {% else %}
+                        You haven't created any oversight groups yet.
+                    {% endif %}
+                </p>
+                <a href="{% url 'create_company_group_admin' %}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Create Your First Group
+                </a>
+            </div>
+            {% endif %}
+        </div>
+        {% if recent_groups %}
+        <div class="card-footer text-muted d-flex justify-content-between align-items-center">
+            <div>
+                Showing {{ recent_groups|length }} most recent groups
+                {% if total_groups > recent_groups|length %}
+                    (of {{ total_groups }} total)
+                {% endif %}
+            </div>
+            <div>
+                <i class="bi bi-info-circle me-1"></i>
+                Last updated: {% now "H:i" %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Dashboard Sections -->
+    <div class="row">
+        <!-- User Information -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-person-circle me-2"></i>User Information
+                    </h5>
+                    <span class="badge {% if is_superuser %}bg-danger{% else %}bg-info{% endif %}">
+                        {% if is_superuser %}Superuser{% else %}Group Owner{% endif %}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <dl class="mb-0">
+                                <dt>Username:</dt>
+                                <dd>{{ request.user.username }}</dd>
+                                
+                                <dt>Email:</dt>
+                                <dd>{{ request.user.email|default:"Not set" }}</dd>
+                                
+                                <dt>Date Joined:</dt>
+                                <dd>{{ request.user.date_joined|date:"M d, Y" }}</dd>
+                            </dl>
+                        </div>
+                        <div class="col-md-6">
+                            <dl class="mb-0">
+                                <dt>Last Login:</dt>
+                                <dd>
+                                    {% if request.user.last_login %}
+                                        {{ request.user.last_login|date:"M d, Y H:i" }}
+                                    {% else %}
+                                        First login
+                                    {% endif %}
+                                </dd>
+                                
+                                <dt>Groups Owned:</dt>
+                                <dd>{{ total_groups }}</dd>
+                                
+                                <dt>Companies Managed:</dt>
+                                <dd>{{ total_members }}</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="d-grid">
+                        <a href="{% url 'company_group_list' %}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-list-ul me-1"></i>View All My Groups
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-lightning-charge me-2"></i>Stats
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-2">
+                    
+                        {%comment%}
+                        <div class="col-md-6">
+                            <a href="{% url 'government_dashboard' %}" class="btn btn-outline-info w-100 mb-2">
+                                <i class="bi bi-speedometer2 me-1"></i>Oversight Dashboard
+                            </a>
+                        </div>{%endcomment%}
+                    </div>
+                    
+                    <!-- Quick Stats -->
+                    <div class="mt-4 pt-3 border-top">
+                        <h6 class="mb-2">Quick Stats</h6>
+                        <div class="row text-center">
+                            <div class="col-4">
+                                <div class="text-primary fw-bold">{{ total_groups }}</div>
+                                <div class="text-muted small">Groups</div>
+                            </div>
+                            <div class="col-4">
+                                <div class="text-success fw-bold">{{ total_active_groups }}</div>
+                                <div class="text-muted small">Active</div>
+                            </div>
+                            <div class="col-4">
+                                <div class="text-warning fw-bold">{{ total_members }}</div>
+                                <div class="text-muted small">Companies</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <small class="text-muted">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Dashboard updates automatically
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+{%comment%}
+    <!-- Performance Metrics -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-graph-up me-2"></i>Performance Metrics
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3 mb-3">
+                            <div class="p-3 border rounded">
+                                <div class="display-6 text-primary">{{ avg_per_group }}</div>
+                                <div class="text-muted">Avg. Companies/Group</div>
+                                <small class="text-success">
+                                    <i class="bi bi-arrow-up"></i> Optimal
+                                </small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="p-3 border rounded">
+                                <div class="display-6 text-success">
+                                    {% if total_groups > 0 %}
+                                        {{ total_active_groups|floatformat:0 }}
+                                    {% else %}
+                                        0
+                                    {% endif %}
+                                </div>
+                                <div class="text-muted">Active Groups</div>
+                                <small class="text-success">
+                                    <i class="bi bi-check-circle"></i> Good
+                                </small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="p-3 border rounded">
+                                <div class="display-6 text-warning">{{ groups_this_month }}</div>
+                                <div class="text-muted">This Month</div>
+                                <small class="text-info">
+                                    <i class="bi bi-activity"></i> Growth
+                                </small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="p-3 border rounded">
+                                <div class="display-6 text-info">{{ total_members }}</div>
+                                <div class="text-muted">Total Companies</div>
+                                <small class="text-primary">
+                                    <i class="bi bi-building"></i> Oversight
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {%endcomment%}
+</div>
+
+<!-- JavaScript for Dashboard Enhancements -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Refresh button functionality
+    document.querySelectorAll('.btn-refresh').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const originalText = this.innerHTML;
+            this.innerHTML = '<i class="bi bi-arrow-clockwise spin"></i> Refreshing...';
+            this.disabled = true;
+            
+            setTimeout(() => {
+                window.location.reload();
+            }, 500);
+        });
+    });
+    
+    // Auto-refresh dashboard every 5 minutes (optional)
+    let refreshTimer = null;
+    function setupAutoRefresh() {
+        if (refreshTimer) clearTimeout(refreshTimer);
+        refreshTimer = setTimeout(() => {
+            window.location.reload();
+        }, 300000); // 5 minutes
+    }
+    
+    // Start auto-refresh
+    setupAutoRefresh();
+    
+    // Reset timer on user activity
+    document.addEventListener('mousemove', setupAutoRefresh);
+    document.addEventListener('keypress', setupAutoRefresh);
+    
+    // Highlight active groups in table
+    const tableRows = document.querySelectorAll('table tbody tr');
+    tableRows.forEach(row => {
+        const statusBadge = row.querySelector('.badge.bg-success');
+        if (statusBadge) {
+            row.style.backgroundColor = 'rgba(25, 135, 84, 0.05)';
+        }
+    });
+    
+    // Add tooltips to all buttons
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Update last updated time every minute
+    function updateLastUpdated() {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        const lastUpdatedElements = document.querySelectorAll('.last-updated');
+        lastUpdatedElements.forEach(el => {
+            el.textContent = `Last updated: ${timeString}`;
+        });
+    }
+    
+    // Update every minute
+    setInterval(updateLastUpdated, 60000);
+    
+    // Add CSS for spinning refresh icon
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .spin {
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
+        .card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .stat-card {
+            border-left: 4px solid;
+        }
+        .stat-card.bg-primary { border-left-color: #0d6efd; }
+        .stat-card.bg-success { border-left-color: #198754; }
+        .stat-card.bg-info { border-left-color: #0dcaf0; }
+        .stat-card.bg-warning { border-left-color: #ffc107; }
+    `;
+    document.head.appendChild(style);
+    
+    // Add stat-card class to all stat cards
+    document.querySelectorAll('.card.bg-primary, .card.bg-success, .card.bg-info, .card.bg-warning, .card.bg-secondary, .card.bg-danger').forEach(card => {
+        card.classList.add('stat-card');
+    });
+});
+</script>
+
+{% endblock %}

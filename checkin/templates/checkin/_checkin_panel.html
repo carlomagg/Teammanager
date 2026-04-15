@@ -1,0 +1,114 @@
+{# checkin/_checkin_panel.html #}
+{# Reusable check-in tab panel — included by checkin_dashboard.html #}
+{# for both manager view and ordinary staff view. #}
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-transparent border-0 fw-semibold">
+    <i class="fas fa-user-check me-1 text-primary"></i>Staff Check-in
+  </div>
+  <div class="card-body pt-0">
+
+    <ul class="nav nav-pills nav-fill mb-3" id="checkinTabs">
+      <li class="nav-item">
+        <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#tabQR">
+          <i class="fas fa-qrcode"></i><span class="d-none d-sm-inline ms-1">QR</span>
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tabPIN">
+          <i class="fas fa-key"></i><span class="d-none d-sm-inline ms-1">PIN</span>
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tabManual">
+          <i class="fas fa-hand-pointer"></i><span class="d-none d-sm-inline ms-1">Manual</span>
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tabBiometric">
+          <i class="fas fa-fingerprint"></i><span class="d-none d-sm-inline ms-1">Bio</span>
+        </button>
+      </li>
+    </ul>
+
+    <div class="tab-content">
+
+      {# QR #}
+      <div class="tab-pane fade show active" id="tabQR" style="min-height:220px;">
+        <video id="qrVideo" style="width:100%;border-radius:8px;background:#000;" autoplay playsinline muted></video>
+        <canvas id="qrCanvas" style="display:none;"></canvas>
+        <div id="qrResult" class="alert alert-info py-2 small mt-2" style="display:none;"></div>
+        <form method="post" action="{% url 'checkin:staff_checkin_qr' %}" id="qrForm" class="mt-2">
+          {% csrf_token %}
+          <input type="hidden" name="token" id="qrTokenInput">
+          <div class="d-flex gap-2">
+            <button type="button" class="btn btn-primary flex-grow-1" id="startQRBtn" onclick="startQRScanner()">
+              <i class="fas fa-camera me-1"></i>Start Camera
+            </button>
+            <button type="button" class="btn btn-outline-secondary" id="stopQRBtn" onclick="stopQRScanner()" style="display:none;">
+              <i class="fas fa-stop"></i>
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {# PIN #}
+      <div class="tab-pane fade" id="tabPIN" style="min-height:220px;">
+        <form method="post" action="{% url 'checkin:staff_checkin_pin' %}">
+          {% csrf_token %}
+          <div class="mb-2">
+            <label class="form-label small fw-semibold">Username</label>
+            <input type="text" name="username" class="form-control" placeholder="staff username" autocomplete="off" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">PIN</label>
+            <input type="password" name="pin" class="form-control" placeholder="••••" inputmode="numeric" maxlength="6" required>
+          </div>
+          <button type="submit" class="btn btn-primary w-100">
+            <i class="fas fa-sign-in-alt me-1"></i>Check In
+          </button>
+        </form>
+      </div>
+
+      {# Manual — only shown to managers #}
+      <div class="tab-pane fade" id="tabManual" style="min-height:220px;">
+        {% if manual_form %}
+        <form method="post" action="{% url 'checkin:staff_checkin_manual' %}">
+          {% csrf_token %}
+          <div class="mb-2">
+            <label class="form-label small fw-semibold">Select Staff Member</label>
+            {{ manual_form.staff }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Notes (optional)</label>
+            {{ manual_form.notes }}
+          </div>
+          <button type="submit" class="btn btn-primary w-100">
+            <i class="fas fa-sign-in-alt me-1"></i>Check In
+          </button>
+        </form>
+        {% else %}
+        <div class="text-center py-4 text-muted small">
+          <i class="fas fa-lock fa-2x mb-2 d-block opacity-25"></i>
+          Manual check-in is for authorised staff only.
+        </div>
+        {% endif %}
+      </div>
+
+      {# Biometric #}
+      <div class="tab-pane fade" id="tabBiometric" style="min-height:220px;">
+        <div class="text-center py-3">
+          <i class="fas fa-fingerprint fa-3x text-muted mb-3 d-block"></i>
+          <p class="text-muted small mb-3">Use your device's fingerprint sensor or Face ID.</p>
+          <button class="btn btn-primary mb-2 w-100" onclick="startBiometricCheckin('fingerprint')">
+            <i class="fas fa-fingerprint me-2"></i>Fingerprint
+          </button>
+          <button class="btn btn-outline-primary w-100" onclick="startBiometricCheckin('faceid')">
+            <i class="fas fa-user-circle me-2"></i>Face ID
+          </button>
+          <div id="biometricStatus" class="mt-2 small text-muted"></div>
+        </div>
+      </div>
+
+    </div>{# /tab-content #}
+  </div>
+</div>

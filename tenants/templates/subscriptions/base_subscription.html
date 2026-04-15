@@ -1,0 +1,371 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Subscription Management - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+    :root {
+        --primary-color: #319795;
+        --primary-dark: #2c7a7a;
+        --primary-light: #4fd1c5;
+        --primary-soft: #e6fffa;
+    }
+    
+    .subscription-nav {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+        padding: 0.75rem 0;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 12px rgba(49, 151, 149, 0.15);
+        border-radius: 0 0 12px 12px;
+    }
+    
+    .subscription-nav .nav-link {
+        color: rgba(255, 255, 255, 0.9) !important;
+        font-weight: 500;
+        padding: 0.5rem 1rem !important;
+        margin: 0 0.25rem;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+    
+    .subscription-nav .nav-link:hover {
+        background-color: rgba(255, 255, 255, 0.15);
+        color: white !important;
+        transform: translateY(-1px);
+    }
+    
+    .subscription-nav .nav-link.active {
+        background-color: white;
+        color: var(--primary-color) !important;
+        font-weight: 600;
+    }
+    
+    .subscription-stats-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        border-left: 4px solid var(--primary-color);
+    }
+    
+    body.dark-mode .subscription-stats-card {
+        background: #2d3748;
+        color: #e2e8f0;
+    }
+    
+    .subscription-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .subscription-badge.active {
+        background: #48bb78;
+        color: white;
+    }
+    
+    .subscription-badge.expiring {
+        background: #ecc94b;
+        color: #1a202c;
+    }
+    
+    .subscription-badge.expired {
+        background: #f56565;
+        color: white;
+    }
+    
+    .subscription-badge.warning {
+        background: #ed8936;
+        color: white;
+    }
+    
+    .subscription-badge.info {
+        background: #4299e1;
+        color: white;
+    }
+    
+    /* User Coverage Alert */
+    .coverage-alert {
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+        padding: 1rem;
+    }
+    
+    .coverage-alert.warning {
+        background: #fff3e0;
+        border-left: 4px solid #ed8936;
+    }
+    
+    .coverage-alert.danger {
+        background: #ffe6e6;
+        border-left: 4px solid #f56565;
+    }
+    
+    .coverage-alert.info {
+        background: #e6f7ff;
+        border-left: 4px solid #4299e1;
+    }
+    
+    @media (max-width: 768px) {
+        .subscription-nav .nav-link {
+            padding: 0.4rem 0.8rem !important;
+            font-size: 0.9rem;
+        }
+        
+        .subscription-stats-card {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- User Coverage Alert (for tenant users not covered by any subscription) -->
+{% if is_tenant_user and user_coverage and not user_coverage.is_covered %}
+<div class="container-fluid px-4 mt-3">
+    <div class="coverage-alert warning d-flex align-items-center">
+        <i class="fas fa-exclamation-triangle fa-2x me-3" style="color: #ed8936;"></i>
+        <div>
+            <h5 class="mb-1">You're not covered by any subscription</h5>
+            <p class="mb-0">
+                {{ user_coverage.message|default:"Your organization has active subscriptions, but you are not included in them. Please contact your administrator to be added to a subscription." }}
+            </p>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Subscription Status Bar (if user has subscription) -->
+{% if subscription_stats and subscription_stats.has_active %}
+<div class="container-fluid px-4 mt-3">
+    <div class="subscription-stats-card d-flex flex-wrap justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-3 flex-wrap">
+            <span class="subscription-badge active">
+                <i class="fas fa-check-circle me-1"></i>Active
+            </span>
+            <span>
+                <strong>{{ subscription_stats.plan_name }}</strong> Plan
+            </span>
+            {% if subscription_stats.user_scope %}
+            <span class="subscription-badge info">
+                <i class="fas fa-{% if subscription_stats.user_scope == 'all' %}users{% else %}user-check{% endif %} me-1"></i>
+                {% if subscription_stats.user_scope == 'all' %}All Users{% else %}Selected Users{% endif %}
+            </span>
+            {% endif %}
+            {% if subscription_stats.days_remaining <= 7 and subscription_stats.days_remaining > 0 %}
+            <span class="subscription-badge expiring">
+                <i class="fas fa-exclamation-triangle me-1"></i>
+                Expires in {{ subscription_stats.days_remaining }} days
+            </span>
+            {% elif subscription_stats.days_remaining <= 0 %}
+            <span class="subscription-badge expired">
+                <i class="fas fa-times-circle me-1"></i>
+                Expired
+            </span>
+            {% endif %}
+        </div>
+        <div class="d-flex align-items-center gap-4 flex-wrap">
+            <span>
+                <i class="fas fa-calendar me-1"></i>
+                {% if subscription_stats.end_date %}
+                    Renews: {{ subscription_stats.end_date|date:"M d, Y" }}
+                {% endif %}
+            </span>
+            {% if subscription_stats.current_users is not None %}
+            <span>
+                <i class="fas fa-users me-1"></i>
+                {{ subscription_stats.current_users }}/{{ subscription_stats.max_users|default:"∞" }} users
+            </span>
+            {% endif %}
+            {% if subscription_stats.covered_users_count is not None %}
+            <span>
+                <i class="fas fa-user-check me-1"></i>
+                {{ subscription_stats.covered_users_count }} covered users
+            </span>
+            {% endif %}
+            <span>
+                <i class="fas fa-dollar-sign me-1"></i>
+                ₦{{ subscription_stats.monthly_rate|floatformat:2 }}/mo
+            </span>
+        </div>
+    </div>
+</div>
+{% elif subscription_stats and not subscription_stats.has_active and subscription_stats.message %}
+<!-- No Active Subscription Message -->
+<div class="container-fluid px-4 mt-3">
+    <div class="coverage-alert danger d-flex align-items-center">
+        <i class="fas fa-times-circle fa-2x me-3" style="color: #f56565;"></i>
+        <div>
+            <h5 class="mb-1">No Active Subscription</h5>
+            <p class="mb-0">{{ subscription_stats.message }}</p>
+            {% if subscription_stats.action_required == 'contact_admin' %}
+            <button class="btn btn-sm btn-primary mt-2" onclick="contactAdmin()">
+                <i class="fas fa-envelope me-1"></i>Contact Administrator
+            </button>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Subscription Navigation -->
+<div class="subscription-nav">
+    <div class="container">
+        <ul class="nav justify-content-center">
+            {% if not user.is_superuser %}
+            <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.url_name == 'client_subscriptions' %}active{% endif %}" 
+                   href="{% url 'client_subscriptions' %}">
+                    <i class="fas fa-list me-2"></i>My Subscriptions
+                </a>
+            </li>
+            {% else %}
+            <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.url_name == 'manage_paid_subscriptions' %}active{% endif %}" 
+                   href="{% url 'manage_paid_subscriptions' %}">
+                    <i class="fas fa-list me-2"></i>Subscriptions
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.url_name == 'manage_free_subscriptions' %}active{% endif %}" 
+                   href="{% url 'manage_free_subscriptions' %}">
+                    <i class="fas fa-gift me-2"></i>Free Access
+                </a>
+            </li>
+            {% endif %}
+            <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.url_name == 'client_subscription_payments' %}active{% endif %}" 
+                   href="{% url 'client_subscription_payments' %}">
+                    <i class="fas fa-credit-card me-2"></i>Payments
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.url_name == 'list_subscription_plans' %}active{% endif %}" 
+                   href="{% url 'list_subscription_plans' %}">
+                    <i class="fas fa-tags me-2"></i>Plans
+                </a>
+            </li>
+            {% comment %}
+            {% if user.is_superuser %}
+            <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.url_name == 'subscription_adjustments' %}active{% endif %}" 
+                   href="{% url 'subscription_adjustments' %}">
+                    <i class="fas fa-chart-line me-2"></i>Adjustments
+                </a>
+            </li>
+            {% endif %}
+            {% endcomment %}
+        </ul>
+    </div>
+</div>
+
+<!-- Messages -->
+{% if messages %}
+<div class="container mt-3">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% else %}info-circle{% endif %} me-2"></i>
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Main Subscription Content -->
+<div class="container mt-4">
+    {% block subscription_content %}
+    <!-- Default content if no block is defined -->
+    <div class="text-center py-5">
+        <i class="fas fa-crown fa-4x mb-3" style="color: var(--primary-color);"></i>
+        <h3>Subscription Management</h3>
+        <p class="text-muted">Select an option from the navigation above to manage your subscriptions.</p>
+        
+        {% if not subscription_stats or not subscription_stats.has_active %}
+        <div class="mt-4">
+            <h5>No Active Subscription</h5>
+            <p>Choose a plan that fits your needs and get started today!</p>
+            <a href="{% url 'list_subscription_plans' %}" class="btn btn-primary">
+                <i class="fas fa-rocket me-2"></i>View Plans
+            </a>
+        </div>
+        {% elif subscription_stats.has_active %}
+        <div class="mt-4">
+            <div class="row justify-content-center">
+                <div class="col-md-4">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <i class="fas fa-chart-line fa-3x mb-3" style="color: var(--primary-color);"></i>
+                            <h5>Usage Statistics</h5>
+                            <p class="text-muted">View your subscription usage and analytics</p>
+                            <a href="{% url 'client_subscriptions' %}" class="btn btn-outline-primary btn-sm">
+                                View Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <i class="fas fa-credit-card fa-3x mb-3" style="color: var(--primary-color);"></i>
+                            <h5>Payment History</h5>
+                            <p class="text-muted">View all your payment transactions</p>
+                            <a href="{% url 'client_subscription_payments' %}" class="btn btn-outline-primary btn-sm">
+                                View Payments
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% endblock %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+    // Auto-hide alerts after 5 seconds
+    setTimeout(function() {
+        $('.alert').fadeOut('slow');
+    }, 5000);
+    
+    // Highlight active nav item based on current URL
+    $(document).ready(function() {
+        const path = window.location.pathname;
+        $('.subscription-nav .nav-link').each(function() {
+            const href = $(this).attr('href');
+            if (path.includes(href) && href !== '{% url "client_subscriptions" %}') {
+                $(this).addClass('active');
+            }
+        });
+    });
+    
+    // Contact admin function
+    function contactAdmin() {
+        // You can implement this to send an email or show a modal
+        toastr.info('Please contact your organization administrator to be added to a subscription.');
+    }
+</script>
+
+<!-- Toastr for notifications -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+<script>
+    toastr.options = {
+        "closeButton": true,
+        "progressBar": true,
+        "positionClass": "toast-top-right",
+        "timeOut": "3000"
+    };
+</script>
+{% endblock %}

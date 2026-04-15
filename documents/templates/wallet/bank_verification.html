@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Bank Verification - {{ company_profile.company_name }}{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const bankNameInput = document.getElementById('id_bank_name');
+    const bankCodeInput = document.getElementById('id_bank_code');
+    const dropdown = document.getElementById('bank-dropdown');
+    
+    if (bankNameInput && bankCodeInput && dropdown) {
+        bankCodeInput.setAttribute('readonly', true);
+        let banks = [];
+        let activeIndex = -1;
+        
+        // Fetch bank list from our new API
+        fetch('/api/banks/')
+            .then(response => response.json())
+            .then(data => {
+                if (data.status && data.data) {
+                    banks = data.data;
+                    bankNameInput.setAttribute('autocomplete', 'off');
+                    
+                    // Handle input events
+                    bankNameInput.addEventListener('input', function() {
+                        const query = this.value.toLowerCase().trim();
+                        if (!query) {
+                            hideDropdown();
+                            return;
+                        }
+                        
+                        const matches = banks
+                            .filter(b => b.name.toLowerCase().includes(query))
+                            .slice(0, 10);
+                        
+                        if (matches.length > 0) {
+                            renderDropdown(matches);
+                            showDropdown();
+                        } else {
+                            hideDropdown();
+                        }
+                    });
+                    
+                    // Handle keyboard navigation
+                    bankNameInput.addEventListener('keydown', function(e) {
+                        const items = dropdown.querySelectorAll('.bank-item');
+                        if (!items.length) return;
+                        
+                        if (e.key === 'ArrowDown') {
+                            e.preventDefault();
+                            activeIndex = (activeIndex + 1) % items.length;
+                            updateActiveItem(items);
+                        } else if (e.key === 'ArrowUp') {
+                            e.preventDefault();
+                            activeIndex = (activeIndex - 1 + items.length) % items.length;
+                            updateActiveItem(items);
+                        } else if (e.key === 'Enter') {
+                            if (activeIndex >= 0) {
+                                e.preventDefault();
+                                items[activeIndex].click();
+                            }
+                        } else if (e.key === 'Escape') {
+                            hideDropdown();
+                        }
+                    });
+                    
+                    document.addEventListener('click', function(e) {
+                        if (!bankNameInput.contains(e.target) && !dropdown.contains(e.target)) {
+                            hideDropdown();
+                        }
+                    });
+                }
+            });
+            
+        function renderDropdown(matches) {
+            dropdown.innerHTML = '';
+            activeIndex = -1;
+            matches.forEach((bank, index) => {
+                const item = document.createElement('div');
+                item.className = 'bank-item';
+                item.innerHTML = `
+                    <span class="nbi nbi-${bank.code}"></span>
+                    <span class="bank-name">${bank.name}</span>
+                `;
+                item.addEventListener('click', function() {
+                    bankNameInput.value = bank.name;
+                    bankCodeInput.value = bank.code;
+                    hideDropdown();
+                });
+                dropdown.appendChild(item);
+            });
+        }
+        
+        function updateActiveItem(items) {
+            items.forEach((item, index) => {
+                if (index === activeIndex) {
+                    item.classList.add('active');
+                    item.scrollIntoView({ block: 'nearest' });
+                } else {
+                    item.classList.remove('active');
+                }
+            });
+        }
+        
+        function showDropdown() { dropdown.style.display = 'block'; }
+        function hideDropdown() { dropdown.style.display = 'none'; activeIndex = -1; }
+    }
+});
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        <i class="fas fa-university me-2"></i>
+                        Bank Details for Remittances
+                    </h4>
+                </div>
+                <div class="card-body">
+                    
+                    {% if bank_verified %}
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <strong>Bank Details Verified</strong>
+                        <p class="mb-0">Your bank details were verified on {{ company_profile.bank_verification_date|date:"F d, Y" }}</p>
+                    </div>
+                    {% elif has_bank_details %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-clock me-2"></i>
+                        <strong>Bank Details Pending Verification</strong>
+                        <p class="mb-0">Your bank details are complete and awaiting verification.</p>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Bank Details Required</strong>
+                        <p class="mb-0">Please provide your bank details to receive remittance payments.</p>
+                    </div>
+                    {% endif %}
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <h5 class="mb-3">Bank Information</h5>
+                            
+                            <!-- Bank Name -->
+                            <div class="mb-3 bank-selector-container">
+                                <label class="form-label">Bank Name *</label>
+                                {{ form.bank_name }}
+                                <div id="bank-dropdown" class="bank-selector-dropdown"></div>
+                                {% if form.bank_name.errors %}
+                                    <div class="text-danger small">
+                                        {{ form.bank_name.errors }}
+                                    </div>
+                                {% endif %}
+                                <small class="text-muted">The name of your bank (e.g., GTBank, First Bank, Zenith Bank)</small>
+                            </div>
+                            
+                            <!-- Account Number -->
+                            <div class="mb-3">
+                                <label class="form-label">Account Number *</label>
+                                {{ form.bank_account_number }}
+                                {% if form.bank_account_number.errors %}
+                                    <div class="text-danger small">
+                                        {{ form.bank_account_number.errors }}
+                                    </div>
+                                {% endif %}
+                                <small class="text-muted">Your 10-digit bank account number</small>
+                            </div>
+                            
+                            <!-- Account Name -->
+                            <div class="mb-3">
+                                <label class="form-label">Account Name *</label>
+                                {{ form.bank_account_name }}
+                                {% if form.bank_account_name.errors %}
+                                    <div class="text-danger small">
+                                        {{ form.bank_account_name.errors }}
+                                    </div>
+                                {% endif %}
+                                <small class="text-muted">The name as it appears on your bank account</small>
+                            </div>
+                            
+                            <!-- Bank Code -->
+                            <div class="mb-3">
+                                <label class="form-label">Bank Code *</label>
+                                {{ form.bank_code }}
+                                {% if form.bank_code.errors %}
+                                    <div class="text-danger small">
+                                        {{ form.bank_code.errors }}
+                                    </div>
+                                {% endif %}
+                                <small class="text-muted">
+                                    Your bank's unique code (e.g., GTBank: 058, First Bank: 011, Zenith Bank: 057)
+                                </small>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>Important:</strong> Ensure all bank details are accurate. Incorrect details may cause payment delays or failures.
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'view_company_profile' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i> Back to Profile
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i> Save Bank Details
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Bank Details Preview -->
+            {% if has_bank_details %}
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Current Bank Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Bank Name:</strong><br>{{ company_profile.bank_name }}</p>
+                            <p><strong>Account Number:</strong><br>{{ company_profile.bank_account_number }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Account Name:</strong><br>{{ company_profile.bank_account_name }}</p>
+                            <p><strong>Bank Code:</strong><br>{{ company_profile.bank_code }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}

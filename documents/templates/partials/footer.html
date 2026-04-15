@@ -1,0 +1,173 @@
+<!-- Footer Section -->
+<footer class="bg-light border-top mt-5 py-5" id="footer">
+    <div class="container">
+        <div class="row mb-4">
+            <!-- Company Info -->
+            <div class="col-lg-3 col-md-6 mb-4 mb-lg-0">
+                <h6 class="fw-bold mb-3 text-dark">
+                    <i class="fas fa-tasks text-primary me-2"></i>TeamManager
+                </h6>
+                <p class="text-muted small">Empowering organizations with modern team management and collaboration solutions.</p>
+                <div class="d-flex gap-2 mt-3">
+                    <a href="#" class="text-muted text-decoration-none" title="Facebook">
+                        <i class="fab fa-facebook-f"></i>
+                    </a>
+                    <a href="#" class="text-muted text-decoration-none" title="Twitter">
+                        <i class="fab fa-twitter"></i>
+                    </a>
+                    <a href="#" class="text-muted text-decoration-none" title="LinkedIn">
+                        <i class="fab fa-linkedin-in"></i>
+                    </a>
+                    <a href="#" class="text-muted text-decoration-none" title="Instagram">
+                        <i class="fab fa-instagram"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Product Links -->
+            <div class="col-lg-3 col-md-6 mb-4 mb-lg-0">
+                <h6 class="fw-bold mb-3 text-dark">Product</h6>
+                <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <a href="{% url 'job_board' %}" class="text-muted text-decoration-none small" style="transition: color 0.3s;">
+                            Job Board
+                        </a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="{% url 'conference_board' %}" class="text-muted text-decoration-none small" style="transition: color 0.3s;">
+                            Conferences
+                        </a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="{% url 'home' %}" class="text-muted text-decoration-none small" style="transition: color 0.3s;">
+                            Dashboard
+                        </a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="{% url 'getting_started' %}" class="text-muted text-decoration-none small" style="transition: color 0.3s;">
+                            Getting Started
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Resources Links -->
+            <div class="col-lg-3 col-md-6 mb-4 mb-lg-0">
+                <h6 class="fw-bold mb-3 text-dark">Resources</h6>
+                <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <a href="{% url 'getting_started' %}" class="text-muted text-decoration-none small" style="transition: color 0.3s;">
+                            Setup Guide
+                        </a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="{% url 'contact_support' %}" class="text-muted text-decoration-none small" style="transition: color 0.3s;">
+                            Support
+                        </a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="#" class="text-muted text-decoration-none small" style="transition: color 0.3s;">
+                            Documentation
+                        </a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="#" class="text-muted text-decoration-none small" style="transition: color 0.3s;">
+                            Blog
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Legal & Contact Links -->
+            <div class="col-lg-3 col-md-6">
+                <h6 class="fw-bold mb-3 text-dark">Legal</h6>
+                <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <a href="{% url 'policies' %}" class="text-muted text-decoration-none small" style="transition: color 0.3s;">
+                            Privacy Policy
+                        </a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="{% url 'policies' %}" class="text-muted text-decoration-none small" style="transition: color 0.3s;">
+                            Terms of Service
+                        </a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="{% url 'policies' %}" class="text-muted text-decoration-none small" style="transition: color 0.3s;">
+                            Cookie Policy
+                        </a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="{% url 'contact_support' %}" class="text-muted text-decoration-none small" style="transition: color 0.3s;">
+                            Contact Us
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <hr class="my-4 border-secondary">
+
+        <!-- Bottom Footer -->
+        <div class="row align-items-center">
+            <div class="col-md-6 text-center text-md-start">
+                <p class="text-muted small mb-2 mb-md-0">
+                    &copy; <span id="year">2026</span> TeamManager. All rights reserved.
+                </p>
+            </div>
+            <div class="col-md-6 text-center text-md-end">
+                <p class="text-muted small">
+                    Made with <i class="fas fa-heart text-danger"></i> by TeamManager
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<style>
+    #footer {
+        margin-top: auto;
+    }
+
+    #footer a {
+        transition: color 0.3s ease;
+    }
+
+    #footer a:hover {
+        color: var(--bs-primary) !important;
+    }
+
+    body.dark-mode #footer {
+        background-color: #1e1e1e !important;
+        border-top-color: #333 !important;
+    }
+
+    body.dark-mode #footer h6,
+    body.dark-mode #footer .text-dark {
+        color: #e2e8f0 !important;
+    }
+
+    body.dark-mode #footer hr {
+        border-color: #333 !important;
+    }
+
+    @media (max-width: 576px) {
+        #footer .col-md-6 {
+            margin-bottom: 1rem;
+        }
+
+        #footer h6 {
+            font-size: 0.95rem;
+        }
+
+        #footer .small {
+            font-size: 0.85rem;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('year').textContent = new Date().getFullYear();
+    });
+</script>

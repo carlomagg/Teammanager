@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Review Invoice — {{ invoice.invoice_number }}{% endblock %}
+
+{% block content %}
+<div class="container py-4" style="max-width:700px;">
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h4 class="mb-0">
+        <i class="fas fa-file-invoice me-2 text-warning"></i>Review Invoice
+      </h4>
+      <small class="text-muted">
+        Submitted by <strong>{{ invoice.party_display }}</strong>
+        on {{ invoice.created_at|date:"d M Y, H:i" }}
+      </small>
+    </div>
+    <a href="{% url 'invoice_detail' invoice.pk %}"
+       class="btn btn-outline-secondary btn-sm">
+      <i class="fas fa-arrow-left me-1"></i>Back
+    </a>
+  </div>
+
+  {# ── Invoice summary ── #}
+  <div class="card border-0 shadow-sm mb-3">
+    <div class="card-body">
+      <div class="row g-3 small">
+        <div class="col-6">
+          <div class="text-muted">From</div>
+          <div class="fw-semibold">{{ invoice.party_display }}</div>
+          <div class="text-muted">{{ invoice.payer_email }}</div>
+        </div>
+        <div class="col-6 text-end">
+          <div class="text-muted">Amount Due</div>
+          <div class="fw-bold fs-4 text-primary">
+            {{ invoice.currency }} {{ invoice.total_amount|floatformat:2|intcomma }}
+          </div>
+          <div class="text-muted">Due {{ invoice.due_date|date:"d M Y" }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# ── Line items ── #}
+  <div class="card border-0 shadow-sm mb-3">
+    <div class="card-header bg-transparent border-bottom fw-semibold py-2">
+      <i class="fas fa-list me-1 text-info"></i>Line Items
+    </div>
+    <div class="card-body p-0">
+      <table class="table table-sm mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Description</th><th class="text-center">Qty</th>
+            <th class="text-end">Unit Price</th><th class="text-end">Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in invoice.items %}
+          <tr>
+            <td>{{ item.name }}</td>
+            <td class="text-center">{{ item.quantity }}</td>
+            <td class="text-end">{{ invoice.currency }} {{ item.unit_price|floatformat:2|intcomma }}</td>
+            <td class="text-end fw-semibold">{{ invoice.currency }} {{ item.subtotal|floatformat:2|intcomma }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          {% if invoice.discount %}
+          <tr>
+            <td colspan="3" class="text-end text-muted small">Discount</td>
+            <td class="text-end text-muted">– {{ invoice.currency }} {{ invoice.discount|floatformat:2|intcomma }}</td>
+          </tr>
+          {% endif %}
+          <tr>
+            <td colspan="3" class="text-end fw-bold">TOTAL</td>
+            <td class="text-end fw-bold fs-5">{{ invoice.currency }} {{ invoice.total_amount|floatformat:2|intcomma }}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+
+  {# ── Payment details from submitter ── #}
+  {% if invoice.bank_account_number or invoice.payment_link %}
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent border-bottom fw-semibold py-2">
+      <i class="fas fa-credit-card me-1 text-success"></i>Submitter's Payment Details
+    </div>
+    <div class="card-body small">
+      {% if invoice.payment_link %}
+      <div class="mb-2">
+        <span class="text-muted">Payment Link:</span>
+        <a href="{{ invoice.payment_link }}" target="_blank" class="ms-2">
+          {{ invoice.payment_link|truncatechars:50 }}
+        </a>
+      </div>
+      {% endif %}
+      {% if invoice.bank_account_number %}
+      <dl class="row mb-0">
+        <dt class="col-4 text-muted">Bank</dt><dd class="col-8">{{ invoice.bank_name }}</dd>
+        <dt class="col-4 text-muted">Account Name</dt><dd class="col-8">{{ invoice.bank_account_name }}</dd>
+        <dt class="col-4 text-muted">Account No.</dt>
+        <dd class="col-8 fw-semibold">{{ invoice.bank_account_number }}</dd>
+        {% if invoice.bank_code %}
+        <dt class="col-4 text-muted">Sort/Swift</dt><dd class="col-8">{{ invoice.bank_code }}</dd>
+        {% endif %}
+      </dl>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if invoice.attachment %}
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-body py-2 small">
+      <i class="fas fa-paperclip me-1 text-secondary"></i>
+      <strong>Attachment:</strong>
+      <a href="{{ invoice.attachment.url }}" target="_blank" class="ms-1">
+        View attached document
+      </a>
+    </div>
+  </div>
+  {% endif %}
+
+  {# ── Accept / Reject actions ── #}
+  {% if invoice.status == 'draft' %}
+  <div class="row g-3">
+    <div class="col-12 col-md-6">
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="accept">
+        <div class="mb-2">
+          <label class="form-label small fw-semibold">Note to submitter (optional)</label>
+          <textarea name="note" class="form-control" rows="2"
+                    placeholder="Acknowledgement note…"></textarea>
+        </div>
+        <button type="submit" class="btn btn-success w-100">
+          <i class="fas fa-check me-2"></i>Accept Invoice
+        </button>
+      </form>
+    </div>
+    <div class="col-12 col-md-6">
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="reject">
+        <div class="mb-2">
+          <label class="form-label small fw-semibold">Reason for rejection <span class="text-danger">*</span></label>
+          <textarea name="note" class="form-control" rows="2"
+                    placeholder="Explain why this invoice is rejected…" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-outline-danger w-100">
+          <i class="fas fa-times me-2"></i>Reject Invoice
+        </button>
+      </form>
+    </div>
+  </div>
+  {% else %}
+  <div class="alert alert-info py-2 small">
+    This invoice has already been reviewed — status: <strong>{{ invoice.get_status_display }}</strong>.
+    <a href="{% url 'invoice_detail' invoice.pk %}" class="ms-2">View full details</a>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

@@ -1,0 +1,290 @@
+{% extends 'base.html' %}
+{% load static custom_filters %}
+
+{% block title %}Performance Dashboard - TeamManager{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-md-12">
+            <div class="card shadow-sm border-0 mb-4" style="border-radius: 12px;">
+                <div class="card-header bg-transparent d-flex align-items-center justify-content-between flex-wrap gap-3">
+                    <h2 class="mb-0"><i class="fas fa-chart-line me-2 text-primary"></i> My Performance Dashboard</h2>
+                    <div class="d-flex flex-wrap gap-3 align-items-center">
+                        <select id="categorySelect" class="form-select" style="max-width: 200px;" data-bs-toggle="tooltip" title="Select metric category">
+                            <option value="overall" {% if category == 'overall' %}selected{% endif %}>Overall</option>
+                            <option value="personal" {% if category == 'personal' %}selected{% endif %}>Personal Tasks</option>
+                            <option value="corporate" {% if category == 'corporate' %}selected{% endif %}>Corporate Tasks</option>
+                        </select>
+                        <button id="resetButton" class="btn btn-outline-secondary btn-sm" title="Reset to Overall">
+                            <i class="fas fa-undo me-1"></i> Reset
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row g-4">
+                        <!-- Completion Percentage -->
+                        <div class="col-12 col-md-6">
+                            <div class="card h-100 shadow-sm border-0" style="border-radius: 8px;">
+                                <div class="card-body text-center">
+                                    <h3 class="card-title font-semibold">Completion Percentage</h3>
+                                    <div style="max-width: 200px; margin: 0 auto;">
+                                        <canvas id="completionChart"></canvas>
+                                    </div>
+                                    <p class="text-3xl font-bold text-primary mt-3">{{ completion_percentage }}%</p>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Tasks Completed -->
+                        <div class="col-12 col-md-6">
+                            <div class="card h-100 shadow-sm border-0" style="border-radius: 8px;">
+                                <div class="card-body text-center">
+                                    <h3 class="card-title font-semibold">Tasks Completed</h3>
+                                    <div style="max-width: 250px; margin: 0 auto;">
+                                        <canvas id="tasksChart"></canvas>
+                                    </div>
+                                    <p class="mt-3">Weekly: {{ weekly_completed }}</p>
+                                    <p>Monthly: {{ monthly_completed }}</p>
+                                    <p>Yearly: {{ yearly_completed }}</p>
+                                    <p class="text-sm">Overdue Tasks: {{ overdue_tasks }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        border-radius: 12px;
+    }
+    .card-body .card {
+        border-radius: 8px;
+    }
+    body.dark-mode .card {
+        background: #2d3748;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    body.dark-mode .card-body h3,
+    body.dark-mode .card-body p {
+        color: #e2e8f0;
+    }
+    body.dark-mode .chart-outer {
+        background: #2d3748 !important;
+    }
+    .text-primary {
+        color: #319795 !important;
+    }
+    .text-primary:hover {
+        color: #2c7a7b !important;
+    }
+    .form-control, .form-select {
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+    }
+    body.dark-mode .form-control,
+    body.dark-mode .form-select {
+        background: #2d3748;
+        border-color: #4a5568;
+        color: #e2e8f0;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: #319795;
+        box-shadow: 0 0 0 0.2rem rgba(49, 151, 149, 0.25);
+    }
+    /* Select2 Custom Styles */
+    .select2-container--bootstrap-5 .select2-selection {
+        border-radius: 8px !important;
+        border: 1px solid #e2e8f0 !important;
+        background: #fff !important;
+        font-size: 0.95rem;
+        height: 38px;
+        line-height: 38px;
+        padding: 0 12px;
+    }
+    body.dark-mode .select2-container--bootstrap-5 .select2-selection {
+        background: #2d3748 !important;
+        border-color: #4a5568 !important;
+        color: #e2e8f0 !important;
+    }
+    .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+        line-height: 36px;
+        padding-left: 0;
+    }
+    .select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow {
+        height: 38px;
+        right: 12px;
+    }
+    .select2-container--bootstrap-5 .select2-dropdown {
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        z-index: 1055;
+    }
+    body.dark-mode .select2-container--bootstrap-5 .select2-dropdown {
+        background: #2d3748;
+        border-color: #4a5568;
+    }
+    .select2-container--bootstrap-5 .select2-results__option {
+        padding: 8px 12px;
+        font-size: 0.95rem;
+        color: #2d3748;
+    }
+    body.dark-mode .select2-container--bootstrap-5 .select2-results__option {
+        color: #e2e8f0;
+    }
+    .select2-container--bootstrap-5 .select2-results__option--highlighted {
+        background: #319795 !important;
+        color: #fff !important;
+    }
+    .select2-container--bootstrap-5 .select2-selection:focus {
+        border-color: #319795 !important;
+        box-shadow: 0 0 0 0.2rem rgba(49, 151, 149, 0.25) !important;
+    }
+    @media (max-width: 768px) {
+        .card-title {
+            font-size: 1rem;
+        }
+        .text-3xl {
+            font-size: 1.5rem;
+        }
+        .text-sm {
+            font-size: 0.85rem;
+        }
+        #categorySelect, #resetButton {
+            max-width: 100%;
+            margin-bottom: 10px;
+        }
+        .card-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .select2-container--bootstrap-5 .select2-selection {
+            font-size: 0.85rem;
+            height: 34px;
+            line-height: 34px;
+        }
+        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+            line-height: 32px;
+        }
+        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow {
+            height: 34px;
+        }
+    }
+</style>
+
+<script>
+$(document).ready(function() {
+    // Initialize Select2 for category dropdown
+    $('#categorySelect').select2({
+        theme: 'bootstrap-5',
+        width: '100%',
+        placeholder: 'Select Category'
+    }).on('change', function() {
+        window.location.href = '{% url "performance_dashboard" %}?category=' + $(this).val();
+    });
+
+    // Initialize Bootstrap tooltips
+    $('[data-bs-toggle="tooltip"]').tooltip();
+
+    // Reset button
+    $('#resetButton').on('click', function(e) {
+        e.preventDefault();
+        window.location.href = '{% url "performance_dashboard" %}?category=overall';
+    });
+
+    const isDarkMode = $('body').hasClass('dark-mode');
+
+    // Dark mode chart adjustments
+    if ($('body').hasClass('dark-mode')) {
+        Chart.defaults.color = '#e2e8f0';
+        Chart.defaults.borderColor = '#4a5568';
+    }
+
+    // Initialize Completion Percentage Doughnut Chart
+    const completionCtx = document.getElementById('completionChart').getContext('2d');
+    new Chart(completionCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Completed', 'Remaining'],
+            datasets: [{
+                data: [{{ completion_percentage }}, {{ 100|subtract:completion_percentage }}],
+                backgroundColor: ['#319795', '#e2e8f0'],
+                borderColor: ['#319795', '#e2e8f0'],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        color: isDarkMode? '#e2e8f0' : '#2d3748'
+                    }
+                },
+                tooltip: {
+                    backgroundColor: '#2d3748',
+                    titleColor: '#fff',
+                    bodyColor: '#fff'
+                }
+            }
+        }
+    });
+
+    // Initialize Tasks Completed Bar Chart
+    const tasksCtx = document.getElementById('tasksChart').getContext('2d');
+    new Chart(tasksCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Weekly', 'Monthly', 'Yearly'],
+            datasets: [{
+                label: 'Tasks Completed',
+                data: [{{ weekly_completed }}, {{ monthly_completed }}, {{ yearly_completed }}],
+                backgroundColor: '#319795',
+                borderColor: '#319795',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        color: '#2d3748'
+                    },
+                    grid: {
+                        color: '#e2e8f0'
+                    }
+                },
+                x: {
+                    ticks: {
+                        color: '#2d3748'
+                    },
+                    grid: {
+                        display: false
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: '#2d3748',
+                    titleColor: '#fff',
+                    bodyColor: '#fff'
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

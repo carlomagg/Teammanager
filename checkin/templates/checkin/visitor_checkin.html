@@ -1,0 +1,613 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Visitor Check-in{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* ── Document section ── */
+  #docScanSection {
+    animation: slideDown 0.25s ease;
+  }
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Upload drop zone */
+  .doc-dropzone {
+    border: 2px dashed #adb5bd;
+    border-radius: 10px;
+    padding: 1.5rem 1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    background: #f8f9fa;
+    position: relative;
+  }
+  .doc-dropzone:hover,
+  .doc-dropzone.dragover {
+    border-color: #0d6efd;
+    background: #e8f0fe;
+  }
+  .doc-dropzone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+  .doc-dropzone .dz-icon { font-size: 2rem; color: #6c757d; }
+  .doc-dropzone .dz-label { font-size: 0.85rem; color: #6c757d; margin-top: 0.4rem; }
+
+  /* Camera strip */
+  #docVideo {
+    width: 100%;
+    max-height: 200px;
+    object-fit: cover;
+    border-radius: 8px;
+    background: #000;
+  }
+  #docPreview {
+    width: 100%;
+    max-height: 200px;
+    object-fit: contain;
+    border-radius: 8px;
+    border: 2px solid #198754;
+  }
+
+  /* Thumbnail row */
+  #uploadPreviewWrap img {
+    width: 80px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+  }
+
+  /* Tab pills for Upload vs Camera */
+  .doc-tab-btn {
+    border: 1px solid #dee2e6;
+    background: #fff;
+    padding: 0.35rem 0.9rem;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    color: #495057;
+  }
+  .doc-tab-btn.active {
+    background: #0d6efd;
+    color: #fff;
+    border-color: #0d6efd;
+  }
+  .doc-tab-panel { display: none; }
+  .doc-tab-panel.active { display: block; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4" style="max-width:760px;">
+
+  {# ── Header ── #}
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h4 class="mb-0"><i class="fas fa-user-plus me-2 text-success"></i>Visitor Check-in</h4>
+      <small class="text-muted">Complete at least name and phone number to proceed.</small>
+    </div>
+    <a href="{% url 'checkin:checkin_dashboard' %}" class="btn btn-outline-secondary btn-sm">
+      <i class="fas fa-arrow-left me-1"></i>Back
+    </a>
+  </div>
+
+  {# ── Returning visitor banner ── #}
+  <div id="returningBanner" class="alert alert-success py-2 small d-none">
+    <i class="fas fa-user-check me-1"></i>
+    <span id="returningName"></span> — details pre-filled from previous visit.
+  </div>
+
+  <form method="post" enctype="multipart/form-data" novalidate id="visitorForm">
+    {% csrf_token %}
+
+    {# ── Visitor Details ── #}
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-header bg-transparent border-bottom fw-semibold py-2">
+        <i class="fas fa-id-card me-1 text-primary"></i>Visitor Details
+        <span class="text-danger small ms-1">* required</span>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+
+          <div class="col-12 col-md-6">
+            <label for="{{ form.phone_number.id_for_label }}" class="form-label small fw-semibold">
+              Phone Number <span class="text-danger">*</span>
+            </label>
+            {{ form.phone_number }}
+            <div id="phoneLookupSpinner" class="form-text text-muted d-none">
+              <span class="spinner-border spinner-border-sm me-1"></span>Looking up visitor…
+            </div>
+            {% if form.phone_number.errors %}
+              <div class="invalid-feedback d-block">{{ form.phone_number.errors|join:", " }}</div>
+            {% endif %}
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label for="{{ form.name.id_for_label }}" class="form-label small fw-semibold">
+              Full Name <span class="text-danger">*</span>
+            </label>
+            {{ form.name }}
+            {% if form.name.errors %}
+              <div class="invalid-feedback d-block">{{ form.name.errors|join:", " }}</div>
+            {% endif %}
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label for="{{ form.email.id_for_label }}" class="form-label small fw-semibold">
+              Email <span class="text-muted fw-normal">(optional)</span>
+            </label>
+            {{ form.email }}
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label for="{{ form.purpose.id_for_label }}" class="form-label small fw-semibold">
+              Purpose <span class="text-muted fw-normal">(optional)</span>
+            </label>
+            {{ form.purpose }}
+          </div>
+
+          <div class="col-12" id="purposeDetailWrap" style="display:none;">
+            <label for="{{ form.purpose_detail.id_for_label }}" class="form-label small fw-semibold">
+              Additional Details
+            </label>
+            {{ form.purpose_detail }}
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    {# ── Visit Details ── #}
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-header bg-transparent border-bottom fw-semibold py-2">
+        <i class="fas fa-calendar-check me-1 text-info"></i>Visit Details
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+
+          <div class="col-12 col-md-6">
+            <label for="{{ form.visitee.id_for_label }}" class="form-label small fw-semibold">
+              Who are they visiting? <span class="text-muted fw-normal">(optional)</span>
+            </label>
+            {{ form.visitee }}
+          </div>
+
+          <div class="col-12 col-md-6 d-flex align-items-center">
+            <div class="form-check mt-3">
+              {{ form.on_appointment }}
+              <label class="form-check-label small fw-semibold" for="{{ form.on_appointment.id_for_label }}">
+                On appointment
+              </label>
+            </div>
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label for="{{ form.id_type.id_for_label }}" class="form-label small fw-semibold">
+              Form of ID <span class="text-muted fw-normal">(optional)</span>
+            </label>
+            {{ form.id_type }}
+          </div>
+
+          <div class="col-12 col-md-6" id="idNumberWrap" style="display:none;">
+            <label for="{{ form.id_number.id_for_label }}" class="form-label small fw-semibold">
+              ID Number
+            </label>
+            {{ form.id_number }}
+          </div>
+
+          <div class="col-12">
+            <label for="{{ form.notes.id_for_label }}" class="form-label small fw-semibold">
+              Notes <span class="text-muted fw-normal">(optional)</span>
+            </label>
+            {{ form.notes }}
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    {# ── Document Section  #}
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-transparent border-bottom py-2">
+        <div class="d-flex align-items-center justify-content-between">
+          <span class="fw-semibold">
+            <i class="fas fa-file-alt me-1 text-secondary"></i>Document Scan
+          </span>
+          <div class="form-check form-switch mb-0">
+            
+            <input class="form-check-input" type="checkbox"
+                   id="id_has_document" name="has_document" role="switch"
+                   {% if form.has_document.value %}checked{% endif %}>
+            <label class="form-check-label small fw-semibold" for="id_has_document">
+              Visitor has a document
+            </label>
+          </div>
+        </div>
+      </div>
+
+      {# Hidden until checkbox is ticked #}
+      <div id="docScanSection" style="display:none;">
+        <div class="card-body">
+
+          {# ── Tab switcher: Upload | Camera ── #}
+          <div class="d-flex gap-2 mb-3">
+            <button type="button" class="doc-tab-btn active" data-tab="upload" onclick="switchDocTab('upload')">
+              <i class="fas fa-upload me-1"></i>Upload File
+            </button>
+            <button type="button" class="doc-tab-btn" data-tab="camera" onclick="switchDocTab('camera')">
+              <i class="fas fa-camera me-1"></i>Use Camera
+            </button>
+          </div>
+
+          {# ── UPLOAD TAB ── #}
+          <div id="docTabUpload" class="doc-tab-panel active">
+
+            {# Drop zone wrapping the real file input #}
+            <div class="doc-dropzone" id="docDropzone">
+              {{ form.document_scan }}
+              <div class="dz-icon"><i class="fas fa-file-image"></i></div>
+              <div class="fw-semibold small mt-1">Click to browse or drag & drop</div>
+              <div class="dz-label">PNG, JPG, PDF — max 10 MB</div>
+            </div>
+
+            {# Thumbnail preview — no d-flex class: Bootstrap's !important overrides style="display:none" #}
+            {#   and prevents JS from hiding it. JS sets display:flex directly. #}
+            <div id="uploadPreviewWrap" class="align-items-center gap-2 mt-2" style="display:none;">
+              <img id="uploadThumb" src="" alt="preview"
+                   style="display:none;width:80px;height:60px;object-fit:cover;border-radius:6px;border:1px solid #dee2e6;">
+              <div id="uploadPdfIcon"
+                   style="display:none;width:80px;height:60px;border-radius:6px;border:1px solid #dee2e6;
+                          background:#fff3cd;align-items:center;justify-content:center;flex-shrink:0;">
+                <i class="fas fa-file-pdf text-danger" style="font-size:2rem;"></i>
+              </div>
+              <div>
+                <div class="small fw-semibold" id="uploadFileName"></div>
+                <div class="text-muted" style="font-size:.78rem;" id="uploadFileSize"></div>
+                <button type="button" class="btn btn-link btn-sm p-0 text-danger mt-1" onclick="window.clearUpload()">
+                  <i class="fas fa-times me-1"></i>Remove
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+          {# ── CAMERA TAB ── #}
+          <div id="docTabCamera" class="doc-tab-panel">
+
+            {# Status message #}
+            <div id="camStatus" class="text-muted small mb-2">
+              <i class="fas fa-info-circle me-1"></i>Point camera at the document, then tap Capture.
+            </div>
+
+            {# Video / Preview #}
+            <div class="position-relative mb-2">
+              <video id="docVideo" style="display:none;" autoplay playsinline muted></video>
+              <canvas id="docCanvas" style="display:none;"></canvas>
+              <img id="docPreview" src="" alt="Captured document" style="display:none;">
+
+              {# Overlay shutter ring #}
+              <div id="shutterOverlay" style="display:none;position:absolute;inset:0;border-radius:8px;background:rgba(255,255,255,.6);pointer-events:none;"></div>
+            </div>
+
+            {# Camera controls #}
+            <div class="d-flex gap-2 flex-wrap">
+              <button type="button" class="btn btn-outline-secondary btn-sm" id="startCamBtn" onclick="startDocCamera()">
+                <i class="fas fa-camera me-1"></i>Open Camera
+              </button>
+              <button type="button" class="btn btn-danger btn-sm" id="captureBtn" style="display:none;" onclick="captureDoc()">
+                <i class="fas fa-circle me-1"></i>Capture
+              </button>
+              <button type="button" class="btn btn-outline-warning btn-sm" id="retakeBtn" style="display:none;" onclick="retakeDoc()">
+                <i class="fas fa-redo me-1"></i>Retake
+              </button>
+              <button type="button" class="btn btn-outline-danger btn-sm" id="stopCamBtn" style="display:none;" onclick="stopCamera()">
+                <i class="fas fa-stop me-1"></i>Stop
+              </button>
+            </div>
+
+            {# Capture confirmation badge #}
+            <div id="captureConfirm" class="mt-2 text-success small fw-semibold" style="display:none;">
+              <i class="fas fa-check-circle me-1"></i>Document captured — ready to submit.
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+
+      {# Placeholder when checkbox is off #}
+      <div id="docPlaceholder" class="card-body text-center text-muted py-4 small">
+        <i class="fas fa-file-upload fa-2x mb-2 d-block opacity-25"></i>
+        Tick the switch above to scan or upload a document.
+      </div>
+
+    </div>
+
+    {# ── Submit ── #}
+    <div class="d-flex gap-2 justify-content-end">
+      <a href="{% url 'checkin:checkin_dashboard' %}" class="btn btn-outline-secondary px-4">Cancel</a>
+      <button type="submit" class="btn btn-success px-5" id="submitBtn">
+        <i class="fas fa-sign-in-alt me-2"></i>Check In Visitor
+      </button>
+    </div>
+
+  </form>
+</div>
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+(function () {
+  "use strict";
+
+  /* ── Phone lookup → pre-fill  */
+  const phoneInput = document.getElementById('id_phone_number');
+  const spinner    = document.getElementById('phoneLookupSpinner');
+  const banner     = document.getElementById('returningBanner');
+  const bannerName = document.getElementById('returningName');
+
+  if (phoneInput) {
+    let debounce;
+    phoneInput.addEventListener('input', function () {
+      clearTimeout(debounce);
+      const val = this.value.trim();
+      if (val.length < 7) return;
+      debounce = setTimeout(() => {
+        spinner.classList.remove('d-none');
+        fetch(`{% url 'checkin:visitor_lookup' %}?phone=${encodeURIComponent(val)}`)
+          .then(r => r.json())
+          .then(data => {
+            spinner.classList.add('d-none');
+            if (!data.found) return;
+            const nameField  = document.getElementById('id_name');
+            const emailField = document.getElementById('id_email');
+            if (nameField  && !nameField.value)  nameField.value  = data.name;
+            if (emailField && !emailField.value) emailField.value = data.email || '';
+            bannerName.textContent = data.name;
+            banner.classList.remove('d-none');
+          })
+          .catch(() => spinner.classList.add('d-none'));
+      }, 500);
+    });
+  }
+
+  /* ── Purpose detail toggle */
+  const purposeSel = document.getElementById('id_purpose');
+  const detailWrap = document.getElementById('purposeDetailWrap');
+  if (purposeSel) {
+    const toggle = () => { detailWrap.style.display = purposeSel.value ? '' : 'none'; };
+    purposeSel.addEventListener('change', toggle);
+    toggle();
+  }
+
+  /* ── ID number toggle  */
+  const idTypeSel = document.getElementById('id_id_type');
+  const idNumWrap = document.getElementById('idNumberWrap');
+  if (idTypeSel) {
+    const toggle = () => { idNumWrap.style.display = idTypeSel.value ? '' : 'none'; };
+    idTypeSel.addEventListener('change', toggle);
+    toggle();
+  }
+
+  /*     ── DOCUMENT SECTION ──────────────────────────────────── */
+
+  /* ── Shared refs  */
+  const fileInput      = document.getElementById('id_document_scan');
+  const previewWrap    = document.getElementById('uploadPreviewWrap');
+  const uploadThumb    = document.getElementById('uploadThumb');
+  const uploadPdfIcon  = document.getElementById('uploadPdfIcon');
+  const uploadFileName = document.getElementById('uploadFileName');
+  const uploadFileSize = document.getElementById('uploadFileSize');
+  let   docStream      = null;
+
+  /*  Django ImageField renders accept="image/*" which blocks PDFs.
+     Override immediately so the file picker accepts PDFs too. */
+  if (fileInput) {
+    fileInput.setAttribute('accept', 'image/*,application/pdf,.pdf');
+  }
+
+  /* ── stopCamera — defined FIRST so toggleDocSection can call it ── */
+  window.stopCamera = function () {
+    if (docStream) {
+      docStream.getTracks().forEach(t => t.stop());
+      docStream = null;
+    }
+    const video      = document.getElementById('docVideo');
+    const startBtn   = document.getElementById('startCamBtn');
+    const captureBtn = document.getElementById('captureBtn');
+    const stopBtn    = document.getElementById('stopCamBtn');
+    if (video)      video.style.display      = 'none';
+    if (startBtn)   startBtn.style.display   = '';
+    if (captureBtn) captureBtn.style.display = 'none';
+    if (stopBtn)    stopBtn.style.display    = 'none';
+  };
+
+  /* ── clearUpload — defined FIRST so toggleDocSection can call it ── */
+  window.clearUpload = function () {
+    if (fileInput) fileInput.value = '';
+    if (previewWrap) previewWrap.style.display = 'none';   // works: no d-flex !important fighting it
+    if (uploadThumb) { uploadThumb.src = ''; uploadThumb.style.display = 'none'; }
+    if (uploadPdfIcon) uploadPdfIcon.style.display = 'none';
+    if (uploadFileName) uploadFileName.textContent = '';
+    if (uploadFileSize) uploadFileSize.textContent = '';
+  };
+
+  /* ── Checkbox toggle — safe to call now that helpers are defined ── */
+  const hasDocCheck    = document.getElementById('id_has_document');
+  const docSection     = document.getElementById('docScanSection');
+  const docPlaceholder = document.getElementById('docPlaceholder');
+
+  function toggleDocSection() {
+    if (hasDocCheck.checked) {
+      docSection.style.display     = '';
+      docPlaceholder.style.display = 'none';
+    } else {
+      docSection.style.display     = 'none';
+      docPlaceholder.style.display = '';
+      window.clearUpload();
+      window.stopCamera();
+    }
+  }
+
+  if (hasDocCheck) {
+    hasDocCheck.addEventListener('change', toggleDocSection);
+    toggleDocSection(); // safe now — helpers already defined above
+  }
+
+  /* ── Tab switcher ────────────────────────────────────────── */
+  window.switchDocTab = function (tab) {
+    document.querySelectorAll('.doc-tab-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.tab === tab);
+    });
+    document.querySelectorAll('.doc-tab-panel').forEach(panel => {
+      panel.classList.toggle('active', panel.id === 'docTab' + tab.charAt(0).toUpperCase() + tab.slice(1));
+    });
+    if (tab !== 'camera') window.stopCamera();
+  };
+
+  /* ── Upload: drag/drop + preview */
+  const dropzone = document.getElementById('docDropzone');
+
+  function formatBytes(b) {
+    if (b < 1024) return b + ' B';
+    if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
+    return (b / 1048576).toFixed(1) + ' MB';
+  }
+
+  function showUploadPreview(file) {
+    uploadFileName.textContent = file.name;
+    uploadFileSize.textContent = formatBytes(file.size);
+    previewWrap.style.display  = 'flex';   // 
+
+    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+
+    if (isPdf) {
+      uploadThumb.style.display   = 'none';
+      uploadPdfIcon.style.display = 'flex';
+    } else if (file.type.startsWith('image/')) {
+      uploadPdfIcon.style.display = 'none';
+      const reader = new FileReader();
+      reader.onload = e => { uploadThumb.src = e.target.result; uploadThumb.style.display = ''; };
+      reader.readAsDataURL(file);
+    } else {
+      // Generic file — show neither icon, just name/size
+      uploadThumb.style.display   = 'none';
+      uploadPdfIcon.style.display = 'none';
+    }
+  }
+
+  if (fileInput) {
+    fileInput.addEventListener('change', function () {
+      if (this.files.length) showUploadPreview(this.files[0]);
+      else window.clearUpload();
+    });
+  }
+
+  if (dropzone) {
+    dropzone.addEventListener('dragover',  e => { e.preventDefault(); dropzone.classList.add('dragover'); });
+    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+    dropzone.addEventListener('drop', e => {
+      e.preventDefault();
+      dropzone.classList.remove('dragover');
+      const file = e.dataTransfer.files[0];
+      if (!file) return;
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      fileInput.files = dt.files;
+      showUploadPreview(file);
+    });
+  }
+
+  /* ── Camera capture ─ */
+  window.startDocCamera = function () {
+    const video      = document.getElementById('docVideo');
+    const startBtn   = document.getElementById('startCamBtn');
+    const captureBtn = document.getElementById('captureBtn');
+    const stopBtn    = document.getElementById('stopCamBtn');
+    const status     = document.getElementById('camStatus');
+
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } } })
+      .then(stream => {
+        docStream = stream;
+        video.srcObject = stream;
+        video.style.display      = '';
+        startBtn.style.display   = 'none';
+        captureBtn.style.display = '';
+        stopBtn.style.display    = '';
+        status.textContent = '📷 Camera active — point at document and tap Capture.';
+      })
+      .catch(() => {
+        status.innerHTML = '<span class="text-danger"><i class="fas fa-exclamation-triangle me-1"></i>Camera access denied. Please use the Upload tab instead.</span>';
+      });
+  };
+
+  window.captureDoc = function () {
+    const video      = document.getElementById('docVideo');
+    const canvas     = document.getElementById('docCanvas');
+    const preview    = document.getElementById('docPreview');
+    const captureBtn = document.getElementById('captureBtn');
+    const retakeBtn  = document.getElementById('retakeBtn');
+    const stopBtn    = document.getElementById('stopCamBtn');
+    const overlay    = document.getElementById('shutterOverlay');
+    const confirm    = document.getElementById('captureConfirm');
+    const status     = document.getElementById('camStatus');
+
+    overlay.style.display = '';
+    setTimeout(() => { overlay.style.display = 'none'; }, 200);
+
+    canvas.width  = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+
+    window.stopCamera();
+
+    preview.src              = canvas.toDataURL('image/jpeg', 0.92);
+    preview.style.display    = '';
+    video.style.display      = 'none';
+    captureBtn.style.display = 'none';
+    retakeBtn.style.display  = '';
+    stopBtn.style.display    = 'none';
+    confirm.style.display    = '';
+    status.textContent       = '';
+
+    canvas.toBlob(blob => {
+      const file = new File([blob], 'document_scan.jpg', { type: 'image/jpeg' });
+      const dt   = new DataTransfer();
+      dt.items.add(file);
+      if (fileInput) fileInput.files = dt.files;
+    }, 'image/jpeg', 0.92);
+  };
+
+  window.retakeDoc = function () {
+    const preview   = document.getElementById('docPreview');
+    const retakeBtn = document.getElementById('retakeBtn');
+    const confirm   = document.getElementById('captureConfirm');
+
+    preview.style.display   = 'none';
+    retakeBtn.style.display = 'none';
+    confirm.style.display   = 'none';
+    if (fileInput) fileInput.value = '';
+    window.startDocCamera();
+  };
+
+  /* ── Prevent double submit  */
+  document.getElementById('visitorForm').addEventListener('submit', function () {
+    const btn = document.getElementById('submitBtn');
+    btn.disabled  = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing…';
+  });
+
+})();
+</script>
+{% endblock %}

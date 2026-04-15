@@ -1,0 +1,341 @@
+/**
+ * Field-Level Approval Styling
+ * Provides clean, professional styling for field approval UI
+ */
+
+/* Field Container */
+.field-approval-container {
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+    transition: all 0.3s ease;
+}
+
+.field-approval-container:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border-color: #d0d0d0;
+}
+
+/* Field approved state */
+.field-approval-container[data-status="approved"] {
+    border-left: 4px solid #28a745;
+    background: #f8fff9;
+}
+
+/* Field rejected state */
+.field-approval-container[data-status="rejected"] {
+    border-left: 4px solid #dc3545;
+    background: #fff8f8;
+}
+
+/* Field resubmitted state */
+.field-approval-container[data-status="resubmitted"] {
+    border-left: 4px solid #17a2b8;
+    background: #f8fcff;
+}
+
+/* Field pending state */
+.field-approval-container[data-status="pending"] {
+    border-left: 4px solid #ffc107;
+    background: #fffef8;
+}
+
+/* Field Label */
+.field-approval-container .form-label {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+}
+
+/* Field Value */
+.field-approval-container .field-value {
+    color: #555;
+    margin-bottom: 12px;
+    padding: 8px 0;
+}
+
+.field-approval-container .field-value p {
+    margin-bottom: 0;
+    line-height: 1.6;
+}
+
+/* File Upload Display */
+.field-approval-container .field-value .btn-outline-primary {
+    font-size: 0.875rem;
+    padding: 6px 12px;
+}
+
+/* Approval Actions */
+.field-approval-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+.field-approval-actions .btn-group {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.field-approval-actions .btn {
+    font-size: 0.875rem;
+    padding: 6px 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.field-approval-actions .btn-approve:hover:not(:disabled) {
+    background-color: #28a745;
+    color: white;
+    transform: translateY(-1px);
+}
+
+.field-approval-actions .btn-reject:hover:not(:disabled) {
+    background-color: #dc3545;
+    color: white;
+    transform: translateY(-1px);
+}
+
+.field-approval-actions .btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+/* Status Badge */
+.field-status-badge {
+    text-align: center;
+    margin-top: 8px;
+}
+
+.field-status-badge .badge {
+    font-size: 0.8rem;
+    padding: 6px 12px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+}
+
+/* Rejection Reason Alert */
+.field-approval-container .alert-danger {
+    margin-top: 12px;
+    margin-bottom: 0;
+    font-size: 0.875rem;
+    border-left: 3px solid #dc3545;
+}
+
+.field-approval-container .alert-danger strong {
+    display: block;
+    margin-bottom: 4px;
+}
+
+/* Section Headers */
+.section-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    margin: 24px 0 16px 0;
+    box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
+}
+
+.section-header h5 {
+    margin: 0;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.section-header i {
+    margin-right: 8px;
+}
+
+/* Approval Summary Card */
+.approval-summary {
+    position: sticky;
+    top: 20px;
+}
+
+.approval-summary .card {
+    border: none;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.approval-summary .card-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+}
+
+.approval-summary .progress {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.approval-summary .progress-bar {
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.approval-summary .list-group-item {
+    border-left: none;
+    border-right: none;
+    padding: 12px 0;
+}
+
+.approval-summary .list-group-item:first-child {
+    border-top: none;
+}
+
+.approval-summary .list-group-item:last-child {
+    border-bottom: none;
+}
+
+/* Approve All Button */
+.alert .btn-success {
+    box-shadow: 0 2px 6px rgba(40, 167, 69, 0.3);
+    transition: all 0.2s ease;
+}
+
+.alert .btn-success:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+}
+
+/* Resubmitted Approve Button */
+.btn-resubmitted {
+    position: relative;
+}
+
+.btn-resubmitted small {
+    color: #17a2b8;
+    font-weight: 600;
+    display: block;
+    margin-top: 2px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .field-approval-container {
+        padding: 12px;
+    }
+    
+    .field-approval-container .d-flex {
+        flex-direction: column;
+    }
+    
+    .field-approval-actions {
+        align-items: stretch;
+        width: 100%;
+        margin-top: 12px;
+    }
+    
+    .field-approval-actions .btn-group {
+        width: 100%;
+    }
+    
+    .field-approval-actions .btn {
+        flex: 1;
+    }
+    
+    .section-header {
+        padding: 10px 15px;
+    }
+    
+    .section-header h5 {
+        font-size: 1rem;
+    }
+}
+
+/* Toast and Modal styles removed - using standard browser alerts/prompts */
+
+/* Loading State */
+.field-approval-container.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.field-approval-container.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 24px;
+    height: 24px;
+    margin: -12px 0 0 -12px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Print Styles */
+@media print {
+    .field-approval-actions,
+    .btn,
+    .alert {
+        display: none !important;
+    }
+    
+    .field-approval-container {
+        border: 1px solid #000;
+        page-break-inside: avoid;
+    }
+    
+    .section-header {
+        background: #f0f0f0 !important;
+        color: #000 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+}
+
+/* Accessibility */
+.field-approval-actions .btn:focus {
+    outline: 2px solid #667eea;
+    outline-offset: 2px;
+}
+
+.field-approval-container:focus-within {
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+}
+
+/* Dark Mode Support (Optional) */
+@media (prefers-color-scheme: dark) {
+    .field-approval-container {
+        background: #2d2d2d;
+        border-color: #444;
+        color: #e0e0e0;
+    }
+    
+    .field-approval-container .form-label {
+        color: #f0f0f0;
+    }
+    
+    .field-approval-container .field-value {
+        color: #d0d0d0;
+    }
+    
+    .field-approval-container[data-status="approved"] {
+        background: #1a2e1a;
+    }
+    
+    .field-approval-container[data-status="rejected"] {
+        background: #2e1a1a;
+    }
+    
+    .field-approval-container[data-status="pending"] {
+        background: #2e2a1a;
+    }
+}

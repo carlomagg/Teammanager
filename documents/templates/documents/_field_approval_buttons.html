@@ -1,0 +1,113 @@
+{% comment %}
+Reusable template for field-level approval/rejection buttons
+Usage:
+  {% include 'documents/_field_approval_buttons.html' with field_name='nin' field_label='NIN' field_value=kyc.nin content_type_id=content_type.id object_id=kyc.id %}
+{% endcomment %}
+
+{% load static %}
+
+<div class="field-approval-container" data-field-name="{{ field_name }}">
+    <div class="d-flex justify-content-between align-items-start mb-2">
+        <div class="flex-grow-1">
+            <label class="form-label fw-bold">{{ field_label }}</label>
+            <div class="field-value">
+                {% if field_type == 'file' %}
+                    {% if field_value %}
+                        <a href="{{ field_value.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-file-earmark"></i> View Document
+                        </a>
+                    {% else %}
+                        <span class="text-muted">No file uploaded</span>
+                    {% endif %}
+                {% else %}
+                    <p class="mb-0">{{ field_value|default:"Not provided" }}</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        {% if can_review %}
+        <div class="field-approval-actions ms-3">
+            <div class="btn-group btn-group-sm" role="group">
+                <button type="button" 
+                        class="btn btn-approve {% if field_status == 'approved' %}btn-success active{% else %}btn-outline-success{% endif %} {% if field_status == 'resubmitted' %}btn-resubmitted{% endif %}"
+                        data-action="approve"
+                        data-field-name="{{ field_name }}"
+                        data-content-type-id="{{ content_type_id }}"
+                        data-object-id="{{ object_id }}"
+                        {% if loan_id %}data-loan-id="{{ loan_id }}"{% endif %}
+                        {% if field_status == 'approved' %}disabled{% endif %}>
+                    <i class="bi bi-check-circle"></i> Approve
+                    {% if field_status == 'resubmitted' %}<br><small style="font-size: 0.65em; line-height: 1;">(Resubmitted)</small>{% endif %}
+                </button>
+                <button type="button" 
+                        class="btn btn-reject {% if field_status == 'rejected' %}btn-danger active{% else %}btn-outline-danger{% endif %}"
+                        data-action="reject"
+                        data-field-name="{{ field_name }}"
+                        data-content-type-id="{{ content_type_id }}"
+                        data-object-id="{{ object_id }}"
+                        {% if loan_id %}data-loan-id="{{ loan_id }}"{% endif %}
+                        {% if field_status == 'rejected' %}disabled{% endif %}>
+                    <i class="bi bi-x-circle"></i> Reject
+                </button>
+            </div>
+            
+            <div class="field-status-badge mt-1">
+                {% if field_status == 'approved' %}
+                    <span class="badge bg-success">
+                        <i class="bi bi-check-circle-fill"></i> Approved
+                    </span>
+                {% elif field_status == 'rejected' %}
+                    <span class="badge bg-danger">
+                        <i class="bi bi-x-circle-fill"></i> Rejected
+                    </span>
+                {% elif field_status == 'resubmitted' %}
+                    <span class="badge bg-info">
+                        <i class="bi bi-arrow-repeat"></i> Resubmitted - Awaiting Review
+                    </span>
+                {% else %}
+                    <span class="badge bg-warning text-dark">
+                        <i class="bi bi-clock"></i> Pending
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+        {% else %}
+            <div class="field-status-badge">
+                {% if field_status == 'approved' %}
+                    <span class="badge bg-success">
+                        <i class="bi bi-check-circle-fill"></i> Approved
+                    </span>
+                {% elif field_status == 'rejected' %}
+                    <span class="badge bg-danger">
+                        <i class="bi bi-x-circle-fill"></i> Rejected
+                    </span>
+                    {% if rejection_reason %}
+                        <div class="alert alert-danger mt-2 mb-0">
+                            <strong>Rejection Reason:</strong> {{ rejection_reason }}
+                            <div class="mt-2">
+                                <small class="text-muted">Please update this field and resubmit.</small>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <span class="badge bg-warning text-dark">
+                        <i class="bi bi-clock"></i> Under Review
+                    </span>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+    
+    {% if field_status == 'rejected' and rejection_reason and can_review %}
+        <div class="alert alert-danger alert-sm mb-0">
+            <strong>Rejection Reason:</strong> {{ rejection_reason }}
+        </div>
+    {% endif %}
+</div>
+
+<hr class="my-3">
+
+{% comment %}
+Add this script once in the parent template
+<script src="{% static 'js/field_approval.js' %}"></script>
+{% endcomment %}

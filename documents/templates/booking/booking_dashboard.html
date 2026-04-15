@@ -1,0 +1,1068 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Booking Dashboard{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+<div class="container py-5">
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <h1 class="fw-bold text-primary mb-0">Booking Dashboard</h1>
+    <div class="d-flex gap-2">
+      {% comment %} <a href="{% url 'availability_rule_create' %}" class="btn btn-outline-primary">
+        <i class="fas fa-plus me-1"></i> Add Availability
+      </a> {% endcomment %}
+      <a href="{% url 'booking_type_create' %}" class="btn btn-outline-primary">
+        <i class="fas fa-plus me-1"></i> New Booking Service
+      </a>
+    </div>
+  </div>
+
+  <!-- ── Tabs ──────────────────────────────────────────────────────────────── -->
+  <ul class="nav nav-tabs mb-4" id="dashTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active" id="overview-tab" data-bs-toggle="tab"
+              data-bs-target="#overview" type="button" role="tab">
+        <i class="fas fa-tachometer-alt me-1"></i> Overview
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="mycalendar-tab" data-bs-toggle="tab"
+              data-bs-target="#mycalendar" type="button" role="tab">
+        <i class="fas fa-calendar-alt me-1"></i> My Calendar
+      </button>
+    </li>
+  </ul>
+
+  <div class="tab-content" id="dashTabContent">
+
+    <!-- ════════════════════════════════════════════════════════════════════
+         TAB 1 — Overview  (unchanged)
+         ════════════════════════════════════════════════════════════════════ -->
+    <div class="tab-pane fade show active" id="overview" role="tabpanel">
+
+      <!-- Stats cards -->
+      <div class="row g-4 mb-4">
+        <div class="col-md-4">
+          <div class="card shadow-sm h-100">
+            <div class="card-body">
+              <div class="d-flex align-items-center gap-3 mb-2">
+                <span class="bg-success bg-opacity-10 text-success rounded p-2"><i class="fas fa-calendar-alt fa-lg"></i></span>
+                <h5 class="card-title mb-0">Booking Services <span class="badge bg-success ms-1">{{ booking_types_count }}</span></h5>
+              </div>
+              <p class="card-text text-muted small">Appointment type or Services people can book{% if not is_personal %} (personal or organization-wide){% endif %}.</p>
+              <a href="{% url 'booking_type_list' %}" class="btn btn-success btn-sm">View Services</a>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card shadow-sm h-100">
+            <div class="card-body">
+              <div class="d-flex align-items-center gap-3 mb-2">
+                <span class="bg-warning bg-opacity-10 text-warning rounded p-2"><i class="fas fa-users fa-lg"></i></span>
+                <h5 class="card-title mb-0">Bookings</h5>
+              </div>
+              <p class="card-text text-muted small">View scheduled meetings, appointments, and sessions.</p>
+              <a href="{% url 'bookings_list' %}" class="btn btn-warning btn-sm text-white">View Bookings</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Share Calendar -->
+      {% comment %} <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+          <h5 class="mb-0"><i class="fas fa-share-alt me-2 text-primary"></i>Share Your Calendar</h5>
+        </div>
+        <div class="card-body">
+          <p class="text-muted mb-3">Allow external users to book time with you{% if not is_personal %} or your organization{% endif %}.</p>
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="shareToggle" {% if is_shareable %}checked{% endif %}>
+            <label class="form-check-label" for="shareToggle">Make Calendar Shareable</label>
+          </div>
+          {% if is_shareable %}
+          <div class="input-group">
+            <input type="text" class="form-control" id="shareLink" value="{{ shareable_link }}" readonly>
+            <button class="btn btn-outline-secondary" id="copyBtn"><i class="fas fa-copy me-1"></i>Copy</button>
+          </div>
+          {% endif %}
+        </div>
+      </div> {% endcomment %}
+
+      <!-- Share Calendar -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+          <h5 class="mb-0"><i class="fas fa-share-alt me-2 text-primary"></i>Share Calendar</h5>
+        </div>
+        <div class="card-body">
+          <p class="text-muted mb-4">
+            Allow external users to book time with you{% if not is_personal %} or your organization{% endif %}.
+          </p>
+
+          <div class="form-check form-switch mb-4">
+            <input class="form-check-input" type="checkbox" id="shareToggle" {% if is_shareable %}checked{% endif %}>
+            <label class="form-check-label fw-semibold" for="shareToggle">
+              Make calendar shareable
+              {% if not is_personal %}(personal + organization-wide){% endif %}
+            </label>
+          </div>
+
+          {% if is_shareable %}
+          <div id="shareLinksContainer" class="mt-3">
+            <!-- Personal link -->
+            <div class="mb-4">
+              <label class="form-label small fw-bold text-primary">
+                <i class="fas fa-user me-1"></i> Personal Booking Page
+              </label>
+              <div class="input-group input-group-sm">
+                <input type="text" class="form-control" id="shareLinkPersonal" value="{{ shareable_link|default:'' }}" readonly>
+                <button class="btn btn-outline-secondary copy-btn" type="button" data-target="#shareLinkPersonal">
+                  <i class="fas fa-copy me-1"></i> Copy
+                </button>
+              </div>
+              <div class="form-text small text-muted mt-1">
+                For 1:1 appointments booked directly with you
+              </div>
+            </div>
+
+            {% if not is_personal and org_shareable_link %}
+            <!-- Organization link -->
+            <div>
+              <label class="form-label small fw-bold text-info">
+                <i class="fas fa-users me-1"></i> Organization Booking Page
+              </label>
+              <div class="input-group input-group-sm">
+                <input type="text" class="form-control" id="shareLinkOrg" value="{{ org_shareable_link }}" readonly>
+                <button class="btn btn-outline-secondary copy-btn" type="button" data-target="#shareLinkOrg">
+                  <i class="fas fa-copy me-1"></i> Copy
+                </button>
+              </div>
+              <div class="form-text small text-muted mt-1">
+                For any public booking service in your organization
+              </div>
+            </div>
+            {% endif %}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Recent Bookings -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <h5 class="mb-0"><i class="fas fa-list me-2 text-primary"></i>Recent Bookings</h5>
+          {% if recent_bookings %}
+          <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#inviteExternalModal">
+            <i class="fas fa-envelope me-1"></i> Invite External Participants
+          </button>
+          {% endif %}
+        </div>
+        <div class="card-body p-0">
+          {% if recent_bookings %}
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Event</th><th>Attendee</th><th>When</th><th>Status</th><th>Invited</th><th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for booking in recent_bookings %}
+                <tr>
+                  <td>{{ booking.event.title }}</td>
+                  <td>
+                    {% if booking.user %}{{ booking.user.get_full_name|default:booking.user.username }}
+                    {% else %}{{ booking.first_name }} {{ booking.last_name }}{% endif %}
+                  </td>
+                  <td>{{ booking.event.start_time|date:"M d, Y  h:i A" }}</td>
+                  <td>
+                    <span class="badge
+                      {% if booking.status == 'confirmed' %}bg-success
+                      {% elif booking.status == 'pending' %}bg-warning text-dark
+                      {% elif booking.status == 'cancelled' %}bg-danger
+                      {% else %}bg-secondary{% endif %}">
+                      {{ booking.get_status_display }}
+                    </span>
+                  </td>
+                  <td class="text-center participant-info">
+                    {% for ext in booking.event.external_participants.all|slice:":5" %}
+                        <span class="d-inline-block text-center me-1" title="{{ ext.email }}">
+                            <div class="bg-primary text-white rounded-circle" style="width:28px;height:28px;font-size:11px;line-height:28px;">
+                                {{ ext.email|slice:":2"|upper }}
+                            </div>
+                        </span>
+                    {% empty %}
+                        <span class="text-muted">—</span>
+                    {% endfor %}
+                  </td>
+                  <td>
+                    {% if booking.status == 'pending' %}
+                    <a href="{% url 'booking_action' booking.uuid 'accept' %}" class="btn btn-sm btn-success">Accept</a>
+                    <a href="{% url 'booking_action' booking.uuid 'decline' %}" class="btn btn-sm btn-danger ms-1">Decline</a>
+                    {% endif %}
+                    <button class="btn btn-sm btn-outline-secondary ms-1"
+                            data-bs-toggle="modal" data-bs-target="#inviteExternalModal"
+                            data-event-id="{{ booking.event.id }}"
+                            data-event-title="{{ booking.event.title }}"
+                            title="Invite external participants">
+                      <i class="fas fa-user-plus"></i>
+                    </button>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="text-center text-muted py-5">
+            <i class="fas fa-calendar-times fa-2x mb-2 opacity-50"></i>
+            <p>No bookings yet.</p>
+          </div>
+          {% endif %}
+        </div>
+        {% if recent_bookings %}
+        <div class="card-footer bg-white">
+          <a href="{% url 'bookings_list' %}" class="btn btn-sm btn-outline-primary">View all bookings →</a>
+        </div>
+        {% endif %}
+      </div>
+
+    </div><!-- /tab overview -->
+
+
+    <!-- ════════════════════════════════════════════════════════════════════
+         TAB 2 — My Calendar
+         ════════════════════════════════════════════════════════════════════ -->
+    <div class="tab-pane fade" id="mycalendar" role="tabpanel">
+      <div class="card shadow-sm border-0">
+
+        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2"
+             style="background:#f5f7fa; border-bottom:1px solid #e2e8f0;">
+          <h5 class="mb-0 fw-bold" style="color:#319795;">
+            <i class="fas fa-calendar-alt me-2" style="color:#319795;"></i>My Calendar
+          </h5>
+          <div class="d-flex gap-2 align-items-center flex-wrap">
+            <span class="badge bg-light text-secondary border small fw-normal">
+              <i class="fas fa-globe me-1 text-muted"></i>
+              <span id="cal-tz-label">{{ effective_timezone|default:"Africa/Lagos" }}</span>
+            </span>
+            <div class="btn-group btn-group-sm">
+              <button class="btn btn-outline-primary cal-view-btn active" data-view="dayGridMonth">Month</button>
+              <button class="btn btn-outline-primary cal-view-btn" data-view="timeGridWeek">Week</button>
+              <button class="btn btn-outline-primary cal-view-btn" data-view="timeGridDay">Day</button>
+            </div>
+            <button class="btn btn-primary btn-sm" id="newEventBtn">
+              <i class="fas fa-plus me-1"></i> New Event
+            </button>
+          </div>
+        </div>
+
+        <!-- Colour legend -->
+        <div class="px-3 pt-2 pb-2 border-bottom d-flex flex-wrap gap-3 small text-muted align-items-center">
+          <span>
+            <span style="display:inline-block;width:12px;height:12px;background:#319795;border-radius:3px;vertical-align:middle;margin-right:4px;"></span>
+            {% if not is_personal %}Team / internal events
+            {% else %}Personal Events (Reminders){% endif %}
+          </span>
+          <span>
+            <span style="display:inline-block;width:12px;height:12px;background:#e67e22;border-radius:3px;vertical-align:middle;margin-right:4px;"></span>
+            Booked appointments {% if not is_personal %}(Personal){% endif %}
+          </span>
+          {% if not is_personal %}
+            <span>
+              <span style="display:inline-block;width:12px;height:12px;background:#9f7aea;border-radius:3px;vertical-align:middle;margin-right:4px;"></span>
+              Booked appointments (Organization)
+            </span>
+          {% endif %}
+          <span class="ms-auto fst-italic">Click a date to add · Click an event to view/edit</span>
+        </div>
+
+        <div class="card-body p-0">
+          <div id="myCalendar" style="padding:12px; min-height:620px;"></div>
+        </div>
+      </div>
+    </div><!-- /tab mycalendar -->
+
+  </div><!-- /tab-content -->
+</div><!-- /container -->
+
+
+<!-- ════════════════════════════════════════════════════════════════════════
+     MODAL — Internal Event Create / Edit
+     Includes BOTH in-house participant picker and external email invites
+     in a single tabbed interface so you can do both in one action.
+     ════════════════════════════════════════════════════════════════════════ -->
+<div class="modal fade" id="eventModal" tabindex="-1" aria-labelledby="eventModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <form id="eventForm" aria-label="Event Form">
+      <div class="modal-content">
+        <div class="modal-header" style="background:#f5f7fa; border-bottom:1px solid #e2e8f0;">
+          <h5 class="modal-title fw-bold" id="eventModalLabel">Add Event</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body" style="max-height:75vh; overflow-y:auto;">
+          <input type="hidden" id="eventId">
+
+          <!-- ── Event details ────────────────────────────────────────────── -->
+          <div class="mb-3">
+            <label for="ev-title" class="form-label fw-bold">Title <span class="text-danger">*</span></label>
+            <input type="text" id="ev-title" class="form-control" required>
+            <div class="invalid-feedback"></div>
+          </div>
+          <div class="mb-3">
+            <label for="ev-description" class="form-label fw-bold">Description</label>
+            <textarea id="ev-description" class="form-control" rows="2"></textarea>
+          </div>
+          <div class="row">
+            <div class="col-12 col-md-6 mb-3">
+              <label for="ev-start" class="form-label fw-bold">Start <span class="text-danger">*</span></label>
+              <input type="datetime-local" id="ev-start" class="form-control" required>
+              <div class="invalid-feedback"></div>
+            </div>
+            <div class="col-12 col-md-6 mb-3">
+              <label for="ev-end" class="form-label fw-bold">End</label>
+              <input type="datetime-local" id="ev-end" class="form-control">
+            </div>
+          </div>
+          <div class="mb-4">
+            <label for="ev-link" class="form-label fw-bold">Meeting Link</label>
+            <input type="url" id="ev-link" class="form-control" placeholder="https://…">
+          </div>
+
+          <hr class="my-3">
+
+          <!-- ── Participants — inner tabs ────────────────────────────────── -->
+          <p class="fw-bold mb-2"><i class="fas fa-users me-1 text-primary"></i>Participants</p>
+
+          <ul class="nav nav-pills nav-fill mb-3 gap-1" id="participantTabs" role="tablist">
+            {% if not user.is_personal %}
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" id="inhouse-tab" data-bs-toggle="pill"
+                      data-bs-target="#inhouse-pane" type="button" role="tab">
+                <i class="fas fa-building me-1"></i> In-house
+              </button>
+            </li>
+            {% endif %}
+            <li class="nav-item" role="presentation">
+              <button class="nav-link {% if user.is_personal %}active{% endif %}"
+                      id="external-tab" data-bs-toggle="pill"
+                      data-bs-target="#external-pane" type="button" role="tab">
+                <i class="fas fa-envelope me-1"></i> External
+              </button>
+            </li>
+            {% if not user.is_personal %}
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="both-tab" data-bs-toggle="pill"
+                      data-bs-target="#both-pane" type="button" role="tab">
+                <i class="fas fa-people-arrows me-1"></i> Both
+              </button>
+            </li>
+            {% endif %}
+          </ul>
+
+          <div class="tab-content" id="participantTabContent">
+
+            <!-- In-house -->
+            {% if not user.is_personal %}
+            <div class="tab-pane fade show active" id="inhouse-pane" role="tabpanel">
+              <label for="eventParticipants" class="form-label small text-muted">
+                Select team members — they'll be notified by the system.
+              </label>
+              <select multiple id="eventParticipants" class="form-select"></select>
+            </div>
+            {% endif %}
+
+            <!-- External only -->
+            <div class="tab-pane fade {% if user.is_personal %}show active{% endif %}"
+                 id="external-pane" role="tabpanel">
+              <label class="form-label small text-muted">
+                Enter emails of external guests — they'll receive an email invite with all event details.
+                No account needed.
+              </label>
+              <textarea class="form-control" id="ev-external-emails" rows="3"
+                placeholder="alice@example.com, bob@company.org&#10;carol@elsewhere.net"></textarea>
+              <div class="form-text">Separate with commas or new lines.</div>
+              <div class="mt-2">
+                <label class="form-label small text-muted">Personal note (optional)</label>
+                <textarea class="form-control form-control-sm" id="ev-external-note" rows="2"
+                  placeholder="Add a short note to include with the invite…"></textarea>
+              </div>
+            </div>
+
+            <!-- Both in-house + external at the same time -->
+            {% if not user.is_personal %}
+            <div class="tab-pane fade" id="both-pane" role="tabpanel">
+              <div class="row g-3">
+                <div class="col-12 col-md-6">
+                  <label class="form-label fw-semibold small">In-house</label>
+                  <select multiple id="eventParticipantsBoth" class="form-select form-select-sm"></select>
+                </div>
+                <div class="col-12 col-md-6">
+                  <label class="form-label fw-semibold small">External emails</label>
+                  <textarea class="form-control form-control-sm" id="ev-both-emails" rows="4"
+                    placeholder="alice@example.com&#10;bob@company.org"></textarea>
+                  <div class="mt-2">
+                    <textarea class="form-control form-control-sm" id="ev-both-note" rows="2"
+                      placeholder="Optional note for external guests…"></textarea>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% endif %}
+
+          </div><!-- /participant tab content -->
+
+          <!-- Invite result (shown after save when external emails were given) -->
+          <div id="ev-invite-result" class="mt-3 d-none"></div>
+
+        </div><!-- /modal-body -->
+
+        <div class="modal-footer" style="background:#f5f7fa;">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="saveEventBtn">
+            Save <span class="spinner-border spinner-border-sm d-none"></span>
+          </button>
+          <button type="button" class="btn btn-outline-danger d-none" id="deleteBtn"
+                  data-bs-toggle="modal" data-bs-target="#deleteConfirmModal">Delete</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Event Details Modal (participant read-only view) -->
+<div class="modal fade" id="eventDetailsModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Event Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="detailEventId">
+        <p><strong>Title:</strong> <span id="details-title"></span></p>
+        <p><strong>Description:</strong> <span id="details-description"></span></p>
+        <p><strong>Start:</strong> <span id="details-start"></span></p>
+        <p><strong>End:</strong> <span id="details-end"></span></p>
+        <p><strong>Meeting Link:</strong> <span id="details-link"></span></p>
+        <p><strong>Participants:</strong> <span id="details-participants"></span></p>
+        <div class="mb-2">
+          <label class="form-label fw-bold">Your Response</label>
+          <select id="participant-response" class="form-select">
+            <option value="pending">Pending</option>
+            <option value="accepted">Accept</option>
+            <option value="declined">Decline</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id="save-response">Save Response</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Confirm Delete</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">Are you sure you want to delete this event?</div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+          Delete <span class="spinner-border spinner-border-sm d-none"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Stand-alone External Invite Modal (for bookings list row) -->
+<div class="modal fade" id="inviteExternalModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title"><i class="fas fa-envelope me-2"></i>Invite External Participants</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted small mb-3">
+          Recipients don't need an account — they'll receive an email with all event details.
+        </p>
+        <div class="mb-3">
+          <label class="form-label fw-bold">Event</label>
+          <select class="form-select" id="invite-event-id">
+            <option value="">Select an event…</option>
+            {% for booking in recent_bookings %}
+            <option value="{{ booking.event.id }}">{{ booking.event.title }} — {{ booking.event.start_time|date:"M d" }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-bold">Email Addresses <span class="text-danger">*</span></label>
+          <textarea class="form-control" id="invite-emails" rows="4"
+            placeholder="alice@example.com, bob@company.org&#10;carol@elsewhere.net"></textarea>
+          <div class="form-text">Separate with commas or new lines.</div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-bold">Personal Note <span class="text-muted fw-normal">(optional)</span></label>
+          <textarea class="form-control" id="invite-message" rows="2"
+            placeholder="Add a personal message…"></textarea>
+        </div>
+        <div id="invite-result" class="d-none"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" id="sendInviteBtn">
+          <i class="fas fa-paper-plane me-1"></i> Send Invites
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════════════════
+     Scripts
+     ════════════════════════════════════════════════════════════════════════ -->
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+<link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+window.currentUserId = {{ request.user.id|default:0 }};
+const DASH_TZ = "{{ effective_timezone|default:'Africa/Lagos' }}";
+
+/* ── utils ────────────────────────────────────────────────────────────────── */
+function getCookie(name) {
+  const val = `; ${document.cookie}`.split(`; ${name}=`)[1];
+  return val ? val.split(';')[0] : null;
+}
+function toLocalInput(dt) {
+  const p = n => String(n).padStart(2, '0');
+  return `${dt.getFullYear()}-${p(dt.getMonth()+1)}-${p(dt.getDate())}T${p(dt.getHours())}:${p(dt.getMinutes())}`;
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   MY CALENDAR — lazy init on first tab open
+   ════════════════════════════════════════════════════════════════════════════ */
+let myCalendar = null;
+
+function initMyCalendar() {
+  if (myCalendar) return;
+
+  const calEl = document.getElementById('myCalendar');
+
+  myCalendar = new FullCalendar.Calendar(calEl, {
+    initialView:  'dayGridMonth',
+    timeZone:      DASH_TZ,
+    slotMinTime:  '07:00:00',
+    slotMaxTime:  '22:00:00',
+    height:       'auto',
+    editable:     true,
+    selectable:   true,
+    eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: true },
+    headerToolbar: {
+      left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay'
+    },
+
+    eventSources: [
+      {
+        url: '/api/events/',
+        method: 'GET',
+        extraParams: function() {
+          return { user_timezone: DASH_TZ };
+        },
+        failure: function() {
+          console.warn('Could not load calendar events');
+        }
+      }
+    ],
+
+    /* Clicking a blank date → open create modal */
+    dateClick: function(info) {
+      clearEventForm();
+      const start = info.date;
+      start.setHours(9, 0, 0, 0);
+      document.getElementById('ev-start').value = toLocalInput(start);
+      document.getElementById('ev-end').value   = toLocalInput(new Date(start.getTime() + 3600000));
+      document.getElementById('eventModalLabel').textContent = 'Add Event';
+      new bootstrap.Modal(document.getElementById('eventModal')).show();
+    },
+
+    /* Clicking an existing event → edit (owner) or details (participant) */
+    eventClick: function(info) {
+      info.jsEvent.preventDefault();
+      openEditModal(info.event.id);
+    },
+
+    eventContent: function(info) {
+      const div = document.createElement('div');
+      div.style.overflow = 'hidden';
+      div.innerHTML = `<strong style="font-size:0.82rem;">${info.event.title}</strong>`;
+      return { domNodes: [div] };
+    },
+
+    eventDidMount: function(info) {
+  const props = info.event.extendedProps;
+  let color, bgOpacity = '1a'; // ~10% opacity for background
+
+  if (!props.is_booking) {
+    // Internal team/personal events
+    color = '#319795';           // teal
+  } 
+  else if (props.booking_for === 'organization') {
+    // Organization-wide booking (group sessions, office hours, etc.)
+    color = '#9f7aea';           // purple / violet — clearly different from personal
+    // or '#f6ad55'              // amber
+    // or '#ed64a6'              // pinkish
+  } 
+  else {
+    // Personal 1:1 booking from external person
+    color = '#f4a261';           // warm orange
+  }
+
+  // Apply colors
+  info.el.style.backgroundColor = color + bgOpacity;
+  info.el.style.borderColor     = color;
+  info.el.style.borderWidth     = '2px';
+  info.el.style.borderStyle     = 'solid';
+  info.el.style.color           = '#1f2937'; // dark text for readability
+
+  // Optional: add class for further styling or debugging
+  info.el.classList.add('fc-event-custom');
+  if (!props.is_booking) {
+    info.el.classList.add('event-internal');
+  } else if (props.booking_for === 'organization') {
+    info.el.classList.add('event-org-booking');
+  } else {
+    info.el.classList.add('event-personal-booking');
+  }
+},
+  });
+
+  myCalendar.render();
+}
+
+/* Lazy init when tab first shown */
+document.getElementById('mycalendar-tab').addEventListener('shown.bs.tab', function () {
+  initMyCalendar();
+  document.getElementById('cal-tz-label').textContent = DASH_TZ;
+});
+
+/* View-toggle buttons */
+document.querySelectorAll('.cal-view-btn').forEach(btn => {
+  btn.addEventListener('click', function () {
+    if (!myCalendar) return;
+    myCalendar.changeView(this.dataset.view);
+    document.querySelectorAll('.cal-view-btn').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+
+/* "New Event" button */
+document.getElementById('newEventBtn').addEventListener('click', () => {
+  clearEventForm();
+  document.getElementById('eventModalLabel').textContent = 'Add Event';
+  new bootstrap.Modal(document.getElementById('eventModal')).show();
+});
+
+/* ════════════════════════════════════════════════════════════════════════════
+   SELECT2 init
+   ════════════════════════════════════════════════════════════════════════════ */
+const USERS_DATA = [
+  {% for u in users %}
+    { id: {{ u.id }}, text: '{{ u.get_full_name|default:u.username|escapejs }}' },
+  {% endfor %}
+];
+
+$(function() {
+  const s2opts = {
+    placeholder: 'Select participants', allowClear: true, width: '100%',
+    dropdownParent: $('#eventModal'), data: USERS_DATA
+  };
+  $('#eventParticipants').select2(s2opts);
+  // "Both" panel has its own select
+  $('#eventParticipantsBoth').select2({ ...s2opts, dropdownParent: $('#eventModal') });
+});
+
+/* ════════════════════════════════════════════════════════════════════════════
+   INTERNAL EVENT CRUD
+   ════════════════════════════════════════════════════════════════════════════ */
+function openEditModal(eventId) {
+  $.ajax({
+    url: `/api/events/${eventId}/`, method: 'GET',
+    success: function(event) {
+      const me = window.currentUserId;
+      if (event.created_by === me) {
+        /* Owner — editable */
+        document.getElementById('eventId').value        = event.id;
+        document.getElementById('ev-title').value       = event.title;
+        document.getElementById('ev-description').value = event.description || '';
+        document.getElementById('ev-start').value       = new Date(event.start).toISOString().slice(0,16);
+        document.getElementById('ev-end').value         = event.end ? new Date(event.end).toISOString().slice(0,16) : '';
+        document.getElementById('ev-link').value        = event.event_link || '';
+        document.getElementById('deleteBtn').classList.remove('d-none');
+        document.getElementById('eventModalLabel').textContent = 'Edit Event';
+
+        /* Populate in-house participants */
+        const $p = $('#eventParticipants');
+        if ($p.length) {
+          $p.empty();
+          $.ajax({
+            url: '/api/users/', method: 'GET',
+            success: function(users) {
+              users.forEach(u => {
+                const sel = event.participants?.some(p => p.id === u.id) ? 'selected' : '';
+                $p.append(`<option value="${u.id}" ${sel}>${u.username}</option>`);
+              });
+              $p.trigger('change');
+            }
+          });
+        }
+        new bootstrap.Modal(document.getElementById('eventModal')).show();
+      } else {
+        /* Participant — read-only + response */
+        document.getElementById('detailEventId').value             = event.id;
+        document.getElementById('details-title').textContent       = event.title;
+        document.getElementById('details-description').textContent = event.description || 'No description';
+        document.getElementById('details-start').textContent       = new Date(event.start).toLocaleString();
+        document.getElementById('details-end').textContent         = event.end ? new Date(event.end).toLocaleString() : '—';
+        document.getElementById('details-link').innerHTML          = event.event_link
+          ? `<a href="${event.event_link}" target="_blank">${event.event_link}</a>` : 'No link';
+        document.getElementById('details-participants').textContent =
+          event.participants?.map(p => p.username).join(', ') || 'None';
+        const participant = event.participants?.find(p => p.id === me);
+        if (participant?.response) document.getElementById('participant-response').value = participant.response;
+        new bootstrap.Modal(document.getElementById('eventDetailsModal')).show();
+      }
+    },
+    error: function() { alert('Failed to load event details.'); }
+  });
+}
+
+/* ── Save event (create or update), then fire external invites if given ─── */
+document.getElementById('eventForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  this.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+  if (!this.checkValidity()) {
+    this.querySelectorAll(':invalid').forEach(el => el.classList.add('is-invalid'));
+    return;
+  }
+
+  const saveBtn = document.getElementById('saveEventBtn');
+  saveBtn.querySelector('.spinner-border').classList.remove('d-none');
+  saveBtn.disabled = true;
+
+  const id   = document.getElementById('eventId').value;
+
+  /* Collect in-house participants from whichever tab is active */
+  const activePane = document.querySelector('#participantTabContent .tab-pane.active');
+  let inHouseIds = [];
+  if (activePane?.id === 'inhouse-pane' || activePane?.id === 'both-pane') {
+    const selector = activePane.id === 'inhouse-pane' ? '#eventParticipants' : '#eventParticipantsBoth';
+    inHouseIds = $(selector).val()?.map(Number) || [];
+  }
+
+  /* Collect external emails from whichever tab is active */
+  let externalEmails = [];
+  let externalNote   = '';
+  if (activePane?.id === 'external-pane') {
+    externalEmails = (document.getElementById('ev-external-emails')?.value || '')
+      .split(/[,\n]+/).map(e => e.trim()).filter(Boolean);
+    externalNote = document.getElementById('ev-external-note')?.value?.trim() || '';
+  } else if (activePane?.id === 'both-pane') {
+    externalEmails = (document.getElementById('ev-both-emails')?.value || '')
+      .split(/[,\n]+/).map(e => e.trim()).filter(Boolean);
+    externalNote = document.getElementById('ev-both-note')?.value?.trim() || '';
+  }
+
+  const body = {
+    title:       document.getElementById('ev-title').value,
+    description: document.getElementById('ev-description').value,
+    start_time:  document.getElementById('ev-start').value,
+    end_time:    document.getElementById('ev-end').value,
+    event_link:  document.getElementById('ev-link').value,
+  };
+  if (inHouseIds.length > 0) {
+    body.participants = inHouseIds.map(uid => ({ user: uid, response: 'pending' }));
+  }
+
+  try {
+    /* Step 1 — save the event */
+    const resp = await fetch(id ? `/api/events/${id}/` : '/api/events/', {
+      method:  id ? 'PUT' : 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+      body:    JSON.stringify(body)
+    });
+
+    if (!resp.ok) {
+      const err = await resp.json();
+      alert('Failed to save event:\n' + Object.values(err).join('\n'));
+      return;
+    }
+
+    const savedEvent = await resp.json();
+    const savedId    = savedEvent.id || id;
+
+    /* Step 2 — fire external invites if any were given */
+    if (externalEmails.length > 0 && savedId) {
+      const inviteResp = await fetch(`/api/events/${savedId}/invite-external/`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+        body:    JSON.stringify({ emails: externalEmails, message: externalNote })
+      });
+      const inviteData = await inviteResp.json();
+
+      /* Show result briefly inside the modal before closing */
+      const resultEl = document.getElementById('ev-invite-result');
+      let html = '';
+      if (inviteData.sent?.length)
+        html += `<div class="alert alert-success py-2 mb-1"><i class="fas fa-check-circle me-1"></i>Invite sent to <strong>${inviteData.sent.join(', ')}</strong></div>`;
+      if (inviteData.failed?.length)
+        html += `<div class="alert alert-warning py-2 mb-0"><i class="fas fa-exclamation-triangle me-1"></i>Failed: ${inviteData.failed.map(f=>`${f.email}`).join(', ')}</div>`;
+      resultEl.innerHTML = html;
+      resultEl.classList.remove('d-none');
+
+      /* Wait a moment so the user sees the result, then close */
+      await new Promise(r => setTimeout(r, 1800));
+    }
+
+    bootstrap.Modal.getInstance(document.getElementById('eventModal')).hide();
+    myCalendar?.refetchEvents();
+
+  } catch { alert('Network error while saving the event.'); }
+  finally {
+    saveBtn.querySelector('.spinner-border').classList.add('d-none');
+    saveBtn.disabled = false;
+  }
+});
+
+/* ── Delete ─────────────────────────────────────────────────────────────── */
+document.getElementById('confirmDeleteBtn').addEventListener('click', async function() {
+  const id = document.getElementById('eventId').value;
+  this.querySelector('.spinner-border').classList.remove('d-none');
+  this.disabled = true;
+  try {
+    const resp = await fetch(`/api/events/${id}/`, {
+      method: 'DELETE', headers: { 'X-CSRFToken': getCookie('csrftoken') }
+    });
+    if (resp.ok) {
+      bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal'))?.hide();
+      bootstrap.Modal.getInstance(document.getElementById('eventModal'))?.hide();
+      myCalendar?.refetchEvents();
+    } else alert('Failed to delete the event.');
+  } catch { alert('Network error while deleting.'); }
+  finally {
+    this.querySelector('.spinner-border').classList.add('d-none');
+    this.disabled = false;
+  }
+});
+
+/* ── Participant response (read-only modal) ─────────────────────────────── */
+document.getElementById('save-response').addEventListener('click', function() {
+  const eventId  = document.getElementById('detailEventId').value;
+  const response = document.getElementById('participant-response').value;
+  $.ajax({
+    url: `/api/events/${eventId}/respond/`, method: 'POST',
+    headers: { 'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/json' },
+    data: JSON.stringify({ response }),
+    success: function() {
+      bootstrap.Modal.getInstance(document.getElementById('eventDetailsModal'))?.hide();
+    },
+    error: function(xhr) {
+      alert('Error saving response: ' + (xhr.responseJSON?.error || 'Unknown error'));
+    }
+  });
+});
+
+function clearEventForm() {
+  document.getElementById('eventForm').reset();
+  document.getElementById('eventForm').querySelectorAll('.is-invalid')
+    .forEach(el => el.classList.remove('is-invalid'));
+  document.getElementById('eventId').value = '';
+  document.getElementById('deleteBtn').classList.add('d-none');
+  document.getElementById('ev-invite-result').classList.add('d-none');
+  document.getElementById('ev-invite-result').innerHTML = '';
+  $('#eventParticipants').val(null).trigger('change');
+  $('#eventParticipantsBoth').val(null).trigger('change');
+  /* Reset participant sub-tab to first option */
+  const firstTab = document.querySelector('#participantTabs .nav-link');
+  if (firstTab) bootstrap.Tab.getOrCreateInstance(firstTab).show();
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   OVERVIEW TAB — share toggle, copy, stand-alone external invite modal
+   ════════════════════════════════════════════════════════════════════════════ */
+// Toggle shareable status + update both links
+document.getElementById('shareToggle')?.addEventListener('change', async function () {
+  const enabled = this.checked;
+  const originalState = enabled; // for potential revert
+
+  try {
+    this.disabled = true;
+
+    const formData = new URLSearchParams();
+    formData.append('toggle_share', enabled ? 'true' : 'false');
+
+    const response = await fetch(window.location.pathname, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-CSRFToken': getCookie('csrftoken'),
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (data.success) {
+      // Update inputs if response contains links
+      const personalInput = document.getElementById('shareLinkPersonal');
+      if (personalInput && data.shareable_link !== undefined) {
+        personalInput.value = data.shareable_link || '';
+      }
+
+      const orgInput = document.getElementById('shareLinkOrg');
+      if (orgInput && data.org_shareable_link !== undefined) {
+        orgInput.value = data.org_shareable_link || '';
+      }
+      location.reload();
+      // Optional: visual feedback
+      this.closest('.form-check').querySelector('label').style.color = enabled ? '#0d6efd' : '';
+    } else {
+      this.checked = !originalState; // revert on failure
+      alert(data.error || 'Failed to update sharing status');
+    }
+  } catch (err) {
+    console.error('Toggle share error:', err);
+    this.checked = !originalState; // revert on network error
+  } finally {
+    this.disabled = false;
+  }
+});
+
+// Unified copy button handler (works for both buttons)
+document.addEventListener('click', function (e) {
+  if (e.target.closest('.copy-btn')) {
+    const btn = e.target.closest('.copy-btn');
+    const targetSelector = btn.getAttribute('data-target');
+    const input = document.querySelector(targetSelector);
+
+    if (input && input.value.trim()) {
+      navigator.clipboard.writeText(input.value.trim()).then(() => {
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check me-1"></i> Copied!';
+        btn.classList.add('btn-success');
+        setTimeout(() => {
+          btn.innerHTML = originalText;
+          btn.classList.remove('btn-success');
+        }, 1800);
+      }).catch(err => {
+        console.error('Clipboard copy failed:', err);
+      });
+    }
+  }
+});
+
+/* Pre-fill event when invite modal opened from per-row button */
+document.getElementById('inviteExternalModal').addEventListener('show.bs.modal', function (e) {
+  const btn      = e.relatedTarget;
+  const eventId  = btn?.dataset.eventId;
+  const eventTitle = btn?.dataset.eventTitle;
+  const sel      = document.getElementById('invite-event-id');
+  if (eventId && sel) {
+    sel.value = eventId;
+    if (!sel.value) sel.add(new Option(eventTitle || `Event #${eventId}`, eventId, true, true));
+  }
+  const resultEl = document.getElementById('invite-result');
+  resultEl.className = 'd-none';
+  resultEl.innerHTML = '';
+});
+
+document.getElementById('sendInviteBtn').addEventListener('click', async function () {
+  const eventId   = document.getElementById('invite-event-id')?.value;
+  const rawEmails = document.getElementById('invite-emails')?.value || '';
+  const message   = document.getElementById('invite-message')?.value?.trim() || '';
+  const resultEl  = document.getElementById('invite-result');
+
+  if (!eventId) { alert('Please select an event.'); return; }
+  const emails = rawEmails.split(/[,\n]+/).map(e => e.trim()).filter(Boolean);
+  if (!emails.length) { alert('Please enter at least one email address.'); return; }
+
+  this.disabled = true;
+  this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Sending…';
+
+  try {
+    const resp = await fetch(`/api/events/${eventId}/invite-external/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+      body: JSON.stringify({ emails, message })
+    });
+    const data = await resp.json();
+    let html = '';
+    if (data.sent?.length)
+      html += `<div class="alert alert-success mb-2"><i class="fas fa-check-circle me-1"></i>Invites sent to: <strong>${data.sent.join(', ')}</strong></div>`;
+    if (data.failed?.length)
+      html += `<div class="alert alert-warning mb-0"><i class="fas fa-exclamation-triangle me-1"></i>Failed: ${data.failed.map(f=>`${f.email} (${f.error})`).join(', ')}</div>`;
+    resultEl.innerHTML = html;
+    resultEl.classList.remove('d-none');
+    if (data.sent?.length && !data.failed?.length)
+      setTimeout(() => bootstrap.Modal.getInstance(document.getElementById('inviteExternalModal'))?.hide(), 2000);
+  } catch {
+    resultEl.innerHTML = `<div class="alert alert-danger">Network error. Please try again.</div>`;
+    resultEl.classList.remove('d-none');
+  } finally {
+    this.disabled = false;
+    this.innerHTML = '<i class="fas fa-paper-plane me-1"></i>Send Invites';
+  }
+});
+</script>
+
+<style>
+  /* ── Calendar tab: teal FC nav buttons ────────────────────────────────── */
+  #myCalendar .fc-button {
+    background-color: #319795 !important;
+    border-color:     #319795 !important;
+    color:            #fff !important;
+    border-radius:    8px !important;
+    padding:          5px 11px !important;
+    font-size:        0.88rem !important;
+  }
+  #myCalendar .fc-button:hover,
+  #myCalendar .fc-button.fc-button-active {
+    background-color: #2c7a7b !important;
+    border-color:     #2c7a7b !important;
+  }
+  #myCalendar .fc-daygrid-day-number,
+  #myCalendar .fc-col-header-cell-cushion { color: #2d3748; text-decoration: none; }
+  #myCalendar .fc-event               { border-radius: 5px; padding: 2px 5px; font-size: 0.82rem; }
+
+  /* ── Participant inner tabs ────────────────────────────────────────────── */
+  #participantTabs .nav-link          { font-size: 0.85rem; padding: 6px 10px; }
+  #participantTabContent              { min-height: 100px; }
+
+  /* ── Select2 inside modal ─────────────────────────────────────────────── */
+  .select2-container--open .select2-dropdown { z-index: 1060; }
+  .select2-selection__choice__display { color: #000; }
+
+  /* ── Dark mode ────────────────────────────────────────────────────────── */
+  body.dark-mode #myCalendar .fc { background: #2d3748; color: #e2e8f0; }
+  body.dark-mode #myCalendar .fc .fc-daygrid-day-frame,
+  body.dark-mode #myCalendar .fc .fc-timegrid-slot-label,
+  body.dark-mode #myCalendar .fc .fc-timegrid-axis { background: #3b4a6b; border-color: #4a5568; }
+
+  @media (max-width: 768px) { #myCalendar { font-size: 0.83rem; } }
+</style>
+{% endblock %}

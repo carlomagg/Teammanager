@@ -1,0 +1,515 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Payment History{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="display-6 fw-bold" style="color: var(--primary-dark);">
+                <i class="fas fa-credit-card me-2"></i>Payment History
+            </h1>
+            <p class="text-muted">View all your subscription payments and transactions</p>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-icon">
+                    <i class="fas fa-receipt"></i>
+                </div>
+                <div class="stats-value">{{ total_payments }}</div>
+                <div class="stats-label">Total Transactions</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-icon" style="background: linear-gradient(135deg, #48bb78 0%, #2f855a 100%);">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stats-value">{{ successful_payments }}</div>
+                <div class="stats-label">Successful</div>
+                <small class="text-muted">₦{{ total_amount|floatformat:2 }}</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-icon" style="background: linear-gradient(135deg, #f56565 0%, #c53030 100%);">
+                    <i class="fas fa-exclamation-circle"></i>
+                </div>
+                <div class="stats-value">{{ failed_payments }}</div>
+                <div class="stats-label">Failed</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-icon" style="background: linear-gradient(135deg, #4299e1 0%, #2b6cb0 100%);">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stats-value">{{ pending_payments }}</div>
+                <div class="stats-label">Pending</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional Stats Row if needed -->
+    {% if abandoned_payments > 0 or refunded_payments > 0 %}
+    <div class="row mb-4">
+        {% if abandoned_payments > 0 %}
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-icon" style="background: linear-gradient(135deg, #718096 0%, #4a5568 100%);">
+                    <i class="fas fa-hourglass-half"></i>
+                </div>
+                <div class="stats-value">{{ abandoned_payments }}</div>
+                <div class="stats-label">Abandoned</div>
+            </div>
+        </div>
+        {% endif %}
+        {% if refunded_payments > 0 %}
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-icon" style="background: linear-gradient(135deg, #9f7aea 0%, #6b46c1 100%);">
+                    <i class="fas fa-undo-alt"></i>
+                </div>
+                <div class="stats-value">{{ refunded_payments }}</div>
+                <div class="stats-label">Refunded</div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-header light-header">
+            <i class="fas fa-filter me-2"></i>Filter Payments
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label for="status" class="form-label">Status</label>
+                    <select name="status" id="status" class="form-select">
+                        <option value="">All Status</option>
+                        <option value="success" {% if status_filter == 'success' %}selected{% endif %}>Success</option>
+                        <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+                        <option value="failed" {% if status_filter == 'failed' %}selected{% endif %}>Failed</option>
+                        <option value="refunded" {% if status_filter == 'refunded' %}selected{% endif %}>Refunded</option>
+                        <option value="abandoned" {% if status_filter == 'abandoned' %}selected{% endif %}>Abandoned</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="date_from" class="form-label">Date From</label>
+                    <input type="date" class="form-control" id="date_from" name="date_from" value="{{ date_from|default:'' }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="date_to" class="form-label">Date To</label>
+                    <input type="date" class="form-control" id="date_to" name="date_to" value="{{ date_to|default:'' }}">
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary me-2 w-100">
+                        <i class="fas fa-search me-2"></i>Apply Filters
+                    </button>
+                </div>
+                <div class="col-12 d-flex justify-content-end">
+                    <a href="{% url 'client_subscription_payments' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-2"></i>Clear Filters
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Payments List -->
+    <div class="card">
+        <div class="card-header">
+            <i class="fas fa-list me-2"></i>Transaction History
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>Transaction ID</th>
+                            <th>Date & Time</th>
+                            <th>Description</th>
+                            <th>Type</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <!-- <th class="text-center">Actions</th> -->
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for payment in payments %}
+                        <tr>
+                            <td>
+                                <span class="fw-bold">#{{ payment.transaction_id|default:payment.id }}</span>
+                            </td>
+                            <td>
+                                <div>
+                                    <i class="fas fa-calendar-alt text-muted me-1"></i>
+                                    {{ payment.created_at|date:"M d, Y" }}
+                                </div>
+                                <small class="text-muted">
+                                    <i class="fas fa-clock me-1"></i>
+                                    {{ payment.created_at|time:"g:i A" }}
+                                </small>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="me-3">
+                                        {% if payment.payment_type == 'subscription' %}
+                                        <span class="badge bg-primary p-2">
+                                            <i class="fas fa-crown"></i>
+                                        </span>
+                                        {% elif payment.payment_type == 'subscription_adjustment' %}
+                                        <span class="badge bg-info p-2">
+                                            <i class="fas fa-users"></i>
+                                        </span>
+                                        {% elif payment.payment_type == 'credit' %}
+                                        <span class="badge bg-success p-2">
+                                            <i class="fas fa-gift"></i>
+                                        </span>
+                                        {% elif payment.payment_type == 'refund' %}
+                                        <span class="badge bg-warning p-2">
+                                            <i class="fas fa-undo"></i>
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <strong>{{ payment.description|truncatechars:50 }}</strong>
+                                        {% if payment.content_object %}
+                                        <br>
+                                        <small class="text-muted">
+                                            <i class="fas fa-tag me-1"></i>
+                                            {{ payment.content_object.plan.name }} - 
+                                            {% if payment.content_object.tenant %}
+                                                {{ payment.content_object.tenant.name }}
+                                            {% else %}
+                                                {{ payment.content_object.user.email }}
+                                            {% endif %}
+                                        </small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge {% if payment.payment_type == 'subscription' %}bg-primary{% elif payment.payment_type == 'subscription_adjustment' %}bg-info{% elif payment.payment_type == 'credit' %}bg-success{% elif payment.payment_type == 'refund' %}bg-warning{% else %}bg-secondary{% endif %} p-2">
+                                    {{ payment.get_payment_type_display }}
+                                </span>
+                            </td>
+                            <td>
+                                <strong class="{% if payment.direction == 'incoming' %}text-success{% else %}text-danger{% endif %}">
+                                    ₦{{ payment.amount|floatformat:2 }}
+                                </strong>
+                                {% if payment.net_amount != payment.amount %}
+                                <br>
+                                <small class="text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Net: ₦{{ payment.net_amount|floatformat:2 }}
+                                </small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if payment.status == 'success' %}
+                                <span class="badge bg-success p-2">
+                                    <i class="fas fa-check-circle me-1"></i>Success
+                                </span>
+                                {% elif payment.status == 'pending' %}
+                                <span class="badge bg-warning text-dark p-2">
+                                    <i class="fas fa-clock me-1"></i>Pending
+                                </span>
+                                {% elif payment.status == 'failed' %}
+                                <span class="badge bg-danger p-2">
+                                    <i class="fas fa-exclamation-circle me-1"></i>Failed
+                                </span>
+                                {% elif payment.status == 'refunded' %}
+                                <span class="badge bg-info p-2">
+                                    <i class="fas fa-undo-alt me-1"></i>Refunded
+                                </span>
+                                {% elif payment.status == 'abandoned' %}
+                                <span class="badge bg-secondary p-2">
+                                    <i class="fas fa-hourglass-half me-1"></i>Abandoned
+                                </span>
+                                {% else %}
+                                <span class="badge bg-secondary p-2">{{ payment.status }}</span>
+                                {% endif %}
+                            </td>
+                            {%comment%}
+                            <td class="text-center">
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'subscription_payment_detail' payment.id %}" 
+                                       class="btn btn-sm btn-outline-primary" 
+                                       title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    {% if payment.status == 'pending' %}
+                                    <button class="btn btn-sm btn-outline-success" 
+                                            title="Retry Payment" 
+                                            onclick="retryPayment({{ payment.id }})">
+                                        <i class="fas fa-redo"></i>
+                                    </button>
+                                    {% endif %}
+                                    {% if payment.status == 'success' %}
+                                    <button class="btn btn-sm btn-outline-secondary" 
+                                            title="Download Receipt" 
+                                            onclick="downloadReceipt({{ payment.id }})">
+                                        <i class="fas fa-download"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            {%endcomment%}
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-5">
+                                <div class="text-muted">
+                                    <i class="fas fa-credit-card fa-4x mb-3" style="color: var(--primary-light);"></i>
+                                    <h5 class="mb-2">No payments found</h5>
+                                    <p class="mb-3">Your payment history will appear here once you make your first subscription payment.</p>
+                                    <a href="{% url 'list_subscription_plans' %}" class="btn btn-primary">
+                                        <i class="fas fa-rocket me-2"></i>View Subscription Plans
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if payments.has_other_pages %}
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if payments.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ payments.previous_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+            </li>
+            {% else %}
+            <li class="page-item disabled">
+                <span class="page-link"><i class="fas fa-chevron-left"></i></span>
+            </li>
+            {% endif %}
+
+            {% for i in payments.paginator.page_range %}
+                {% if payments.number == i %}
+                <li class="page-item active">
+                    <span class="page-link">{{ i }}</span>
+                </li>
+                {% elif i > payments.number|add:'-3' and i < payments.number|add:'3' %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ i }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">{{ i }}</a>
+                </li>
+                {% endif %}
+            {% endfor %}
+
+            {% if payments.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ payments.next_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            </li>
+            {% else %}
+            <li class="page-item disabled">
+                <span class="page-link"><i class="fas fa-chevron-right"></i></span>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+
+<!-- Retry Payment Modal -->
+<div class="modal fade" id="retryPaymentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%); color: white;">
+                <h5 class="modal-title">
+                    <i class="fas fa-redo-alt me-2"></i>Retry Payment
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Would you like to retry this payment?</p>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Your card will be charged the full amount again. Make sure you have sufficient funds.
+                </div>
+                <div class="payment-details bg-light p-3 rounded" id="modalPaymentDetails">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cancel
+                </button>
+                <!-- <button type="button" class="btn btn-primary" id="confirmRetryBtn">
+                    <i class="fas fa-redo-alt me-2"></i>Retry Payment
+                </button> -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Stats Cards Styling */
+.stats-card {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.3s, box-shadow 0.3s;
+    height: 100%;
+}
+
+.stats-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+}
+
+.stats-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    margin-bottom: 15px;
+}
+
+.stats-value {
+    font-size: 32px;
+    font-weight: bold;
+    color: var(--primary-dark);
+    line-height: 1.2;
+}
+
+.stats-label {
+    color: #718096;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 500;
+}
+
+/* Table Styling */
+.table td {
+    vertical-align: middle;
+    padding: 1rem 0.75rem;
+}
+
+.table thead th {
+    border-bottom: 2px solid #dee2e6;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+    padding: 1rem 0.75rem;
+}
+
+/* Badge Styling */
+.badge {
+    font-weight: 500;
+    padding: 0.5rem 0.75rem;
+}
+
+/* Button Group */
+.btn-group .btn {
+    padding: 0.25rem 0.5rem;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .stats-card {
+        margin-bottom: 1rem;
+    }
+    
+    .stats-value {
+        font-size: 24px;
+    }
+    
+    .stats-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 20px;
+    }
+}
+</style>
+
+{% block extra_js %}
+<script>
+    let retryPaymentId = null;
+    let retryPaymentAmount = null;
+    let retryPaymentDescription = null;
+    
+    function retryPayment(paymentId) {
+        // Find payment details from the row
+        const row = $(`button[onclick="retryPayment(${paymentId})"]`).closest('tr');
+        const amount = row.find('td:eq(4) strong').text().trim();
+        const description = row.find('td:eq(2) strong').text().trim();
+        const date = row.find('td:eq(1)').text().trim();
+        
+        retryPaymentId = paymentId;
+        retryPaymentAmount = amount;
+        retryPaymentDescription = description;
+        
+        // Populate modal
+        $('#modalPaymentDetails').html(`
+            <p class="mb-2"><strong>Payment ID:</strong> #${paymentId}</p>
+            <p class="mb-2"><strong>Description:</strong> ${description}</p>
+            <p class="mb-2"><strong>Date:</strong> ${date}</p>
+            <p class="mb-0"><strong>Amount:</strong> <span class="text-primary fw-bold">${amount}</span></p>
+        `);
+        
+        $('#retryPaymentModal').modal('show');
+    }
+    
+    
+    function downloadReceipt(paymentId) {
+        // Show loading indicator
+        toastr.info('Generating receipt...');
+        
+        // Add your receipt download logic here
+        window.location.href = `/payments/${paymentId}/receipt/`;
+    }
+    
+    // Initialize tooltips
+    $(document).ready(function() {
+        $('[title]').tooltip();
+        
+        // Auto-submit form when filters change (optional)
+        $('#status, #date_from, #date_to').change(function() {
+            // Uncomment to auto-submit on change
+            // $(this).closest('form').submit();
+        });
+    });
+</script>
+
+<!-- Toastr for notifications -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+<script>
+    toastr.options = {
+        "closeButton": true,
+        "progressBar": true,
+        "positionClass": "toast-top-right",
+        "timeOut": "3000"
+    };
+</script>
+{% endblock %}
+{% endblock %}

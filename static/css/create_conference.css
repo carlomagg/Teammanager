@@ -1,0 +1,111 @@
+/* Speaker Card Styles */
+.speaker-card {
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    padding: 12px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.speaker-card:hover {
+    border-color: #0d6efd;
+    background-color: #f8f9fa;
+}
+
+.speaker-card.selected {
+    border-color: #198754;
+    background-color: #d1e7dd;
+}
+
+.speaker-list-item {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.speaker-list-item:hover {
+    background-color: #f8f9fa;
+}
+
+.speaker-list-item.selected {
+    background-color: #d1e7dd;
+    border-color: #198754 !important;
+}
+
+.selected-speaker-badge {
+    position: relative;
+    display: inline-block;
+}
+
+.remove-speaker-btn {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: #dc3545;
+    color: white;
+    border: 2px solid white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s ease;
+}
+
+.remove-speaker-btn:hover {
+    background-color: #bb2d3b;
+    transform: scale(1.1);
+}
+
+.speaker-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.speaker-avatar-lg {
+    width: 80px;
+    height: 80px;
+}
+
+.card {
+    border-radius: 14px;
+}
+
+.card-header {
+    background: linear-gradient(135deg, #63abaaff, #158583ff);
+    color: #fff;
+}
+
+h6.text-uppercase {
+    font-weight: 600;
+    letter-spacing: .05em;
+}
+
+.select2-container {
+    border-radius: 8px;
+    border: 1px solid #cecacaff;
+    color: #000000;
+}
+.select2-container .select2-selection--multiple {
+    border-radius: 8px;
+    border: 1px solid #cecacaff;
+    color: #000000;
+}
+body.dark-mode .select2-container .select2-selection--multiple {
+    border-color: #4a5568;
+    background: #3b4a6b;
+    color: #000000;
+}
+.select2-container--default .select2-selection--multiple .select2-selection__choice {
+    background-color: #319795;
+    color: #000000;
+}
+body.dark-mode .select2-results__options {
+    color: #000000;
+    max-height: 300px;
+    overflow-y: auto;
+}

@@ -1,0 +1,343 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Complete Staff KYC{% endblock %}
+
+{# Hide notification bar on KYC pages #}
+<style>
+    .notification-bar {
+        display: none !important;
+    }
+</style>
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-id-card"></i> Complete Your Staff KYC Verification</h4>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            {# Skip memo-specific flash messages; those are handled via the memo notification system #}
+                            {% if 'memo' not in message.tags %}
+                                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <p class="text-muted">
+                        Please provide your identity verification documents. All fields marked with * are required.
+                    </p>
+                    
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        {% if missing_profile_fields %}
+                        <div class="alert alert-warning">
+                            <h6><i class="fas fa-exclamation-triangle"></i> Complete Your Profile</h6>
+                            <p class="mb-2">Some profile fields are missing. Please complete them below:</p>
+                            <small>Missing: {{ missing_profile_fields|join:", " }}</small>
+                        </div>
+                        
+                        <div class="mb-4 border rounded p-3 bg-light">
+                            <h5 class="border-bottom pb-2 text-primary">
+                                <i class="fas fa-user-edit"></i> Profile Update Section
+                            </h5>
+                            <p class="small text-muted">Complete your missing profile information here without leaving this form.</p>
+                            
+                            <div class="row">
+                                {% if form.profile_first_name.field.widget.input_type != 'hidden' %}
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.profile_first_name.id_for_label }}" class="form-label">
+                                        First Name
+                                    </label>
+                                    {{ form.profile_first_name }}
+                                    {% if form.profile_first_name.errors %}
+                                        <div class="text-danger small">{{ form.profile_first_name.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                                
+                                {% if form.profile_last_name.field.widget.input_type != 'hidden' %}
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.profile_last_name.id_for_label }}" class="form-label">
+                                        Last Name
+                                    </label>
+                                    {{ form.profile_last_name }}
+                                    {% if form.profile_last_name.errors %}
+                                        <div class="text-danger small">{{ form.profile_last_name.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="row">
+                                {% if form.profile_phone_number.field.widget.input_type != 'hidden' %}
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.profile_phone_number.id_for_label }}" class="form-label">
+                                        Phone Number
+                                    </label>
+                                    {{ form.profile_phone_number }}
+                                    {% if form.profile_phone_number.errors %}
+                                        <div class="text-danger small">{{ form.profile_phone_number.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                                
+                                {% if form.profile_date_of_birth.field.widget.input_type != 'hidden' %}
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.profile_date_of_birth.id_for_label }}" class="form-label">
+                                        Date of Birth
+                                    </label>
+                                    {{ form.profile_date_of_birth }}
+                                    {% if form.profile_date_of_birth.errors %}
+                                        <div class="text-danger small">{{ form.profile_date_of_birth.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="row">
+                                {% if form.profile_home_address.field.widget.input_type != 'hidden' %}
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.profile_home_address.id_for_label }}" class="form-label">
+                                        Address
+                                    </label>
+                                    {{ form.profile_home_address }}
+                                    {% if form.profile_home_address.errors %}
+                                        <div class="text-danger small">{{ form.profile_home_address.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                                
+                                {% if form.profile_department.field.widget.input_type != 'hidden' %}
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.profile_department.id_for_label }}" class="form-label">
+                                        Department
+                                    </label>
+                                    {{ form.profile_department }}
+                                    {% if form.profile_department.errors %}
+                                        <div class="text-danger small">{{ form.profile_department.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="row">
+                                {% if form.profile_designation.field.widget.input_type != 'hidden' %}
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.profile_designation.id_for_label }}" class="form-label">
+                                        Designation
+                                    </label>
+                                    {{ form.profile_designation }}
+                                    {% if form.profile_designation.errors %}
+                                        <div class="text-danger small">{{ form.profile_designation.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="mb-4">
+                            <h5 class="border-bottom pb-2">Identity Information</h5>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.nin.id_for_label }}" class="form-label">
+                                        National Identification Number (NIN)
+                                    </label>
+                                    {{ form.nin }}
+                                    {% if form.nin.errors %}
+                                        <div class="text-danger small">{{ form.nin.errors }}</div>
+                                    {% endif %}
+                                    <small class="form-text text-muted">{{ form.nin.help_text }}</small>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.bvn.id_for_label }}" class="form-label">
+                                        Bank Verification Number (BVN)
+                                    </label>
+                                    {{ form.bvn }}
+                                    {% if form.bvn.errors %}
+                                        <div class="text-danger small">{{ form.bvn.errors }}</div>
+                                    {% endif %}
+                                    <small class="form-text text-muted">{{ form.bvn.help_text }}</small>
+                                </div>
+                            </div>
+                            
+                            <div class="alert alert-info small">
+                                <i class="fas fa-info-circle"></i> Please provide at least one: NIN or BVN
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h5 class="border-bottom pb-2">ID Document</h5>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.id_type.id_for_label }}" class="form-label">
+                                        ID Type *
+                                    </label>
+                                    {{ form.id_type }}
+                                    {% if form.id_type.errors %}
+                                        <div class="text-danger small">{{ form.id_type.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.id_number.id_for_label }}" class="form-label">
+                                        ID Number
+                                    </label>
+                                    {{ form.id_number }}
+                                    {% if form.id_number.errors %}
+                                        <div class="text-danger small">{{ form.id_number.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.id_front_file.id_for_label }}" class="form-label">
+                                        ID Front Image/PDF *
+                                    </label>
+                                    {{ form.id_front_file }}
+                                    {% if form.id_front_file.errors %}
+                                        <div class="text-danger small">{{ form.id_front_file.errors }}</div>
+                                    {% endif %}
+                                    <small class="form-text text-muted">{{ form.id_front_file.help_text }}</small>
+                                    {% if kyc.id_front_file %}
+                                        <div class="mt-2">
+                                            <a href="{{ kyc.id_front_file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i> View Current
+                                            </a>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.id_back_file.id_for_label }}" class="form-label">
+                                        ID Back Image/PDF
+                                    </label>
+                                    {{ form.id_back_file }}
+                                    {% if form.id_back_file.errors %}
+                                        <div class="text-danger small">{{ form.id_back_file.errors }}</div>
+                                    {% endif %}
+                                    <small class="form-text text-muted">{{ form.id_back_file.help_text }}</small>
+                                    {% if kyc.id_back_file %}
+                                        <div class="mt-2">
+                                            <a href="{{ kyc.id_back_file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i> View Current
+                                            </a>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h5 class="border-bottom pb-2">Proof of Address</h5>
+                            
+                            <div class="mb-3">
+                                <label for="{{ form.utility_bill_file.id_for_label }}" class="form-label">
+                                    Utility Bill or Bank Statement
+                                </label>
+                                {{ form.utility_bill_file }}
+                                {% if form.utility_bill_file.errors %}
+                                    <div class="text-danger small">{{ form.utility_bill_file.errors }}</div>
+                                {% endif %}
+                                <small class="form-text text-muted">{{ form.utility_bill_file.help_text }}</small>
+                                {% if kyc.utility_bill_file %}
+                                    <div class="mt-2">
+                                        <a href="{{ kyc.utility_bill_file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i> View Current
+                                        </a>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h5 class="border-bottom pb-2">Next of Kin Information</h5>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.next_of_kin_name.id_for_label }}" class="form-label">
+                                        Next of Kin Full Name
+                                    </label>
+                                    {{ form.next_of_kin_name }}
+                                    {% if form.next_of_kin_name.errors %}
+                                        <div class="text-danger small">{{ form.next_of_kin_name.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.next_of_kin_relationship.id_for_label }}" class="form-label">
+                                        Relationship
+                                    </label>
+                                    {{ form.next_of_kin_relationship }}
+                                    {% if form.next_of_kin_relationship.errors %}
+                                        <div class="text-danger small">{{ form.next_of_kin_relationship.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.next_of_kin_phone.id_for_label }}" class="form-label">
+                                        Next of Kin Phone
+                                    </label>
+                                    {{ form.next_of_kin_phone }}
+                                    {% if form.next_of_kin_phone.errors %}
+                                        <div class="text-danger small">{{ form.next_of_kin_phone.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.next_of_kin_address.id_for_label }}" class="form-label">
+                                        Next of Kin Address
+                                    </label>
+                                    {{ form.next_of_kin_address }}
+                                    {% if form.next_of_kin_address.errors %}
+                                        <div class="text-danger small">{{ form.next_of_kin_address.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {{ form.non_field_errors }}
+                            </div>
+                        {% endif %}
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'kyc_status' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Back
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-check"></i> Submit KYC
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card mt-3 border-info">
+                <div class="card-body">
+                    <h6><i class="fas fa-shield-alt"></i> Security & Privacy</h6>
+                    <p class="small text-muted mb-0">
+                        Your documents are encrypted and stored securely. We use industry-standard security measures to protect your personal information.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

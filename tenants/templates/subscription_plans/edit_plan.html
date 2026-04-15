@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+
+{% block title %}{% if is_create %}Create{% else %}Edit{% endif %} Subscription Plan{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Header -->
+            <div class="d-flex align-items-center mb-4">
+                <a href="{% url 'list_subscription_plans' %}" class="btn btn-outline-secondary me-3">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+                <div>
+                    <h1 class="display-6 fw-bold" style="color: var(--primary-dark);">
+                        <i class="fas fa-{% if is_create %}plus-circle{% else %}edit{% endif %} me-2"></i>
+                        {% if is_create %}Create New Plan{% else %}Edit Plan: {{ plan.name }}{% endif %}
+                    </h1>
+                    <p class="text-muted">
+                        {% if is_create %}Define a new subscription plan for your customers{% else %}Update the details of this subscription plan{% endif %}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Plan Form -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-{% if is_create %}plus{% else %}pen{% endif %} me-2"></i>
+                    Plan Details
+                </div>
+                <div class="card-body">
+                    <form method="post" id="planForm">
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                            <i class="fas fa-exclamation-circle me-2"></i>{{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <div class="row">
+                            <!-- Plan Name -->
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.name.id_for_label }}" class="form-label">
+                                    <i class="fas fa-tag me-2"></i>Plan Name
+                                </label>
+                                {% render_field form.name class="form-control" placeholder="e.g., Professional, Enterprise" %}
+                                {% if form.name.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.name.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Price -->
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.price.id_for_label }}" class="form-label">
+                                    <i class="fas fa-dollar-sign me-2"></i>Price (Monthly)
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    {% render_field form.price class="form-control" placeholder="0.00" %}
+                                </div>
+                                {% if form.price.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.price.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Duration -->
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.duration.id_for_label }}" class="form-label">
+                                    <i class="fas fa-clock me-2"></i>Duration (Days)
+                                </label>
+                                {% render_field form.duration class="form-control" placeholder="30" %}
+                                <small class="text-muted">Number of days the subscription lasts</small>
+                                {% if form.duration.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.duration.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Discount Percentage -->
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.discount_percentage.id_for_label }}" class="form-label">
+                                    <i class="fas fa-percent me-2"></i>Discount Percentage
+                                </label>
+                                <div class="input-group">
+                                    {% render_field form.discount_percentage class="form-control" placeholder="0" %}
+                                    <span class="input-group-text">%</span>
+                                </div>
+                                <small class="text-muted">Default discount applied to this plan</small>
+                                {% if form.discount_percentage.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.discount_percentage.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Max Users -->
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.max_users.id_for_label }}" class="form-label">
+                                    <i class="fas fa-users me-2"></i>Maximum Users
+                                </label>
+                                {% render_field form.max_users class="form-control" placeholder="Leave blank for unlimited" %}
+                                <small class="text-muted">Maximum number of users allowed (optional)</small>
+                                {% if form.max_users.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.max_users.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Active Status -->
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check mt-4">
+                                    {% render_field form.is_active class="form-check-input" %}
+                                    <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                        <i class="fas fa-power-off me-2"></i>Plan is active and available for purchase
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Description -->
+                            <div class="col-12 mb-3">
+                                <label for="{{ form.description.id_for_label }}" class="form-label">
+                                    <i class="fas fa-align-left me-2"></i>Description
+                                </label>
+                                {% render_field form.description class="form-control" rows="4" placeholder="Describe the plan features and benefits..." %}
+                                {% if form.description.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.description.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Preview Card -->
+                        <div class="card bg-primary-soft mt-4">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <i class="fas fa-eye me-2"></i>Preview
+                                </h5>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h3 id="previewName">{{ form.name.value|default:"Plan Name" }}</h3>
+                                        <div class="pricing-price" id="previewPrice">
+                                            ${{ form.price.value|default:"0"|floatformat:2 }}
+                                            <span class="pricing-period">/mo</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <ul class="list-unstyled">
+                                            <li><i class="fas fa-clock text-primary-custom me-2"></i> <span id="previewDuration">{{ form.duration.value|default:"30" }}</span> days</li>
+                                            <li><i class="fas fa-percent text-primary-custom me-2"></i> <span id="previewDiscount">{{ form.discount_percentage.value|default:"0" }}</span>% discount</li>
+                                            <li><i class="fas fa-users text-primary-custom me-2"></i> <span id="previewUsers">{{ form.max_users.value|default:"Unlimited" }}</span> users</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-end mt-4">
+                            <a href="{% url 'list_subscription_plans' %}" class="btn btn-outline-secondary me-2">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-{% if is_create %}plus{% else %}save{% endif %} me-2"></i>
+                                {% if is_create %}Create Plan{% else %}Save Changes{% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    // Live preview updates
+    $('#{{ form.name.id_for_label }}').on('input', function() {
+        $('#previewName').text($(this).val() || 'Plan Name');
+    });
+    
+    $('#{{ form.price.id_for_label }}').on('input', function() {
+        let price = parseFloat($(this).val()) || 0;
+        $('#previewPrice').html('$' + price.toFixed(2) + ' <span class="pricing-period">/mo</span>');
+    });
+    
+    $('#{{ form.duration.id_for_label }}').on('input', function() {
+        $('#previewDuration').text($(this).val() || '30');
+    });
+    
+    $('#{{ form.discount_percentage.id_for_label }}').on('input', function() {
+        $('#previewDiscount').text($(this).val() || '0');
+    });
+    
+    $('#{{ form.max_users.id_for_label }}').on('input', function() {
+        $('#previewUsers').text($(this).val() || 'Unlimited');
+    });
+</script>
+{% endblock %}
+{% endblock %}

@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Error - Team Manager{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <div class="card shadow-sm border-0 mt-4" style="border-radius: 12px;">
+                <div class="card-header bg-transparent">
+                    <h1 class="mb-0"><i class="fas fa-exclamation-circle me-2 text-primary"></i> Error</h1>
+                </div>
+                <div class="card-body text-center">
+                    <p class="text-gray-700">{{ message }}</p>
+                    <p class="card-text text-muted">
+                        Login in to your own Company?.
+                    </p>
+                    <p class="card-text">
+                        <a href="{{ login_url|default:'/accounts/login' }}" class="text-primary fw-medium">Log in</a>
+                    </p>
+                    <button type= "button" onclick="history.back()" class="btn btn-primary btn-sm mt-3" data-bs-toggle="tooltip" title="Return to previous page">
+                        <i class="fas fa-arrow-left me-1"></i> Back
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        border-radius: 12px;
+    }
+    body.dark-mode .card {
+        background: #2d3748;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    body.dark-mode .card-body p {
+        color: #e2e8f0;
+    }
+    .text-primary {
+        color: #319795 !important;
+    }
+    .btn-primary {
+        background-color: #319795;
+        border-color: #319795;
+    }
+    .btn-primary:hover {
+        background-color: #2c7a7b;
+        border-color: #2c7a7b;
+    }
+    body.dark-mode .btn-primary {
+        background-color: #319795;
+        border-color: #319795;
+    }
+    body.dark-mode .btn-primary:hover {
+        background-color: #2c7a7b;
+        border-color: #2c7a7b;
+    }
+    .text-gray-700 {
+        color: #2d3748;
+    }
+    body.dark-mode .text-gray-700 {
+        color: #e2e8f0;
+    }
+    @media (max-width: 768px) {
+        .card-header h1 {
+            font-size: 1.5rem;
+        }
+        .card-body p {
+            font-size: 0.9rem;
+        }
+        .btn-sm {
+            font-size: 0.85rem;
+        }
+    }
+</style>
+
+<script>
+$(document).ready(function() {
+    // Initialize Bootstrap tooltips
+    $('[data-bs-toggle="tooltip"]').tooltip();
+});
+function goBack() {
+    window.location.href = '{% url "staff_list" %}'
+}
+</script>
+{% endblock %}

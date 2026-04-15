@@ -1,0 +1,332 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load crm_extras %}
+
+{% block title %}{{ opportunity.title }} - Opportunity Detail{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-briefcase"></i> {{ opportunity.title }}</h2>
+        <div>
+            <a href="{% url 'crm:opportunity_update' opportunity.pk %}" class="btn btn-warning">
+                <i class="fas fa-edit"></i> Edit
+            </a>
+            <a href="{% url 'crm:opportunity_delete' opportunity.pk %}" class="btn btn-danger">
+                <i class="fas fa-trash"></i> Delete
+            </a>
+            <a href="{% url 'crm:opportunity_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to List
+            </a>
+        </div>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-info-circle"></i> Opportunity Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Category:</strong>
+                            {% if opportunity.category == 'Lead' %}
+                                <span class="badge bg-info">{{ opportunity.category }}</span>
+                            {% elif opportunity.category == 'Deal' %}
+                                <span class="badge bg-warning">{{ opportunity.category }}</span>
+                            {% else %}
+                                <span class="badge bg-success">{{ opportunity.category }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Stage:</strong>
+                            {% if opportunity.stage %}
+                                <span class="badge bg-secondary">{{ opportunity.stage.name }}</span>
+                            {% else %}
+                                <span class="text-muted">Not set</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Deal Type:</strong> {{ opportunity.get_deal_type_display|default:"-" }}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Deal Size:</strong>
+                            {% if opportunity.deal_size %}
+                                <span class="badge bg-primary">{{ opportunity.deal_size }}</span>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Description:</strong>
+                        <p>{{ opportunity.description|default:"No description provided" }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-building"></i> Company Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Company Name:</strong> {{ opportunity.company_name|default:"-" }}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Company Type:</strong> {{ opportunity.get_company_type_display|default:"-" }}
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Industry:</strong> {{ opportunity.get_industry_display|default:"-" }}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Website:</strong>
+                            {% if opportunity.company_website %}
+                                <a href="{{ opportunity.company_website }}" target="_blank">{{ opportunity.company_website }}</a>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Address:</strong>
+                        <p>
+                            {% if opportunity.address %}
+                                {{ opportunity.address }}<br>
+                                {{ opportunity.city }}{% if opportunity.city and opportunity.country %}, {% endif %}{{ opportunity.country.name }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-user"></i> Contact Person</h5>
+                </div>
+                <div class="card-body">
+                    {% if opportunity.contact %}
+                        <p><strong>Contact:</strong> {{ opportunity.contact.name }}</p>
+                        <p><strong>Email:</strong> {{ opportunity.contact.email }}</p>
+                        <p><strong>Phone:</strong> {{ opportunity.contact.phone|default:"-" }}</p>
+                    {% else %}
+                        <div class="row mb-2">
+                            <div class="col-md-6">
+                                <strong>Name:</strong> {{ opportunity.contact_first_name }} {{ opportunity.contact_last_name }}
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Title:</strong> {{ opportunity.contact_title|default:"-" }}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>Email:</strong> {{ opportunity.contact_email|default:"-" }}
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Phone:</strong> {{ opportunity.contact_phone|default:"-" }}
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-box"></i> Products & Services</h5>
+                </div>
+                <div class="card-body">
+                    {% if opportunity.products.all %}
+                        <ul>
+                            {% for product in opportunity.products.all %}
+                                <li>{{ product.name }} - {{ product.get_category_display }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted">No products selected</p>
+                    {% endif %}
+                    
+                    {% if opportunity.product_details %}
+                        <strong>Service Details:</strong>
+                        <p>{{ opportunity.product_details }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if opportunity.delivery_method == 'Through Partner' or opportunity.delivery_method == 'Through Consultant' %}
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5><i class="fas fa-handshake"></i> Partner Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Delivery Method:</strong> {{ opportunity.get_delivery_method_display }}</p>
+                        {% if opportunity.partner_contact %}
+                            <p><strong>Partner Contact:</strong> {{ opportunity.partner_contact.name }}</p>
+                            <p><strong>Email:</strong> {{ opportunity.partner_contact.email }}</p>
+                        {% else %}
+                            <p><strong>Organization:</strong> {{ opportunity.partner_org_name|default:"-" }}</p>
+                            <p><strong>Contact Name:</strong> {{ opportunity.partner_contact_name|default:"-" }}</p>
+                            <p><strong>Email:</strong> {{ opportunity.partner_email|default:"-" }}</p>
+                            <p><strong>Phone:</strong> {{ opportunity.partner_phone|default:"-" }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5><i class="fas fa-tasks"></i> Activities</h5>
+                    <a href="{% url 'crm:activity_create' content_type_id=opportunity|get_content_type_id object_id=opportunity.id %}" 
+                       class="btn btn-sm btn-primary">
+                        <i class="fas fa-plus"></i> Add Activity
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if activities %}
+                        <div class="list-group">
+                            {% for activity in activities %}
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between">
+                                        <h6>{{ activity.get_activity_type_display }}: {{ activity.subject }}</h6>
+                                        {% if activity.completed %}
+                                            <span class="badge bg-success">Completed</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">Pending</span>
+                                            <button class="btn btn-success mark-complete" data-id="{{ activity.id }}">
+                                                Mark Completed
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                    <p class="mb-1">{{ activity.description }}</p>
+                                    <small class="text-muted">
+                                        Due: {{ activity.due_date|date:"M d, Y H:i" }}
+                                        {% if activity.assigned_to %}
+                                            | Assigned to: {{ activity.assigned_to.get_full_name|default:activity.assigned_to.username }}
+                                        {% endif %}
+                                    </small>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No activities yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-dollar-sign"></i> Deal Value</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Estimated Amount:</strong> 
+                        {% if opportunity.estimated_amount %}
+                            ₦{{ opportunity.estimated_amount|floatformat:2 }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </p>
+                    <p><strong>Actual Amount:</strong>
+                        {% if opportunity.actual_amount %}
+                            ₦{{ opportunity.actual_amount|floatformat:2 }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </p>
+                    <p><strong>Recurring Revenue:</strong> {{ opportunity.get_recurring_revenue_display }}</p>
+                    <p><strong>Expected Close Date:</strong> {{ opportunity.expected_close_date|date:"M d, Y"|default:"-" }}</p>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-chart-line"></i> Source & Competition</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Source:</strong> {{ opportunity.get_source_display|default:"-" }}</p>
+                    
+                    {% if opportunity.source == 'Referral' and opportunity.referrer_name %}
+                        <hr>
+                        <p><strong>Referrer:</strong> {{ opportunity.referrer_name }}</p>
+                        <p><strong>Referrer Email:</strong> {{ opportunity.referrer_email|default:"-" }}</p>
+                        <p><strong>Referrer Phone:</strong> {{ opportunity.referrer_phone|default:"-" }}</p>
+                    {% endif %}
+                    
+                    <hr>
+                    <p><strong>Competitive:</strong> {{ opportunity.is_competitive|yesno:"Yes,No" }}</p>
+                    {% if opportunity.is_competitive and opportunity.competitor_names %}
+                        <p><strong>Competitors:</strong> {{ opportunity.competitor_names }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-user-tie"></i> Assignment</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Assigned To:</strong>
+                        {% if opportunity.assigned_to %}
+                            {{ opportunity.assigned_to.get_full_name|default:opportunity.assigned_to.username }}
+                        {% else %}
+                            <span class="text-muted">Unassigned</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-clock"></i> Audit Information</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Created By:</strong> {{ opportunity.created_by.get_full_name|default:opportunity.created_by.username }}</p>
+                    <p><strong>Created At:</strong> {{ opportunity.created_at|date:"M d, Y H:i" }}</p>
+                    {% if opportunity.updated_by %}
+                        <p><strong>Updated By:</strong> {{ opportunity.updated_by.get_full_name|default:opportunity.updated_by.username }}</p>
+                    {% endif %}
+                    <p><strong>Updated At:</strong> {{ opportunity.updated_at|date:"M d, Y H:i" }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.querySelectorAll(".mark-complete").forEach(btn => {
+        btn.addEventListener("click", function () {
+            const activityId = this.dataset.id;
+
+            fetch(`/crm/activity/${activityId}/mark-completed/`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    this.innerText = "Completed";
+                    this.classList.remove("btn-success");
+                    this.classList.add("btn-secondary");
+                    this.disabled = true;
+                    location.reload();
+                }
+            });
+        });
+    });
+</script>
+{% load crm_extras %}
+{% endblock %}

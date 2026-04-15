@@ -1,0 +1,60 @@
+<div class="container my-4">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card border-0 shadow-sm mb-4" style="background-color: #fff;">
+                <div class="card-header bg-white border-bottom-0">
+                    <h3 class="mb-0"><i class="fas fa-user me-2" style="color: #319795;"></i>User Dashboard</h3>
+                </div>
+                <div class="card-body">
+                    <!-- Card for Total Active Users -->
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="card text-center border-0 shadow" style="background-color: #f8fafc;">
+                                <div class="card-body">
+                                    <h5 class="card-title text-muted">Total Active Users</h5>
+                                    <h2 class="card-text" style="color: #2c7a7b;">{{ total_active_users }}</h2>
+                                    <p class="text-muted small">Users logged in within the last 24 hours</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Table for Active Users Per Tenant -->
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="card border-0 shadow" style="background-color: #fff;">
+                                <div class="card-header bg-white">
+                                    <h5 class="mb-0">Active Users by Tenant (Top 20)</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th scope="col" style="color: #319795;">Tenant</th>
+                                                    <th scope="col" style="color: #319795;">Active Users</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for item in active_users_per_tenant %}
+                                                    <tr>
+                                                        <td>{{ item.tenant__name|default:"Default Tenant" }}</td>
+                                                        <td>{{ item.active_user_count }}</td>
+                                                    </tr>
+                                                {% empty %}
+                                                    <tr>
+                                                        <td colspan="2" class="text-center text-muted">No active users found in the last 24 hours.</td>
+                                                    </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

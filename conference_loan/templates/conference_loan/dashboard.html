@@ -1,0 +1,267 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Conference Loan Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2>Conference Loan Dashboard</h2>
+            <p class="text-muted">Manage your conference financing applications</p>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Applications</h5>
+                    <h2>{{ stats.total_applications }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Pending Review</h5>
+                    <h2>{{ stats.pending }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Approved</h5>
+                    <h2>{{ stats.approved }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Disbursed</h5>
+                    <h2>{{ stats.disbursed }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Financial Summary -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="text-muted">Total Approved Amount</h6>
+                    <h3>NGN {{ stats.total_approved_amount|floatformat:2 }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="text-muted">Total Disbursed</h6>
+                    <h3>NGN {{ stats.total_disbursed|floatformat:2 }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="text-muted">Total Repaid</h6>
+                    <h3>NGN {{ stats.total_repaid|floatformat:2 }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <a href="{% url 'conference_loan:loan_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Apply for New Loan
+            </a>
+            <a href="{% url 'conference_loan:loan_list' %}" class="btn btn-secondary">
+                <i class="fas fa-list"></i> View All Applications
+            </a>
+            {% if request.user.is_superuser or request.user.tenant.admin == request.user %}
+            <a href="{% url 'conference_loan:admin_dashboard' %}" class="btn btn-success">
+                <i class="fas fa-gavel"></i> Review & Approval Dashboard
+            </a>
+            {% endif %}
+            <button type="button" class="btn btn-info" id="checkKycBtn">
+                <i class="fas fa-check-circle"></i> Check KYC Status
+            </button>
+        </div>
+    </div>
+
+    <!-- Recent Loans -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Recent Loan Applications</h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_loans %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Reference</th>
+                                    <th>Conference</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for loan in recent_loans %}
+                                <tr>
+                                    <td>{{ loan.reference_number }}</td>
+                                    <td>{{ loan.conference.title }}</td>
+                                    <td>{{ loan.currency }} {{ loan.amount|floatformat:2 }}</td>
+                                    <td>
+                                        <span class="badge badge-{{ loan.status|lower }}">
+                                            {{ loan.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ loan.created_at|date:"M d, Y" }}</td>
+                                    <td>
+                                        <a href="{% url 'conference_loan:loan_detail' loan.pk %}" class="btn btn-sm btn-primary">
+                                            View
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No loan applications yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Reviews (Tenant Admin & Superuser Only) -->
+    {% if pending_reviews %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-warning">
+                <div class="card-header bg-warning text-white">
+                    <h5>Pending Reviews (Tenant Admin)</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Reference</th>
+                                    <th>Applicant</th>
+                                    <th>Conference</th>
+                                    <th>Amount</th>
+                                    <th>Submitted</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for loan in pending_reviews %}
+                                <tr>
+                                    <td>{{ loan.reference_number }}</td>
+                                    <td>{{ loan.applicant.get_full_name|default:loan.applicant.username }}</td>
+                                    <td>{{ loan.conference.title }}</td>
+                                    <td>{{ loan.currency }} {{ loan.amount|floatformat:2 }}</td>
+                                    <td>{{ loan.submitted_at|date:"M d, Y H:i" }}</td>
+                                    <td>
+                                        <a href="{% url 'conference_loan:loan_detail' loan.pk %}" class="btn btn-sm btn-primary">
+                                            View
+                                        </a>
+                                        <a href="{% url 'conference_loan:loan_review' loan.pk %}" class="btn btn-sm btn-success">
+                                            Review
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- KYC Status Modal -->
+<div class="modal fade" id="kycModal" tabindex="-1" aria-labelledby="kycModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="kycModalLabel">KYC/KYB Status</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="kycModalBody">
+                <p class="text-center"><i class="fas fa-spinner fa-spin"></i> Checking...</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Initialize modal instance
+const kycModalElement = document.getElementById('kycModal');
+const kycModal = new bootstrap.Modal(kycModalElement);
+
+document.getElementById('checkKycBtn').addEventListener('click', function() {
+    kycModal.show();
+    fetch('{% url "conference_loan:check_kyc_status" %}')
+        .then(response => response.json())
+        .then(data => {
+            const icon = data.eligible ? 
+                '<i class="fas fa-check-circle text-success fa-3x mb-3"></i>' :
+                '<i class="fas fa-times-circle text-danger fa-3x mb-3"></i>';
+            const statusClass = data.eligible ? 'alert-success' : 'alert-warning';
+            
+            let actionButton = '';
+            if (!data.eligible) {
+                actionButton = `
+                    <div class="mt-3">
+                        <a href="/dashboard/kyc/" class="btn btn-primary w-100">
+                            <i class="fas fa-user-check"></i> Complete KYC/KYB Verification
+                        </a>
+                    </div>
+                `;
+            }
+            
+            document.getElementById('kycModalBody').innerHTML = `
+                <div class="text-center">
+                    ${icon}
+                    <div class="alert ${statusClass}">
+                        ${data.message}
+                    </div>
+                    ${actionButton}
+                </div>
+            `;
+        })
+        .catch(error => {
+            document.getElementById('kycModalBody').innerHTML = `
+                <div class="alert alert-danger">
+                    Error checking KYC status. Please try again.
+                </div>
+            `;
+        });
+});
+
+// Reset modal content when closed
+kycModalElement.addEventListener('hidden.bs.modal', function () {
+    document.getElementById('kycModalBody').innerHTML = '<p class="text-center"><i class="fas fa-spinner fa-spin"></i> Checking...</p>';
+});
+</script>
+{% endblock %}

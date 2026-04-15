@@ -1,0 +1,439 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% block title %}Schedule Interview{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-xl-9">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-gradient-primary">
+                    <h4 class="mb-0">
+                        <i class="fas fa-calendar-plus me-2"></i>
+                        Schedule New Interview
+                    </h4>
+                </div>
+                <div class="card-body p-4">
+
+                    <form method="post" novalidate>
+                        {% if form.errors %}
+                            <div class="alert alert-danger">
+                                {{ form.errors }}
+                            </div>
+                        {% endif %}
+                        {% csrf_token %}
+
+                        <!-- Vacancy Selection -->
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <label class="form-label fw-bold text-primary">
+                                    <i class="fas fa-briefcase me-2"></i>Vacancy
+                                </label>
+                                {{ form.vacancy|as_crispy_field }}
+                            </div>
+                        </div>
+
+                        <!-- Applications Selection -->
+                        <!-- Replace this whole block -->
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <label class="form-label fw-bold text-primary">
+                                    <i class="fas fa-users me-2"></i>Candidates (Accepted Applications)
+                                </label>
+
+                                <!-- Search input + container -->
+                                <div class="mb-3">
+                                    <input type="text" id="candidate-search" class="form-control" placeholder="Search by name or email...">
+                                </div>
+
+                                <div class="border rounded p-3 bg-light" style="max-height: 340px; overflow-y: auto;" id="candidates-container">
+                                    <!-- Checkboxes will be inserted here via JS -->
+                                    <div class="text-center py-4 text-muted">
+                                        <i class="fas fa-spinner fa-spin me-2"></i>
+                                        Select a vacancy to load candidates...
+                                    </div>
+                                </div>
+
+                                <p class="text-muted mt-2 mb-1">
+                                    <small>Select one or more candidates for this interview</small>
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Interviewers -->
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <label class="form-label fw-bold text-primary">
+                                    <i class="fas fa-user-tie me-2"></i>Interviewers
+                                </label>
+                                {{ form.interviewers|as_crispy_field }}
+                            </div>
+                        </div>
+
+                        <!-- Date, Time & Timezone -->
+                        <div class="row mb-4">
+                            <div class="col-md-5">
+                                {{ form.schedule_start|as_crispy_field }}
+                            </div>
+                            <div class="col-md-5">
+                                {{ form.schedule_end|as_crispy_field }}
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label fw-bold text-primary">
+                                    <i class="fas fa-globe me-2"></i>Timezone
+                                </label>
+                                {{ form.timezone }}
+                            </div>
+                        </div>
+
+                        <!-- Virtual or Physical -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    {{ form.is_virtual }}
+                                    <label class="form-check-label fw-bold text-primary" for="{{ form.is_virtual.id_for_label }}">
+                                        Virtual Interview?
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Google Meet feature temporarily disabled -->
+                            {% comment %}
+                            <div class="col-md-6">
+                                <div id="googleMeetField" style="display: none;">
+                                    <label class="form-check-label fw-bold text-primary" for="{{ form.google_meet.id_for_label }}">
+                                        Use our Google Meet feature
+                                    </label>
+                                    {{ form.google_meet|as_crispy_field }}
+                                </div>
+                            </div>
+                            {% endcomment %}
+
+                            <div class="col-md-6">
+                                <div id="virtualLinkField" style="display: none;">
+                                    {{ form.virtual_link|as_crispy_field }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div id="physicalLocationField" style="display: none;">
+                                    {{ form.physical_location|as_crispy_field }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="d-flex justify-content-between">
+                            {% comment %} <a href="{% url 'vacancy_list' %}" class="btn btn-outline-secondary btn-lg">
+                                <i class="fas fa-arrow-left me-2"></i>Cancel
+                            </a> {% endcomment %}
+                            <button type="button" onclick="history.back()" class="btn btn-outline-secondary btn-lg"><i class="fas fa-arrow-left me-2"></i> Cancel</button>
+                            <button type="submit" class="btn btn-primary btn-lg px-5">
+                                <i class="fas fa-paper-plane me-2"></i>
+                                Create Interview
+                                 {% comment %} & Google Meet {% endcomment %}
+                            </button>
+                            {% comment %} <button type="submit" name="save_and_add_more" value="1" class="btn btn-outline-primary btn-lg">
+                                <i class="fas fa-plus me-2"></i>Create & Schedule Another
+                            </button> {% endcomment %}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Auto-select user's timezone + toggle physical location -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Auto-select user's timezone
+    const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const tzSelect = document.getElementById('id_timezone');
+    if (tzSelect && tzSelect.querySelector(`option[value="${userTimezone}"]`)) {
+        tzSelect.value = userTimezone;
+    }
+
+    // Show/hide physical location
+    const virtualToggle = document.getElementById('id_is_virtual');
+    // const googleMeet = document.getElementById('googleMeetField');
+    const virtualLink = document.getElementById('virtualLinkField');
+    const locationField = document.getElementById('physicalLocationField');
+
+    function toggleLocation() {
+        if (virtualToggle && locationField) {
+            locationField.style.display = virtualToggle.checked ? 'none' : 'block';
+        }
+    }
+
+    // function toggleVirtual() {
+    //    if (virtualToggle && googleMeet && virtualLink){
+    //        googleMeet.style.display = virtualToggle.checked ? 'block': 'none';
+    //        virtualLink.style.display = virtualToggle.checked ? 'block': 'none';
+    //    }
+    //}
+
+    function toggleVirtual() {
+        if (virtualToggle && virtualLink) {
+            virtualLink.style.display = virtualToggle.checked ? 'block' : 'none';
+        }
+    }
+
+    if (virtualToggle) {
+        virtualToggle.addEventListener('change', toggleLocation);
+        virtualToggle.addEventListener('change', toggleVirtual)
+        toggleLocation(); // Initial state
+        toggleVirtual();
+    }
+
+});
+$(document).ready(function () {
+    $('.select2').each(function() {
+        var $select = $(this);
+        $select.select2({
+            tags: true,
+            tokenSeparators: [',', ' '],
+            placeholder: $select.data('placeholder') || 'Select Interviewers',
+            allowClear: true,
+            width: '100%',
+            multiple: true,
+            ajax: {
+                url: "{% url 'user_search' %}",
+                dataType: 'json',
+                delay: 250,
+                data: function(params) {
+                    return {
+                        q: params.term
+                    };
+                },
+                processResults: function(data) {
+                    return {
+                        results: data.map(function(user) {
+                            return {
+                                id: user.id,
+                                text: user.name,
+                                email: user.email
+                            };
+                        })
+                    };
+                },
+                cache: true,
+                error: function(jqXHR, textStatus, errorThrown) {
+                    console.error('AJAX error:', textStatus, errorThrown);
+                }
+            },
+            templateResult: function(data) {
+                return data.text || data.email || data.id;
+            },
+            templateSelection: function(data) {
+                console.log('Rendering selection:', data);
+                console.log('Rendering selection email:', data.email);
+                return data.text || data.email || data.id;
+            },
+            createTag: function(params) {
+                var term = $.trim(params.term);
+                if (term === '') {
+                    return null;
+                }
+                var exists = $select.find('option').filter(function() {
+                    return $.trim($(this).val()).toLowerCase() === term.toLowerCase();
+                }).length > 0;
+                if (exists) {
+                    return null;
+                }
+                return {
+                    id: term,
+                    text: term,
+                    email: term,
+                    newTag: true
+                };
+            }
+        });
+
+        // Initialize pre-filled values
+        {% if form.users.value %}
+            const $select = $('.select2');
+            {{ form.users.value|safe }}.forEach(email => {
+                const user = $select.find(`option[value="${email}"]`);
+                if (user.length === 0) {
+                    const opt = new Option(email, email, true, true);
+                    $select.append(opt);
+                }
+            });
+            $select.trigger('change');
+        {% endif %}
+
+        // Debug: Log selections and value updates
+        $select.on('select2:select', function(e) {
+            console.log('Selected:', e.params.data);
+            console.log('Current select value:', $select.val());
+            console.log('Options:', $select.find('option').map(function() { return $(this).val(); }).get());
+            console.log('Form data:', $select.closest('form').serialize());
+        });
+        $select.on('select2:unselect', function(e) {
+            console.log('Unselected:', e.params.data);
+            console.log('Current select value:', $select.val());
+            console.log('Options:', $select.find('option').map(function() { return $(this).val(); }).get());
+            console.log('Form data:', $select.closest('form').serialize());
+        });
+    });
+
+    const vacancySelect    = document.getElementById("id_vacancy");
+    const container        = document.getElementById("candidates-container");
+    const searchInput      = document.getElementById("candidate-search");
+
+    // ────────────────────────────────────────────────
+    //  Load candidates when vacancy changes
+    // ────────────────────────────────────────────────
+    function loadCandidates(vacancyId) {
+        if (!vacancyId) {
+            container.innerHTML = `<div class="text-center py-4 text-muted">
+                <i class="far fa-folder-open fa-2x mb-3 d-block text-muted"></i>
+                Select a vacancy first
+            </div>`;
+            return;
+        }
+
+        container.innerHTML = `<div class="text-center py-5">
+            <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
+            <p class="mt-3 text-muted">Loading shortlisted candidates...</p>
+        </div>`;
+
+        fetch(`{% url 'ajax_load_applications' %}?vacancy_id=${vacancyId}`)
+            .then(r => r.json())
+            .then(data => {
+                if (!data || data.length === 0) {
+                    container.innerHTML = `<div class="alert alert-info mb-0">
+                        No accepted / shortlisted applications for this vacancy yet.
+                    </div>`;
+                    return;
+                }
+
+                let html = '';
+                data.forEach(app => {
+                    html += `
+                    <div class="form-check py-2 border-bottom candidate-item">
+                        <input class="form-check-input" type="checkbox"
+                               name="applications"
+                               value="${app.id}"
+                               id="app_${app.id}">
+                        <label class="form-check-label ms-2" for="app_${app.id}">
+                            <strong>${app.text}</strong>
+                            ${app.email ? `<br><small class="text-muted">${app.email}</small>` : ''}
+                        </label>
+                    </div>`;
+                });
+
+                container.innerHTML = html;
+            })
+            .catch(err => {
+                console.error(err);
+                container.innerHTML = `<div class="alert alert-danger mb-0">
+                    Failed to load candidates. Please try again.
+                </div>`;
+            });
+    }
+
+    // ────────────────────────────────────────────────
+    //  Real-time search/filter
+    // ────────────────────────────────────────────────
+    if (searchInput) {
+        searchInput.addEventListener('input', function () {
+            const term = this.value.toLowerCase().trim();
+            document.querySelectorAll('.candidate-item').forEach(item => {
+                const text = item.textContent.toLowerCase();
+                item.style.display = text.includes(term) ? '' : 'none';
+            });
+        });
+    }
+
+    // ────────────────────────────────────────────────
+    //  Trigger on vacancy change
+    // ────────────────────────────────────────────────
+    vacancySelect.addEventListener("change", function () {
+        loadCandidates(this.value);
+    });
+
+    // ────────────────────────────────────────────────
+    //  If editing → pre-load
+    // ────────────────────────────────────────────────
+    {% if form.instance.pk and form.instance.vacancy %}
+        vacancySelect.value = "{{ form.instance.vacancy.id }}";
+        loadCandidates(vacancySelect.value);
+
+        // Pre-check already selected ones (if editing)
+        setTimeout(() => {
+            {% for app in form.instance.applications.all %}
+                const cb = document.querySelector(`input[value="{{ app.id }}"]`);
+                if (cb) cb.checked = true;
+            {% endfor %}
+        }, 800);
+    {% endif %}
+
+});
+</script>
+
+<!-- Optional: Make timezone selector searchable -->
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.bootstrap5.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+<script>
+    new TomSelect('#id_timezone', {
+        maxOptions: 500,
+        searchField: ['text'],
+        placeholder: "Search timezone..."
+    });
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #319795 0%, #225e5d 100%);
+    }
+    .form-check-input:checked {
+        background-color: #319795;
+        border-color: #319795;
+    }
+    .form-check-input:focus {
+        box-shadow: 0 0 0 0.2rem rgba(49, 151, 149, 0.25);
+    }
+    #id_applications .form-check {
+        padding-left: 1.8rem;
+    }
+    #id_applications .form-check-input {
+        margin-left: -1.8rem;
+    }
+    .form-label {
+        font-weight: 500;
+        color: #2d3748;
+    }
+    body.dark-mode .form-label {
+        color: #e2e8f0;
+    }
+    .form-control, .form-select {
+        border-radius: 8px;
+    }
+    body.dark-mode .form-control, body.dark-mode .form-select {
+        background: #3b4a6b;
+        color: #000000;
+        border-color: #4a5568;
+    }
+    .select2-container .select2-selection--multiple {
+        border-radius: 8px;
+        border: 1px solid #ced4da;
+        color: #000000;
+    }
+    body.dark-mode .select2-container .select2-selection--multiple {
+        border-color: #4a5568;
+        background: #3b4a6b;
+        color: #000000;
+    }
+    .select2-container--default .select2-selection--multiple .select2-selection__choice {
+        background-color: #319795;
+        color: #000000;
+    }
+    body.dark-mode .select2-results__options {
+        color: #000000;
+    }
+</style>
+{% endblock %}

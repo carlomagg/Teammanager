@@ -1,0 +1,43 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Event Reminder</title>
+  <style>
+    body { font-family: Arial, Helvetica, sans-serif; color: #2d3748; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .btn { display: inline-block; padding: 10px 16px; background: #319795; color: #fff; text-decoration: none; border-radius: 6px; }
+    .muted { color: #6b7280; font-size: 0.95rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2 style="margin-top:0;">Reminder: {{ conference.title }}</h2>
+    <p class="muted">Hello {{ participant.full_name }},</p>
+
+    <p>This is a reminder for <strong>{{ conference.title }}</strong> happening on <strong>{{ conference.start_date|date:"SHORT_DATETIME_FORMAT" }}</strong>.</p>
+
+    <p>
+      <strong>Venue:</strong> {{ conference.venue|default:"Virtual / TBA" }}
+    </p>
+
+    {% if offset %}
+    <p class="muted">This reminder is being sent {{ offset }} day(s) before the event.</p>
+    {% endif %}
+
+    <p>
+      View event details and updates here:
+    </p>
+
+    <p>
+      <a class="btn" href="{{ access_url }}">{{ access_url }}</a>
+    </p>
+
+    <hr>
+
+    <p class="muted">If you no longer wish to receive reminders, please contact the event organizer.</p>
+
+    <p style="font-size:0.9rem; color:#9CA3AF; margin-top:8px;">&copy; {{ conference.tenant }}</p>
+  </div>
+</body>
+</html>

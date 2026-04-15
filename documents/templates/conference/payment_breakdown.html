@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Payment Breakdown – {{ conference.title }}</h2>
+    <div class="card">
+        <div class="card-body">
+            <p><strong>Participant:</strong> {{ participant.full_name }} ({{ participant.email }})</p>
+            <hr>
+            <table class="table table-borderless">
+                <tbody>
+                    <tr>
+                        <td>Ticket Price
+                            {% if base_price != conference.ticket_price %}
+                                (
+                                {% if base_price == conference.early_bird_price %}
+                                    Early Bird
+                                {% elif conference.late_price and base_price == conference.late_price %}
+                                    Late
+                                {% else %}
+                                    Standard
+                                {% endif %}
+                                )
+                            {% endif %}
+                            :
+                        </td>
+                        <td class="text-end">{{ currency }} {{ base_price|floatformat:2 }}</td>
+                    </tr>
+                    {% if fixed_fee > 0 %}
+                    <tr>
+                        <td>Platform Fee:</td>
+                        <td class="text-end">{{ currency }} {{ fixed_fee|floatformat:2 }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if percent_fee_amount > 0 %}
+                    <tr>
+                        <td>VAT ({{ conference.platform_fee_percent }}%):</td>
+                        <td class="text-end">{{ currency }} {{ percent_fee_amount|floatformat:2 }}</td>
+                    </tr>
+                    {% endif %}
+                    <tr class="fw-bold">
+                        <td>Total Payable:</td>
+                        <td class="text-end">{{ currency }} {{ payable_amount|floatformat:2 }}</td>
+                    </tr>
+                </tbody>
+            </table>
+            <form method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-primary btn-lg">Proceed to Pay</button>
+                <a href="{% url 'conference_post' conference_id=conference.id %}" class="btn btn-secondary ms-3">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,127 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Registration Accepted</title>
+  <style>
+    body { font-family: Arial, Helvetica, sans-serif; color: #2d3748; background: #f7fafc; margin: 0; padding: 0; }
+    .wrapper { background: #f7fafc; padding: 32px 16px; }
+    .container { max-width: 600px; margin: 0 auto; background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+    .header { background: #319795; padding: 32px 32px 24px; text-align: center; }
+    .header h1 { color: #fff; margin: 0; font-size: 1.5rem; letter-spacing: 0.5px; }
+    .header p { color: #e6fffa; margin: 8px 0 0; font-size: 0.95rem; }
+    .body { padding: 32px; }
+    .detail-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+    .detail-table td { padding: 10px 12px; font-size: 0.95rem; border-bottom: 1px solid #e2e8f0; }
+    .detail-table td:first-child { color: #718096; width: 38%; }
+    .detail-table td:last-child { font-weight: 600; color: #2d3748; }
+    .tier-badge { display: inline-block; background: #ebf8ff; color: #2b6cb0; border: 1px solid #bee3f8; border-radius: 6px; padding: 4px 12px; font-size: 0.9rem; font-weight: 600; }
+    .price-row td:last-child { color: #276749; }
+    .qr-section { text-align: center; margin: 28px 0; padding: 20px; background: #f0fff4; border-radius: 8px; border: 1px solid #c6f6d5; }
+    .qr-section p { margin: 0 0 12px; color: #276749; font-size: 0.9rem; font-weight: 600; }
+    .btn { display: inline-block; padding: 12px 28px; background: #319795; color: #fff; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 0.95rem; }
+    .btn-outline { background: #fff; color: #319795; border: 2px solid #319795; }
+    .cta-section { text-align: center; margin: 28px 0 16px; }
+    .ref { background: #f7fafc; border-radius: 6px; padding: 10px 16px; font-size: 0.85rem; color: #718096; margin: 20px 0 0; text-align: center; }
+    .ref code { background: #edf2f7; padding: 2px 7px; border-radius: 4px; color: #4a5568; font-size: 0.85rem; }
+    .footer { text-align: center; padding: 20px 32px; font-size: 0.82rem; color: #a0aec0; border-top: 1px solid #e2e8f0; }
+  </style>
+</head>
+<body>
+<div class="wrapper">
+  <div class="container">
+
+    <!-- Header -->
+    <div class="header">
+      <h1>🎉 You're Confirmed!</h1>
+      <p>Your registration has been accepted</p>
+    </div>
+
+    <!-- Body -->
+    <div class="body">
+      <p>Hello <strong>{{ participant.full_name }}</strong>,</p>
+      <p>We're pleased to confirm your registration for <strong>{{ conference.title }}</strong>. We look forward to seeing you there.</p>
+
+      <!-- Event Details -->
+      <table class="detail-table">
+        <tr>
+          <td>Event</td>
+          <td>{{ conference.title }}</td>
+        </tr>
+        {% if conference.theme %}
+        <tr>
+          <td>Theme</td>
+          <td>{{ conference.theme }}</td>
+        </tr>
+        {% endif %}
+        <tr>
+          <td>Date</td>
+          <td>{{ conference.start_date|date:"N j, Y, P" }} — {{ conference.end_date|date:"N j, Y, P" }}</td>
+        </tr>
+        {% if conference.venue %}
+        <tr>
+          <td>Venue</td>
+          <td>{{ conference.venue }}</td>
+        </tr>
+        {% endif %}
+        {% if conference.virtual_link %}
+        <tr>
+          <td>Virtual Link</td>
+          <td><a href="{{ conference.virtual_link }}">{{ conference.virtual_link }}</a></td>
+        </tr>
+        {% endif %}
+        {% if participant.attendance_mode %}
+        <tr>
+          <td>Attendance Mode</td>
+          <td>{{ participant.get_attendance_mode_display }}</td>
+        </tr>
+        {% endif %}
+
+        <!-- Tier / Pricing row -->
+        {% if participant.price_tier %}
+        <tr>
+          <td>Registration Tier</td>
+          <td><span class="tier-badge">{{ participant.price_tier.name }}</span></td>
+        </tr>
+        <tr class="price-row">
+          <td>Ticket Price</td>
+          <td>{{ conference.currency|default:"NGN" }} {{ participant.price_tier.price|floatformat:2 }}</td>
+        </tr>
+        {% elif participant.ticket_paid %}
+        <tr class="price-row">
+          <td>Ticket</td>
+          <td>{% if conference.ticket_price == 0 %}Free{% else %}{{ conference.currency|default:"NGN" }} {{ conference.ticket_price|floatformat:2 }}{% endif %}</td>
+        </tr>
+        {% endif %}
+      </table>
+
+      <!-- QR Code -->
+      {% if qr_data_uri %}
+      <div class="qr-section">
+        <p><i>Present this QR code at the venue for seamless check-in</i></p>
+        <img src="{{ qr_data_uri }}" alt="Check-in QR Code" style="max-width:200px; display:block; margin:0 auto;">
+      </div>
+      {% endif %}
+
+      <!-- CTAs -->
+      <div class="cta-section">
+        <a class="btn" href="{{ access_url }}" style="margin: 6px;">View Event Updates</a>
+        <a class="btn btn-outline" href="{{ dashboard_url }}" style="margin: 6px;">My Dashboard</a>
+      </div>
+
+      <!-- Reference -->
+      <div class="ref">
+        Registration reference: <code>{{ participant.unique_token }}</code>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      Questions? Contact <strong>{{ conference.organizer }}</strong> via {{ conference.organizer.email }}<br>
+      This email was sent to {{ participant.email }}
+    </div>
+
+  </div>
+</div>
+</body>
+</html>

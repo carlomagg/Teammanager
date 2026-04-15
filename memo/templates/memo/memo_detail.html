@@ -1,0 +1,831 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ memo.reference_number }} — {{ memo.title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'memo:dashboard' %}">Mail & Memo</a></li>
+                    <li class="breadcrumb-item active">{{ memo.reference_number }}</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-md-8">
+            <!-- Memo Header -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h3>{{ memo.title }}</h3>
+                            <p class="text-muted mb-1">
+                                <code>{{ memo.reference_number }}</code>
+                                {% if memo.is_external %}<span class="badge bg-info">External</span>{% endif %}
+                            </p>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-{% if memo.status == 'pending' %}warning{% elif memo.status == 'in_progress' %}info{% elif memo.status == 'approved' %}success{% elif memo.status == 'rejected' %}danger{% elif memo.status == 'escalated' %}danger{% elif memo.status == 'positive_response' %}success{% elif memo.status == 'negative_response' %}warning{% elif memo.status == 'completed' %}dark{% elif memo.status == 'closed' %}secondary{% else %}secondary{% endif %} fs-6">
+                                {{ memo.get_status_display }}
+                            </span>
+                            <br>
+                            <span class="badge bg-{% if memo.priority == 'urgent' %}danger{% elif memo.priority == 'high' %}warning{% elif memo.priority == 'medium' %}info{% else %}secondary{% endif %} mt-1">
+                                {{ memo.get_priority_display }} Priority
+                            </span>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>From:</strong> {{ memo.submitter_display }}</p>
+                            <p><strong>To:</strong> 
+                                {% if memo.to_users.all %}
+                                    {% for user in memo.to_users.all %}
+                                        <span class="badge bg-primary">{{ user.get_full_name|default:user.username }}</span>{% if not forloop.last %}, {% endif %}
+                                    {% endfor %}
+                                {% else %}
+                                    <span class="text-muted">None</span>
+                                {% endif %}
+                            </p>
+                            {% if memo.cc_users.all %}
+                            <p><strong>CC:</strong> 
+                                {% for user in memo.cc_users.all %}
+                                    <span class="badge bg-info">{{ user.get_full_name|default:user.username }}</span>{% if not forloop.last %}, {% endif %}
+                                {% endfor %}
+                            </p>
+                            {% endif %}
+                            {% if memo.bcc_users.all and is_creator %}
+                            <p><strong>BCC:</strong> 
+                                {% for user in memo.bcc_users.all %}
+                                    <span class="badge bg-secondary">{{ user.get_full_name|default:user.username }}</span>{% if not forloop.last %}, {% endif %}
+                                {% endfor %}
+                                <small class="text-muted d-block">(Only visible to you)</small>
+                            </p>
+                            {% endif %}
+                            <p><strong>Category:</strong> {{ memo.category.name|default:"None" }}</p>
+                            <p><strong>Document Type:</strong> {{ memo.get_document_type_display }}</p>
+                            <p><strong>Created:</strong> {{ memo.created_at|date:"M d, Y H:i" }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Current Holder:</strong> {{ memo.current_holder.username|default:"Unassigned" }}</p>
+                            <p><strong>Last Updated:</strong> {{ memo.updated_at|date:"M d, Y H:i" }}</p>
+                            {% if memo.completed_at %}<p><strong>Completed:</strong> {{ memo.completed_at|date:"M d, Y H:i" }}</p>{% endif %}
+                            {% if memo.closed_at %}<p><strong>Closed:</strong> {{ memo.closed_at|date:"M d, Y H:i" }}</p>{% endif %}
+                        </div>
+                    </div>
+                    <hr>
+                    <div>
+                        <strong>Description:</strong>
+                        <div class="mt-2">
+                            {{ memo.description|safe }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Attachments -->
+            {% if attachments %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-paperclip me-2"></i>Attachments</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        {% for att in attachments %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="fas fa-file me-2"></i>
+                                <a href="{{ att.file.url }}" target="_blank">{{ att.original_name }}</a>
+                                {% if att.step %}<small class="text-muted">(Step {{ att.step.step_number }})</small>{% endif %}
+                            </div>
+                            <small class="text-muted">{{ att.uploaded_by.username|default:"External" }} · {{ att.uploaded_at|date:"M d" }}</small>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Routing Trail / Timeline -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-route me-2"></i>Routing Trail</h5>
+                </div>
+                <div class="card-body">
+                    {% if steps %}
+                    <div class="timeline">
+                        {% for step in steps %}
+                        <div class="d-flex mb-3">
+                            <div class="me-3 text-center" style="min-width: 40px;">
+                                <div class="rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 36px; height: 36px; background: {% if step.action == 'approved' %}#198754{% elif step.action == 'rejected' %}#dc3545{% elif step.action == 'escalated' %}#e65100{% elif step.action == 'positive_response' %}#28a745{% elif step.action == 'negative_response' %}#ffc107{% elif step.action == 'request_info' %}#17a2b8{% elif step.action == 'created' %}#319795{% else %}#6c757d{% endif %}; color: white;">
+                                    <small>{{ step.step_number }}</small>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="card">
+                                    <div class="card-body py-2 px-3">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div class="me-3">
+                                            <strong class="d-block">
+                                                {% if step.action == 'created' %}
+                                                    <i class="fas fa-plus-circle text-primary me-1"></i>
+                                                {% elif step.action == 'forwarded' %}
+                                                    <i class="fas fa-share text-secondary me-1"></i>
+                                                {% elif step.action == 'approved' %}
+                                                    <i class="fas fa-check-circle text-success me-1"></i>
+                                                {% elif step.action == 'rejected' %}
+                                                    <i class="fas fa-times-circle text-danger me-1"></i>
+                                                {% elif step.action == 'escalated' %}
+                                                    <i class="fas fa-exclamation-triangle text-warning me-1"></i>
+                                                {% elif step.action == 'received' %}
+                                                    <i class="fas fa-envelope me-1"></i>
+                                                {% elif step.action == 'returned' %}
+                                                    <i class="fas fa-undo me-1"></i>
+                                                {% elif step.action == 'positive_response' %}
+                                                    <i class="fas fa-thumbs-up me-1"></i>
+                                                {% elif step.action == 'negative_response' %}
+                                                    <i class="fas fa-thumbs-down me-1"></i>
+                                                {% elif step.action == 'kept_in_view' %}
+                                                    <i class="fas fa-eye me-1"></i>
+                                                {% elif step.action == 'withdrawn' %}
+                                                    <i class="fas fa-undo-alt me-1"></i>
+                                                {% elif step.action == 'request_info' %}
+                                                    <i class="fas fa-question-circle text-info me-1"></i>
+                                                {% endif %}
+                                                {% if step.action == 'forwarded' %}
+                                                    Minuted
+                                                {% elif step.action == 'positive_response' %}
+                                                    Positive Recommendation
+                                                {% elif step.action == 'negative_response' %}
+                                                    Negative Recommendation
+                                                {% else %}
+                                                    {{ step.get_action_display }}
+                                                {% endif %}
+                                            </strong>
+                                            </div>
+                                            <div class="text-end">
+                                                <small class="text-muted d-block">
+                                                    {% if step.action == 'approved' %}
+                                                        Approved by <strong>{{ step.from_user.username|default:"External" }}</strong>
+                                                    {% elif step.action == 'rejected' %}
+                                                        Rejected by <strong>{{ step.from_user.username|default:"External" }}</strong>
+                                                    {% elif step.action == 'forwarded' %}
+                                                        Minuted to <strong>{{ step.to_user.username|default:"—" }}</strong>
+                                                    {% elif step.action == 'escalated' %}
+                                                        Escalated to <strong>{{ step.to_user.username|default:"—" }}</strong>
+                                                    {% elif step.action == 'returned' %}
+                                                        Returned to <strong>{{ step.to_user.username|default:"—" }}</strong>
+                                                    {% elif step.action == 'created' %}
+                                                        Created by <strong>{{ step.from_user.username|default:"External" }}</strong>
+                                                    {% elif step.action == 'received' %}
+                                                        Received and assigned to <strong>{{ step.to_user.username|default:"—" }}</strong>
+                                                    {% elif step.action == 'positive_response' %}
+                                                        Positive recommendation by <strong>{{ step.from_user.username|default:"External" }}</strong>
+                                                    {% elif step.action == 'negative_response' %}
+                                                        Negative recommendation by <strong>{{ step.from_user.username|default:"External" }}</strong>
+                                                    {% elif step.action == 'kept_in_view' %}
+                                                        Kept in view by <strong>{{ step.from_user.username|default:"External" }}</strong>
+                                                    {% elif step.action == 'withdrawn' %}
+                                                        Withdrawn by <strong>{{ step.from_user.username|default:"External" }}</strong>
+                                                    {% elif step.action == 'request_info' %}
+                                                        Requested more info from <strong>{{ step.to_user.username|default:"—" }}</strong>
+                                                    {% else %}
+                                                        {{ step.from_user.username|default:"External" }} → {{ step.to_user.username|default:"—" }}
+                                                    {% endif %}
+                                                </small>
+                                                <small class="text-muted d-block mt-1">{{ step.created_at|date:"M d, Y H:i" }}</small>
+                                            </div>
+                                        </div>
+                                        {% if step.note %}
+                                        <div class="routing-note-wrapper mt-1">
+                                            <div class="mt-1">{{ step.note }}</div>
+                                            {% if step.is_private_note %}<span class="badge bg-secondary ms-1 mt-1 d-inline-block">Private</span>{% endif %}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No routing activity yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Comments -->
+            <div class="card mb-4" style="display: none;">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-comments me-2"></i>Comments</h5>
+                </div>
+                <div class="card-body">
+                    {% for comment in comments %}
+                    <div class="d-flex mb-3">
+                        <div class="me-3">
+                            <div class="rounded-circle bg-secondary d-inline-flex align-items-center justify-content-center" style="width: 36px; height: 36px; color: white;">
+                                <i class="fas fa-user"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="bg-light rounded p-2">
+                                <strong>{{ comment.author.username|default:comment.external_author_name|default:"Unknown" }}</strong>
+                                {% if comment.is_private %}<span class="badge bg-warning text-dark">Private</span>{% endif %}
+                                <small class="text-muted float-end">{{ comment.created_at|date:"M d, Y H:i" }}</small>
+                                <p class="mb-0 mt-1">
+                                    {{ comment.content|linebreaksbr }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted">No comments yet.</p>
+                    {% endfor %}
+
+                    <!-- Add Comment Form -->
+                    <hr>
+                    <form method="POST" action="{% url 'memo:memo_add_comment' memo.pk %}">
+                        {% csrf_token %}
+                        <div class="mb-2">
+                            {{ comment_form.content }}
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="form-check">
+                                {{ comment_form.is_private }}
+                                <label class="form-check-label" for="id_is_private">Private comment</label>
+                            </div>
+                            <button type="submit" class="btn btn-sm btn-primary"><i class="fas fa-comment me-1"></i> Add Comment</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar: Actions -->
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>Actions</h5>
+                </div>
+                <div class="card-body">
+                    {% if memo.status == 'draft' and is_creator %}
+                    <a href="{% url 'memo:memo_edit' memo.pk %}" class="btn btn-primary w-100 mb-2">
+                        <i class="fas fa-edit me-1"></i> Edit Draft
+                    </a>
+                    {% endif %}
+
+                    {% if can_forward %}
+                    <a href="{% url 'memo:memo_forward' memo.pk %}" class="btn btn-primary w-100 mb-2">
+                        <i class="fas fa-share me-1"></i> Minute/Forward/Route
+                    </a>
+                    {% endif %}
+
+                    {% if can_approve %}
+                    <button class="btn btn-success w-100 mb-2" data-bs-toggle="modal" data-bs-target="#approveModal">
+                        <i class="fas fa-check me-1"></i> Approve
+                    </button>
+                    {% endif %}
+
+                    {% if can_reject %}
+                    <button class="btn btn-danger w-100 mb-2" data-bs-toggle="modal" data-bs-target="#rejectModal">
+                        <i class="fas fa-times me-1"></i> Reject
+                    </button>
+                    {% endif %}
+
+                    {% if can_record_response %}
+                    <button class="btn btn-outline-success w-100 mb-2" data-bs-toggle="modal" data-bs-target="#positiveResponseModal">
+                        <i class="fas fa-thumbs-up me-1"></i> Positive Recommendation
+                    </button>
+
+                    <button class="btn btn-outline-danger w-100 mb-2" data-bs-toggle="modal" data-bs-target="#negativeResponseModal">
+                        <i class="fas fa-thumbs-down me-1"></i> Negative Recommendation
+                    </button>
+                    {% endif %}
+
+                    {% if can_keep_in_view %}
+                    <button class="btn btn-secondary w-100 text-white mb-2" data-bs-toggle="modal" data-bs-target="#keepInViewModal">
+                        <i class="fas fa-eye me-1"></i> Keep In-View
+                    </button>
+                    {% endif %}
+
+                    {% if can_withdraw %}
+                    <button class="btn btn-outline-danger w-100 mb-2" data-bs-toggle="modal" data-bs-target="#withdrawModal">
+                        <i class="fas fa-undo-alt me-1"></i> Withdraw
+                    </button>
+                    {% endif %}
+
+                    {% if can_mark_in_progress %}
+                    <form method="POST" action="{% url 'memo:memo_mark_in_progress' memo.pk %}" class="mb-2">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-info w-100 text-white">
+                            <i class="fas fa-spinner me-1"></i> Mark In Progress
+                        </button>
+                    </form>
+                    {% endif %}
+
+                    {% if can_escalate %}
+                    <button class="btn btn-warning w-100 mb-2" data-bs-toggle="modal" data-bs-target="#escalateModal">
+                        <i class="fas fa-exclamation-triangle me-1"></i> Escalate
+                    </button>
+                    {% endif %}
+
+                    {% if can_request_info %}
+                    <button class="btn btn-outline-info w-100 mb-2" data-bs-toggle="modal" data-bs-target="#requestInfoModal">
+                        <i class="fas fa-question-circle me-1"></i> Request More Info
+                    </button>
+                    {% endif %}
+
+                    {% if can_complete %}
+                    <form method="POST" action="{% url 'memo:memo_complete' memo.pk %}" class="mb-2">
+                        {% csrf_token %}
+                        <button type="button" class="btn btn-dark w-100 js-confirm-submit" data-confirm-title="Complete Memo" data-confirm-message="Mark this memo as completed?" data-confirm-submit-text="Mark Completed">
+                            <i class="fas fa-flag-checkered me-1"></i> Mark Completed
+                        </button>
+                    </form>
+                    {% endif %}
+
+                    {% if can_close %}
+                    <form method="POST" action="{% url 'memo:memo_close' memo.pk %}" class="mb-2">
+                        {% csrf_token %}
+                        <button type="button" class="btn btn-secondary w-100 js-confirm-submit" data-confirm-title="Close Memo" data-confirm-message="Close this memo?" data-confirm-submit-text="Close">
+                            <i class="fas fa-archive me-1"></i> Close
+                        </button>
+                    </form>
+                    {% endif %}
+
+                    {% if can_reopen %}
+                    <form method="POST" action="{% url 'memo:memo_reopen' memo.pk %}" class="mb-2">
+                        {% csrf_token %}
+                        <button type="button" class="btn btn-outline-primary w-100 js-confirm-submit" data-confirm-title="Reopen Memo" data-confirm-message="Reopen this memo?" data-confirm-submit-text="Reopen">
+                            <i class="fas fa-redo me-1"></i> Reopen
+                        </button>
+                    </form>
+                    {% endif %}
+
+                    {% if not can_forward and not can_approve and not can_reject and not can_request_info and not can_record_response and not can_keep_in_view and not can_withdraw and not can_escalate and not can_mark_in_progress and not can_complete and not can_close and not can_reopen %}
+                    <p class="text-muted text-center mb-0">No actions available.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- External Info -->
+            {% if memo.is_external %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-globe me-2"></i>External Submitter</h6>
+                </div>
+                <div class="card-body">
+                    <p><strong>Name:</strong> {{ memo.external_name|default:"-" }}</p>
+                    <p><strong>Email:</strong> {{ memo.external_email|default:"-" }}</p>
+                    <p><strong>Phone:</strong> {{ memo.external_phone|default:"-" }}</p>
+                    <p class="mb-2"><strong>Status Link:</strong></p>
+                    <div class="input-group input-group-sm">
+                        <input type="text" class="form-control" id="externalStatusLink" value="{{ request.scheme }}://{{ request.get_host }}{% url 'memo:external_status' memo.external_token %}" readonly>
+                        <button class="btn btn-outline-primary" onclick="copyExternalStatusLink(this)" title="Copy link">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Confirm Action Modal -->
+<div class="modal fade" id="memoConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="memoConfirmTitle">Confirm</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="memoConfirmMessage">Are you sure?</div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="memoConfirmSubmitBtn">Continue</button>
+            </div>
+            <div class="px-3 pb-3" id="memoConfirmNoteContainer" style="display: none;">
+                <label for="memoConfirmNote" class="form-label mb-1" id="memoConfirmNoteLabel">Note</label>
+                <textarea id="memoConfirmNote"
+                          class="form-control"
+                          rows="3"
+                          placeholder=""></textarea>
+                <div class="alert alert-danger mt-2 py-2 px-3" id="memoConfirmNoteError" style="display: none; font-size: 0.875rem;">
+                    Please provide a note before continuing.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Escalate Modal -->
+{% if can_escalate %}
+<div class="modal fade" id="escalateModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{% url 'memo:memo_escalate' memo.pk %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title">Escalate Memo</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Send To <small class="text-muted">(optional)</small></label>
+                        <select name="to_user" id="id_escalate_to_user" class="form-control select2" data-placeholder="Select recipient">
+                            <option value="">---------</option>
+                            {% for user_option in forward_form.to_users.field.queryset %}
+                            <option value="{{ user_option.pk }}">{{ user_option }}</option>
+                            {% endfor %}
+                        </select>
+                        <small class="form-text text-muted">Select the person to escalate this memo to.</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Reason for Escalation <span class="text-danger">*</span></label>
+                        <textarea name="note" class="form-control" rows="3" placeholder="Reason for escalation..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" name="escalate_to" class="btn btn-warning">Escalate</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+    // Initialize select2 for escalate modal
+    $(document).ready(function() {
+        $('#id_escalate_to_user').select2({
+            dropdownParent: $('#escalateModal'),
+            width: '100%'
+        });
+    });
+</script>
+{% endif %}
+
+<!-- Approve Modal -->
+{% if can_approve %}
+<div class="modal fade" id="approveModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{% url 'memo:memo_approve' memo.pk %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title">Approve Memo</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Send To / Minute To <small class="text-muted">(optional)</small></label>
+                        <select name="to_user" id="id_approve_to_user" class="form-control select2" data-placeholder="Select recipient">
+                            <option value="">---------</option>
+                            {% for user_option in forward_form.to_users.field.queryset %}
+                            <option value="{{ user_option.pk }}">{{ user_option }}</option>
+                            {% endfor %}
+                        </select>
+                        <small class="form-text text-muted">Leave blank to return the approved memo to the original creator.</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Comment / Note <small class="text-muted">(optional)</small></label>
+                        <textarea name="note" class="form-control" rows="3" placeholder="Add a comment or note..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">Approve</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Reject Modal -->
+{% if can_reject %}
+<div class="modal fade" id="rejectModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{% url 'memo:memo_reject' memo.pk %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title">Reject Memo</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Send To <small class="text-muted">(optional)</small></label>
+                        <select name="to_user" id="id_reject_to_user" class="form-control select2" data-placeholder="Select recipient">
+                            <option value="">---------</option>
+                            {% for user_option in forward_form.to_users.field.queryset %}
+                            <option value="{{ user_option.pk }}">{{ user_option }}</option>
+                            {% endfor %}
+                        </select>
+                        <small class="form-text text-muted">Leave blank to return the rejected memo to the original creator.</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Reason for Rejection <span class="text-danger">*</span></label>
+                        <textarea name="note" class="form-control" rows="3" placeholder="Enter reason for rejection..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Reject</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Positive Response Modal -->
+{% if can_record_response %}
+<div class="modal fade" id="positiveResponseModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{% url 'memo:memo_positive_response' memo.pk %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title">Positive Recommendation</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Send To <small class="text-muted">(optional)</small></label>
+                        <select name="to_user" id="id_positive_to_user" class="form-control select2" data-placeholder="Select recipient">
+                            <option value="">---------</option>
+                            {% for user_option in forward_form.to_users.field.queryset %}
+                            <option value="{{ user_option.pk }}">{{ user_option }}</option>
+                            {% endfor %}
+                        </select>
+                        <small class="form-text text-muted">Leave blank to return to the original creator.</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Positive Recommendation Note <span class="text-danger">*</span></label>
+                        <textarea name="note" class="form-control" rows="3" placeholder="Enter your note..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Negative Response Modal -->
+<div class="modal fade" id="negativeResponseModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{% url 'memo:memo_negative_response' memo.pk %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title">Negative Recommendation</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Send To <small class="text-muted">(optional)</small></label>
+                        <select name="to_user" id="id_negative_to_user" class="form-control select2" data-placeholder="Select recipient">
+                            <option value="">---------</option>
+                            {% for user_option in forward_form.to_users.field.queryset %}
+                            <option value="{{ user_option.pk }}">{{ user_option }}</option>
+                            {% endfor %}
+                        </select>
+                        <small class="form-text text-muted">Leave blank to return to the original creator.</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Negative Recommendation Note <span class="text-danger">*</span></label>
+                        <textarea name="note" class="form-control" rows="3" placeholder="Enter your note..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Keep In View Modal -->
+{% if can_keep_in_view %}
+<div class="modal fade" id="keepInViewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{% url 'memo:memo_keep_in_view' memo.pk %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title">Keep In View</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Send To <small class="text-muted">(optional)</small></label>
+                        <select name="to_user" id="id_keep_in_view_to_user" class="form-control select2" data-placeholder="Select recipient">
+                            <option value="">---------</option>
+                            {% for user_option in forward_form.to_users.field.queryset %}
+                            <option value="{{ user_option.pk }}">{{ user_option }}</option>
+                            {% endfor %}
+                        </select>
+                        <small class="form-text text-muted">Leave blank to keep with yourself.</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Note <small class="text-muted">(optional)</small></label>
+                        <textarea name="note" class="form-control" rows="3" placeholder="Add a note..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-secondary text-white">Keep In View</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Withdraw Modal -->
+{% if can_withdraw %}
+<div class="modal fade" id="withdrawModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{% url 'memo:memo_withdraw' memo.pk %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title">Withdraw Memo</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Send To <small class="text-muted">(optional)</small></label>
+                        <select name="to_user" id="id_withdraw_to_user" class="form-control select2" data-placeholder="Select recipient">
+                            <option value="">---------</option>
+                            {% for user_option in forward_form.to_users.field.queryset %}
+                            <option value="{{ user_option.pk }}">{{ user_option }}</option>
+                            {% endfor %}
+                        </select>
+                        <small class="form-text text-muted">Leave blank to return to yourself.</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Reason for Withdrawal <span class="text-danger">*</span></label>
+                        <textarea name="note" class="form-control" rows="3" placeholder="Enter reason for withdrawal..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Withdraw</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Request Info Modal -->
+{% if can_request_info %}
+<div class="modal fade" id="requestInfoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{% url 'memo:memo_request_info' memo.pk %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title">Request More Information</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Send To <small class="text-muted">(optional)</small></label>
+                        <select name="to_user" id="id_request_info_to_user" class="form-control select2" data-placeholder="Select recipient">
+                            <option value="">---------</option>
+                            {% for user_option in forward_form.to_users.field.queryset %}
+                            <option value="{{ user_option.pk }}">{{ user_option }}</option>
+                            {% endfor %}
+                        </select>
+                        <small class="form-text text-muted">Leave blank to send to the original creator.</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Information Needed <span class="text-danger">*</span></label>
+                        <textarea name="note" class="form-control" rows="3" placeholder="Please provide details about..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-info text-white">Send Request</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<script>
+    (function() {
+        const modalEl = document.getElementById('memoConfirmModal');
+        if (!modalEl || typeof bootstrap === 'undefined') return;
+
+        const modal = new bootstrap.Modal(modalEl);
+        const titleEl = document.getElementById('memoConfirmTitle');
+        const msgEl = document.getElementById('memoConfirmMessage');
+        const submitBtn = document.getElementById('memoConfirmSubmitBtn');
+        const noteContainer = document.getElementById('memoConfirmNoteContainer');
+        const noteField = document.getElementById('memoConfirmNote');
+        const noteLabel = document.getElementById('memoConfirmNoteLabel');
+        const noteError = document.getElementById('memoConfirmNoteError');
+        let formToSubmit = null;
+        let requiresNote = false;
+
+        document.querySelectorAll('.js-confirm-submit').forEach(btn => {
+            btn.addEventListener('click', function() {
+                formToSubmit = this.closest('form');
+                if (!formToSubmit) return;
+
+                titleEl.textContent = this.getAttribute('data-confirm-title') || 'Confirm';
+                msgEl.textContent = this.getAttribute('data-confirm-message') || 'Are you sure?';
+                submitBtn.textContent = this.getAttribute('data-confirm-submit-text') || 'Continue';
+                
+                // Reset note UI
+                requiresNote = this.getAttribute('data-require-note') === 'true';
+                noteField.value = '';
+                if (noteError) {
+                    noteError.style.display = 'none';
+                }
+
+                // Setup optional note field
+                if (requiresNote) {
+                    const labelText = this.getAttribute('data-note-label') || 'Note';
+                    const placeholderText = this.getAttribute('data-note-placeholder') || '';
+                    noteLabel.textContent = labelText;
+                    noteField.placeholder = placeholderText;
+                    noteContainer.style.display = 'block';
+                } else {
+                    noteContainer.style.display = 'none';
+                }
+
+                modal.show();
+            });
+        });
+
+        submitBtn.addEventListener('click', function() {
+            if (!formToSubmit) return;
+
+            if (requiresNote) {
+                const noteValue = (noteField.value || '').trim();
+                if (!noteValue) {
+                    if (noteError) {
+                        const baseLabel = noteLabel.textContent || 'note';
+                        noteError.textContent = `Please provide ${baseLabel.toLowerCase()} before continuing.`;
+                        noteError.style.display = 'block';
+                    }
+                    noteField.focus();
+                    return;
+                }
+                if (noteError) {
+                    noteError.style.display = 'none';
+                }
+                const hiddenNoteInput = formToSubmit.querySelector('input[name="note"]');
+                if (hiddenNoteInput) {
+                    hiddenNoteInput.value = noteValue;
+                }
+            }
+
+            formToSubmit.submit();
+        });
+    })();
+</script>
+
+<script>
+function copyExternalStatusLink(button) {
+    const input = document.getElementById('externalStatusLink');
+    input.select();
+    input.setSelectionRange(0, 99999); // For mobile devices
+    
+    navigator.clipboard.writeText(input.value).then(() => {
+        const originalHTML = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-check"></i>';
+        button.classList.remove('btn-outline-primary');
+        button.classList.add('btn-success');
+        
+        setTimeout(() => {
+            button.innerHTML = originalHTML;
+            button.classList.remove('btn-success');
+            button.classList.add('btn-outline-primary');
+        }, 2000);
+    }).catch(err => {
+        console.error('Failed to copy:', err);
+        alert('Failed to copy link');
+    });
+}
+</script>
+
+{% endblock %}

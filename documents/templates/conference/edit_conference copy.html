@@ -1,0 +1,626 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Edit: {{ conference.title }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-edit me-2"></i> Edit Conference</h5>
+                    <a href="{% url 'conference_detail' conference.id %}" class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i> Back
+                    </a>
+                </div>
+                <form method="post" class="card-body" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {{ form.non_field_errors }}
+                        </div>
+                    {% endif %}
+
+                    <!-- ================= BASIC INFO ================= -->
+                    <h6 class="text-uppercase text-muted mb-3">Basic Information</h6>
+
+                    <div class="row g-3">
+                        <div class="col-12">
+                            {{ form.title.label_tag }}
+                            {{ form.title }}
+                            {{ form.title.errors }}
+                        </div>
+
+                        <div class="col-12">
+                            {{ form.theme.label_tag }}
+                            {{ form.theme }}
+                            {{ form.theme.errors }}
+                        </div>
+
+                        <div class="col-12">
+                            {{ form.description.label_tag }}
+                            {{ form.description }}
+                            {{ form.description.errors }}
+                        </div>
+
+                        <div class="col-12">
+                            {{ form.banner.label_tag }}
+                            {{ form.banner }}
+                            <small class="form-text text-muted">Recommended size: 1200×600px</small>
+                            {{ form.banner.errors }}
+                        </div>
+
+                        <div class="col-12">
+                            {{ form.tags.label_tag }}
+                            {{ form.tags }}
+                            <small class="text-muted">{{ form.tags.help_text }}</small>
+                            {{ form.tags.errors }}
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <!-- ================= SCHEDULE ================= -->
+                    <h6 class="text-uppercase text-muted mb-3">Schedule</h6>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            {{ form.start_date.label_tag }}
+                            {{ form.start_date }}
+                            {{ form.start_date.errors }}
+                        </div>
+
+                        <div class="col-md-6">
+                            {{ form.end_date.label_tag }}
+                            {{ form.end_date }}
+                            {{ form.end_date.errors }}
+                        </div>
+
+                        <div class="col-12 mb-3">
+                            {{ form.conference_type.label_tag }}
+                            {{ form.conference_type }}
+                        </div>
+
+                        <div class="col-md-6" id="venue-wrapper">
+                            {{ form.venue.label_tag }}
+                            {{ form.venue }}
+                            {{ form.venue.errors }}
+                        </div>
+
+                        <div class="col-12" id="virtual-link-wrapper">
+                            {{ form.virtual_link.label_tag }}
+                            {{ form.virtual_link }}
+                            {{ form.virtual_link.errors }}
+                        </div>
+
+                    </div>
+
+                    <hr class="my-4">
+
+                    <!-- ================= REGISTRATION ================= -->
+                    <h6 class="text-uppercase text-muted mb-3">Registration</h6>
+
+                    <div class="row g-3">
+                        <div class="col-md-6 d-flex align-items-center">
+                            <div class="form-check mt-4">
+                                {{ form.registration_required }}
+                                <label class="form-check-label">{{ form.registration_required.label }}</label>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            {{ form.registration_deadline.label_tag }}
+                            {{ form.registration_deadline }}
+                            {{ form.registration_deadline.errors }}
+                        </div>
+
+                        <div class="col-md-6" id="max-phy">
+                            {{ form.max_participants_physical.label_tag }}
+                            {{ form.max_participants_physical }}
+                            {{ form.max_participants_physical.errors }}
+                        </div>
+
+                        <div class="col-md-6" id="max-virt">
+                            {{ form.max_participants_virtual.label_tag }}
+                            {{ form.max_participants_virtual }}
+                            {{ form.max_participants_virtual.errors }}
+                        </div>
+
+                        <div class="col-md-6">
+                            {{ form.free_first_n_participants.label_tag }}
+                            {{ form.free_first_n_participants }}
+                            {{ form.free_first_n_participants.errors }}
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <!-- ================= PRICING ================= -->
+                    <h6 class="text-uppercase text-muted mb-3">Pricing</h6>
+
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            {{ form.ticket_price.label_tag }}
+                            {{ form.ticket_price }}
+                            {{ form.ticket_price.errors }}
+                        </div>
+
+                        <div class="col-md-4">
+                            {{ form.currency.label_tag }}
+                            {{ form.currency }}
+                            {{ form.currency.errors }}
+                        </div>
+
+                        <div class="col-md-4">
+                            {{ form.early_bird_price.label_tag }}
+                            {{ form.early_bird_price }}
+                            {{ form.early_bird_price.errors }}
+                        </div>
+
+                        <div class="col-md-6">
+                            {{ form.early_bird_deadline.label_tag }}
+                            {{ form.early_bird_deadline }}
+                            {{ form.early_bird_deadline.errors }}
+                        </div>
+
+                        <div class="col-md-6">
+                            {{ form.late_price.label_tag }}
+                            {{ form.late_price }}
+                            {{ form.late_price.errors }}
+                        </div>
+
+                        <div class="col-md-6">
+                            {{ form.late_deadline.label_tag }}
+                            {{ form.late_deadline }}
+                            {{ form.late_deadline.errors }}
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <!-- ================= HOST & REMINDERS ================= -->
+                    <h6 class="text-uppercase text-muted mb-3">Host & Notifications</h6>
+
+                    <div class="row g-3">
+                        <div class="col-12">
+                            {{ form.about_host.label_tag }}
+                            {{ form.about_host }}
+                            {{ form.about_host.errors }}
+                        </div>
+
+                        <div class="col-md-6">
+                            {{ form.reminder_offsets.label_tag }}
+                            {{ form.reminder_offsets }}
+                            {{ form.reminder_offsets.errors }}
+                        </div>
+
+                        <div class="col-md-6">
+                            {{ form.reminder_count.label_tag }}
+                            {{ form.reminder_count }}
+                            {{ form.reminder_count.errors }}
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+                    <!-- Speakers Section -->
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h6 class="mb-0">
+                                <i class="fas fa-users me-2"></i>
+                                Conference Speakers (Optional)
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted mb-3">
+                                Add or remove speakers for this conference.
+                            </p>
+
+                            <!-- Selected Speakers Display with TEXT SLIDER -->
+                            <div id="selected-speakers-container" class="mb-3">
+                                <!-- Text Slider Container -->
+                                <div id="speakers-text-slider" class="speakers-slider-container" style="display: none;">
+                                    <div class="speakers-slider-track">
+                                        <div id="speakers-slider-content" class="speakers-slider-content"></div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Grid Display -->
+                                <div id="selected-speakers-list" class="row g-2"></div>
+                            </div>
+
+
+                            <!-- Add Speaker Button -->
+                            <button type="button" 
+                                    class="btn btn-outline-primary" 
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#speakerModal">
+                                <i class="fas fa-plus me-2"></i>Add Speaker
+                            </button>
+
+                            <!-- Hidden input to store selected speaker IDs -->
+                            <input type="hidden" name="speaker_ids" id="speaker_ids" value="">
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <!-- Custom Questions Section -->
+                        <div class="col-12">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="enableCustomQuestions">
+                                <label class="form-check-label fw-500" for="enableCustomQuestions">
+                                    Add custom registration questions for participants
+                                </label>
+                            </div>
+                            <small class="text-muted d-block mt-1">
+                                Collect additional information from participants during registration
+                            </small>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Custom Questions Section (Hidden by default) -->
+                    <div id="customQuestionsSection" style="display: none;">
+                        <hr class="my-4">
+                        <h6 class="text-uppercase text-muted mb-3">
+                            <i class="fas fa-question-circle me-2"></i>Custom Registration Questions
+                        </h6>
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Add questions that participants will answer during registration.
+                        </div>
+
+                        <!-- Question Input -->
+                        <div class="row g-3 mb-3">
+                            <div class="col-12">
+                                <div class="input-group">
+                                    <input type="text" 
+                                           id="questionInput" 
+                                           class="form-control" 
+                                           placeholder="Enter your question"
+                                           maxlength="200">
+                                    <button type="button" 
+                                            class="btn btn-primary" 
+                                            id="addQuestionBtn">
+                                        <i class="fas fa-plus me-1"></i>Add Question
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Questions List -->
+                        <div id="questionsList" class="mb-3"></div>
+
+                        <!-- Hidden input to store questions as JSON -->
+                        <input type="hidden" id="customQuestionsData" name="custom_questions" value="">
+                    </div>
+
+                    <hr class="my-4">
+
+                    <!-- ================= PARTICIPANT UPLOAD FOLDER ================= -->
+                    <h6 class="text-uppercase text-muted mb-3">
+                        <i class="fas fa-folder-open me-2"></i>Participant File Uploads
+                    </h6>
+
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Why create an upload folder?</strong><br>
+                        <small>
+                            Participants can submit their slides, posters, abstracts, videos, or any files directly to a dedicated folder.
+                            This keeps all conference materials organized in one place.
+                        </small>
+                    </div>
+
+                    <div class="row g-3">
+                        <!-- Option 1: Create New Folder (Recommended) -->
+                        <div class="col-12">
+                            <div class="card border-success">
+                                <div class="card-body">
+                                    <div class="form-check mb-3">
+                                        {{ form.create_new_folder }}
+                                        <label class="form-check-label fw-bold" for="{{ form.create_new_folder.id_for_label }}">
+                                            <i class="fas fa-plus-circle text-success me-2"></i>
+                                            {{ form.create_new_folder.label }}
+                                            <span class="badge bg-success ms-2">Recommended</span>
+                                        </label>
+                                        <br>
+                                        <small class="text-muted ms-4">{{ form.create_new_folder.help_text }}</small>
+                                    </div>
+
+                                    <!-- Custom Folder Name (shown when checkbox is checked) -->
+                                    <div id="customFolderNameSection" style="display: none;">
+                                        <div class="bg-light p-3 rounded border-start border-success border-4">
+                                            <label for="{{ form.custom_folder_name.id_for_label }}" class="form-label">
+                                                {{ form.custom_folder_name.label }}
+                                            </label>
+                                            {{ form.custom_folder_name }}
+                                            <small class="form-text text-muted d-block mt-1">
+                                                {{ form.custom_folder_name.help_text }}
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Divider -->
+                        <div class="col-12">
+                            <div class="text-center">
+                                <span class="badge bg-secondary">OR</span>
+                            </div>
+                        </div>
+
+                        <!-- Option 2: Select Existing Folder -->
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-body">
+                                    <label for="{{ form.upload_folder.id_for_label }}" class="form-label fw-500">
+                                        <i class="fas fa-folder text-primary me-2"></i>
+                                        Use Existing Folder
+                                    </label>
+                                    {{ form.upload_folder }}
+                                    <small class="form-text text-muted d-block mt-2">
+                                        {{ form.upload_folder.help_text }}
+                                    </small>
+                                    {{ form.upload_folder.errors }}
+                                    
+                                    {% if form.upload_folder.field.queryset.count == 0 %}
+                                        <div class="alert alert-warning mt-2 mb-0">
+                                            <small>
+                                                <i class="fas fa-exclamation-triangle me-1"></i>
+                                                No existing folders found. Create a new one above or skip this step.
+                                            </small>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Show current folder if editing -->
+                        {% if action == 'update' and conference.upload_folder %}
+                        <div class="col-12">
+                            <div class="alert alert-success">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <i class="fas fa-check-circle me-2"></i>
+                                        <strong>Current Upload Folder:</strong> {{ conference.upload_folder.name }}
+                                    </div>
+                                    <a href="{% url 'folder_view_public' conference.upload_folder.id %}" 
+                                    class="btn btn-sm btn-outline-success" 
+                                    target="_blank">
+                                        <i class="fas fa-external-link-alt me-1"></i>View Folder
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Skip Info -->
+                        <div class="col-12">
+                            <div class="alert alert-light border">
+                                <i class="fas fa-lightbulb text-warning me-2"></i>
+                                <strong>You can skip this step</strong><br>
+                                <small class="text-muted">
+                                    An upload folder is optional. You can create or assign one later from the conference edit page.
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <hr class="my-4">
+
+                    <div class="d-flex justify-content-between mt-3">
+                        <a href="{% url 'delete_conference' conference.id %}" class="btn btn-outline-danger">
+                            <i class="fas fa-trash-alt me-1"></i> Delete
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i> Save Changes
+                        </button>
+                        {% if user.is_staff and not user.tenant %}
+                            <button type= "button" onclick="history.back()" class="btn btn-secondary btn-sm mt-3" data-bs-toggle="tooltip" title="Return to previous page">
+                                <i class="fas fa-arrow-left me-1"></i> Back
+                            </button>
+                        {% else %}
+                            <a href="{% url 'conference_detail' conference.id %}" class="btn btn-secondary"><i class="fas fa-times"></i> Cancel</a>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Speaker Modal -->
+<div class="modal fade" id="speakerModal" tabindex="-1" aria-labelledby="speakerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="speakerModalLabel">
+                    <i class="fas fa-user-tie me-2"></i>Add Speaker
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <div class="modal-body">
+                <!-- Tab Navigation -->
+                <ul class="nav nav-tabs mb-3" id="speakerTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" 
+                                id="select-speaker-tab" 
+                                data-bs-toggle="tab" 
+                                data-bs-target="#select-speaker" 
+                                type="button" 
+                                role="tab">
+                            <i class="fas fa-list me-1"></i>Select Existing
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" 
+                                id="create-speaker-tab" 
+                                data-bs-toggle="tab" 
+                                data-bs-target="#create-speaker" 
+                                type="button" 
+                                role="tab">
+                            <i class="fas fa-plus me-1"></i>Create New
+                        </button>
+                    </li>
+                </ul>
+
+                <!-- Tab Content -->
+                <div class="tab-content">
+                    <!-- Select Existing Speaker Tab (WITH AVATARS) -->
+                    <div class="tab-pane fade show active" id="select-speaker">
+                        <input type="text" class="form-control mb-3" id="speaker-search" placeholder="Search speakers...">
+                        <div id="speakers-list-container" class="list-group" style="max-height: 400px; overflow-y: auto;">
+                            <div class="text-center py-5">
+                                <div class="spinner-border text-primary"></div>
+                                <p class="text-muted mt-2">Loading speakers...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="create-speaker">
+                        <form id="create-speaker-form" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            
+                            <h6 class="border-bottom pb-2 mb-3">Personal Information</h6>
+                            
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label class="form-label">Photo</label>
+                                    <input type="file" class="form-control" name="photo" accept="image/*">
+                                </div>
+
+                                <div class="col-md-3">
+                                    <label class="form-label">Title</label>
+                                    <select class="form-select no-select2" name="title">
+                                        <option value="">-</option>
+                                        <option value="mr">Mr.</option>
+                                        <option value="mrs">Mrs.</option>
+                                        <option value="ms">Ms.</option>
+                                        <option value="dr">Dr.</option>
+                                        <option value="prof">Prof.</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-9">
+                                    <label class="form-label">First Name <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" name="first_name" required>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label">Middle Name</label>
+                                    <input type="text" class="form-control" name="middle_name">
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label">Last Name <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" name="last_name" required>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label">Company</label>
+                                    <input type="text" class="form-control" name="company">
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label">Job Title</label>
+                                    <input type="text" class="form-control" name="designation">
+                                </div>
+                            </div>
+
+                            <div id="speaker-form-messages" class="mt-3"></div>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+            
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Cancel
+                </button>
+                <button type="button" 
+                        class="btn btn-primary" 
+                        id="add-selected-speaker-btn" 
+                        style="display: none;">
+                    <i class="fas fa-check me-1"></i>Add Selected
+                </button>
+                <button type="button" 
+                        class="btn btn-success" 
+                        id="create-speaker-btn" 
+                        style="display: none;">
+                    <i class="fas fa-save me-1"></i>
+                    <span class="btn-text">Create & Add Speaker</span>
+                    <span class="spinner-border spinner-border-sm d-none ms-2" role="status"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="{% static 'css/create_conference.css' %}" />
+
+<script>
+    window.EXISTING_SPEAKERS = {{ existing_speakers_json|safe }};
+    window.EXISTING_QUESTIONS = {{ existing_questions_json|safe }};
+</script>
+{% comment %} <script src="{% static 'js/create_conference.js' %}"></script> {% endcomment %}
+<script src="{% static 'js/edit_conference.js' %}"></script>
+
+<!-- JavaScript for Toggle Behavior -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const createNewCheckbox = document.getElementById('{{ form.create_new_folder.id_for_label }}');
+    const customNameSection = document.getElementById('customFolderNameSection');
+    const existingFolderSelect = document.getElementById('{{ form.upload_folder.id_for_label }}');
+    const titleField = document.getElementById('{{ form.title.id_for_label }}');
+    const customFolderNameInput = document.getElementById('{{ form.custom_folder_name.id_for_label }}');
+
+    if (!createNewCheckbox || !customNameSection || !existingFolderSelect) {
+        return;
+    }
+
+    createNewCheckbox.addEventListener('change', function() {
+        if (this.checked) {
+            customNameSection.style.display = 'block';
+            existingFolderSelect.value = '';
+            existingFolderSelect.disabled = true;
+            
+            if (titleField && titleField.value && customFolderNameInput) {
+                customFolderNameInput.placeholder = `Uploads - ${titleField.value}`;
+            }
+        } else {
+            customNameSection.style.display = 'none';
+            existingFolderSelect.disabled = false;
+        }
+    });
+
+    if (createNewCheckbox.checked) {
+        customNameSection.style.display = 'block';
+        existingFolderSelect.disabled = true;
+    }
+
+    if (titleField && customFolderNameInput) {
+        titleField.addEventListener('input', function() {
+            if (createNewCheckbox.checked) {
+                const newPlaceholder = this.value 
+                    ? `Uploads - ${this.value}` 
+                    : 'Uploads - Your Conference Title';
+                customFolderNameInput.placeholder = newPlaceholder;
+            }
+        });
+    }
+
+    existingFolderSelect.addEventListener('change', function() {
+        if (this.value) {
+            createNewCheckbox.checked = false;
+            customNameSection.style.display = 'none';
+        }
+    });
+});
+</script>
+
+
+{% endblock %}

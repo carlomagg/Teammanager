@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interview {% if interview.status == "rescheduled" %}Rescheduled{% else %}Updated{%endif%} - {{ vacancy_title }}</title>
+  <style>
+    body { margin: 0; padding: 0; background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333333; }
+    .container { max-width: 600px; margin: 30px auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+    .header { background: linear-gradient(135deg, #63abaaff 0%, #158583ff 100%); color: white; padding: 40px 30px; text-align: center; }
+    .header h1 { margin: 0; font-size: 28px; font-weight: 600; }
+    .header p { margin: 10px 0 0; font-size: 17px; opacity: 0.95; }
+    .content { padding: 40px 30px; }
+    .greeting { font-size: 18px; margin-bottom: 24px; line-height: 1.5; }
+    .alert-box { background-color: #fff4e5; border-left: 5px solid #f39c12; padding: 20px; border-radius: 0 8px 8px 0; margin: 25px 0; }
+    .alert-box h2 { margin: 0 0 15px 0; color: #e67e22; font-size: 22px; }
+    .old-details { background-color: #83d3d2ff; color: #0a5b5aff; padding: 15px; border-radius: 8px; margin: 15px 0; font-size: 14px; }
+    table.info-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+    table.info-table td { padding: 12px 0; vertical-align: top; }
+    table.info-table td.label { font-weight: 600; color: #555; width: 140px; }
+    .btn { display: inline-block; background-color: #319795; color: white !important; text-decoration: none; padding: 14px 32px; border-radius: 50px; font-weight: 600; margin: 25px 0; font-size: 16px; box-shadow: 0 4px 15px rgba(245, 87, 108, 0.4); }
+    .btn:hover { background-color: #e74c5e; }
+    .footer { background-color: #f8f9ff; padding: 30px; text-align: center; color: #777777; font-size: 14px; }
+    .footer a { color: #f5576c; text-decoration: none; }
+    @media (max-width: 600px) {
+      .container { margin: 15px; border-radius: 10px; }
+      .header, .content { padding: 25px 20px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <h1>Interview {% if interview.status == "rescheduled" %}Rescheduled{% else %}Updated{%endif%}</h1>
+      <p>Your interview has been {% if interview.status == "rescheduled" %}
+          <strong>rescheduled</strong>.
+        {%else%}
+          <strong>updated</strong>
+        {% endif %}</p>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+      <p class="greeting">
+        Hi {{ candidate_name }},<br><br>
+        This is to inform you that your interview for the <strong>{{ vacancy_title }}</strong> position at <strong>{{ company_name }}</strong> has been 
+        {% if interview.status == "rescheduled" %}
+          <strong>rescheduled</strong>
+        {%else%}
+          <strong>updated</strong>
+        {% endif %}
+        .
+      </p>
+
+      <div class="alert-box">
+        <h2>New Interview Details</h2>
+        
+        <table class="info-table">
+          <tr>
+            <td class="label">New Date</td>
+            <td><strong style="color:#27ae60;">{{ new_interview_date }}</strong></td>
+          </tr>
+          <tr>
+            <td class="label">New Time</td>
+            <td><strong style="color:#27ae60;">{{ new_interview_time }}</strong> ({{ interview_timezone|cut:"_"|title }})</td>
+          </tr>
+          <tr>
+            <td class="label">Type</td>
+            <td>
+              {% if interview_type %}
+                <span style="color:#28a745;font-weight:600;">Virtual Interview</span>
+              {% else %}
+                <span style="color:#dc3545;font-weight:600;">In-Person Interview</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% if interview_type and interview_link %}
+          <tr>
+            <td class="label">Join Link</td>
+            <td>
+              <a href="{{ interview_link }}" style="color:#f5576c;font-weight:600;">
+                Click here to join
+              </a>
+            </td>
+          </tr>
+          {% elif not interview_type and interview_location %}
+          <tr>
+            <td class="label">Location</td>
+            <td><strong>{{ interview_location }}</strong></td>
+          </tr>
+          {% endif %}
+        </table>
+      </div>
+
+      {% if old_schedule_start %}
+      <div class="old-details">
+        <strong>Previous Schedule:</strong><br>
+        {{ old_schedule_start|date:"l, F d, Y \a\t h:i A" }} ({{ interview_timezone|cut:"_"|title }})
+        {% if old_was_virtual %} (Virtual){% else %} (In-Person){% endif %}
+      </div>
+      {% endif %}
+
+      {% if interview_type and interview_link %}
+      <div style="text-align:center;">
+        <a href="{{ interview_link }}" class="btn" target="_blank">
+          Join Updated Interview
+        </a>
+      </div>
+      {% endif %}
+
+      <p>
+        Please update your calendar and be ready at the new time.
+      </p>
+
+      <p>
+        If this new time doesn't work for you, please reply to this email as soon as possible.
+      </p>
+
+      <hr style="border:0;border-top:1px solid #eee;margin:35px 0;">
+
+      <p>
+        Questions? Contact:<br>
+        <strong>{{ hr_name }}</strong> at <a href="mailto:{{ hr_email }}">{{ hr_email }}</a>
+      </p>
+
+      <p>Thank you for your flexibility!</p>
+
+      <p>Best regards,<br>
+         <strong>{{ hr_name }}</strong><br>
+         Talent Acquisition<br>
+         {{ company_name }}
+      </p>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <p>This is an automated update from TeamManager's recruitment system.</p>
+      <p><a href="#">Unsubscribe</a> • <a href="#">Privacy Policy</a></p>
+      <p style="margin-top:20px;color:#aaa;font-size:12px;">
+        © {{ now|date:"Y" }} TeamManager. All rights reserved.
+      </p>
+    </div>
+  </div>
+</body>
+</html>

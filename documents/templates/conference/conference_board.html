@@ -1,0 +1,296 @@
+{% extends 'base.html' %}
+{% load static humanize %}
+{% block title %}Conference - Find, register and attend events around you.{% endblock %}
+
+{% block meta_description %}
+    Browse upcoming conferences, events, and workshops hosted on TeamManager.
+{% endblock %}
+
+{% block meta_keywords %}
+    Conference, Workshops, Events
+{% endblock %}
+
+{% block content %}
+
+<div class="container py-5">
+    <div class="text-center mb-5">
+        <h1 class="display-5 fw-bold text-dark mb-3">Conferences & Events</h1>
+        <p class="lead text-muted">Discover upcoming professional conferences, summits, and workshops</p>
+    </div>
+
+    <ul class="nav nav-pills nav-justified mb-4" id="conferenceTabs">
+        <li class="nav-item">
+            <a class="nav-link {% if not request.GET.tab == 'past' %}active{% endif %}" 
+            href="?tab=upcoming">Upcoming</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if request.GET.tab == 'past' %}active{% endif %}" 
+            href="?tab=past">Past Events</a>
+        </li>
+    </ul>
+
+    <!-- In your template -->
+    <form method="get" class="row g-3" id="conference-filter-form">
+        <div class="col-md-3">
+            <input type="text" name="search" class="form-control" placeholder="Search events..." value="{{ filter_data.search }}">
+        </div>
+        <div class="col-md-2">
+            <select name="is_virtual" class="form-select">
+                <option value="">All Locations</option>
+                <option value="true" {% if filter_data.is_virtual == 'true' %}selected{% endif %}>Virtual</option>
+                <option value="false" {% if filter_data.is_virtual == 'false' %}selected{% endif %}>In-Person</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select name="ordering" class="form-select">
+                <option value="start_date" {% if filter_data.ordering == 'start_date' %}selected{% endif %}>Soonest First</option>
+                <option value="-start_date" {% if filter_data.ordering == '-start_date' %}selected{% endif %}>Latest First</option>
+                <option value="ticket_price" {% if filter_data.ordering == 'price_asc' %}selected{% endif %}>Price: Low to High</option>
+                <option value="-ticket_price" {% if filter_data.ordering == 'price_desc' %}selected{% endif %}>Price: High to Low</option>
+            </select>
+        </div>
+        {% comment %} <div class="col-md-2">
+            <select id="tag-filter" multiple class=" form-select select2-tags">
+                <!-- options populated via AJAX -->
+            </select>
+        </div> {% endcomment %}
+
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-teal w-100">Filter</button>
+        </div>
+    </form>
+
+    {% if conferences %}
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            {% for conf in conferences %}
+                {% now "U" as now_ts %}
+                {% with start_ts=conf.start_date|date:"U" end_ts=conf.end_date|date:"U" %}
+
+                <div class="col">
+                    <div class="card h-100 shadow-sm border-0 overflow-hidden rounded-3 hover-shadow-lg transition-all">
+                        <!-- Banner -->
+                        <div class="banner position-relative">
+                            {% if conf.banner %}
+                                <img src="{{ conf.banner.url }}" class="card-img-top" alt="{{ conf.title }}" style="height: 140px; object-fit: cover;">
+                            {% else %}
+                                <img src="{% static 'banner.jpg' %}" 
+                                     class="card-img-top grayscale opacity-75" 
+                                     alt="Conference" style="height: 140px; object-fit: cover;">
+                            {% endif %}
+
+                            <!-- Status Badge -->
+                            {% if view_mode == 'past' %}
+                                <span class="position-absolute top-0 start-0 m-3 badge rounded-pill bg-secondary px-3 py-2">
+                                    <i class="fas fa-history me-1"></i> Past Event
+                                </span>
+                            {% endif %}
+                            {% if start_ts > now_ts %}
+                                <span class="position-absolute top-0 start-0 m-3 badge rounded-pill bg-primary px-3 py-2">
+                                    <i class="fas fa-clock me-1"></i> Upcoming
+                                </span>
+                            {% elif end_ts >= now_ts %}
+                                <span class="position-absolute top-0 start-0 m-3 badge rounded-pill bg-success px-3 py-2 animate__animated animate__pulse animate__infinite">
+                                    <i class="fas fa-circle-dot me-1"></i> Live Now
+                                </span>
+                            {% endif %}
+                        </div>
+
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title fw-bold text-dark">{{ conf.title }}</h5>
+                            {% if conference.theme %}
+                                <p>{{ conference.theme }}</p>
+                            {% endif %}
+                            <p class="text-primary">{{conf.tenant.name}}</p>
+                            <p class="card-text text-muted small description-clamp">
+                                {{ conf.description|default:"No description provided."|truncatewords:25 }}
+                            </p>
+
+                            <div class="d-flex flex-wrap gap-2 text-muted small mt-2">
+
+                                <!-- Date -->
+                                <span class="d-flex align-items-center">
+                                    <i class="fas fa-calendar-alt me-1 text-teal"></i>
+                                    {{ conf.start_date|date:"M d" }}
+                                </span>
+
+                                <!-- Location / Virtual -->
+                                <span class="d-flex align-items-center">
+                                    {% if conference.conference_type == "virtual" %}
+                                    <i class="fas fa-video me-1 text-purple-600"></i> Virtual
+                                    {% elif conference.conference_type == "physical" %}
+                                    <i class="fas fa-map-marker-alt me-1 text-teal"></i>
+                                    {{ conf.venue|truncatechars:18|default:"TBA" }}
+                                    {% else %}
+                                    <i class="fas fa-video me-1 text-teal"></i> / <i class="fas fa-map-marker-alt me-1 text-teal"></i> Hybrid
+                                    {% endif %}
+                                </span>
+
+                                <!-- Deadline -->
+                                {% if conf.registration_deadline %}
+                                <span class="d-flex align-items-center text-warning">
+                                    <i class="fas fa-hourglass-end me-1"></i>
+                                    Reg ends {{ conf.registration_deadline|date:"M d" }}
+                                </span>
+                                {% endif %}
+                                </div>
+
+
+                            <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+
+                                <div>
+                                    {% if conf.price_tiers.exists %}
+                                        {# Inline queryset filters don't work in templates — pass annotated data from view, #}
+                                        {# or use a template tag. Simplest: pass min_tier_price on the queryset annotation. #}
+                                        {# See view note below. For now, show "Tiered" badge + lowest price from annotation. #}
+                                        {% if conf.min_tier_price is not None %}
+                                            <span class="fw-bold text-teal">
+                                                From {{ conf.min_tier_price|floatformat:2 }} {{ conf.currency|default:"NGN" }}
+                                            </span>
+                                        {% else %}
+                                            <span class="fw-bold text-teal">Tiered Tickets</span>
+                                        {% endif %}
+                                        <div><span class="badge bg-info text-dark" style="font-size:0.7rem;">
+                                            <i class="fas fa-tags me-1"></i>{{ conf.price_tiers.count }} tier{{ conf.price_tiers.count|pluralize }}
+                                        </span></div>
+                                    {% elif conf.ticket_price > 0 %}
+                                        <span class="fw-bold text-teal">
+                                            {{ conf.ticket_price|intcomma }} {{ conf.currency|default:"NGN" }}
+                                        </span>
+                                    {% else %}
+                                        <span class="fw-bold text-success">Free</span>
+                                    {% endif %}
+                                </div>
+
+                                {% if view_mode != 'past' %}
+                                    <a href="{% url 'conference_post' conf.id %}"
+                                    class="btn btn-sm btn-teal fw-600 text-white rounded-3 px-3">
+                                        View
+                                    </a>
+                                {% else %}
+                                    <span class="badge bg-secondary px-3 py-2">Ended {{ conf.end_date|date:"M d, Y" }}</span>
+                                {% endif %}
+                            </div>
+
+                            <div class="card-extra-info">
+                            <!-- meta row here -->
+                            </div>
+
+
+                            {% if view_mode != 'past' %}
+                            <div class="mt-4">
+                                <a href="{% url 'conference_post' conf.id %}" 
+                                   class="btn btn-teal w-100 fw-600 text-white rounded-3 shadow-sm hover-shadow">
+                                    <i class="fas fa-ticket-alt me-2"></i>
+                                    View Details & Register
+                                </a>
+                            </div>
+                            {% else %}
+                            <div class="mt-4">
+                                <a href="{% url 'conference_post' conf.id %}" 
+                                   class="btn btn-secondary w-100 fw-600 text-white rounded-3 shadow-sm hover-shadow">
+                                    View Details
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                {% endwith %}
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-5 my-5">
+            <div class="bg-light border-dashed border-3 rounded-4 d-inline-block p-5 mb-4">
+                <i class="fas fa-calendar-times fa-5x text-muted opacity-25"></i>
+            </div>
+            <h3 class="text-muted fw-600">No upcoming conferences</h3>
+            <p class="text-muted">New events will be announced soon. Please check back later!</p>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Custom CSS for your brand -->
+<style>
+    :root {
+        --teal: #319795;
+        --teal-dark: #2c7a7b;
+    }
+    .btn-teal {
+        background-color: var(--teal);
+        border-color: var(--teal);
+    }
+    .btn-teal:hover {
+        background-color: var(--teal-dark);
+        border-color: var(--teal-dark);
+    }
+    .text-teal {
+        color: var(--teal) !important;
+    }
+    .bg-teal {
+        background-color: var(--teal) !important;
+    }
+    .hover-shadow-lg:hover {
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+        transform: translateY(-4px);
+    }
+    .transition-all {
+        transition: all 0.3s ease;
+    }
+    .grayscale {
+        filter: grayscale(100%);
+    }
+    .border-dashed {
+        border-style: dashed !important;
+    }
+    .row {
+        padding-top: 50px;
+    }
+    .description-clamp {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    .card-extra-info {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height .3s ease;
+    }
+
+    .card:hover .card-extra-info {
+        max-height: 100px;
+    }
+
+    .nav-pills .nav-link {
+        color: #495057;               /* default text color (dark gray) */
+        border-radius: 0.375rem;      /* keep Bootstrap's pill rounding */
+    }
+
+    .nav-pills .nav-link:hover {
+        background-color: rgba(49, 151, 149, 0.1);  /* very light teal hover */
+        color: var(--teal);
+    }
+
+    .nav-pills .nav-link.active,
+    .nav-pills .nav-link.active:hover,
+    .nav-pills .nav-link.active:focus {
+        color: white !important;
+        background-color: var(--teal) !important;
+        border-color: var(--teal) !important;     /* if you ever add borders */
+    }
+
+    /* Optional: make the active pill stand out more */
+    .nav-pills .nav-link.active {
+        box-shadow: 0 2px 8px rgba(49, 151, 149, 0.25);  /* subtle teal glow */
+    }
+</style>
+
+<script>
+    $('#tag-filter').select2({
+        placeholder: 'Filter by tags',
+        width: '100%'
+        tags: $('#tag-filter').val()
+    });
+</script>
+{% endblock%}

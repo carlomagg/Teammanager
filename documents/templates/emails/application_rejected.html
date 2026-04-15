@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Update on Your Application - {{ vacancy_title }}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f9fafb; font-family: 'Helvetica Neue', Arial, sans-serif; color: #1e293b;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f9fafb; padding: 20px 0;">
+    <tr>
+      <td align="center">
+        <!-- Main Container -->
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);">
+          
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #319795 0%, #2c7a7b 100%); padding: 36px 40px; text-align: center; color: white;">
+              <h1 style="margin: 0 0 10px; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">
+                Application Update
+              </h1>
+              <p style="margin: 0; font-size: 17px; opacity: 0.95;">
+                {{ vacancy_title }} at {{ company_name }}
+              </p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 40px 32px;">
+              <p style="margin: 0 0 16px; font-size: 16px; line-height: 1.7; color: #334155;">
+                Dear <strong>{{ candidate_name }}</strong>,
+              </p>
+
+              <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.75; color: #334155;">
+                Thank you for applying for the <strong>{{ vacancy_title }}</strong> position at <strong>{{ company_name }}</strong> and for your interest in joining our team.
+              </p>
+
+              <p style="margin: 0 0 28px; font-size: 16px; line-height: 1.75; color: #334155;">
+                We truly appreciate the time and effort you invested in your application. After a thorough review of all candidates, we’ve decided to move forward with applicants whose experience more closely matches the current needs of this role.
+              </p>
+
+              <!-- Kind Note -->
+              <div style="background-color: #fef3c7; border: 1px solid #dd6b20; border-radius: 10px; padding: 18px 22px; margin: 28px 0; text-align: center;">
+                <p style="margin: 0; font-size: 16px; color: #92400e; font-weight: 600;">
+                  This was a tough decision — we received many strong applications.
+                </p>
+              </div>
+
+              <p style="margin: 24px 0 20px; font-size: 16px; line-height: 1.75; color: #334155;">
+                We encourage you to <strong>stay connected</strong> and check our <a href="#" style="color: #6366f1; text-decoration: underline;">careers page</a> for future roles that may align with your skills and goals.
+              </p>
+
+              <p style="margin: 0 0 28px; font-size: 16px; line-height: 1.75; color: #334155;">
+                We wish you all the best in your job search and future career endeavors.
+              </p>
+
+              <!-- Warm Closing -->
+              <div style="background-color: #f7fafc; border-left: 4px solid #94a3b8; padding: 16px 20px; margin: 28px 0; border-radius: 0 8px 8px 0; font-size: 15px; color: #475569;">
+                <p style="margin: 0; font-style: italic;">
+                  Your talent impressed us — we hope our paths cross again.
+                </p>
+              </div>
+            </td>
+          </tr>
+
+          <!-- HR Signature -->
+          <tr>
+            <td style="padding: 0 40px 40px;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td style="font-size: 16px; color: #1e293b; padding-bottom: 8px;">
+                    <strong>Sincerely,</strong><br>
+                    <strong style="color: #475569;">{{ hr_name }}</strong><br>
+                    <span style="color: #64748b;">Human Resources | {{ company_name }}</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="font-size: 15px; color: #64748b; line-height: 1.6; padding-top: 12px;">
+                    Email: <a href="mailto:{{ hr_email }}" style="color: #475569; text-decoration: none;">{{ hr_email }}</a><br>
+                    Company: {{ company_name }}
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #f7fafc; padding: 28px 40px; text-align: center; font-size: 13px; color: #4a5568; border-top: 1px solid #e2e8f0;">
+              <p style="margin: 0 0 8px; font-weight: 600; color: #1e293b;">
+                Human Resources Team
+              </p>
+              <p style="margin: 0; font-size: 12px;">
+                {{ company_name }} • Application ID: <strong>#{{ vacancy_application.id }}</strong><br>
+                © {{ "now"|date:"Y" }} All rights reserved.
+              </p>
+            </td>
+          </tr>
+        </table>
+
+        <!-- Bottom Note -->
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="margin-top: 24px;">
+          <tr>
+            <td style="text-align: center; font-size: 12px; color: #94a3b8;">
+              <p style="margin: 0;">
+                This is an automated message. For feedback, reply to this email.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

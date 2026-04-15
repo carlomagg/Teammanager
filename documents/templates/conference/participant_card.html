@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}Participant Card — {{ participant.full_name }}{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+
+      <div class="card shadow-sm" id="printable-card">
+
+        <!-- Conference header -->
+        <div class="card-header text-center bg-primary text-white py-3">
+          <h5 class="mb-1 fw-bold">{{ conference.title }}</h5>
+          {% if conference.theme %}
+            <small class="opacity-75 d-block">{{ conference.theme }}</small>
+          {% endif %}
+          <small class="opacity-75">
+            {{ conference.start_date|date:"N j, Y" }} &mdash; {{ conference.end_date|date:"N j, Y" }}
+          </small>
+        </div>
+
+        <div class="card-body text-center px-4 py-4">
+
+          <!-- QR / Access link -->
+          <div class="mb-4">
+            {% if qr_data_uri %}
+              <img src="{{ qr_data_uri }}" alt="QR Code" class="img-fluid" style="max-width:220px;">
+              <p class="text-muted small mt-2 mb-0">Scan to verify attendance</p>
+            {% else %}
+              <div class="border rounded p-3">
+                <p class="mb-1"><strong>Access link:</strong></p>
+                <p class="small text-break mb-0"><a href="{{ access_url }}">{{ access_url }}</a></p>
+              </div>
+            {% endif %}
+          </div>
+
+          <!-- Participant name & email -->
+          <h5 class="mb-0 fw-bold">{{ participant.full_name }}</h5>
+          <div class="text-muted small mb-1">{{ participant.email }}</div>
+          {% if participant.designation %}
+            <div class="text-muted small">{{ participant.designation }}</div>
+          {% endif %}
+          {% if participant.organization %}
+            <div class="text-muted small">{{ participant.organization }}</div>
+          {% endif %}
+
+          <!-- Attendance mode badge -->
+          {% if participant.attendance_mode %}
+            <span class="badge bg-secondary mt-2">
+              <i class="fas fa-{% if participant.attendance_mode == 'virtual' %}video{% else %}map-marker-alt{% endif %} me-1"></i>
+              {{ participant.get_attendance_mode_display }}
+            </span>
+          {% endif %}
+
+          <!-- Tier / Pricing info -->
+          {% if participant.price_tier %}
+            <div class="mt-3 p-3 rounded" style="background:#ebf8ff; border:1px solid #bee3f8;">
+              <div class="small text-secondary mb-1">Registration Tier</div>
+              <span class="fw-bold text-primary fs-6">{{ participant.price_tier.name }}</span>
+              {% if participant.price_tier.description %}
+                <div class="small text-muted mt-1">{{ participant.price_tier.description }}</div>
+              {% endif %}
+              <div class="mt-1 small">
+                <strong>{{ conference.currency|default:"NGN" }} {{ participant.price_tier.price|floatformat:2 }}</strong>
+              </div>
+            </div>
+          {% elif conference.ticket_price > 0 %}
+            <div class="mt-3 small text-muted">
+              Ticket: <strong>{{ conference.currency|default:"NGN" }} {{ conference.ticket_price|floatformat:2 }}</strong>
+            </div>
+          {% else %}
+            <div class="mt-3">
+              <span class="badge bg-success">Free Admission</span>
+            </div>
+          {% endif %}
+
+          <!-- Reference token -->
+          <div class="mt-3">
+            <p class="small text-muted mb-0">Ref: <code>{{ participant.unique_token }}</code></p>
+          </div>
+
+          <!-- Action buttons (hidden on print) -->
+          <div class="d-flex justify-content-center gap-2 mt-4 no-print">
+            <button class="btn btn-primary" onclick="window.print();">
+              <i class="fas fa-print me-1"></i> Print
+            </button>
+            <a href="{{ access_url }}" class="btn btn-outline-secondary" target="_blank" rel="noopener">
+              <i class="fas fa-external-link-alt me-1"></i> Open Link
+            </a>
+          </div>
+
+        </div>
+      </div>
+
+      <p class="text-muted small mt-2 no-print">
+        Tip: Use the Print button to create a physical badge or pass for the participant.
+      </p>
+    </div>
+  </div>
+</div>
+
+<style>
+  @media print {
+    body * { visibility: hidden; }
+    #printable-card, #printable-card * { visibility: visible; }
+    #printable-card { position: absolute; left: 0; right: 0; margin: 0 auto; top: 10mm; width: 80mm; }
+    .no-print { display: none !important; }
+  }
+</style>
+{% endblock %}

@@ -1,0 +1,410 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Edit Profile - TeamManager{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-9">
+
+      <!-- Header -->
+      <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+          <h3 class="fw-bold mb-0">Edit Profile</h3>
+          <p class="text-muted mb-0">
+            {% if is_personal %}Update your personal details{% else %}Update your staff profile{% endif %}
+          </p>
+        </div>
+        <a href="{% url 'view_my_profile' %}" class="btn btn-outline-secondary btn-sm">
+          <i class="fas fa-arrow-left me-1"></i> Back to Profile
+        </a>
+      </div>
+
+      <!-- Non-field errors -->
+      {% if profile_form.non_field_errors %}
+        <div class="alert alert-danger">{{ profile_form.non_field_errors }}</div>
+      {% endif %}
+
+      <form method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+
+        <!-- ──────────────────────────────────────────────────
+             PERSONAL INFO (shared by both profile types)
+        ────────────────────────────────────────────────── -->
+        <div class="card shadow-sm mb-4">
+          <div class="card-header bg-white fw-semibold">
+            <i class="fas fa-user me-2 text-primary"></i> Personal Information
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-4 text-center">
+                {% if profile.photo %}
+                  <img src="{{ profile.photo.url }}" alt="Photo"
+                       class="rounded-circle mb-2"
+                       style="width:110px;height:110px;object-fit:cover;border:3px solid #e2e8f0;">
+                {% else %}
+                  <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center mb-2 mx-auto text-white fw-bold fs-3"
+                       style="width:110px;height:110px;">
+                    {{ profile.first_name|first|upper }}{{ profile.last_name|first|upper }}
+                  </div>
+                {% endif %}
+                <div>{{ profile_form.photo|as_crispy_field }}</div>
+              </div>
+
+              <div class="col-md-8">
+                <div class="row g-3">
+                  <div class="col-sm-6">{{ profile_form.first_name|as_crispy_field }}</div>
+                  <div class="col-sm-6">{{ profile_form.last_name|as_crispy_field }}</div>
+                  <div class="col-sm-6">{{ profile_form.middle_name|as_crispy_field }}</div>
+                  <div class="col-sm-6">{{ profile_form.phone_number|as_crispy_field }}</div>
+                  <div class="col-sm-6">{{ profile_form.email|as_crispy_field }}</div>
+                  <div class="col-sm-6">{{ profile_form.date_of_birth|as_crispy_field }}</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="row g-3 mt-1">
+              <div class="col-sm-4">{{ profile_form.sex|as_crispy_field }}</div>
+              {% comment %} <div class="col-sm-4">{{ profile_form.marital_status|as_crispy_field }}</div> {% endcomment %}
+              <div class="col-sm-4">{{ profile_form.religion|as_crispy_field }}</div>
+              <div class="col-12">{{ profile_form.home_address|as_crispy_field }}</div>
+
+              {% if is_personal %}
+                <div class="col-sm-6">{{ profile_form.designation|as_crispy_field }}</div>
+                <div class="col-sm-6">{{ profile_form.location|as_crispy_field }}</div>
+              {% else %}
+                <!-- Staff-specific personal fields -->
+                <div class="col-sm-6">{{ profile_form.state_of_origin|as_crispy_field }}</div>
+                <div class="col-sm-6">{{ profile_form.lga|as_crispy_field }}</div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- ──────────────────────────────────────────────────
+             STAFF-ONLY: Work / Employment Details
+        ────────────────────────────────────────────────── -->
+        {% if not is_personal %}
+        <div class="card shadow-sm mb-4">
+          <div class="card-header bg-white fw-semibold">
+            <i class="fas fa-briefcase me-2 text-primary"></i> Employment Details
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-sm-6">{{ profile_form.designation|as_crispy_field }}</div>
+              <div class="col-sm-6">{{ profile_form.official_email|as_crispy_field }}</div>
+              <div class="col-sm-6">{{ profile_form.department|as_crispy_field }}</div>
+              <div class="col-sm-6">{{ profile_form.team|as_crispy_field }}</div>
+              <div class="col-sm-6">{{ profile_form.employment_date|as_crispy_field }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Emergency Contact -->
+        <div class="card shadow-sm mb-4">
+          <div class="card-header bg-white fw-semibold">
+            <i class="fas fa-phone-alt me-2 text-danger"></i> Emergency Contact
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-sm-6">{{ profile_form.emergency_name|as_crispy_field }}</div>
+              <div class="col-sm-4">{{ profile_form.emergency_relationship|as_crispy_field }}</div>
+              <div class="col-sm-6">{{ profile_form.emergency_phone|as_crispy_field }}</div>
+              <div class="col-sm-6">{{ profile_form.emergency_email|as_crispy_field }}</div>
+              <div class="col-12">{{ profile_form.emergency_address|as_crispy_field }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Next of Kin -->
+        <div class="card shadow-sm mb-4">
+          <div class="card-header bg-white fw-semibold">
+            <i class="fas fa-users me-2 text-warning"></i> Next of Kin
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-sm-6">{{ profile_form.next_of_kin_name|as_crispy_field }}</div>
+              <div class="col-sm-6">{{ profile_form.next_of_kin_relationship|as_crispy_field }}</div>
+              <div class="col-sm-6">{{ profile_form.next_of_kin_phone|as_crispy_field }}</div>
+              <div class="col-sm-6">{{ profile_form.next_of_kin_email|as_crispy_field }}</div>
+              <div class="col-12">{{ profile_form.next_of_kin_address|as_crispy_field }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Guarantor -->
+        <div class="card shadow-sm mb-4">
+          <div class="card-header bg-white fw-semibold">
+            <i class="fas fa-id-badge me-2 text-info"></i> Guarantor
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-sm-6">{{ profile_form.guarantor_name|as_crispy_field }}</div>
+              <div class="col-sm-6">{{ profile_form.guarantor_phone|as_crispy_field }}</div>
+              <div class="col-sm-6">{{ profile_form.guarantor_email|as_crispy_field }}</div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- ──────────────────────────────────────────────────
+             BANK DETAILS (both profile types have these)
+        ────────────────────────────────────────────────── -->
+        <div class="card shadow-sm mb-4">
+          <div class="card-header bg-white fw-semibold">
+            <i class="fas fa-university me-2 text-success"></i> Bank Details
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-sm-6 bank-selector-container">
+                {{ profile_form.bank_name|as_crispy_field }}
+                <div id="bank-dropdown" class="bank-selector-dropdown"></div>
+              </div>
+              <div class="col-sm-6">{{ profile_form.bank_account_number|as_crispy_field }}</div>
+              <div class="col-sm-6">{{ profile_form.bank_account_name|as_crispy_field }}</div>
+              <div class="col-sm-6">{{ profile_form.bank_code|as_crispy_field }}</div>
+              <div class="col-12">{{ profile_form.bank_verification_note|as_crispy_field }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bio -->
+        <div class="card shadow-sm mb-4">
+          <div class="card-header bg-white fw-semibold">
+            <i class="fas fa-align-left me-2 text-muted"></i> Personal Bio
+          </div>
+          <div class="card-body">
+            {{ profile_form.bio|as_crispy_field }}
+          </div>
+        </div>
+
+        <!-- Submit -->
+        <div class="d-flex gap-2 justify-content-end pb-4">
+          <a href="{% url 'view_my_profile' %}" class="btn btn-outline-secondary">Cancel</a>
+          <button type="submit" class="btn btn-primary px-4">
+            <i class="fas fa-save me-1"></i> Save Changes
+          </button>
+        </div>
+
+      </form>
+
+      <!-- ──────────────────────────────────────────────────
+           STAFF-ONLY: Staff Documents card (separate form/AJAX)
+      ────────────────────────────────────────────────── -->
+      {% if not is_personal and document_form %}
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
+          <span><i class="fas fa-file-alt me-2 text-secondary"></i> My Documents</span>
+          <button class="btn btn-sm btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#docUploadForm">
+            <i class="fas fa-plus me-1"></i> Upload
+          </button>
+        </div>
+        <div class="collapse p-3" id="docUploadForm">
+          <form id="staffDocForm" method="post" enctype="multipart/form-data"
+                action="{% url 'add_staff_document' %}">
+            {% csrf_token %}
+            {{ document_form|crispy }}
+            <button type="submit" class="btn btn-primary btn-sm mt-2">Upload Document</button>
+          </form>
+        </div>
+        <div class="card-body" id="staffDocList">
+          {% for doc in profile.documents.all %}
+          <div class="d-flex justify-content-between align-items-center border-bottom py-2"
+               id="doc-{{ doc.id }}">
+            <div>
+              <i class="fas fa-file me-2 text-muted"></i>
+              <a href="{{ doc.file.url }}" target="_blank">
+                {{ doc.description|default:doc.get_document_type_display }}
+              </a>
+              <small class="text-muted ms-2">{{ doc.uploaded_at|date:"d M Y" }}</small>
+            </div>
+            <form method="post" action="{% url 'delete_staff_document' doc.id %}"
+                  class="d-inline delete-doc-form">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm btn-outline-danger"
+                      onclick="return confirm('Delete this document?')">
+                <i class="fas fa-trash-alt"></i>
+              </button>
+            </form>
+          </div>
+          {% empty %}
+          <p class="text-muted mb-0">No documents uploaded yet.</p>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+</div>
+
+<script>
+// AJAX upload for staff documents
+const staffDocForm = document.getElementById('staffDocForm');
+if (staffDocForm) {
+  staffDocForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    fetch(this.action, { method: 'POST', body: formData })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          const list = document.getElementById('staffDocList');
+          const div = document.createElement('div');
+          div.id = 'doc-' + data.document.id;
+          div.className = 'd-flex justify-content-between align-items-center border-bottom py-2';
+          div.innerHTML = `
+            <div>
+              <i class="fas fa-file me-2 text-muted"></i>
+              <a href="${data.document.file_url}" target="_blank">
+                ${data.document.description}
+              </a>
+              <small class="text-muted ms-2">${data.document.uploaded_at}</small>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-danger"
+              onclick="deleteDoc(${data.document.id})">
+              <i class="fas fa-trash-alt"></i>
+            </button>`;
+          list.prepend(div);
+          staffDocForm.reset();
+          document.getElementById('docUploadForm').classList.remove('show');
+        } else {
+          alert('Upload failed. Please check the form.');
+        }
+      });
+  });
+}
+
+function deleteDoc(id) {
+  if (!confirm('Delete this document?')) return;
+  const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+  fetch(`/staff/documents/${id}/delete/`, {
+    method: 'POST',
+    headers: { 'X-CSRFToken': csrfToken }
+  }).then(r => r.json()).then(data => {
+    if (data.success) {
+      const el = document.getElementById('doc-' + id);
+      if (el) el.remove();
+    }
+  });
+}
+
+// ──────────────────────────────────────────────────
+// BANK SELECTION ENHANCEMENT
+// ──────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+    const bankNameInput = document.getElementById('id_bank_name');
+    const bankCodeInput = document.getElementById('id_bank_code');
+    const dropdown = document.getElementById('bank-dropdown');
+    
+    if (bankNameInput && bankCodeInput && dropdown) {
+        bankCodeInput.setAttribute('readonly', true);
+        let banks = [];
+        let activeIndex = -1;
+        
+        // Fetch bank list from our new API
+        fetch('/api/banks/')
+            .then(response => response.json())
+            .then(data => {
+                if (data.status && data.data) {
+                    banks = data.data;
+                    bankNameInput.setAttribute('autocomplete', 'off');
+                    
+                    // Handle input events
+                    bankNameInput.addEventListener('input', function() {
+                        const query = this.value.toLowerCase().trim();
+                        if (!query) {
+                            hideDropdown();
+                            return;
+                        }
+                        
+                        const matches = banks
+                            .filter(b => b.name.toLowerCase().includes(query))
+                            .slice(0, 10); // Limit to top 10 best matches
+                        
+                        if (matches.length > 0) {
+                            renderDropdown(matches);
+                            showDropdown();
+                        } else {
+                            hideDropdown();
+                        }
+                    });
+                    
+                    // Handle keyboard navigation
+                    bankNameInput.addEventListener('keydown', function(e) {
+                        const items = dropdown.querySelectorAll('.bank-item');
+                        if (!items.length) return;
+                        
+                        if (e.key === 'ArrowDown') {
+                            e.preventDefault();
+                            activeIndex = (activeIndex + 1) % items.length;
+                            updateActiveItem(items);
+                        } else if (e.key === 'ArrowUp') {
+                            e.preventDefault();
+                            activeIndex = (activeIndex - 1 + items.length) % items.length;
+                            updateActiveItem(items);
+                        } else if (e.key === 'Enter') {
+                            if (activeIndex >= 0) {
+                                e.preventDefault();
+                                items[activeIndex].click();
+                            }
+                        } else if (e.key === 'Escape') {
+                            hideDropdown();
+                        }
+                    });
+                    
+                    // Hide dropdown when clicking outside
+                    document.addEventListener('click', function(e) {
+                        if (!bankNameInput.contains(e.target) && !dropdown.contains(e.target)) {
+                            hideDropdown();
+                        }
+                    });
+                }
+            });
+            
+        function renderDropdown(matches) {
+            dropdown.innerHTML = '';
+            activeIndex = -1;
+            
+            matches.forEach((bank, index) => {
+                const item = document.createElement('div');
+                item.className = 'bank-item';
+                item.innerHTML = `
+                    <span class="nbi nbi-${bank.code}"></span>
+                    <span class="bank-name">${bank.name}</span>
+                `;
+                
+                item.addEventListener('click', function() {
+                    bankNameInput.value = bank.name;
+                    bankCodeInput.value = bank.code;
+                    hideDropdown();
+                });
+                
+                dropdown.appendChild(item);
+            });
+        }
+        
+        function updateActiveItem(items) {
+            items.forEach((item, index) => {
+                if (index === activeIndex) {
+                    item.classList.add('active');
+                    item.scrollIntoView({ block: 'nearest' });
+                } else {
+                    item.classList.remove('active');
+                }
+            });
+        }
+        
+        function showDropdown() {
+            dropdown.style.display = 'block';
+        }
+        
+        function hideDropdown() {
+            dropdown.style.display = 'none';
+            activeIndex = -1;
+        }
+    }
+});
+</script>
+{% endblock %}

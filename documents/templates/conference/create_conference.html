@@ -1,0 +1,1698 @@
+{% extends "base.html" %}
+{% load static %}
+{% load crispy_forms_tags %}
+{% block title %}Create Conference{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-plus me-2"></i> Create Conference</h5>
+                    {% include 'partials/help_icon.html' with faq_key='create_conference' %}
+                    <a href="{% url 'conference_list' %}" class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i> Back
+                    </a>
+                </div>
+                <form method="post" class="card-body" enctype="multipart/form-data" novalidate>
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {{ form.non_field_errors }}
+                    </div>
+                {% endif %}
+
+                <!-- ================= BASIC INFO ================= -->
+                <h6 class="text-uppercase text-muted mb-3">Basic Information</h6>
+
+                <div class="row g-3">
+                    <div class="col-12">
+                        {{ form.title.label_tag }}
+                        {{ form.title }}
+                        {{ form.title.errors }}
+                    </div>
+
+                    <div class="col-12">
+                        {{ form.theme.label_tag }}
+                        {{ form.theme }}
+                        {{ form.theme.errors }}
+                    </div>
+
+                    <div class="col-12">
+                        {{ form.description.label_tag }}
+                        {{ form.description }}
+                        {{ form.description.errors }}
+                    </div>
+
+                    <div class="col-12">
+                        {{ form.banner.label_tag }}
+                        {{ form.banner }}
+                        <small class="form-text text-muted">Recommended size: 1600 × 900 pixels</small>
+                        {{ form.banner.errors }}
+                    </div>
+
+                    <div class="col-12">
+                        {{ form.tags.label_tag }}
+                        {{ form.tags }}
+                        <small class="text-muted">{{ form.tags.help_text }}</small>
+                        {{ form.tags.errors }}
+                    </div>
+                </div>
+
+                <hr class="my-4">
+
+                <!-- ================= SCHEDULE ================= -->
+                <h6 class="text-uppercase text-muted mb-3">Schedule</h6>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        {{ form.start_date.label_tag }}
+                        {{ form.start_date }}
+                        {{ form.start_date.errors }}
+                    </div>
+
+                    <div class="col-md-6">
+                        {{ form.end_date.label_tag }}
+                        {{ form.end_date }}
+                        {{ form.end_date.errors }}
+                    </div>
+
+                    <div class="col-12 mb-3">
+                        {{ form.conference_type.label_tag }}
+                        {{ form.conference_type }}
+                    </div>
+
+                    <div class="col-md-6" id="venue-wrapper">
+                        {{ form.venue.label_tag }}
+                        {{ form.venue }}
+                        {{ form.venue.errors }}
+                    </div>
+
+                    <div class="col-12" id="virtual-link-wrapper">
+                        {{ form.virtual_link.label_tag }}
+                        {{ form.virtual_link }}
+                        {{ form.virtual_link.errors }}
+                    </div>
+                </div>
+
+                <hr class="my-4">
+
+                <!-- ================= REGISTRATION ================= -->
+                <h6 class="text-uppercase text-muted mb-3">Registration</h6>
+
+                <div class="row g-3">
+                    <div class="col-md-6 d-flex align-items-center">
+                        <div class="form-check mt-4">
+                            {{ form.registration_required }}
+                            <label class="form-check-label">{{ form.registration_required.label }}</label>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        {{ form.registration_deadline.label_tag }}
+                        {{ form.registration_deadline }}
+                        {{ form.registration_deadline.errors }}
+                    </div>
+
+                    <div class="col-md-6" id="max-phy">
+                        {{ form.max_participants_physical.label_tag }}
+                        {{ form.max_participants_physical }}
+                        {{ form.max_participants_physical.errors }}
+                    </div>
+
+                    <div class="col-md-6" id="max-virt">
+                        {{ form.max_participants_virtual.label_tag }}
+                        {{ form.max_participants_virtual }}
+                        {{ form.max_participants_virtual.errors }}
+                    </div>
+
+                    <div class="col-md-6">
+                        {{ form.first_free_n_participants.label_tag }}
+                        {{ form.first_free_n_participants }}
+                        {{ form.first_free_n_participants.errors }}
+                    </div>
+                </div>
+
+                <hr class="my-4">
+
+                <!-- ================= PRICING ================= -->
+                <h6 class="text-uppercase text-muted mb-3">Pricing</h6>
+
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        {{ form.ticket_price.label_tag }}
+                        {{ form.ticket_price }}
+                        {{ form.ticket_price.errors }}
+                    </div>
+
+                    <div class="col-md-4">
+                        {{ form.currency.label_tag }}
+                        {{ form.currency }}
+                        {{ form.currency.errors }}
+                    </div>
+
+                    <div class="col-md-4">
+                        {{ form.early_bird_price.label_tag }}
+                        {{ form.early_bird_price }}
+                        {{ form.early_bird_price.errors }}
+                    </div>
+
+                    <div class="col-md-6">
+                        {{ form.early_bird_deadline.label_tag }}
+                        {{ form.early_bird_deadline }}
+                        {{ form.early_bird_deadline.errors }}
+                    </div>
+
+                    <div class="col-md-6">
+                        {{ form.late_price.label_tag }}
+                        {{ form.late_price }}
+                        {{ form.late_price.errors }}
+                    </div>
+
+                    <div class="col-md-6">
+                        {{ form.late_deadline.label_tag }}
+                        {{ form.late_deadline }}
+                        {{ form.late_deadline.errors }}
+                    </div>
+
+                    <hr class="my-4">
+                    <h6 class="text-uppercase text-muted mb-3">
+                    <i class="fas fa-tags me-2"></i>Pricing Tiers
+                    <small class="text-muted fw-normal ms-2">(optional — overrides flat ticket price when set)</small>
+                    </h6>
+
+                    <div id="tier-formset">
+                    {{ tier_formset.management_form }}
+
+                    <div id="tier-rows">
+                        {% for tf in tier_formset %}
+                        <div class="tier-row card mb-3 border-secondary">
+                            <div class="card-body">
+                            <div class="row g-2 align-items-end">
+                                {{ tf.id }}   {# hidden pk field #}
+
+                                <div class="col-md-3">
+                                <label class="form-label small">Tier Name <span class="text-danger">*</span></label>
+                                {{ tf.name }}
+                                </div>
+                                <div class="col-md-3">
+                                <label class="form-label small">Price <span class="text-danger">*</span></label>
+                                {{ tf.price }}
+                                </div>
+                                <div class="col-md-2">
+                                <label class="form-label small">Capacity</label>
+                                {{ tf.capacity }}
+                                </div>
+                                <div class="col-md-1 text-center">
+                                <label class="form-label small">Order</label>
+                                {{ tf.order }}
+                                </div>
+                                <div class="col-md-1 text-center pt-4">
+                                <div class="form-check">
+                                    {{ tf.is_active }}
+                                    <label class="form-check-label small">Active</label>
+                                </div>
+                                </div>
+                                <div class="col-md-2">
+                                <label class="form-label small">Description</label>
+                                {{ tf.description }}
+                                </div>
+                                {% if tier_formset.can_delete %}
+                                <div class="col-12 text-end">
+                                    <div class="form-check d-inline-block">
+                                    {{ tf.DELETE }}
+                                    <label class="form-check-label text-danger small">Remove this tier</label>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <button type="button" id="add-tier-btn" class="btn btn-sm btn-outline-primary mt-1">
+                        <i class="fas fa-plus me-1"></i> Add Another Tier
+                    </button>
+                    </div>
+
+                    <script>
+                    // Dynamic add-more for tier formset
+                    (function () {
+                        const totalForms = document.getElementById('id_tiers-TOTAL_FORMS');
+                        const tierRows   = document.getElementById('tier-rows');
+                        const addBtn     = document.getElementById('add-tier-btn');
+                        if (!totalForms || !tierRows || !addBtn) return;
+
+                        addBtn.addEventListener('click', function () {
+                        const count    = parseInt(totalForms.value);
+                        // Clone the first empty row and update indices
+                        const template = tierRows.querySelector('.tier-row');
+                        if (!template) return;
+
+                        const newRow = template.cloneNode(true);
+                        newRow.innerHTML = newRow.innerHTML.replace(/tiers-(\d+)-/g, `tiers-${count}-`);
+                        // Clear values
+                        newRow.querySelectorAll('input[type=text], input[type=number], textarea').forEach(el => el.value = '');
+                        newRow.querySelectorAll('input[type=checkbox]').forEach(el => el.checked = el.name.includes('is_active'));
+                        newRow.querySelectorAll('input[type=hidden]').forEach(el => { if (!el.name.includes('csrfmiddlewaretoken')) el.value = ''; });
+                        tierRows.appendChild(newRow);
+                        totalForms.value = count + 1;
+                        });
+                    })();
+                    </script>
+                </div>
+
+                <hr class="my-4">
+
+                <!-- ================= HOST & REMINDERS ================= -->
+                <h6 class="text-uppercase text-muted mb-3">Host & Notifications</h6>
+
+                <div class="row g-3">
+                    <div class="col-12">
+                        {{ form.about_host.label_tag }}
+                        {{ form.about_host }}
+                        {{ form.about_host.errors }}
+                    </div>
+
+                    <div class="col-md-6">
+                        {{ form.reminder_offsets.label_tag }}
+                        {{ form.reminder_offsets }}
+                        {{ form.reminder_offsets.errors }}
+                    </div>
+
+                    <div class="col-md-6">
+                        {{ form.reminder_count.label_tag }}
+                        {{ form.reminder_count }}
+                        {{ form.reminder_count.errors }}
+                    </div>
+
+                    <!-- Custom Questions Section -->
+                    <div class="col-12">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="enableCustomQuestions">
+                            <label class="form-check-label fw-500" for="enableCustomQuestions">
+                                Add custom registration questions for participants
+                            </label>
+                        </div>
+                        <small class="text-muted d-block mt-1">
+                            Collect additional information from participants during registration
+                        </small>
+                    </div>
+                </div>
+
+                <!-- Dynamic Custom Questions Section (Hidden by default) -->
+                <div id="customQuestionsSection" style="display: none;">
+                    <hr class="my-4">
+                    <h6 class="text-uppercase text-muted mb-3">
+                        <i class="fas fa-question-circle me-2"></i>Custom Registration Questions
+                    </h6>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Add questions that participants will answer during registration. Each question will have a text field where participants can type their response. You'll see a preview of how each question will appear.
+                    </div>
+
+                    <!-- Question Input -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-12">
+                            <div class="input-group">
+                                <input type="text" 
+                                       id="questionInput" 
+                                       class="form-control" 
+                                       placeholder="Enter your question (e.g., What is your dietary preference?)"
+                                       maxlength="200">
+                                <button type="button" 
+                                        class="btn btn-primary" 
+                                        id="addQuestionBtn">
+                                    <i class="fas fa-plus me-1"></i>Add Question
+                                </button>
+                            </div>
+                            <small class="text-muted">Press Enter or click "Add Question" to add</small>
+                        </div>
+                    </div>
+
+                    <!-- Questions List -->
+                    <div id="questionsList" class="mb-3">
+                        <!-- Questions will be added here dynamically -->
+                    </div>
+
+                    <!-- Hidden input to store questions as JSON -->
+                    <input type="hidden" id="customQuestionsData" name="custom_questions" value="">
+                </div>
+
+                <hr class="my-4">
+
+                <!-- ================= PARTICIPANT UPLOAD FOLDER (ENHANCED) ================= -->
+
+                <h6 class="text-uppercase text-muted mb-3">
+                    <i class="fas fa-folder-open me-2"></i>Participant File Uploads
+                </h6>
+
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Why create an upload folder?</strong><br>
+                    <small>
+                        Participants can submit their slides, posters, abstracts, videos, or any files directly to a dedicated folder.
+                        This keeps all conference materials organized in one place.
+                    </small>
+                </div>
+
+                <div class="row g-3">
+                    <!-- Option 1: Create New Folder (Recommended) -->
+                    <div class="col-12">
+                        <div class="card border-success">
+                            <div class="card-body">
+                                <div class="form-check mb-3">
+                                    {{ form.create_new_folder }}
+                                    <label class="form-check-label fw-bold" for="{{ form.create_new_folder.id_for_label }}">
+                                        <i class="fas fa-plus-circle text-success me-2"></i>
+                                        {{ form.create_new_folder.label }}
+                                        <span class="badge bg-success ms-2">Recommended</span>
+                                    </label>
+                                    <br>
+                                    <small class="text-muted ms-4">{{ form.create_new_folder.help_text }}</small>
+                                </div>
+
+                                <!-- Custom Folder Name (shown when checkbox is checked) -->
+                                <div id="customFolderNameSection" style="display: none;">
+                                    <div class="bg-light p-3 rounded border-start border-success border-4">
+                                        <label for="{{ form.custom_folder_name.id_for_label }}" class="form-label">
+                                            {{ form.custom_folder_name.label }}
+                                        </label>
+                                        {{ form.custom_folder_name }}
+                                        <small class="form-text text-muted d-block mt-1">
+                                            {{ form.custom_folder_name.help_text }}
+                                        </small>
+
+                                        <!-- NEW: Add Custom Instructions Button -->
+                                        <div class="mt-3">
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-outline-primary" 
+                                                    id="toggleUploadInstructionsBtn"
+                                                    onclick="toggleUploadInstructions()">
+                                                <i class="fas fa-plus me-1"></i>
+                                                Add Upload Instructions for Participants
+                                            </button>
+                                        </div>
+
+                                        <!-- NEW: Custom Upload Instructions Field (Hidden by default) -->
+                                        <div id="uploadInstructionsSection" class="mt-3" style="display: none;">
+                                            <label for="upload_instructions" class="form-label">
+                                                <i class="fas fa-info-circle me-1 text-info"></i>
+                                                Instructions for Participants
+                                            </label>
+                                            <textarea class="form-control" 
+                                                    id="upload_instructions" 
+                                                    name="upload_instructions" 
+                                                    rows="3"
+                                                    placeholder="Example: Please upload your presentation slides in PDF format. File names should include your name and session number (e.g., UcheSola_Session1.pdf)"></textarea>
+                                            <small class="form-text text-muted">
+                                                These instructions will be shown to participants on the registration form when they upload files.
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Divider -->
+                    <div class="col-12">
+                        <div class="text-center">
+                            <span class="badge bg-secondary">OR</span>
+                        </div>
+                    </div>
+
+                    <!-- Option 2: Select Existing Folder -->
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <label for="{{ form.upload_folder.id_for_label }}" class="form-label fw-500">
+                                    <i class="fas fa-folder text-primary me-2"></i>
+                                    Use Existing Folder
+                                </label>
+                                {{ form.upload_folder }}
+                                <small class="form-text text-muted d-block mt-2">
+                                    {{ form.upload_folder.help_text }}
+                                </small>
+                                {{ form.upload_folder.errors }}
+                                
+                                {% if form.upload_folder.field.queryset.count == 0 %}
+                                    <div class="alert alert-warning mt-2 mb-0">
+                                        <small>
+                                            <i class="fas fa-exclamation-triangle me-1"></i>
+                                            No existing folders found. Create a new one above or skip this step.
+                                        </small>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Show current folder if editing -->
+                    {% if action == 'update' and conference.upload_folder %}
+                    <div class="col-12">
+                        <div class="alert alert-success">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <i class="fas fa-check-circle me-2"></i>
+                                    <strong>Current Upload Folder:</strong> {{ conference.upload_folder.name }}
+                                </div>
+                                <a href="{% url 'folder_view_public' conference.upload_folder.id %}" 
+                                class="btn btn-sm btn-outline-success" 
+                                target="_blank">
+                                    <i class="fas fa-external-link-alt me-1"></i>View Folder
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Skip Info -->
+                    <div class="col-12">
+                        <div class="alert alert-light border">
+                            <i class="fas fa-lightbulb text-warning me-2"></i>
+                            <strong>You can skip this step</strong><br>
+                            <small class="text-muted">
+                                An upload folder is optional. You can create or assign one later from the conference edit page.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SPEAKER MODAL FOR CONFERENCE CREATE TEMPLATE -->
+
+                <!-- Speakers Section -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-users me-2"></i>
+                            Conference Speakers (Optional)
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-3">
+                            Add speakers who will present at this conference.
+                        </p>
+
+                        <!-- Selected Speakers Display -->
+                        <div id="selected-speakers-container" class="mb-3">
+                            <div id="selected-speakers-list" class="row g-2">
+                                <!-- Selected speakers will appear here -->
+                            </div>
+                        </div>
+
+                        <!-- Add Speaker Button -->
+                        <button type="button" 
+                                class="btn btn-outline-primary" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#speakerModal">
+                            <i class="fas fa-plus me-2"></i>Add Speaker
+                        </button>
+
+                        <!-- Hidden input to store selected speaker IDs -->
+                        <input type="hidden" name="speaker_ids" id="speaker_ids" value="">
+                    </div>
+                </div>
+
+                <!-- ================= ACTION ================= -->
+                <div class="d-flex justify-content-end">
+                    <button type="submit" class="btn btn-lg btn-primary px-4">
+                        <i class="fas fa-save me-1"></i> Create Conference
+                    </button>
+                </div>
+            </form>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Speaker Modal -->
+                <div class="modal fade" id="speakerModal" tabindex="-1" aria-labelledby="speakerModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="speakerModalLabel">
+                                    <i class="fas fa-user-tie me-2"></i>Add Speaker
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            
+                            <div class="modal-body">
+                                <!-- Tab Navigation -->
+                                <ul class="nav nav-tabs mb-3" id="speakerTabs" role="tablist">
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link active" 
+                                                id="select-speaker-tab" 
+                                                data-bs-toggle="tab" 
+                                                data-bs-target="#select-speaker" 
+                                                type="button" 
+                                                role="tab">
+                                            <i class="fas fa-list me-1"></i>Select Existing
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" 
+                                                id="create-speaker-tab" 
+                                                data-bs-toggle="tab" 
+                                                data-bs-target="#create-speaker" 
+                                                type="button" 
+                                                role="tab">
+                                            <i class="fas fa-plus me-1"></i>Create New
+                                        </button>
+                                    </li>
+                                </ul>
+
+                                <!-- Tab Content -->
+                                <div class="tab-content" id="speakerTabsContent">
+                                    
+                                    <!-- Select Existing Speaker Tab -->
+                                    <div class="tab-pane fade show active" 
+                                        id="select-speaker" 
+                                        role="tabpanel">
+                                        
+                                        <!-- Search Box -->
+                                        <div class="mb-3">
+                                            <input type="text" 
+                                                class="form-control" 
+                                                id="speaker-search" 
+                                                placeholder="Search speakers...">
+                                        </div>
+
+                                        <!-- Speakers List -->
+                                        <div id="speakers-list-container" class="list-group" style="max-height: 400px; overflow-y: auto;">
+                                            <div class="text-center py-5">
+                                                <div class="spinner-border text-primary" role="status">
+                                                    <span class="visually-hidden">Loading...</span>
+                                                </div>
+                                                <p class="text-muted mt-2">Loading speakers...</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Create New Speaker Tab -->
+                                    <div class="tab-pane fade" 
+                                        id="create-speaker" 
+                                        role="tabpanel">
+                                        
+                                        <form id="create-speaker-form" enctype="multipart/form-data">
+                                            {% csrf_token %}
+                                            
+                                            <!-- Personal Information -->
+                                            <h6 class="border-bottom pb-2 mb-3">Personal Information</h6>
+                                            
+                                            <div class="row g-3">
+                                                <!-- Photo -->
+                                                <div class="col-12">
+                                                    <label for="speaker_photo" class="form-label">Photo</label>
+                                                    <input type="file" 
+                                                        class="form-control" 
+                                                        id="speaker_photo" 
+                                                        name="photo" 
+                                                        accept="image/*">
+                                                    <small class="text-muted">Recommended: 300x300px, max 2MB</small>
+                                                </div>
+
+                                                <!-- Title -->
+                                                <div class="col-md-3">
+                                                    <label for="speaker_title" class="form-label">Title</label>
+                                                    <select class="form-select" id="speaker_title" name="title">
+                                                        <option value="">-</option>
+                                                        <option value="mr">Mr.</option>
+                                                        <option value="mrs">Mrs.</option>
+                                                        <option value="ms">Ms.</option>
+                                                        <option value="dr">Dr.</option>
+                                                        <option value="prof">Prof.</option>
+                                                    </select>
+                                                </div>
+
+                                                <!-- First Name -->
+                                                <div class="col-md-9">
+                                                    <label for="speaker_first_name" class="form-label">
+                                                        First Name <span class="text-danger">*</span>
+                                                    </label>
+                                                    <input type="text" 
+                                                        class="form-control" 
+                                                        id="speaker_first_name" 
+                                                        name="first_name" 
+                                                        required>
+                                                </div>
+
+                                                <!-- Middle Name -->
+                                                <div class="col-md-6">
+                                                    <label for="speaker_middle_name" class="form-label">Middle Name</label>
+                                                    <input type="text" 
+                                                        class="form-control" 
+                                                        id="speaker_middle_name" 
+                                                        name="middle_name">
+                                                </div>
+
+                                                <!-- Last Name -->
+                                                <div class="col-md-6">
+                                                    <label for="speaker_last_name" class="form-label">
+                                                        Last Name <span class="text-danger">*</span>
+                                                    </label>
+                                                    <input type="text" 
+                                                        class="form-control" 
+                                                        id="speaker_last_name" 
+                                                        name="last_name" 
+                                                        required>
+                                                </div>
+                                            </div>
+
+                                            <!-- Professional Information -->
+                                            <h6 class="border-bottom pb-2 mb-3 mt-4">Professional Information</h6>
+                                            
+                                            <div class="row g-3">
+                                                <!-- Company -->
+                                                <div class="col-md-6">
+                                                    <label for="speaker_company" class="form-label">Company/Organization</label>
+                                                    <input type="text" 
+                                                        class="form-control" 
+                                                        id="speaker_company" 
+                                                        name="company">
+                                                </div>
+
+                                                <!-- Designation -->
+                                                <div class="col-md-6">
+                                                    <label for="speaker_designation" class="form-label">Job Title</label>
+                                                    <input type="text" 
+                                                        class="form-control" 
+                                                        id="speaker_designation" 
+                                                        name="designation">
+                                                </div>
+
+                                                <!-- Bio -->
+                                                <div class="col-12">
+                                                    <label for="speaker_bio" class="form-label">Biography</label>
+                                                    <textarea class="form-control" 
+                                                            id="speaker_bio" 
+                                                            name="bio" 
+                                                            rows="3" 
+                                                            placeholder="Brief biography or description"></textarea>
+                                                </div>
+                                            </div>
+
+                                            <!-- Contact Information (Collapsible) -->
+                                            <div class="accordion mt-3" id="speakerContactAccordion">
+                                                <div class="accordion-item">
+                                                    <h2 class="accordion-header">
+                                                        <button class="accordion-button collapsed" 
+                                                                type="button" 
+                                                                data-bs-toggle="collapse" 
+                                                                data-bs-target="#contactInfo">
+                                                            <i class="fas fa-address-card me-2"></i>
+                                                            Contact & Social Media (Optional)
+                                                        </button>
+                                                    </h2>
+                                                    <div id="contactInfo" 
+                                                        class="accordion-collapse collapse" 
+                                                        data-bs-parent="#speakerContactAccordion">
+                                                        <div class="accordion-body">
+                                                            <div class="row g-3">
+                                                                <!-- Email -->
+                                                                <div class="col-md-6">
+                                                                    <label for="speaker_email" class="form-label">Email</label>
+                                                                    <input type="email" 
+                                                                        class="form-control" 
+                                                                        id="speaker_email" 
+                                                                        name="email">
+                                                                </div>
+
+                                                                <!-- Phone -->
+                                                                <div class="col-md-6">
+                                                                    <label for="speaker_phone" class="form-label">Phone</label>
+                                                                    <input type="tel" 
+                                                                        class="form-control" 
+                                                                        id="speaker_phone" 
+                                                                        name="phone">
+                                                                </div>
+
+                                                                <!-- LinkedIn -->
+                                                                <div class="col-md-6">
+                                                                    <label for="speaker_linkedin" class="form-label">LinkedIn</label>
+                                                                    <input type="url" 
+                                                                        class="form-control" 
+                                                                        id="speaker_linkedin" 
+                                                                        name="linkedin_url" 
+                                                                        placeholder="https://linkedin.com/in/username">
+                                                                </div>
+
+                                                                <!-- Twitter -->
+                                                                <div class="col-md-6">
+                                                                    <label for="speaker_twitter" class="form-label">Twitter</label>
+                                                                    <div class="input-group">
+                                                                        <span class="input-group-text">@</span>
+                                                                        <input type="text" 
+                                                                            class="form-control" 
+                                                                            id="speaker_twitter" 
+                                                                            name="twitter_handle" 
+                                                                            placeholder="username">
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Form Messages -->
+                                            <div id="speaker-form-messages" class="mt-3"></div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                    Cancel
+                                </button>
+                                <button type="button" 
+                                        class="btn btn-primary" 
+                                        id="add-selected-speaker-btn" 
+                                        style="display: none;">
+                                    <i class="fas fa-check me-1"></i>Add Selected
+                                </button>
+                                <button type="button" 
+                                        class="btn btn-success" 
+                                        id="create-speaker-btn" 
+                                        style="display: none;">
+                                    <i class="fas fa-save me-1"></i>
+                                    <span class="btn-text">Create & Add Speaker</span>
+                                    <span class="spinner-border spinner-border-sm d-none ms-2" role="status"></span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+{% comment %} <link rel="stylesheet" href="{% static 'css/create_conference.css' %}" /> {% endcomment %}
+
+{% comment %} <script src="{% static 'js/create_conference.js' %}"></script> {% endcomment %}
+
+<style>
+    /* Speaker Card Styles */
+    .speaker-card {
+        border: 2px solid #dee2e6;
+        border-radius: 8px;
+        padding: 12px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .speaker-card:hover {
+        border-color: #0d6efd;
+        background-color: #f8f9fa;
+    }
+
+    .speaker-card.selected {
+        border-color: #198754;
+        background-color: #d1e7dd;
+    }
+
+    .speaker-list-item {
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .speaker-list-item:hover {
+        background-color: #f8f9fa;
+    }
+
+    .speaker-list-item.selected {
+        background-color: #d1e7dd;
+        border-color: #198754 !important;
+    }
+
+    .selected-speaker-badge {
+        position: relative;
+        display: inline-block;
+    }
+
+    .remove-speaker-btn {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background-color: #dc3545;
+        color: white;
+        border: 2px solid white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 12px;
+        transition: all 0.2s ease;
+    }
+
+    .remove-speaker-btn:hover {
+        background-color: #bb2d3b;
+        transform: scale(1.1);
+    }
+
+    .speaker-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+
+    .speaker-avatar-lg {
+        width: 80px;
+        height: 80px;
+    }
+
+    .card {
+        border-radius: 14px;
+    }
+
+    .card-header {
+        background: linear-gradient(135deg, #63abaaff, #158583ff);
+        color: #fff;
+    }
+
+    h6.text-uppercase {
+        font-weight: 600;
+        letter-spacing: .05em;
+    }
+
+    .select2-container {
+        border-radius: 8px;
+        border: 1px solid #cecacaff;
+        color: #000000;
+    }
+    .select2-container .select2-selection--multiple {
+        border-radius: 8px;
+        border: 1px solid #cecacaff;
+        color: #000000;
+    }
+    body.dark-mode .select2-container .select2-selection--multiple {
+        border-color: #4a5568;
+        background: #3b4a6b;
+        color: #000000;
+    }
+    .select2-container--default .select2-selection--multiple .select2-selection__choice {
+        background-color: #319795;
+        color: #000000;
+    }
+    body.dark-mode .select2-results__options {
+        color: #000000;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    .fw-500 {
+        font-weight: 500;
+    }
+
+    .border-start.border-success {
+        border-width: 4px !important;
+    }
+
+    #customFolderNameSection {
+        animation: slideDown 0.3s ease-out;
+    }
+
+    #uploadInstructionsSection {
+        animation: slideDown 0.3s ease-out;
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    #uploadInstructionsSection textarea {
+        border: 2px solid #e9ecef;
+        transition: border-color 0.2s;
+    }
+
+    #uploadInstructionsSection textarea:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+    const createNewCheckbox = document.getElementById('{{ form.create_new_folder.id_for_label }}');
+    const customNameSection = document.getElementById('customFolderNameSection');
+    const existingFolderSelect = document.getElementById('{{ form.upload_folder.id_for_label }}');
+    const titleField = document.getElementById('{{ form.title.id_for_label }}');
+    const customFolderNameInput = document.getElementById('{{ form.custom_folder_name.id_for_label }}');
+
+    if (!createNewCheckbox || !customNameSection || !existingFolderSelect) {
+        return; // Elements not found, skip initialization
+    }
+
+    // Toggle custom folder name section when checkbox changes
+    createNewCheckbox.addEventListener('change', function() {
+        if (this.checked) {
+            customNameSection.style.display = 'block';
+            existingFolderSelect.value = '';  // Clear existing folder selection
+            existingFolderSelect.disabled = true;
+            
+            // Auto-populate placeholder if title exists
+            if (titleField && titleField.value && customFolderNameInput) {
+                customFolderNameInput.placeholder = `Uploads - ${titleField.value}`;
+            }
+        } else {
+            customNameSection.style.display = 'none';
+            existingFolderSelect.disabled = false;
+            
+            // Hide instructions when unchecking
+            const instructionsSection = document.getElementById('uploadInstructionsSection');
+            if (instructionsSection) {
+                instructionsSection.style.display = 'none';
+                document.getElementById('toggleUploadInstructionsBtn').innerHTML = 
+                    '<i class="fas fa-plus me-1"></i>Add Upload Instructions for Participants';
+            }
+        }
+    });
+
+    // Trigger on page load if already checked
+    if (createNewCheckbox.checked) {
+        customNameSection.style.display = 'block';
+        existingFolderSelect.disabled = true;
+    }
+
+    // Update placeholder dynamically when title changes
+    if (titleField && customFolderNameInput) {
+        titleField.addEventListener('input', function() {
+            if (createNewCheckbox.checked) {
+                const newPlaceholder = this.value 
+                    ? `Uploads - ${this.value}` 
+                    : 'Uploads - Your Conference Title';
+                customFolderNameInput.placeholder = newPlaceholder;
+            }
+        });
+    }
+
+    // Disable create new checkbox when existing folder is selected
+    existingFolderSelect.addEventListener('change', function() {
+        if (this.value) {
+            createNewCheckbox.checked = false;
+            customNameSection.style.display = 'none';
+        }
+    });
+});
+
+// NEW: Toggle Upload Instructions Function
+function toggleUploadInstructions() {
+    const instructionsSection = document.getElementById('uploadInstructionsSection');
+    const toggleBtn = document.getElementById('toggleUploadInstructionsBtn');
+    
+    if (instructionsSection.style.display === 'none') {
+        // Show instructions
+        instructionsSection.style.display = 'block';
+        toggleBtn.innerHTML = '<i class="fas fa-minus me-1"></i>Hide Upload Instructions';
+        toggleBtn.classList.remove('btn-outline-primary');
+        toggleBtn.classList.add('btn-outline-secondary');
+        
+        // Smooth scroll to show the field
+        setTimeout(() => {
+            instructionsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 100);
+    } else {
+        // Hide instructions
+        instructionsSection.style.display = 'none';
+        toggleBtn.innerHTML = '<i class="fas fa-plus me-1"></i>Add Upload Instructions for Participants';
+        toggleBtn.classList.remove('btn-outline-secondary');
+        toggleBtn.classList.add('btn-outline-primary');
+    }
+}
+
+// Custom Questions Management
+    let customQuestions = [];
+    let questionIdCounter = 0;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const enableCheckbox = document.getElementById('enableCustomQuestions');
+        const questionsSection = document.getElementById('customQuestionsSection');
+        const questionInput = document.getElementById('questionInput');
+        const addQuestionBtn = document.getElementById('addQuestionBtn');
+        const questionsList = document.getElementById('questionsList');
+        const customQuestionsData = document.getElementById('customQuestionsData');
+
+        // Toggle custom questions section
+        enableCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                questionsSection.style.display = 'block';
+                setTimeout(() => {
+                    questionsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }, 100);
+            } else {
+                questionsSection.style.display = 'none';
+                // Clear questions when unchecked
+                customQuestions = [];
+                questionsList.innerHTML = '';
+                customQuestionsData.value = '';
+            }
+        });
+
+        // Add question on button click
+        addQuestionBtn.addEventListener('click', function() {
+            addQuestion();
+        });
+
+        // Add question on Enter key
+        questionInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addQuestion();
+            }
+        });
+
+        function addQuestion() {
+            const questionText = questionInput.value.trim();
+            
+            if (!questionText) {
+                alert('Please enter a question');
+                return;
+            }
+
+            if (questionText.length < 5) {
+                alert('Question must be at least 5 characters long');
+                return;
+            }
+
+            // Add to array
+            const questionId = ++questionIdCounter;
+            customQuestions.push({
+                id: questionId,
+                question: questionText,
+                required: true
+            });
+
+            // Update hidden input
+            customQuestionsData.value = JSON.stringify(customQuestions);
+
+            // Add to display
+            renderQuestion(questionId, questionText);
+
+            // Clear input
+            questionInput.value = '';
+            questionInput.focus();
+        }
+
+        function renderQuestion(id, text) {
+            const questionCard = document.createElement('div');
+            questionCard.className = 'card mb-2';
+            questionCard.id = `question-${id}`;
+            questionCard.innerHTML = `
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="badge bg-primary me-2">Q${customQuestions.length}</span>
+                                <strong class="text-dark">${escapeHtml(text)}</strong>
+                            </div>
+                            
+                            <!-- Preview Response Field -->
+                            <div class="mt-3 mb-2">
+                                <label class="form-label small text-muted">
+                                    <i class="fas fa-eye me-1"></i>Preview: Participant's response field
+                                </label>
+                                <input type="text" 
+                                       class="form-control form-control-sm bg-light" 
+                                       placeholder="Participants will type their answer here..."
+                                       disabled>
+                                <small class="text-muted">This is how the question will appear to participants</small>
+                            </div>
+                            
+                            <div class="form-check form-check-inline mt-2">
+                                <input class="form-check-input" 
+                                       type="checkbox" 
+                                       id="required-${id}" 
+                                       checked
+                                       onchange="toggleRequired(${id}, this.checked)">
+                                <label class="form-check-label small text-muted" for="required-${id}">
+                                    Required
+                                </label>
+                            </div>
+                        </div>
+                        <button type="button" 
+                                class="btn btn-sm btn-outline-danger" 
+                                onclick="removeQuestion(${id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            questionsList.appendChild(questionCard);
+        }
+
+        // Make functions globally available
+        window.removeQuestion = function(id) {
+            if (confirm('Remove this question?')) {
+                // Remove from array
+                customQuestions = customQuestions.filter(q => q.id !== id);
+                
+                // Update hidden input
+                customQuestionsData.value = JSON.stringify(customQuestions);
+                
+                // Remove from display
+                const element = document.getElementById(`question-${id}`);
+                if (element) {
+                    element.remove();
+                }
+
+                // Re-render all questions to update numbering
+                questionsList.innerHTML = '';
+                customQuestions.forEach((q, index) => {
+                    const card = document.createElement('div');
+                    card.className = 'card mb-2';
+                    card.id = `question-${q.id}`;
+                    card.innerHTML = `
+                        <div class="card-body p-3">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <span class="badge bg-primary me-2">Q${index + 1}</span>
+                                        <strong class="text-dark">${escapeHtml(q.question)}</strong>
+                                    </div>
+                                    
+                                    <!-- Preview Response Field -->
+                                    <div class="mt-3 mb-2">
+                                        <label class="form-label small text-muted">
+                                            <i class="fas fa-eye me-1"></i>Preview: Participant's response field
+                                        </label>
+                                        <input type="text" 
+                                               class="form-control form-control-sm bg-light" 
+                                               placeholder="Participants will type their answer here..."
+                                               disabled>
+                                        <small class="text-muted">This is how the question will appear to participants</small>
+                                    </div>
+                                    
+                                    <div class="form-check form-check-inline mt-2">
+                                        <input class="form-check-input" 
+                                               type="checkbox" 
+                                               id="required-${q.id}" 
+                                               ${q.required ? 'checked' : ''}
+                                               onchange="toggleRequired(${q.id}, this.checked)">
+                                        <label class="form-check-label small text-muted" for="required-${q.id}">
+                                            Required
+                                        </label>
+                                    </div>
+                                </div>
+                                <button type="button" 
+                                        class="btn btn-sm btn-outline-danger" 
+                                        onclick="removeQuestion(${q.id})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    questionsList.appendChild(card);
+                });
+            }
+        };
+
+        window.toggleRequired = function(id, required) {
+            const question = customQuestions.find(q => q.id === id);
+            if (question) {
+                question.required = required;
+                customQuestionsData.value = JSON.stringify(customQuestions);
+            }
+        };
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    });
+
+    // Existing scripts
+    document.querySelectorAll('select').forEach(function(s){ 
+    if (!s.closest('#speakerModal')) {
+        s.classList.add('select2');
+    }
+});
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof $ !== 'undefined' && typeof $.fn.select2 !== 'undefined') {
+            $('.select2').select2({ theme: 'bootstrap-5', width: '100%' });
+        }
+        
+        // Venue fields 
+        const typeRadios = document.querySelectorAll("input[name='conference_type']");
+        const venueWrapper = document.getElementById("venue-wrapper");
+        const virtualWrapper = document.getElementById("virtual-link-wrapper");
+        const maxPhyWrapper = document.getElementById("max-phy");
+        const maxVirtWrapper = document.getElementById("max-virt");
+
+        function toggleFields() {
+            const selected = document.querySelector("input[name='conference_type']:checked").value;
+
+            if (selected === "physical") {
+                venueWrapper.style.display = "block";
+                virtualWrapper.style.display = "none";
+                maxPhyWrapper.style.display = "block";
+                maxVirtWrapper.style.display = "none";
+            } else if (selected === "virtual") {
+                venueWrapper.style.display = "none";
+                virtualWrapper.style.display = "block";
+                maxPhyWrapper.style.display = "none";
+                maxVirtWrapper.style.display = "block";
+            } else { // hybrid
+                venueWrapper.style.display = "block";
+                virtualWrapper.style.display = "block";
+                maxPhyWrapper.style.display = "block";
+                maxVirtWrapper.style.display = "block";
+            }
+        }
+
+        typeRadios.forEach(radio => radio.addEventListener("change", toggleFields));
+        toggleFields(); // initial state
+    });
+    
+    $(document).ready(function () {
+        $('#id_currency').select2({ width: '100%' });
+        $('.select2-tags').select2({
+            tags: true,
+            tokenSeparators: [','],
+            ajax: {
+                url: "{% url 'conference_tag_autocomplete' %}",
+                dataType: 'json',
+                delay: 250,
+                data: function (params) {
+                    return { q: params.term };
+                },
+                processResults: function (data) {
+                    return data;
+                },
+                cache: true
+            },
+            width: '100%'
+        });
+    });
+
+
+// <!-- SPEAKER MODAL JAVASCRIPT -->
+
+document.addEventListener('DOMContentLoaded', function() {
+    // ===================================================================
+    // SPEAKER MODAL FUNCTIONALITY
+    // ===================================================================
+    
+    const speakerModal = document.getElementById('speakerModal');
+    const speakersListContainer = document.getElementById('speakers-list-container');
+    const selectedSpeakersList = document.getElementById('selected-speakers-list');
+    const speakerIdsInput = document.getElementById('speaker_ids');
+    const addSelectedBtn = document.getElementById('add-selected-speaker-btn');
+    const createSpeakerBtn = document.getElementById('create-speaker-btn');
+    const createSpeakerForm = document.getElementById('create-speaker-form');
+    const speakerSearch = document.getElementById('speaker-search');
+    
+    let allSpeakers = [];
+    let selectedSpeakerInModal = null;
+    let selectedSpeakersData = [];
+    
+    // Load speakers when modal opens
+    speakerModal.addEventListener('show.bs.modal', function() {
+        loadSpeakers();
+    });
+    
+    // Tab switching
+    document.getElementById('select-speaker-tab').addEventListener('click', function() {
+        addSelectedBtn.style.display = 'inline-block';
+        createSpeakerBtn.style.display = 'none';
+    });
+    
+    document.getElementById('create-speaker-tab').addEventListener('click', function() {
+        addSelectedBtn.style.display = 'none';
+        createSpeakerBtn.style.display = 'inline-block';
+    });
+    
+    // ===================================================================
+    // LOAD EXISTING SPEAKERS
+    // ===================================================================
+    
+    function loadSpeakers() {
+        fetch(`/conference/speakers/list/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    allSpeakers = data.speakers;
+                    displaySpeakers(allSpeakers);
+                } else {
+                    showError('Failed to load speakers');
+                }
+            })
+            .catch(error => {
+                console.error('Error loading speakers:', error);
+                showError('Error loading speakers');
+            });
+    }
+    
+    function displaySpeakers(speakers) {
+        if (speakers.length === 0) {
+            speakersListContainer.innerHTML = `
+                <div class="text-center py-5">
+                    <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">No speakers found. Create your first speaker!</p>
+                </div>
+            `;
+            return;
+        }
+        
+        let html = '';
+        speakers.forEach(speaker => {
+            const isSelected = selectedSpeakersData.some(s => s.id === speaker.id);
+            const selectedClass = isSelected ? 'selected' : '';
+            
+            html += `
+                <div class="list-group-item speaker-list-item ${selectedClass}" 
+                     data-speaker-id="${speaker.id}"
+                     onclick="selectSpeaker(${speaker.id})">
+                    <div class="d-flex align-items-center">
+                        ${speaker.photo_url ? `
+                            <img src="${speaker.photo_url}" 
+                                 alt="${speaker.full_name}" 
+                                 class="speaker-avatar me-3">
+                        ` : `
+                            <div class="speaker-avatar me-3 bg-secondary text-white d-flex align-items-center justify-content-center">
+                                <i class="fas fa-user"></i>
+                            </div>
+                        `}
+                        <div class="flex-grow-1">
+                            <h6 class="mb-1">${speaker.full_name}</h6>
+                            ${speaker.designation && speaker.company ? `
+                                <small class="text-muted">${speaker.designation} at ${speaker.company}</small>
+                            ` : speaker.designation ? `
+                                <small class="text-muted">${speaker.designation}</small>
+                            ` : speaker.company ? `
+                                <small class="text-muted">${speaker.company}</small>
+                            ` : ''}
+                        </div>
+                        ${isSelected ? `
+                            <span class="badge bg-success">
+                                <i class="fas fa-check me-1"></i>Selected
+                            </span>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        });
+        
+        speakersListContainer.innerHTML = html;
+    }
+    
+    // ===================================================================
+    // SPEAKER SEARCH
+    // ===================================================================
+    
+    if (speakerSearch) {
+        speakerSearch.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            
+            if (!searchTerm) {
+                displaySpeakers(allSpeakers);
+                return;
+            }
+            
+            const filtered = allSpeakers.filter(speaker => {
+                return speaker.full_name.toLowerCase().includes(searchTerm) ||
+                       (speaker.company && speaker.company.toLowerCase().includes(searchTerm)) ||
+                       (speaker.designation && speaker.designation.toLowerCase().includes(searchTerm));
+            });
+            
+            displaySpeakers(filtered);
+        });
+    }
+    // ===================================================================
+    // SELECT SPEAKER FROM LIST
+    // ===================================================================
+    
+    window.selectSpeaker = function(speakerId) {
+        const speaker = allSpeakers.find(s => s.id === speakerId);
+        if (!speaker) return;
+        
+        const alreadySelected = selectedSpeakersData.some(s => s.id === speakerId);
+        
+        if (alreadySelected) {
+            selectedSpeakersData = selectedSpeakersData.filter(s => s.id !== speakerId);
+            selectedSpeakerInModal = null;
+        } else {
+            selectedSpeakerInModal = speaker;
+        }
+        
+        displaySpeakers(allSpeakers);
+    };
+    
+    // Add selected speaker button
+    if (addSelectedBtn) {
+        addSelectedBtn.addEventListener('click', function() {
+            if (!selectedSpeakerInModal) {
+                alert('Please select a speaker');
+                return;
+            }
+            
+            if (!selectedSpeakersData.some(s => s.id === selectedSpeakerInModal.id)) {
+                selectedSpeakersData.push(selectedSpeakerInModal);
+                updateSelectedSpeakersDisplay();
+                updateHiddenInput();
+            }
+            
+            bootstrap.Modal.getInstance(speakerModal).hide();
+            selectedSpeakerInModal = null;
+        });
+    }
+    
+    // ===================================================================
+    // CREATE NEW SPEAKER
+    // ===================================================================
+    
+    if (createSpeakerBtn && createSpeakerForm) {
+        createSpeakerBtn.addEventListener('click', function() {
+            const btn = this;
+            const btnText = btn.querySelector('.btn-text');
+            const spinner = btn.querySelector('.spinner-border');
+            
+            if (!createSpeakerForm.checkValidity()) {
+                createSpeakerForm.reportValidity();
+                return;
+            }
+            
+            btn.disabled = true;
+            btnText.textContent = 'Creating...';
+            spinner.classList.remove('d-none');
+            
+            const formData = new FormData(createSpeakerForm);
+            
+            fetch(`/conference/speakers/create/`, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    selectedSpeakersData.push(data.speaker);
+                    allSpeakers.push(data.speaker);
+                    
+                    updateSelectedSpeakersDisplay();
+                    updateHiddenInput();
+                    displaySpeakers(allSpeakers);
+                    
+                    showSuccess('Speaker created successfully!');
+                    createSpeakerForm.reset();
+                    bootstrap.Modal.getInstance(speakerModal).hide();
+                } else {
+                    showFormErrors(data.errors || {message: data.message});
+                }
+            })
+            .catch(error => {
+                console.error('Error creating speaker:', error);
+                showError('Failed to create speaker. Please try again.');
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btnText.textContent = 'Create & Add Speaker';
+                spinner.classList.add('d-none');
+            });
+        });
+    }
+    
+    // ===================================================================
+    // UPDATE SELECTED SPEAKERS DISPLAY
+    // ===================================================================
+    
+    function updateSelectedSpeakersDisplay() {
+        if (selectedSpeakersData.length === 0) {
+            selectedSpeakersList.innerHTML = `
+                <div class="col-12">
+                    <p class="text-muted mb-0">No speakers added yet.</p>
+                </div>
+            `;
+            return;
+        }
+        
+        let html = '';
+        selectedSpeakersData.forEach(speaker => {
+            html += `
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100">
+                        <div class="card-body position-relative">
+                            <button type="button" 
+                                    class="remove-speaker-btn" 
+                                    onclick="removeSpeaker(${speaker.id})"
+                                    title="Remove speaker">
+                                <i class="fas fa-times"></i>
+                            </button>
+                            
+                            <div class="text-center mb-2">
+                                ${speaker.photo_url ? `
+                                    <img src="${speaker.photo_url}" 
+                                         alt="${speaker.full_name}" 
+                                         class="speaker-avatar-lg">
+                                ` : `
+                                    <div class="speaker-avatar-lg mx-auto bg-secondary text-white d-flex align-items-center justify-content-center">
+                                        <i class="fas fa-user fa-2x"></i>
+                                    </div>
+                                `}
+                            </div>
+                            
+                            <h6 class="text-center mb-1">${speaker.full_name}</h6>
+                            
+                            ${speaker.designation && speaker.company ? `
+                                <p class="text-center text-muted small mb-0">
+                                    ${speaker.designation}<br>${speaker.company}
+                                </p>
+                            ` : speaker.designation ? `
+                                <p class="text-center text-muted small mb-0">${speaker.designation}</p>
+                            ` : speaker.company ? `
+                                <p class="text-center text-muted small mb-0">${speaker.company}</p>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        selectedSpeakersList.innerHTML = html;
+    }
+    
+    window.removeSpeaker = function(speakerId) {
+        selectedSpeakersData = selectedSpeakersData.filter(s => s.id !== speakerId);
+        updateSelectedSpeakersDisplay();
+        updateHiddenInput();
+        displaySpeakers(allSpeakers);
+    };
+    
+    function updateHiddenInput() {
+        const speakerIds = selectedSpeakersData.map(s => s.id);
+        speakerIdsInput.value = speakerIds.join(',');
+    }
+    
+    function showSuccess(message) {
+        const messagesDiv = document.getElementById('speaker-form-messages');
+        messagesDiv.innerHTML = `
+            <div class="alert alert-success alert-dismissible fade show">
+                <i class="fas fa-check-circle me-2"></i>${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+    }
+    
+    function showError(message) {
+        const messagesDiv = document.getElementById('speaker-form-messages');
+        messagesDiv.innerHTML = `
+            <div class="alert alert-danger alert-dismissible fade show">
+                <i class="fas fa-exclamation-circle me-2"></i>${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+    }
+    
+    function showFormErrors(errors) {
+        let html = '<div class="alert alert-danger"><ul class="mb-0">';
+        
+        for (const [field, messages] of Object.entries(errors)) {
+            messages.forEach(msg => {
+                html += `<li>${field}: ${msg}</li>`;
+            });
+        }
+        
+        html += '</ul></div>';
+        
+        document.getElementById('speaker-form-messages').innerHTML = html;
+    }
+});
+
+// Load existing custom questions
+document.addEventListener('DOMContentLoaded', function() {
+    const existingQuestionsJson = '{{ existing_questions_json|safe }}';
+    
+    if (existingQuestionsJson && existingQuestionsJson !== '[]') {
+        const existingQuestions = JSON.parse(existingQuestionsJson);
+        
+        if (existingQuestions.length > 0) {
+            // Enable section
+            document.getElementById('enableCustomQuestions').checked = true;
+            document.getElementById('customQuestionsSection').style.display = 'block';
+            
+            // Load questions
+            existingQuestions.forEach(function(q) {
+                questionIdCounter++;
+                customQuestions.push({
+                    id: questionIdCounter,
+                    question: q.question,
+                    required: q.required
+                });
+                renderQuestion(questionIdCounter, q.question);
+            });
+            
+            document.getElementById('customQuestionsData').value = JSON.stringify(customQuestions);
+        }
+    }
+});
+
+// Load existing speakers
+document.addEventListener('DOMContentLoaded', function() {
+    const existingSpeakersJson = '{{ existing_speakers_json|safe }}';
+    
+    if (existingSpeakersJson && existingSpeakersJson !== '[]') {
+        const existingSpeakers = JSON.parse(existingSpeakersJson);
+        
+        if (existingSpeakers.length > 0) {
+            selectedSpeakersData = existingSpeakers.map(function(s) {
+                // Build full name
+                const titles = {'mr': 'Mr.', 'mrs': 'Mrs.', 'ms': 'Ms.', 'dr': 'Dr.', 'prof': 'Prof.'};
+                const parts = [];
+                if (s.title) parts.push(titles[s.title]);
+                if (s.first_name) parts.push(s.first_name);
+                if (s.middle_name) parts.push(s.middle_name);
+                if (s.last_name) parts.push(s.last_name);
+                
+                return {
+                    id: s.id,
+                    full_name: parts.join(' '),
+                    designation: s.designation || '',
+                    company: s.company || '',
+                    photo_url: s.photo ? '/media/' + s.photo : null
+                };
+            });
+            
+            updateSelectedSpeakersDisplay();
+            updateHiddenInput();
+        }
+    }
+});
+</script>
+{% endblock %}

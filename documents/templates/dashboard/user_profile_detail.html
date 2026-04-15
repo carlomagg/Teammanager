@@ -1,0 +1,1013 @@
+{% load static %}
+{% load crispy_forms_tags %}
+
+<div class="container-fluid mt-4 linkedin-profile">
+  <div class="row">
+
+    <!-- ── Left Sidebar ─────────────────────────────────────── -->
+    <div class="col-lg-4 mb-4">
+      <div class="card profile-card shadow-sm p-0">
+        <!-- Photo -->
+        <div class="profile-photo-container">
+          {% if profile.photo %}
+            <img src="{{ profile.photo.url }}" class="profile-photo" alt="Profile Photo">
+          {% else %}
+            <div class="profile-photo-placeholder">
+              {{ profile.first_name|first|upper }}{{ profile.last_name|first|upper }}
+            </div>
+          {% endif %}
+          {% if request.user == profile.user %}
+            <a href="{% url 'edit_my_profile' %}" class="photo-edit-btn" title="Edit Profile">
+              <i class="fas fa-pen"></i>
+            </a>
+          {% endif %}
+        </div>
+
+        <div class="card-body px-4 pb-4 pt-3">
+
+          <!-- Name & designation -->
+          <h3 class="profile-name mb-0 fw-bold">{{ profile.full_name }}</h3>
+          <p class="profile-title mb-1">{{ profile.designation|default:"—" }}</p>
+          {% if profile.user.roles.exists %}
+            <div class="user-roles mb-2">
+              {% for role in profile.user.roles.all %}
+                <span class="badge bg-light text-primary border border-primary-subtle rounded-pill px-2 py-1 small fw-medium" style="font-size: 0.75rem;">
+                  {{ role.name }}
+                </span>
+              {% endfor %}
+            </div>
+          {% endif %}
+          {% if profile.location %}
+            <div class="info-row mt-1" style="padding:0;background:transparent;border:none">
+              <span class="info-icon"><i class="fas fa-map-marker-alt"></i></span>
+              <span class="info-text fw-medium" style="color:var(--pg-text-secondary);font-size:0.86rem">
+                {{ profile.location }}
+              </span>
+            </div>
+          {% endif %}
+
+          <!-- Action buttons -->
+          <div class="action-row d-flex flex-wrap align-items-center gap-2 mt-3 mb-4">
+            {% if profile.user.personal_external_token %}
+              <a href="{% url 'memo:external_submit_personal' profile.user.personal_external_token %}" target="_blank" class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-semibold" title="Send Memo">
+                <i class="fas fa-envelope-open-text me-1"></i> Send Memo
+              </a>
+            {% endif %}
+
+            <div class="dropdown">
+              <button class="btn btn-primary btn-sm rounded-pill px-3 fw-semibold dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fas fa-layer-group me-1"></i> Connect & Services
+              </button>
+              <ul class="dropdown-menu shadow-sm border-0 py-2" style="max-height: 400px; overflow-y: auto;">
+                {% if profile.user.has_public_bookings %}
+                <li><a class="dropdown-item py-2" href="{% url 'unified_calendar_public' profile.user.id %}" target="_blank">
+                  <i class="fas fa-calendar-alt fa-fw text-success me-2"></i> Book Meeting
+                </a></li>
+                {% else %}
+                <li><span class="dropdown-item py-2 text-muted" style="cursor:not-allowed;" title="Not Available">
+                  <i class="fas fa-calendar-alt fa-fw text-secondary opacity-50 me-2"></i> Book Meeting <small>(N/A)</small>
+                </span></li>
+                {% endif %}
+
+                {% if profile.user.has_public_tickets %}
+                <li><a class="dropdown-item py-2" href="#" target="_blank">
+                  <i class="fas fa-ticket-alt fa-fw text-success me-2"></i> Ticket
+                </a></li>
+                {% else %}
+                <li><span class="dropdown-item py-2 text-muted" style="cursor:not-allowed;" title="Not Available">
+                  <i class="fas fa-ticket-alt fa-fw text-secondary opacity-50 me-2"></i> Ticket <small>(N/A)</small>
+                </span></li>
+                {% endif %}
+
+                {% if profile.user.has_public_queues %}
+                <li><a class="dropdown-item py-2" href="#" target="_blank">
+                  <i class="fas fa-users fa-fw text-success me-2"></i> Queue
+                </a></li>
+                {% else %}
+                <li><span class="dropdown-item py-2 text-muted" style="cursor:not-allowed;" title="Not Available">
+                  <i class="fas fa-users fa-fw text-secondary opacity-50 me-2"></i> Queue <small>(N/A)</small>
+                </span></li>
+                {% endif %}
+
+                {% if profile.user.has_public_send_me_file %}
+                <li><a class="dropdown-item py-2" href="#" target="_blank">
+                  <i class="fas fa-file-upload fa-fw text-success me-2"></i> Send Me File
+                </a></li>
+                {% else %}
+                <li><span class="dropdown-item py-2 text-muted" style="cursor:not-allowed;" title="Not Available">
+                  <i class="fas fa-file-upload fa-fw text-secondary opacity-50 me-2"></i> Send Me File <small>(N/A)</small>
+                </span></li>
+                {% endif %}
+
+                {% if profile.user.has_public_visitors_form %}
+                <li><a class="dropdown-item py-2" href="#" target="_blank">
+                  <i class="fas fa-clipboard-list fa-fw text-success me-2"></i> Visitors Form
+                </a></li>
+                {% else %}
+                <li><span class="dropdown-item py-2 text-muted" style="cursor:not-allowed;" title="Not Available">
+                  <i class="fas fa-clipboard-list fa-fw text-secondary opacity-50 me-2"></i> Visitors Form <small>(N/A)</small>
+                </span></li>
+                {% endif %}
+
+                {% if profile.user.has_public_pay_me %}
+                <li><a class="dropdown-item py-2" href="#" target="_blank">
+                  <i class="fas fa-money-bill fa-fw text-success me-2"></i> Pay Me
+                </a></li>
+                {% else %}
+                <li><span class="dropdown-item py-2 text-muted" style="cursor:not-allowed;" title="Not Available">
+                  <i class="fas fa-money-bill fa-fw text-secondary opacity-50 me-2"></i> Pay Me <small>(N/A)</small>
+                </span></li>
+                {% endif %}
+
+                {% if profile.user.has_public_my_events %}
+                <li><a class="dropdown-item py-2" href="#" target="_blank">
+                  <i class="fas fa-calendar-check fa-fw text-success me-2"></i> My Events
+                </a></li>
+                {% else %}
+                <li><span class="dropdown-item py-2 text-muted" style="cursor:not-allowed;" title="Not Available">
+                  <i class="fas fa-calendar-check fa-fw text-secondary opacity-50 me-2"></i> My Events <small>(N/A)</small>
+                </span></li>
+                {% endif %}
+
+                {% if profile.user.has_public_vacancies %}
+                <li><a class="dropdown-item py-2" href="#" target="_blank">
+                  <i class="fas fa-briefcase fa-fw text-success me-2"></i> Check Vacancies
+                </a></li>
+                {% else %}
+                <li><span class="dropdown-item py-2 text-muted" style="cursor:not-allowed;" title="Not Available">
+                  <i class="fas fa-briefcase fa-fw text-secondary opacity-50 me-2"></i> Vacancies <small>(N/A)</small>
+                </span></li>
+                {% endif %}
+                {% if request.user.is_authenticated %}
+                  <li><hr class="dropdown-divider"></li>
+                  <li>
+                    <a class="dropdown-item py-2" href="{% url 'leave:dashboard' %}">
+                      <i class="fas fa-umbrella-beach fa-fw text-info me-2"></i> Leave Request
+                    </a>
+                  </li>
+                  <li>
+                    <a class="dropdown-item py-2" href="{% url 'permissions:dashboard' %}">
+                      <i class="fas fa-user-check fa-fw text-warning me-2"></i> Permission Request
+                    </a>
+                  </li>
+                  <li>
+                    <a class="dropdown-item py-2" href="{% url 'fund_request:dashboard' %}">
+                      <i class="fas fa-money-check-alt fa-fw text-success me-2"></i> Fund Request
+                    </a>
+                  </li>
+                {% endif %}
+              </ul>
+            </div>
+          </div>
+
+          <!-- Contact / personal details -->
+          <div class="info-block mb-4">
+            {% if profile.email %}
+            <div class="info-row">
+              <span class="info-icon"><i class="fas fa-envelope"></i></span>
+              <span class="info-text">{{ profile.email }}</span>
+            </div>
+            {% endif %}
+            {% if profile.phone_number %}
+            <div class="info-row">
+              <span class="info-icon"><i class="fas fa-phone"></i></span>
+              <span class="info-text">{{ profile.phone_number }}</span>
+            </div>
+            {% endif %}
+            {% if profile.home_address %}
+              <div class="info-row">
+                <span class="info-icon"><i class="fas fa-home"></i></span>
+                <span class="info-text">{{ profile.home_address }}</span>
+              </div>
+            {% endif %}
+            {% if profile.sex %}
+              <div class="info-row">
+                <span class="info-icon"><i class="fas fa-venus-mars"></i></span>
+                <span class="info-text">{{ profile.get_sex_display }}</span>
+              </div>
+            {% endif %}
+            {% if profile.date_of_birth %}
+              <div class="info-row">
+                <span class="info-icon"><i class="fas fa-birthday-cake"></i></span>
+                <span class="info-text">{{ profile.date_of_birth|date:"F j, Y" }}</span>
+              </div>
+            {% endif %}
+            {% if profile.marital_status %}
+              <div class="info-row">
+                <span class="info-icon"><i class="fas fa-heart"></i></span>
+                <span class="info-text">{{ profile.get_marital_status_display }}</span>
+              </div>
+            {% endif %}
+            {% if profile.religion %}
+              <div class="info-row">
+                <span class="info-icon"><i class="fas fa-moon"></i></span>
+                <span class="info-text">{{ profile.get_religion_display }}</span>
+              </div>
+            {% endif %}
+          </div>
+
+          <!-- Profile completion (owner only) -->
+          {% if request.user == profile.user %}
+            {% if profile.profile_completion == 100 %}
+              <div class="completion-done mb-4">
+                <div class="completion-done-icon"><i class="fas fa-check-circle"></i></div>
+                <div>
+                  <div class="completion-done-title">Profile Complete!</div>
+                  <div class="completion-done-sub">You're all set.</div>
+                </div>
+              </div>
+            {% else %}
+              <div class="completion-block mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <span class="completion-label">Profile Completion</span>
+                  <span class="completion-pct">{{ profile.profile_completion }}%</span>
+                </div>
+                <div class="completion-track">
+                  <div class="completion-fill" style="width:{{ profile.profile_completion }}%"></div>
+                </div>
+                <p class="completion-hint mt-2 mb-0">
+                  {% if profile.profile_completion < 40 %}Add your bio, photo and contact details to get started.
+                  {% elif profile.profile_completion < 70 %}Good progress — add work history and education.
+                  {% else %}Almost there! Fill in the remaining sections.{% endif %}
+                </p>
+              </div>
+            {% endif %}
+            {% endif %}
+
+            {% if request.user == profile.user %}
+            <!-- Public Profile Toggle -->
+            <div class="public-profile-toggle mt-3 p-3 rounded-3" style="background: #f1f5f9;">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="fw-semibold" style="font-size: .85rem;">
+                  <i class="fas fa-globe me-1 text-primary"></i> Public Profile
+                </span>
+                <div class="form-check form-switch mb-0">
+                  <input class="form-check-input" type="checkbox" id="publicProfileToggle"
+                    {% if profile.is_public %}checked{% endif %}
+                    onchange="togglePublicProfile(this)">
+                </div>
+              </div>
+              <p class="text-muted mb-2" style="font-size: .75rem;">Share your profile with anyone via a public link.</p>
+              <div id="publicLinkRow" style="{% if not profile.is_public %}display:none;{% endif %}">
+                <a href="{% if profile.public_slug %}{% url 'public_profile' profile.public_slug %}{% else %}#{% endif %}" target="_blank"
+                   class="btn btn-sm btn-outline-primary w-100" id="previewPublicLink">
+                  <i class="fas fa-external-link-alt me-1"></i> Preview Public Profile
+                </a>
+                <div class="input-group input-group-sm mt-2">
+                  <input type="text" class="form-control" id="publicLinkInput"
+                         value="{{ request.scheme }}://{{ request.get_host }}/p/{{ profile.public_slug|default:'' }}/" readonly>
+                  <button class="btn btn-outline-secondary" onclick="copyPublicLink()"><i class="fas fa-copy"></i></button>
+                </div>
+              </div>
+            </div>
+
+            <!-- KYC Status -->
+            {% if profile.kyc %}
+            <div class="kyc-status-block mt-3 p-3 rounded-3" style="
+              {% if profile.kyc.kyc_status == 'verified' %}background: #d1fae5;{% elif profile.kyc.kyc_status == 'submitted' %}background: #fef3c7;{% elif profile.kyc.kyc_status == 'rejected' %}background: #fee2e2;{% else %}background: #f3f4f6;{% endif %}
+            ">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <span class="fw-semibold" style="font-size: .85rem;">
+                  <i class="fas fa-id-card me-1 
+                    {% if profile.kyc.kyc_status == 'verified' %}text-success{% elif profile.kyc.kyc_status == 'submitted' %}text-warning{% elif profile.kyc.kyc_status == 'rejected' %}text-danger{% else %}text-secondary{% endif %}
+                  "></i> KYC Status
+                </span>
+                <span class="badge 
+                  {% if profile.kyc.kyc_status == 'verified' %}bg-success{% elif profile.kyc.kyc_status == 'submitted' %}bg-warning text-dark{% elif profile.kyc.kyc_status == 'rejected' %}bg-danger{% else %}bg-secondary{% endif %}
+                ">
+                  {% if profile.kyc.kyc_status == 'verified' %}Verified
+                  {% elif profile.kyc.kyc_status == 'submitted' %}Under Review
+                  {% elif profile.kyc.kyc_status == 'rejected' %}Rejected
+                  {% else %}Pending{% endif %}
+                </span>
+              </div>
+              <p class="text-muted mb-2" style="font-size: .75rem;">
+                {% if profile.kyc.kyc_status == 'verified' %}
+                  Your identity has been verified.
+                {% elif profile.kyc.kyc_status == 'submitted' %}
+                  Your KYC documents are under review.
+                {% elif profile.kyc.kyc_status == 'rejected' %}
+                  Your KYC was rejected. Please update and resubmit.
+                {% else %}
+                  Complete your KYC verification to unlock all features.
+                {% endif %}
+              </p>
+              {% if profile.kyc.kyc_status != 'verified' %}
+                <a href="{% url 'kyc_status' %}" class="btn btn-sm 
+                  {% if profile.kyc.kyc_status == 'pending' %}btn-primary{% else %}btn-outline-primary{% endif %} w-100">
+                  <i class="fas fa-arrow-right me-1"></i> 
+                  {% if profile.kyc.kyc_status == 'pending' %}Complete KYC
+                  {% elif profile.kyc.kyc_status == 'rejected' %}Update KYC
+                  {% else %}View KYC{% endif %}
+                </a>
+              {% endif %}
+              {% if profile.kyc.kyc_status == 'rejected' and profile.kyc.kyc_rejection_reason %}
+                <div class="alert alert-danger mt-2 mb-0 p-2" style="font-size: .75rem;">
+                  <strong>Reason:</strong> {{ profile.kyc.kyc_rejection_reason }}
+                </div>
+              {% endif %}
+            </div>
+            {% else %}
+            <div class="kyc-status-block mt-3 p-3 rounded-3" style="background: #f3f4f6;">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <span class="fw-semibold" style="font-size: .85rem;">
+                  <i class="fas fa-id-card me-1 text-secondary"></i> KYC Status
+                </span>
+                <span class="badge bg-secondary">Pending</span>
+              </div>
+              <p class="text-muted mb-2" style="font-size: .75rem;">
+                Complete your KYC verification to unlock all features.
+              </p>
+              <a href="{% url 'kyc_status' %}" class="btn btn-sm btn-primary w-100">
+                <i class="fas fa-arrow-right me-1"></i> Complete KYC
+              </a>
+            </div>
+            {% endif %}
+            {% endif %}
+          {% comment %} {% endif %} {% endcomment %}
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Right Content ─────────────────────────────────────── -->
+    <div class="col-lg-8">
+
+      <!-- Bio -->
+      <div class="card shadow-sm mb-4{% if request.user == profile.user %} {% if profile.bio %}section-complete{% else %}section-incomplete{% endif %}{% endif %}">
+        <div class="card-body p-4">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="d-flex align-items-center gap-2">
+              <h4 class="card-title fw-bold mb-0">Personal Bio</h4>
+              {% if request.user == profile.user %}
+              <span class="section-status-badge {% if profile.bio %}status-ok{% else %}status-missing{% endif %}">
+                {% if profile.bio %}Complete{% else %}Missing{% endif %}
+              </span>
+              {% endif %}
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              {% if request.user == profile.user %}
+              <button class="btn btn-link btn-sm p-0 text-muted visibility-toggle" 
+                      onclick="toggleSection(this, 'bio')" 
+                      title="Toggle public visibility">
+                <i class="fas {% if profile.get_public_sections.bio %}fa-eye text-primary{% else %}fa-eye-slash{% endif %}"></i>
+              </button>
+              <button class="btn btn-light btn-sm rounded-circle text-muted"
+                      data-bs-toggle="modal" data-bs-target="#editBioModal">
+                <i class="fas fa-pen"></i>
+              </button>
+              {% endif %}
+            </div>
+          </div>
+          <p class="text-muted mb-0">
+            {{ profile.bio|default:"No bio added yet." }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Work Experience -->
+      <div class="card shadow-sm mb-4{% if request.user == profile.user %} {% if profile.work_history.exists %}section-complete{% else %}section-incomplete{% endif %}{% endif %}">
+        <div class="card-body p-4">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="d-flex align-items-center gap-2">
+              <h4 class="card-title fw-bold mb-0">Work Experience</h4>
+              {% if request.user == profile.user %}
+              <span class="section-status-badge {% if profile.work_history.exists %}status-ok{% else %}status-missing{% endif %}">
+                {% if profile.work_history.exists %}Complete{% else %}Missing{% endif %}
+              </span>
+              {% endif %}
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              {% if request.user == profile.user %}
+              <button class="btn btn-link btn-sm p-0 text-muted visibility-toggle" 
+                      onclick="toggleSection(this, 'experience')" 
+                      title="Toggle public visibility">
+                <i class="fas {% if profile.get_public_sections.experience %}fa-eye text-primary{% else %}fa-eye-slash{% endif %}"></i>
+              </button>
+              <button class="btn btn-light btn-sm rounded-circle text-muted"
+                      data-bs-toggle="modal" data-bs-target="#addExperienceModal">
+                <i class="fas fa-plus"></i>
+              </button>
+              {% endif %}
+            </div>
+          </div>
+          {% for exp in profile.work_history.all %}
+            <div class="timeline-item {% if not forloop.last %}mb-3 pb-3 border-bottom{% endif %}">
+              <div class="d-flex justify-content-between">
+                <div>
+                  <div class="fw-semibold">{{ exp.designation }}</div>
+                  <div class="text-muted small">{{ exp.organization_name }}</div>
+                  <div class="text-muted small">{{ exp.start_date|date:"M Y" }} – {{ exp.end_date|date:"M Y"|default:"Present" }}</div>
+                  {% if exp.description %}<p class="mt-1 mb-0 small">{{ exp.description }}</p>{% endif %}
+                </div>
+                {% if request.user == profile.user %}
+                  <div>
+                    <button class="btn btn-sm btn-link text-muted p-0"
+                            data-bs-toggle="modal" data-bs-target="#addExperienceModal"
+                            data-id="{{ exp.id }}"
+                            data-organization_name="{{ exp.organization_name }}"
+                            data-designation="{{ exp.designation }}"
+                            data-start_date="{{ exp.start_date|date:'Y-m-d' }}"
+                            data-end_date="{{ exp.end_date|date:'Y-m-d' }}"
+                            data-mode="{{ exp.mode }}"
+                            data-description="{{ exp.description }}">
+                      <i class="fas fa-pen"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-link text-danger p-0 delete-btn"
+                            data-bs-toggle="modal" data-bs-target="#deleteConfirmModal"
+                            data-action="delete_experience"
+                            data-id="{{ exp.id }}"
+                            data-title="Delete Work Experience"
+                            data-heading="Delete Experience?"
+                            data-message="Are you sure you want to remove this work experience from your profile? This action cannot be undone.">
+                      <i class="fas fa-trash-alt"></i>
+                    </button>
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+          {% empty %}
+            <p class="text-muted mb-0">No work experience added yet.</p>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Education -->
+      <div class="card shadow-sm mb-4{% if request.user == profile.user %} {% if profile.education_history.exists %}section-complete{% else %}section-incomplete{% endif %}{% endif %}">
+        <div class="card-body p-4">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="d-flex align-items-center gap-2">
+              <h4 class="card-title fw-bold mb-0">Education</h4>
+              {% if request.user == profile.user %}
+              <span class="section-status-badge {% if profile.education_history.exists %}status-ok{% else %}status-missing{% endif %}">
+                {% if profile.education_history.exists %}Complete{% else %}Missing{% endif %}
+              </span>
+              {% endif %}
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              {% if request.user == profile.user %}
+              <button class="btn btn-link btn-sm p-0 text-muted visibility-toggle" 
+                      onclick="toggleSection(this, 'education')" 
+                      title="Toggle public visibility">
+                <i class="fas {% if profile.get_public_sections.education %}fa-eye text-primary{% else %}fa-eye-slash{% endif %}"></i>
+              </button>
+              <button class="btn btn-light btn-sm rounded-circle text-muted"
+                      data-bs-toggle="modal" data-bs-target="#addEducationModal">
+                <i class="fas fa-plus"></i>
+              </button>
+              {% endif %}
+            </div>
+          </div>
+          {% for edu in profile.education_history.all %}
+            <div class="timeline-item {% if not forloop.last %}mb-3 pb-3 border-bottom{% endif %}">
+              <div class="d-flex justify-content-between">
+                <div>
+                  <div class="fw-semibold">{{ edu.degree }} – {{ edu.course }}</div>
+                  <div class="text-muted small">{{ edu.school_name }}</div>
+                  <div class="text-muted small">{{ edu.start_date|date:"M Y" }} – {{ edu.end_date|date:"M Y"|default:"Present" }}</div>
+                  {% if edu.certificate %}
+                    <a href="{{ edu.certificate.url }}" target="_blank" class="small">
+                      <i class="fas fa-file-pdf me-1"></i>Certificate
+                    </a>
+                  {% endif %}
+                </div>
+                {% if request.user == profile.user %}
+                  <div>
+                    <button class="btn btn-sm btn-link text-muted p-0"
+                            data-bs-toggle="modal" data-bs-target="#addEducationModal"
+                            data-id="{{ edu.id }}"
+                            data-school_name="{{ edu.school_name }}"
+                            data-course="{{ edu.course }}"
+                            data-degree="{{ edu.degree }}"
+                            data-start_date="{{ edu.start_date|date:'Y-m-d' }}"
+                            data-end_date="{{ edu.end_date|date:'Y-m-d' }}">
+                      <i class="fas fa-pen"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-link text-danger p-0 delete-btn"
+                            data-bs-toggle="modal" data-bs-target="#deleteConfirmModal"
+                            data-action="delete_education"
+                            data-id="{{ edu.id }}"
+                            data-title="Delete Education Record"
+                            data-heading="Delete Education?"
+                            data-message="Are you sure you want to remove this education record from your profile? This action cannot be undone.">
+                      <i class="fas fa-trash-alt"></i>
+                    </button>
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+          {% empty %}
+            <p class="text-muted mb-0">No education history added yet.</p>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Achievements -->
+      <div class="card shadow-sm mb-4{% if request.user == profile.user %} {% if profile.achievements.exists %}section-complete{% else %}section-incomplete{% endif %}{% endif %}">
+        <div class="card-body p-4">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="d-flex align-items-center gap-2">
+              <h4 class="card-title fw-bold mb-0">Achievements & Certifications</h4>
+              {% if request.user == profile.user %}
+              <span class="section-status-badge {% if profile.achievements.exists %}status-ok{% else %}status-missing{% endif %}">
+                {% if profile.achievements.exists %}Complete{% else %}Missing{% endif %}
+              </span>
+              {% endif %}
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              {% if request.user == profile.user %}
+              <button class="btn btn-link btn-sm p-0 text-muted visibility-toggle" 
+                      onclick="toggleSection(this, 'achievements')" 
+                      title="Toggle public visibility">
+                <i class="fas {% if profile.get_public_sections.achievements %}fa-eye text-primary{% else %}fa-eye-slash{% endif %}"></i>
+              </button>
+              <button class="btn btn-light btn-sm rounded-circle text-muted"
+                      data-bs-toggle="modal" data-bs-target="#addAchievementModal">
+                <i class="fas fa-plus"></i>
+              </button>
+              {% endif %}
+            </div>
+          </div>
+          {% for ach in profile.achievements.all %}
+            <div class="timeline-item {% if not forloop.last %}mb-3 pb-3 border-bottom{% endif %}">
+              <div class="d-flex justify-content-between">
+                <div>
+                  <span class="badge bg-primary me-2">{{ ach.get_category_display }}</span>
+                  <span class="fw-semibold">{{ ach.title }}</span>
+                  {% if ach.issuer %}<div class="text-muted small">{{ ach.issuer }}</div>{% endif %}
+                  <div class="text-muted small">{{ ach.date|date:"M Y" }}</div>
+                  {% if ach.url %}<a href="{{ ach.url }}" target="_blank" class="small">View credential</a>{% endif %}
+                </div>
+                {% if request.user == profile.user %}
+                  <div>
+                    <button class="btn btn-sm btn-link text-muted p-0"
+                            data-bs-toggle="modal" data-bs-target="#addAchievementModal"
+                            data-id="{{ ach.id }}"
+                            data-category="{{ ach.category }}"
+                            data-title="{{ ach.title }}"
+                            data-issuer="{{ ach.issuer }}"
+                            data-description="{{ ach.description }}"
+                            data-date="{{ ach.date|date:'Y-m-d' }}"
+                            data-url="{{ ach.url }}">
+                      <i class="fas fa-pen"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-link text-danger p-0 delete-btn"
+                            data-bs-toggle="modal" data-bs-target="#deleteConfirmModal"
+                            data-action="delete_achievement"
+                            data-id="{{ ach.id }}"
+                            data-title="Delete Achievement"
+                            data-heading="Delete Achievement?"
+                            data-message="Are you sure you want to remove this achievement or certification? This action cannot be undone.">
+                      <i class="fas fa-trash-alt"></i>
+                    </button>
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+          {% empty %}
+            <p class="text-muted mb-0">No achievements added yet.</p>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Recommendations -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-body p-4">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="card-title fw-bold mb-0">
+              <i class="fas fa-star-half-alt text-warning me-2"></i>Recommendations
+            </h4>
+            <div class="d-flex align-items-center gap-2">
+              {% if request.user == profile.user %}
+              <button class="btn btn-link btn-sm p-0 text-muted visibility-toggle" 
+                      onclick="toggleSection(this, 'recommendations')" 
+                      title="Toggle public visibility">
+                <i class="fas {% if profile.get_public_sections.recommendations %}fa-eye text-primary{% else %}fa-eye-slash{% endif %}"></i>
+              </button>
+              {% endif %}
+              {% if request.user != profile.user %}
+              <button class="btn btn-outline-primary btn-sm rounded-pill px-3"
+                      data-bs-toggle="modal" data-bs-target="#writeRecommendationModalUser">
+                <i class="fas fa-pen me-1"></i> Write a Recommendation
+              </button>
+              {% endif %}
+            </div>
+          </div>
+
+          {% if request.user == profile.user %}
+            {% for rec in profile.recommendations.all %}
+            <div class="p-3 mb-3 rounded-3 border {% if not rec.is_visible %}bg-light opacity-75{% endif %}
+                        {% if not forloop.last %}border-bottom-0 rounded-bottom-0{% endif %}">
+              <div class="d-flex justify-content-between align-items-start">
+                <div>
+                  <span class="fw-semibold">{{ rec.recommender.get_full_name|default:rec.recommender.username }}</span>
+                  <span class="badge bg-secondary ms-2">{{ rec.relationship }}</span>
+                  {% if not rec.is_visible %}
+                    <span class="badge bg-warning text-dark ms-1">Hidden</span>
+                  {% endif %}
+                  <p class="text-muted small mb-1 mt-1">{{ rec.created_at|date:"M j, Y" }}</p>
+                  {% if rec.work_history %}
+                    <p class="small text-muted mb-1"><i class="fas fa-briefcase me-1"></i>Re: {{ rec.work_history.designation }} at {{ rec.work_history.organization_name }}</p>
+                  {% endif %}
+                  {% if rec.education_history %}
+                    <p class="small text-muted mb-1"><i class="fas fa-university me-1"></i>Re: {{ rec.education_history.degree }} at {{ rec.education_history.school_name }}</p>
+                  {% endif %}
+                  <p class="mb-0 mt-2" style="white-space:pre-line">{{ rec.body }}</p>
+                </div>
+                <div class="d-flex gap-1 ms-3 flex-shrink-0">
+                  <!-- Toggle visibility -->
+                  <form method="post" class="d-inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="toggle_recommendation_visibility">
+                    <input type="hidden" name="item_id" value="{{ rec.id }}">
+                    <button type="submit" class="btn btn-sm btn-link p-0 text-muted"
+                            title="{{ rec.is_visible|yesno:'Hide,Show' }}">
+                      <i class="fas fa-eye{% if not rec.is_visible %}-slash{% endif %}"></i>
+                    </button>
+                  </form>
+                  <!-- Delete -->
+                  <button type="button" class="btn btn-sm btn-link p-0 text-danger delete-btn"
+                          data-bs-toggle="modal" data-bs-target="#deleteConfirmModal"
+                          data-action="delete_recommendation"
+                          data-id="{{ rec.id }}"
+                          data-title="Delete Recommendation"
+                          data-heading="Delete Recommendation?"
+                          data-message="Are you sure you want to delete this recommendation? This action cannot be undone.">
+                    <i class="fas fa-trash-alt"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+            {% empty %}
+            <p class="text-muted fst-italic mb-0">No recommendations yet.</p>
+            {% endfor %}
+          {% else %}
+            {% with recs=profile.recommendations.all %}
+            {% for rec in recs %}
+            {% if rec.is_visible %}
+            <div class="p-3 mb-3 rounded-3 border {% if not forloop.last %}border-bottom-0 rounded-bottom-0{% endif %}">
+              <div class="d-flex justify-content-between align-items-start">
+                <div>
+                  <span class="fw-semibold">{{ rec.recommender.get_full_name|default:rec.recommender.username }}</span>
+                  <span class="badge bg-secondary ms-2">{{ rec.relationship }}</span>
+                  <p class="text-muted small mb-1 mt-1">{{ rec.created_at|date:"M j, Y" }}</p>
+                  {% if rec.work_history %}
+                    <p class="small text-muted mb-1"><i class="fas fa-briefcase me-1"></i>Re: {{ rec.work_history.designation }} at {{ rec.work_history.organization_name }}</p>
+                  {% endif %}
+                  {% if rec.education_history %}
+                    <p class="small text-muted mb-1"><i class="fas fa-university me-1"></i>Re: {{ rec.education_history.degree }} at {{ rec.education_history.school_name }}</p>
+                  {% endif %}
+                  <p class="mb-0 mt-2" style="white-space:pre-line">{{ rec.body }}</p>
+                </div>
+                {% if rec.recommender == request.user %}
+                <button type="button" class="btn btn-sm btn-link p-0 text-danger delete-btn"
+                        data-bs-toggle="modal" data-bs-target="#deleteConfirmModal"
+                        data-form-action="{% url 'delete_recommendation' rec.id %}"
+                        data-title="Delete Recommendation"
+                        data-heading="Delete your recommendation?"
+                        data-message="Are you sure you want to delete the recommendation you wrote? This action cannot be undone.">
+                  <i class="fas fa-trash-alt"></i>
+                </button>
+                {% endif %}
+              </div>
+            </div>
+            {% endif %}
+            {% empty %}
+            <p class="text-muted fst-italic mb-0">No recommendations yet.</p>
+            {% endfor %}
+            {% endwith %}
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Write Recommendation Modal (only for non-owners) -->
+      {% if request.user != profile.user %}
+      <div class="modal fade" id="writeRecommendationModalUser" tabindex="-1" aria-labelledby="writeRecommendationModalUserLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="writeRecommendationModalUserLabel">
+                <i class="fas fa-star-half-alt text-warning me-2"></i>
+                Write a Recommendation
+              </h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'give_recommendation' 'user' profile.id %}">
+              {% csrf_token %}
+              <div class="modal-body">
+                <div class="mb-3">
+                  <label class="form-label fw-semibold">Your Relationship</label>
+                  <input type="text" name="relationship" class="form-control"
+                         placeholder="e.g. Direct Manager, Colleague, Professor" required maxlength="100">
+                </div>
+                <div class="mb-3">
+                  <label class="form-label fw-semibold">Recommendation</label>
+                  <textarea name="body" class="form-control" rows="5"
+                            placeholder="Share your experience working with this person..." required></textarea>
+                </div>
+                {% if profile.work_history.exists %}
+                <div class="mb-3">
+                  <label class="form-label fw-semibold">Related Work Experience <span class="text-muted fw-normal">(optional)</span></label>
+                  <select name="work_history" class="form-select">
+                    <option value="">— None —</option>
+                    {% for wh in profile.work_history.all %}
+                    <option value="{{ wh.id }}">{{ wh.designation }} at {{ wh.organization_name }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                {% endif %}
+                {% if profile.education_history.exists %}
+                <div class="mb-3">
+                  <label class="form-label fw-semibold">Related Education <span class="text-muted fw-normal">(optional)</span></label>
+                  <select name="education_history" class="form-select">
+                    <option value="">— None —</option>
+                    {% for eh in profile.education_history.all %}
+                    <option value="{{ eh.id }}">{{ eh.degree }} at {{ eh.school_name }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                {% endif %}
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-primary">
+                  <i class="fas fa-paper-plane me-1"></i> Submit Recommendation
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Identity Documents (owner only) -->
+
+      {% if request.user == profile.user %}
+      <div class="card shadow-sm mb-4{% if profile.identity_documents.exists %}section-complete{% else %}section-incomplete{% endif %}">
+        <div class="card-body p-4">
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="d-flex align-items-center gap-2">
+              <h4 class="card-title fw-bold mb-0">Identity Documents</h4>
+              <span class="section-status-badge {% if profile.identity_documents.exists %}status-ok{% else %}status-missing{% endif %}">
+                {% if profile.identity_documents.exists %}Complete{% else %}Missing{% endif %}
+              </span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              {% if request.user == profile.user %}
+              <button class="btn btn-link btn-sm p-0 text-muted visibility-toggle" 
+                      onclick="toggleSection(this, 'identity_documents')" 
+                      title="Toggle public visibility">
+                <i class="fas {% if profile.get_public_sections.identity_documents %}fa-eye text-primary{% else %}fa-eye-slash{% endif %}"></i>
+              </button>
+              <button
+                class="btn btn-light btn-sm rounded-circle text-muted"
+                data-bs-toggle="modal"
+                data-bs-target="#addIdentityDocumentModal"
+              >
+                <i class="fas fa-plus"></i>
+              </button>
+              {% endif %}
+            </div>
+          </div>
+          {% for doc in profile.identity_documents.all %}
+          <div
+            class="d-flex mb-4 {% if not forloop.last %}
+            pb-4 border-bottom
+            {% endif %}"
+          >
+            <div
+              class="me-3 p-3 bg-light rounded-3 d-flex align-items-center justify-content-center"
+              style="width: 60px; height: 60px"
+            >
+              <i class="fas fa-id-card fa-2x text-primary opacity-75"></i>
+            </div>
+            <div class="flex-grow-1">
+              <div class="d-flex justify-content-between align-items-start">
+                <div>
+                  <h6 class="mb-1 fw-bold fs-5">
+                    {{ doc.get_document_type_display }}
+                  </h6>
+                  <p class="mb-1 text-dark fw-medium">{{ doc.number }}</p>
+                </div>
+                {% if request.user == profile.user %}
+                <div class="d-flex">
+                  <button
+                    class="btn btn-sm btn-link text-primary p-0 me-2"
+                    data-bs-toggle="modal"
+                    data-bs-target="#addIdentityDocumentModal"
+                    data-id="{{ doc.id }}"
+                    data-document_type="{{ doc.document_type }}"
+                    data-number="{{ doc.number }}"
+                    data-issue_date="{{ doc.issue_date|date:'Y-m-d' }}"
+                    data-expiry_date="{{ doc.expiry_date|date:'Y-m-d' }}"
+                  >
+                    <i class="fas fa-pen"></i>
+                  </button>
+                  <button type="button" class="btn btn-sm btn-link text-danger p-0 delete-btn"
+                          data-bs-toggle="modal" data-bs-target="#deleteConfirmModal"
+                          data-action="delete_identity_document"
+                          data-id="{{ doc.id }}"
+                          data-title="Delete Identity Document"
+                          data-heading="Delete Document?"
+                          data-message="Are you sure you want to remove this identity document? This action cannot be undone.">
+                    <i class="fas fa-trash-alt"></i>
+                  </button>
+                </div>
+                {% endif %}
+              </div>
+              {% if doc.expiry_date %}
+              <p class="small text-muted mb-2">
+                Expires: {{ doc.expiry_date|date:"M Y" }}
+              </p>
+              {% endif %} 
+              {% if doc.file %}
+              <a
+                href="{{ doc.file.url }}"
+                target="_blank"
+                class="btn btn-sm btn-outline-primary mt-2"
+              >
+                <i class="fas fa-download me-1"></i> View Document
+              </a>
+              {% endif %}
+            </div>
+          </div>
+          {% empty %}
+          <p class="text-muted fst-italic">No identity documents added yet.</p>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+       <!-- Bank Details (owner only) -->
+      {% if request.user == profile.user %}
+      <div class="card shadow-sm mb-4{% if profile.bank_account_number %}section-complete{% else %}section-incomplete{% endif %}">
+        <div class="card-body p-4">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="d-flex align-items-center gap-2">
+              <h4 class="card-title fw-bold mb-0"><i class="fas fa-university me-2 text-success"></i>Bank Details</h4>
+              <span class="section-status-badge {% if profile.bank_account_number %}status-ok{% else %}status-missing{% endif %}">
+                {% if profile.bank_account_number %}Complete{% else %}Missing{% endif %}
+              </span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              {% if request.user == profile.user %}
+              <button class="btn btn-link btn-sm p-0 text-muted visibility-toggle" 
+                      onclick="toggleSection(this, 'bank_info')" 
+                      title="Toggle public visibility">
+                <i class="fas {% if profile.get_public_sections.bank_info %}fa-eye text-primary{% else %}fa-eye-slash{% endif %}"></i>
+              </button>
+              <a href="{% url 'edit_my_profile' %}" class="btn btn-light btn-sm text-muted">
+                <i class="fas fa-pen"></i>
+              </a>
+              {% endif %}
+            </div>
+          </div>
+          {% if profile.has_complete_bank_details %}
+            <div class="row g-2">
+              <div class="col-sm-6">
+                <span class="text-muted small">Bank</span>
+                <div class="fw-medium">{{ profile.bank_name }}</div>
+              </div>
+              <div class="col-sm-6">
+                <span class="text-muted small">Account Number</span>
+                <div class="fw-medium">{{ profile.bank_account_number }}</div>
+              </div>
+              <div class="col-sm-6">
+                <span class="text-muted small">Account Name</span>
+                <div class="fw-medium">{{ profile.bank_account_name }}</div>
+              </div>
+              <div class="col-sm-6">
+                <span class="text-muted small">Bank Code</span>
+                <div class="fw-medium">{{ profile.bank_code }}</div>
+              </div>
+            </div>
+            {% if profile.bank_verified %}
+              <span class="badge bg-success mt-2"><i class="fas fa-check me-1"></i>Verified</span>
+            {% else %}
+              <span class="badge bg-warning text-dark mt-2">Pending Verification</span>
+            {% endif %}
+          {% else %}
+            <p class="text-muted mb-0">No bank details provided.
+              <a href="{% url 'edit_my_profile' %}">Add them now</a>
+            </p>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+
+  
+
+    </div><!-- /col-lg-8 -->
+  </div><!-- /row -->
+</div>
+
+{% include 'profile_styles.html' %}
+
+{% block extra_js %}
+<script>
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+const csrftoken = getCookie('csrftoken');
+
+function togglePublicProfile(checkbox) {
+    const isPublic = checkbox.checked;
+    fetch("{% url 'toggle_profile_public' %}", {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrftoken,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const linkRow = document.getElementById('publicLinkRow');
+            if (data.is_public) {
+                // Update link and input
+                const baseUrl = window.location.origin;
+                const publicUrl = `${baseUrl}/p/${data.public_slug}/`;
+                
+                document.getElementById('previewPublicLink').href = publicUrl;
+                document.getElementById('publicLinkInput').value = publicUrl;
+                
+                linkRow.style.display = 'block';
+            } else {
+                linkRow.style.display = 'none';
+            }
+        }
+ else {
+            alert('Error updating profile status');
+            checkbox.checked = !isPublic;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred');
+        checkbox.checked = !isPublic;
+    });
+}
+
+function toggleSection(button, sectionKey) {
+    const icon = button.querySelector('i');
+    const isCurrentlyVisible = icon.classList.contains('fa-eye');
+    const newVisible = !isCurrentlyVisible;
+
+    fetch("{% url 'toggle_section_visibility' %}", {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrftoken,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            section: sectionKey,
+            visible: newVisible
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            if (data.visible) {
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye', 'text-primary');
+            } else {
+                icon.classList.remove('fa-eye', 'text-primary');
+                icon.classList.add('fa-eye-slash');
+            }
+        } else {
+            alert('Error updating section visibility');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred');
+    });
+}
+
+function copyPublicLink() {
+    const copyText = document.getElementById("publicLinkInput");
+    copyText.select();
+    copyText.setSelectionRange(0, 99999);
+    navigator.clipboard.writeText(copyText.value);
+    
+    const btn = event.currentTarget;
+    const originalIcon = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-check"></i>';
+    setTimeout(() => {
+        btn.innerHTML = originalIcon;
+    }, 2000);
+}
+</script>
+{% endblock %}

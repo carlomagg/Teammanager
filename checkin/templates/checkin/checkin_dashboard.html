@@ -1,0 +1,571 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Check-in Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+  .metric-card { border-left: 4px solid transparent; transition: transform .15s; }
+  .metric-card:hover { transform: translateY(-2px); }
+  .metric-card.green  { border-left-color: #198754; }
+  .metric-card.blue   { border-left-color: #0d6efd; }
+  .metric-card.orange { border-left-color: #fd7e14; }
+  .metric-card.red    { border-left-color: #dc3545; }
+  .metric-card.teal   { border-left-color: #0dcaf0; }
+  .metric-card.purple { border-left-color: #6610f2; }
+
+  .rank-badge {
+    width: 26px; height: 26px; border-radius: 50%;
+    display:inline-flex; align-items:center; justify-content:center;
+    font-size:.72rem; font-weight:700; flex-shrink:0;
+  }
+  .rank-1 { background:#ffd700; color:#000; }
+  .rank-2 { background:#c0c0c0; color:#000; }
+  .rank-3 { background:#cd7f32; color:#fff; }
+  .rank-n { background:#e9ecef; color:#495057; }
+
+  .progress-slim { height: 6px; border-radius: 3px; }
+  .tab-pane-checkin { min-height: 220px; }
+  .visitors-strip td, .visitors-strip th { padding: .3rem .5rem; font-size:.82rem; }
+
+  /* Staff-only self-service card */
+  .self-service-card {
+    background: linear-gradient(135deg, #f0f7ff 0%, #e8f5e9 100%);
+    border: 1px solid #dee2e6;
+  }
+</style>
+{% endblock %}
+
+{# 
+   Helper: is the current user a manager-level user?
+   Managers = superuser / is_staff / HR / Admin / Receptionist roles
+    #}
+
+
+{% block content %}
+<div class="container-fluid py-3">
+
+  {# ── Header ── #}
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+      <h4 class="mb-0">
+        <i class="fas fa-fingerprint me-2 text-primary"></i>
+        {% if is_manager %}Check-in / Check-out{% else %}My Check-in{% endif %}
+      </h4>
+      <small class="text-muted">{{ today|date:"l, d F Y" }}</small>
+    </div>
+
+    {# Manager-only header buttons #}
+    {% if is_manager %}
+    {% for role in request.user.roles.all %}{% if role.name == "HR" or role.name == "Admin" or role.name == "Receptionist" %}{% with is_manager=True %}{% endwith %}{% endif %}{% endfor %}
+    <div class="d-flex gap-2 flex-wrap">
+      <a href="{% url 'checkin:visitor_checkin' %}" class="btn btn-success btn-sm">
+        <i class="fas fa-user-plus me-1"></i>New Visitor
+      </a>
+      <a href="{% url 'checkin:visitor_dashboard' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="fas fa-id-badge me-1"></i>Visitor Log
+      </a>
+      {% if request.user.is_superuser or request.user.is_staff %}
+      <a href="{% url 'checkin:work_schedule_setup' %}" class="btn btn-outline-primary btn-sm">
+        <i class="fas fa-clock me-1"></i>Work Schedule
+      </a>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+  {# ── Schedule banner (everyone sees this) ── #}
+  {% if schedule %}
+  <div class="alert alert-light border py-2 mb-3 small">
+    <i class="fas fa-clock me-1 text-primary"></i>
+    <strong>Work hours:</strong> {{ schedule.work_start_time|time:"H:i" }} – {{ schedule.work_end_time|time:"H:i" }}
+    &nbsp;|&nbsp;<strong>Late after:</strong> {{ schedule.late_after|time:"H:i" }}
+  </div>
+  {% else %}
+  {% if is_manager %}
+  <div class="alert alert-warning py-2 mb-3 small">
+    <i class="fas fa-exclamation-triangle me-1"></i>No work schedule configured.
+    <a href="{% url 'checkin:work_schedule_setup' %}">Set it up</a>
+  </div>
+  {% endif %}
+  {% endif %}
+
+  {#  ROLE CHECK — show full dashboard OR staff self-service only#}
+
+  {# Resolve role-based manager access (HR / Admin / Receptionist) #}
+  {% with role_names=request.user.roles.all %}
+
+  {# ── MANAGER VIEW #}
+  {% if is_manager %}
+
+    {# Metrics row #}
+    <div class="row g-3 mb-3">
+      <div class="col-6 col-md-4 col-xl-2">
+        <div class="card border-0 shadow-sm metric-card blue h-100">
+          <div class="card-body py-3 px-3">
+            <div class="fs-2 fw-bold text-primary">{{ total_staff }}</div>
+            <div class="small text-muted">Total Staff</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4 col-xl-2">
+        <div class="card border-0 shadow-sm metric-card green h-100">
+          <div class="card-body py-3 px-3">
+            <div class="fs-2 fw-bold text-success">{{ checked_in_count }}</div>
+            <div class="small text-muted">Currently In</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4 col-xl-2">
+        <div class="card border-0 shadow-sm metric-card teal h-100">
+          <div class="card-body py-3 px-3">
+            <div class="fs-2 fw-bold text-info">{{ early_count }}</div>
+            <div class="small text-muted">Early Arrivals</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4 col-xl-2">
+        <div class="card border-0 shadow-sm metric-card orange h-100">
+          <div class="card-body py-3 px-3">
+            <div class="fs-2 fw-bold text-warning">{{ late_count }}</div>
+            <div class="small text-muted">Late Arrivals</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4 col-xl-2">
+        <div class="card border-0 shadow-sm metric-card red h-100">
+          <div class="card-body py-3 px-3">
+            <div class="fs-2 fw-bold text-danger">{{ checked_out_count }}</div>
+            <div class="small text-muted">Checked Out</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4 col-xl-2">
+        <div class="card border-0 shadow-sm metric-card purple h-100">
+          <div class="card-body py-3 px-3">
+            <div class="fs-2 fw-bold" style="color:#6610f2;">{{ visitors_count }}</div>
+            <div class="small text-muted">Visitors Today</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# Attendance rate bar #}
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-body py-2 px-3">
+        <div class="d-flex justify-content-between align-items-center mb-1">
+          <span class="small fw-semibold">
+            <i class="fas fa-chart-bar me-1 text-primary"></i>Attendance Rate Today
+          </span>
+          <span class="small fw-bold text-primary">
+            {{ attendance_rate }}% &nbsp;
+            <span class="text-muted fw-normal">({{ present_today }} / {{ total_staff }} staff)</span>
+          </span>
+        </div>
+        <div class="progress progress-slim">
+          <div class="progress-bar bg-success" style="width:{{ early_pct }}%" title="Early ({{ early_count }})"></div>
+          <div class="progress-bar bg-warning" style="width:{{ late_pct }}%" title="Late ({{ late_count }})"></div>
+        </div>
+        <div class="d-flex gap-3 mt-1" style="font-size:.72rem;">
+          <span><span class="badge bg-success">▮</span> Early</span>
+          <span><span class="badge bg-warning text-dark">▮</span> Late</span>
+          <span class="text-muted ms-auto">Absent: {{ absent_count }}</span>
+        </div>
+      </div>
+    </div>
+
+    {# Main 2-col: check-in panel + rankings #}
+    <div class="row g-3">
+      <div class="col-12 col-xl-4">
+        {% include 'checkin/_checkin_panel.html' %}
+      </div>
+      <div class="col-12 col-xl-8">
+        <div class="row g-3 h-100">
+          {# Top 10 Early Arrivals #}
+          <div class="col-12 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+              <div class="card-header bg-transparent border-bottom fw-semibold py-2">
+                <i class="fas fa-trophy me-1 text-warning"></i>Top 10 Early Arrivals
+                <span class="text-muted fw-normal small ms-1">— by check-in time</span>
+              </div>
+              <div class="card-body p-0">
+                <table class="table table-sm mb-0 visitors-strip">
+                  <tbody>
+                    {% for rec in top_early_arrivals %}
+                    <tr>
+                      <td width="32">
+                        <span class="rank-badge {% if forloop.counter == 1 %}rank-1{% elif forloop.counter == 2 %}rank-2{% elif forloop.counter == 3 %}rank-3{% else %}rank-n{% endif %}">
+                          {{ forloop.counter }}
+                        </span>
+                      </td>
+                      <td class="fw-semibold">{{ rec.staff.get_full_name|default:rec.staff.username }}</td>
+                      <td class="text-end"><span class="badge bg-success">{{ rec.check_in_time|time:"H:i" }}</span></td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="3" class="text-center text-muted py-3 small">No data yet today</td></tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          {# Top 10 Early Leavers #}
+          <div class="col-12 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+              <div class="card-header bg-transparent border-bottom fw-semibold py-2">
+                <i class="fas fa-door-open me-1 text-danger"></i>Top 10 Early Leavers
+                <span class="text-muted fw-normal small ms-1">— by check-out time</span>
+              </div>
+              <div class="card-body p-0">
+                <table class="table table-sm mb-0 visitors-strip">
+                  <tbody>
+                    {% for rec in top_early_leavers %}
+                    <tr>
+                      <td width="32">
+                        <span class="rank-badge {% if forloop.counter == 1 %}rank-1{% elif forloop.counter == 2 %}rank-2{% elif forloop.counter == 3 %}rank-3{% else %}rank-n{% endif %}">
+                          {{ forloop.counter }}
+                        </span>
+                      </td>
+                      <td class="fw-semibold">{{ rec.staff.get_full_name|default:rec.staff.username }}</td>
+                      <td class="text-end"><span class="badge bg-danger">{{ rec.check_out_time|time:"H:i" }}</span></td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="3" class="text-center text-muted py-3 small">No check-outs yet</td></tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# Tables row #}
+    <div class="row g-3 mt-1">
+      {# Staff Attendance #}
+      <div class="col-12 col-xl-8">
+        <div class="card border-0 shadow-sm">
+          <div class="card-header bg-transparent border-bottom fw-semibold py-2 d-flex justify-content-between align-items-center">
+            <span><i class="fas fa-list me-1 text-secondary"></i>Today's Staff Attendance</span>
+            <span class="badge bg-secondary">{{ staff_today|length }}</span>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-sm table-hover mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>Staff</th><th>Method</th><th>Check In</th>
+                    <th>Check Out</th><th>Duration</th><th>Status</th><th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for rec in staff_today %}
+                  <tr>
+                    <td class="fw-semibold">{{ rec.staff.get_full_name|default:rec.staff.username }}</td>
+                    <td>
+                      <span class="badge bg-light text-dark border">
+                        {% if rec.method == 'qrcode' %}<i class="fas fa-qrcode"></i>
+                        {% elif rec.method == 'pin' %}<i class="fas fa-key"></i>
+                        {% elif rec.method == 'fingerprint' %}<i class="fas fa-fingerprint"></i>
+                        {% elif rec.method == 'faceid' %}<i class="fas fa-user-circle"></i>
+                        {% else %}<i class="fas fa-hand-pointer"></i>{% endif %}
+                        {{ rec.get_method_display }}
+                      </span>
+                    </td>
+                    <td class="small">{{ rec.check_in_time|time:"H:i"|default:"—" }}</td>
+                    <td class="small">{{ rec.check_out_time|time:"H:i"|default:"—" }}</td>
+                    <td class="small text-muted">{{ rec.duration }}</td>
+                    <td>
+                      {% if rec.status == 'late' %}<span class="badge bg-warning text-dark">Late</span>
+                      {% elif rec.status == 'present' %}<span class="badge bg-success">Present</span>
+                      {% else %}<span class="badge bg-secondary">{{ rec.get_status_display }}</span>{% endif %}
+                    </td>
+                    <td>
+                      {% if rec.check_in_time and not rec.check_out_time %}
+                      <a href="{% url 'checkin:staff_checkout' rec.id %}"
+                         class="btn btn-xs btn-outline-secondary py-0 px-2">Check Out</a>
+                      {% endif %}
+                    </td>
+                  </tr>
+                  {% empty %}
+                  <tr><td colspan="7" class="text-center text-muted py-4">No check-ins recorded today</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {# Visitors #}
+      <div class="col-12 col-xl-4">
+        <div class="card border-0 shadow-sm">
+          <div class="card-header bg-transparent border-bottom fw-semibold py-2 d-flex justify-content-between align-items-center">
+            <span>
+              <i class="fas fa-circle text-success me-1" style="font-size:.5rem;vertical-align:middle;"></i>
+              Visitors Inside <span class="badge bg-success ms-1">{{ visitors_inside.count }}</span>
+            </span>
+            <a href="{% url 'checkin:visitor_dashboard' %}" class="btn btn-outline-secondary btn-sm py-0">Full Log</a>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-sm table-hover mb-0 visitors-strip">
+                <thead class="table-light">
+                  <tr><th>Tag</th><th>Name</th><th>In</th><th></th></tr>
+                </thead>
+                <tbody>
+                  {% for log in visitors_inside %}
+                  <tr>
+                    <td><span class="badge bg-primary">{{ log.visitor_tag }}</span></td>
+                    <td class="fw-semibold">{{ log.visitor.name }}</td>
+                    <td class="text-muted">{{ log.time_in|time:"H:i" }}</td>
+                    <td>
+                      <form method="post" action="{% url 'checkin:visitor_checkout' %}" class="d-inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="visitor_tag" value="{{ log.visitor_tag }}">
+                        <button type="submit" class="btn btn-xs btn-outline-warning py-0 px-1">
+                          <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                      </form>
+                    </td>
+                  </tr>
+                  {% empty %}
+                  <tr><td colspan="4" class="text-center text-muted py-3 small">No visitors inside</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="card border-0 shadow-sm mt-3">
+          <div class="card-header bg-transparent border-bottom fw-semibold py-2">
+            <i class="fas fa-sign-out-alt me-1 text-secondary"></i>Recent Visitor Sign-outs
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-sm mb-0 visitors-strip">
+                <thead class="table-light">
+                  <tr><th>Tag</th><th>Name</th><th>Out</th></tr>
+                </thead>
+                <tbody>
+                  {% for log in recent_visitor_checkouts %}
+                  <tr>
+                    <td><span class="badge bg-secondary">{{ log.visitor_tag }}</span></td>
+                    <td>{{ log.visitor.name }}</td>
+                    <td class="text-muted">{{ log.time_out|time:"H:i" }}</td>
+                  </tr>
+                  {% empty %}
+                  <tr><td colspan="3" class="text-center text-muted py-3 small">None today</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  {# ── ROLE-BASED MANAGER (HR / Admin / Receptionist) — not is_staff/superuser ── #}
+  {% else %}
+    {% with user_is_role_manager=False %}
+    {% for role in role_names %}
+      {% if role.name == "HR" or role.name == "Admin" or role.name == "Receptionist" %}
+        {# Role-based managers see same full dashboard via view-level is_manager flag #}
+      {% endif %}
+    {% endfor %}
+    {% endwith %}
+
+  {# ── ORDINARY STAFF — check-in panel only ── #}
+    <div class="row g-3 justify-content-center">
+
+      {# Personal status card #}
+      <div class="col-12 col-md-10 col-lg-6">
+        {% if my_checkin %}
+        <div class="card border-0 shadow-sm self-service-card mb-3">
+          <div class="card-body py-3 px-4">
+            <div class="d-flex align-items-center gap-3">
+              <div class="rounded-circle d-flex align-items-center justify-content-center"
+                   style="width:48px;height:48px;background:#198754;flex-shrink:0;">
+                <i class="fas fa-check text-white fs-5"></i>
+              </div>
+              <div>
+                <div class="fw-semibold">
+                  Checked in today
+                  {% if my_checkin.status == 'late' %}
+                    <span class="badge bg-warning text-dark ms-1">Late</span>
+                  {% else %}
+                    <span class="badge bg-success ms-1">On Time</span>
+                  {% endif %}
+                </div>
+                <div class="small text-muted">
+                  In: <strong>{{ my_checkin.check_in_time|time:"H:i" }}</strong>
+                  {% if my_checkin.check_out_time %}
+                    &nbsp;|&nbsp; Out: <strong>{{ my_checkin.check_out_time|time:"H:i" }}</strong>
+                    &nbsp;|&nbsp; Duration: <strong>{{ my_checkin.duration }}</strong>
+                  {% else %}
+                    &nbsp;|&nbsp; <span class="text-success">Currently at work</span>
+                    &nbsp;
+                    <a href="{% url 'checkin:staff_checkout' my_checkin.id %}"
+                       class="btn btn-sm btn-outline-warning py-0 px-2 ms-1">
+                      <i class="fas fa-sign-out-alt me-1"></i>Check Out
+                    </a>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% else %}
+        <div class="alert alert-info py-2 mb-3 small">
+          <i class="fas fa-info-circle me-1"></i>
+          You have not checked in yet today. Use any method below.
+        </div>
+        {% endif %}
+      </div>
+
+      {# Check-in panel centred #}
+      <div class="col-12 col-md-10 col-lg-6">
+        {% include 'checkin/_checkin_panel.html' %}
+      </div>
+
+    </div>
+  {% endif %}
+  {# /role check #}
+
+  {% endwith %}
+
+</div>
+{% endblock %}
+
+
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  /* ── QR Scanner ── */
+  let qrStream = null, qrAnimFrame = null;
+
+  window.startQRScanner = async function () {
+    const video   = document.getElementById('qrVideo');
+    const btn     = document.getElementById('startQRBtn');
+    const stopBtn = document.getElementById('stopQRBtn');
+    try {
+      qrStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      video.srcObject = qrStream;
+      btn.style.display = 'none'; stopBtn.style.display = '';
+      requestAnimationFrame(scanFrame);
+    } catch (e) { alert('Camera access denied or unavailable.'); }
+  };
+
+  window.stopQRScanner = function () {
+    if (qrStream) qrStream.getTracks().forEach(t => t.stop());
+    cancelAnimationFrame(qrAnimFrame);
+    document.getElementById('startQRBtn').style.display = '';
+    document.getElementById('stopQRBtn').style.display  = 'none';
+  };
+
+  function scanFrame () {
+    const video = document.getElementById('qrVideo');
+    const canvas = document.getElementById('qrCanvas');
+    if (!video || video.readyState !== video.HAVE_ENOUGH_DATA) {
+      qrAnimFrame = requestAnimationFrame(scanFrame); return;
+    }
+    canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const code = jsQR(ctx.getImageData(0, 0, canvas.width, canvas.height).data,
+                      canvas.width, canvas.height);
+    if (code) { stopQRScanner(); verifyQRToken(code.data); return; }
+    qrAnimFrame = requestAnimationFrame(scanFrame);
+  }
+
+  function verifyQRToken (token) {
+    const div = document.getElementById('qrResult');
+    div.style.display = ''; div.textContent = 'Verifying…';
+    fetch(`{% url 'checkin:qr_lookup' %}?token=${encodeURIComponent(token)}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.found) {
+          div.className = 'alert alert-success py-2 small mt-2';
+          div.innerHTML = `<i class="fas fa-check-circle me-1"></i>${data.full_name} — checking in…`;
+          document.getElementById('qrTokenInput').value = token;
+          document.getElementById('qrForm').submit();
+        } else {
+          div.className = 'alert alert-danger py-2 small mt-2';
+          div.textContent = 'QR code not recognised. Please try again.';
+        }
+      });
+  }
+
+  /* ── Biometric ── */
+  const CSRF = "{{ csrf_token }}";
+
+  function b64ToBuffer(b64) {
+    const bin = atob(b64.replace(/-/g,'+').replace(/_/g,'/'));
+    return Uint8Array.from(bin, c => c.charCodeAt(0)).buffer;
+  }
+  function bufferToB64(buf) {
+    return btoa(String.fromCharCode(...new Uint8Array(buf)))
+      .replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+  }
+
+  window.startBiometricCheckin = async function (type) {
+    const status = document.getElementById('biometricStatus');
+    status.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Requesting challenge…';
+    if (!window.PublicKeyCredential) { status.textContent = 'WebAuthn not supported.'; return; }
+    try {
+      const optResp = await fetch("{% url 'checkin:biometric_checkin_begin' %}", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+        body: JSON.stringify({ type }),
+      });
+      if (!optResp.ok) {
+        const err = await optResp.json();
+        if (optResp.status === 400) {
+          status.innerHTML = `<span class="text-warning">${err.error}</span>
+            <a href="{% url 'checkin:biometric_register_page' %}" class="btn btn-sm btn-outline-primary ms-2">Register Now</a>`;
+        } else { throw new Error(err.error || 'Server error.'); }
+        return;
+      }
+      const options = await optResp.json();
+      status.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Touch your sensor…';
+      options.challenge = b64ToBuffer(options.challenge);
+      if (options.allowCredentials)
+        options.allowCredentials = options.allowCredentials.map(c => ({ ...c, id: b64ToBuffer(c.id) }));
+      const assertion = await navigator.credentials.get({ publicKey: options });
+      status.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Verifying…';
+      const payload = {
+        id: assertion.id, rawId: bufferToB64(assertion.rawId), type: assertion.type,
+        response: {
+          authenticatorData: bufferToB64(assertion.response.authenticatorData),
+          clientDataJSON:    bufferToB64(assertion.response.clientDataJSON),
+          signature:         bufferToB64(assertion.response.signature),
+          userHandle: assertion.response.userHandle ? bufferToB64(assertion.response.userHandle) : null,
+        },
+      };
+      const verResp = await fetch("{% url 'checkin:biometric_checkin_complete' %}", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+        body: JSON.stringify(payload),
+      });
+      const result = await verResp.json();
+      if (result.ok) {
+        status.innerHTML = result.already
+          ? '<i class="fas fa-info-circle text-info me-1"></i>Already checked in today.'
+          : '<i class="fas fa-check-circle text-success me-1"></i>Checked in! Refreshing…';
+        if (!result.already) setTimeout(() => location.reload(), 1200);
+      } else { throw new Error(result.error || 'Verification failed.'); }
+    } catch (err) {
+      status.innerHTML = err.name === 'NotAllowedError'
+        ? '<i class="fas fa-times-circle text-danger me-1"></i>Cancelled or timed out.'
+        : `<i class="fas fa-times-circle text-danger me-1"></i>${err.message}`;
+    }
+  };
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,274 @@
+{% extends 'base.html' %}
+
+{% block title %}Set Check-in PIN{% endblock %}
+
+{% block content %}
+<div class="container py-4" style="max-width:480px;">
+
+  {# ── Header ── #}
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h4 class="mb-0"><i class="fas fa-key me-2 text-primary"></i>Check-in PIN</h4>
+      <small class="text-muted">Your PIN is used to clock in at the reception terminal.</small>
+    </div>
+    <a href="{% url 'checkin:my_qr_code' %}" class="btn btn-outline-secondary btn-sm">
+      <i class="fas fa-qrcode me-1"></i>My QR
+    </a>
+  </div>
+
+  {# ── Status badge ── #}
+  <div class="alert {% if has_pin %}alert-success{% else %}alert-warning{% endif %} py-2 mb-4 small d-flex align-items-center gap-2">
+    <i class="fas {% if has_pin %}fa-check-circle{% else %}fa-exclamation-triangle{% endif %} fa-lg"></i>
+    <span>
+      {% if has_pin %}
+        You already have a PIN set. Submitting this form will <strong>replace</strong> your current PIN.
+      {% else %}
+        You don't have a PIN yet. Set one below to enable PIN-based check-in.
+      {% endif %}
+    </span>
+  </div>
+
+  {# ── PIN form card ── #}
+  <div class="card border-0 shadow-sm">
+    <div class="card-header bg-transparent border-bottom fw-semibold py-2">
+      <i class="fas fa-lock me-1 text-primary"></i>
+      {% if has_pin %}Update PIN{% else %}Create PIN{% endif %}
+    </div>
+    <div class="card-body">
+      <form method="post" novalidate id="pinForm" autocomplete="off">
+        {% csrf_token %}
+
+        {# PIN entry #}
+        <div class="mb-3">
+          <label for="{{ form.pin.id_for_label }}" class="form-label fw-semibold small">
+            {{ form.pin.label }}
+          </label>
+          <div class="input-group">
+            {{ form.pin }}
+            <button class="btn btn-outline-secondary" type="button" id="togglePin"
+                    onclick="toggleVisibility('id_pin', 'togglePinIcon')" tabindex="-1">
+              <i class="fas fa-eye" id="togglePinIcon"></i>
+            </button>
+          </div>
+
+          {# Strength meter #}
+          <div class="mt-2" id="strengthWrap" style="display:none;">
+            <div class="progress" style="height:5px;">
+              <div id="strengthBar" class="progress-bar" role="progressbar" style="width:0%;transition:width .3s;"></div>
+            </div>
+            <div class="d-flex justify-content-between mt-1" style="font-size:.68rem;">
+              <span id="strengthLabel" class="text-muted"></span>
+              <span id="pinLenLabel" class="text-muted"></span>
+            </div>
+          </div>
+
+          {% if form.pin.errors %}
+          <div class="invalid-feedback d-block">{{ form.pin.errors|join:", " }}</div>
+          {% endif %}
+          <div class="form-text">4 – 6 digits only. Do not use your birthday or repeating numbers.</div>
+        </div>
+
+        {# Confirm PIN #}
+        <div class="mb-3">
+          <label for="{{ form.confirm.id_for_label }}" class="form-label fw-semibold small">
+            {{ form.confirm.label }}
+          </label>
+          <div class="input-group">
+            {{ form.confirm }}
+            <button class="btn btn-outline-secondary" type="button"
+                    onclick="toggleVisibility('id_confirm', 'toggleConfirmIcon')" tabindex="-1">
+              <i class="fas fa-eye" id="toggleConfirmIcon"></i>
+            </button>
+          </div>
+          <div id="matchMsg" class="mt-1" style="font-size:.8rem;display:none;"></div>
+          {% if form.confirm.errors %}
+          <div class="invalid-feedback d-block">{{ form.confirm.errors|join:", " }}</div>
+          {% endif %}
+        </div>
+
+        {# PIN pad (optional tap-to-fill for touch devices) #}
+        <div class="mb-4">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="small fw-semibold text-muted">Use PIN pad</span>
+            <button type="button" class="btn btn-link btn-sm p-0 text-muted" onclick="clearPinPad()">
+              <i class="fas fa-backspace me-1"></i>Clear
+            </button>
+          </div>
+          <div id="pinPad" class="d-grid gap-2" style="grid-template-columns:repeat(3,1fr);">
+            {% for d in "123456789" %}
+            <button type="button" class="btn btn-outline-secondary btn-lg fw-bold"
+                    onclick="appendDigit('{{ d }}')">{{ d }}</button>
+            {% endfor %}
+            <button type="button" class="btn btn-outline-secondary btn-lg"
+                    onclick="appendDigit('0')">0</button>
+            <button type="button" class="btn btn-outline-danger btn-lg"
+                    onclick="backspaceDigit()">
+              <i class="fas fa-backspace"></i>
+            </button>
+          </div>
+        </div>
+
+        {# Non-field errors #}
+        {% if form.non_field_errors %}
+        <div class="alert alert-danger py-2 small mb-3">
+          {% for err in form.non_field_errors %}{{ err }}{% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="d-flex gap-2 justify-content-end">
+          <a href="{% url 'checkin:checkin_dashboard' %}" class="btn btn-outline-secondary px-4">Cancel</a>
+          <button type="submit" class="btn btn-primary px-5" id="saveBtn">
+            <i class="fas fa-save me-2"></i>Save PIN
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  {# ── Security tips ── #}
+  <div class="card border-0 bg-light mt-3">
+    <div class="card-body py-2 small text-muted">
+      <i class="fas fa-shield-alt me-1 text-primary"></i>
+      <strong>Security tips:</strong>
+      Your PIN is stored securely (hashed, never plain text). Never share it with colleagues.
+      If you suspect it has been compromised, update it immediately.
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+(function () {
+  "use strict";
+
+  const pinInput     = document.getElementById('id_pin');
+  const confirmInput = document.getElementById('id_confirm');
+  const strengthWrap = document.getElementById('strengthWrap');
+  const strengthBar  = document.getElementById('strengthBar');
+  const strengthLbl  = document.getElementById('strengthLabel');
+  const lenLbl       = document.getElementById('pinLenLabel');
+  const matchMsg     = document.getElementById('matchMsg');
+  const saveBtn      = document.getElementById('saveBtn');
+
+  /* ── PIN pad: fills whichever field is focused ── */
+  let activePinField = pinInput;
+  [pinInput, confirmInput].forEach(el => {
+    el.addEventListener('focus', () => activePinField = el);
+  });
+
+  window.appendDigit = function (d) {
+    if (activePinField && activePinField.value.length < 6) {
+      activePinField.value += d;
+      activePinField.dispatchEvent(new Event('input'));
+    }
+  };
+
+  window.backspaceDigit = function () {
+    if (activePinField && activePinField.value.length) {
+      activePinField.value = activePinField.value.slice(0, -1);
+      activePinField.dispatchEvent(new Event('input'));
+    }
+  };
+
+  window.clearPinPad = function () {
+    pinInput.value     = '';
+    confirmInput.value = '';
+    [pinInput, confirmInput].forEach(el => el.dispatchEvent(new Event('input')));
+    pinInput.focus();
+  };
+
+  /* ── Show / hide PIN ── */
+  window.toggleVisibility = function (inputId, iconId) {
+    const input = document.getElementById(inputId);
+    const icon  = document.getElementById(iconId);
+    if (input.type === 'password') {
+      input.type      = 'text';
+      icon.className  = 'fas fa-eye-slash';
+    } else {
+      input.type      = 'password';
+      icon.className  = 'fas fa-eye';
+    }
+  };
+
+  /* ── Strength meter ── */
+  function pinStrength (val) {
+    if (!val) return { pct: 0, label: '', cls: '' };
+    const len       = val.length;
+    const allSame   = /^(.)\1+$/.test(val);
+    const sequential = ['0123','1234','2345','3456','4567','5678','6789'].some(s => val.includes(s));
+
+    if (len < 4)            return { pct: 10,  label: 'Too short',  cls: 'bg-danger' };
+    if (allSame)            return { pct: 20,  label: 'Too simple',  cls: 'bg-danger' };
+    if (sequential)         return { pct: 40,  label: 'Weak',        cls: 'bg-warning' };
+    if (len === 4)          return { pct: 55,  label: 'Fair',        cls: 'bg-warning' };
+    if (len === 5)          return { pct: 75,  label: 'Good',        cls: 'bg-info'    };
+    /* len === 6 */         return { pct: 100, label: 'Strong',      cls: 'bg-success' };
+  }
+
+  pinInput.addEventListener('input', function () {
+    const val = this.value;
+    strengthWrap.style.display = val ? '' : 'none';
+    const s = pinStrength(val);
+    strengthBar.style.width   = s.pct + '%';
+    strengthBar.className     = 'progress-bar ' + s.cls;
+    strengthLbl.textContent   = s.label;
+    lenLbl.textContent        = `${val.length}/6 digits`;
+    checkMatch();
+  });
+
+  /* ── Match indicator ── */
+  function checkMatch () {
+    const p = pinInput.value;
+    const c = confirmInput.value;
+    if (!c) { matchMsg.style.display = 'none'; return; }
+    matchMsg.style.display = '';
+    if (p === c) {
+      matchMsg.innerHTML   = '<i class="fas fa-check-circle text-success me-1"></i>PINs match';
+      matchMsg.className   = 'mt-1 text-success';
+    } else {
+      matchMsg.innerHTML   = '<i class="fas fa-times-circle text-danger me-1"></i>PINs do not match';
+      matchMsg.className   = 'mt-1 text-danger';
+    }
+  }
+  confirmInput.addEventListener('input', checkMatch);
+
+  /* ── Client-side validation ── */
+  document.getElementById('pinForm').addEventListener('submit', function (e) {
+    const pin     = pinInput.value.trim();
+    const confirm = confirmInput.value.trim();
+    let ok = true;
+
+    if (!/^\d{4,6}$/.test(pin)) {
+      pinInput.classList.add('is-invalid');
+      ok = false;
+    } else {
+      pinInput.classList.remove('is-invalid');
+    }
+
+    if (pin !== confirm) {
+      confirmInput.classList.add('is-invalid');
+      ok = false;
+    } else {
+      confirmInput.classList.remove('is-invalid');
+    }
+
+    if (!ok) { e.preventDefault(); return; }
+
+    saveBtn.disabled  = true;
+    saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving…';
+  });
+
+  /* ── Digit-only enforcement ── */
+  [pinInput, confirmInput].forEach(el => {
+    el.addEventListener('keypress', function (e) {
+      if (!/\d/.test(e.key)) e.preventDefault();
+    });
+  });
+
+})();
+</script>
+{% endblock %}

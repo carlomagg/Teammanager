@@ -1,0 +1,322 @@
+{% load humanize %}
+{% load custom_filters %}
+
+{% comment %}
+  Expected context variables (passed via {% with ctx=... %}):
+    ctx.wallet              – TenantBalance instance
+    ctx.summary             – dict: total_original, total_adjusted, total_deductions,
+                                    total_transactions, unremitted_amount
+    ctx.conference_summary  – list of {conference_id, title, total_earned}
+    ctx.booking_summary     – list of {booking_type_id, title, total_earned}
+    ctx.recent_remittances  – queryset
+    ctx.profile             – CompanyProfile / UserProfile / StaffProfile
+    ctx.has_bank_details    – bool
+    ctx.bank_verified       – bool
+    ctx.profile_type        – 'company' | 'user' | 'staff'
+    ctx.label               – human-readable section label
+    ctx.page_obj            – paginator page of Payment objects
+    page_param              – query-string key used for this section's pagination
+{% endcomment %}
+
+<!-- Balance Cards -->
+<div class="row mb-4 mt-3">
+    <div class="col-md-4">
+        <div class="card bg-success text-white h-100">
+            <div class="card-body">
+                <h6 class="card-title opacity-75">Available Balance</h6>
+                <h3 class="mb-0">₦{{ ctx.wallet.available_balance|floatformat:2|intcomma }}</h3>
+                <small class="opacity-75">Unremitted balance</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-primary text-white h-100">
+            <div class="card-body">
+                <h6 class="card-title opacity-75">Total Earned</h6>
+                <h3 class="mb-0">₦{{ ctx.wallet.total_earned|floatformat:2|intcomma }}</h3>
+                <small class="opacity-75">After platform fees & deductions</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-info text-white h-100">
+            <div class="card-body">
+                <h6 class="card-title opacity-75">Total Remitted</h6>
+                <h3 class="mb-0">₦{{ ctx.wallet.total_remitted|floatformat:2|intcomma }}</h3>
+                <small class="opacity-75">Paid to bank account</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bank details status -->
+{% if not ctx.has_bank_details %}
+<div class="alert alert-danger d-flex align-items-center mb-4">
+    <i class="fas fa-university fa-lg me-3"></i>
+    <div>
+        <strong>Bank details required</strong> — add your bank details to receive remittance payments.
+        <a href="{% url 'bank_verification' %}" class="btn btn-warning btn-sm ms-2">Add Bank Details</a>
+    </div>
+</div>
+{% elif not ctx.bank_verified %}
+<div class="alert alert-warning d-flex align-items-center mb-4">
+    <i class="fas fa-clock fa-lg me-3"></i>
+    <div>
+        <strong>Bank verification pending</strong> — your details are awaiting admin verification.
+        <a href="{% url 'bank_verification' %}" class="btn btn-outline-secondary btn-sm ms-2">View / Edit</a>
+    </div>
+</div>
+{% endif %}
+
+<!-- Conference earnings by conference -->
+{% if ctx.conference_summary %}
+<div class="card mb-4">
+    <div class="card-header">
+        <h6 class="mb-0"><i class="fas fa-chart-line me-2"></i>Earnings by Conference</h6>
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-hover table-sm mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Conference</th>
+                    <th class="text-end">Net Earned</th>
+                    <th class="text-end"></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for conf in ctx.conference_summary %}
+                <tr>
+                    <td>
+                        {% if conf.conference_id != 'error' and conf.conference_id != 'unlinked' %}
+                            <a href="{% url 'conference_detail' conf.conference_id %}" class="text-decoration-none">
+                                {{ conf.title|truncatechars:60 }}
+                            </a>
+                        {% else %}
+                            <span class="text-muted fst-italic">{{ conf.title|truncatechars:60 }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end text-success fw-semibold">
+                        ₦{{ conf.total_earned|floatformat:2|intcomma }}
+                    </td>
+                    <td class="text-end">
+                        {% if conf.conference_id != 'error' and conf.conference_id != 'unlinked' %}
+                            <a href="{% url 'conference_detail' conf.conference_id %}"
+                               class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="3" class="text-center text-muted py-3">No conference earnings in this period</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Booking earnings by booking type -->
+{% if ctx.booking_summary %}
+<div class="card mb-4">
+    <div class="card-header">
+        <h6 class="mb-0"><i class="fas fa-calendar-check me-2"></i>Earnings by Booking Type</h6>
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-hover table-sm mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Booking Type</th>
+                    <th class="text-end">Net Earned</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for bt in ctx.booking_summary %}
+                <tr>
+                    <td>
+                        {% if bt.booking_type_id != 'error' and bt.booking_type_id != 'unlinked' %}
+                            {{ bt.title|truncatechars:60 }}
+                        {% else %}
+                            <span class="text-muted fst-italic">{{ bt.title|truncatechars:60 }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end text-success fw-semibold">
+                        ₦{{ bt.total_earned|floatformat:2|intcomma }}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="2" class="text-center text-muted py-3">No booking earnings in this period</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Transaction history -->
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h6 class="mb-0">Transaction History</h6>
+        <span class="text-muted small">
+            {{ ctx.page_obj.start_index }}–{{ ctx.page_obj.end_index }}
+            of {{ ctx.page_obj.paginator.count }}
+        </span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover table-sm mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Date</th>
+                        <th>Type</th>
+                        <th>Source</th>
+                        <th>Participant / Booker</th>
+                        <th class="text-end">Net Amount</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for payment in ctx.page_obj %}
+                    {% with adjusted=payment|calculate_adjusted_amount:ctx.wallet %}
+                    <tr>
+                        <td class="text-nowrap">{{ payment.payment_date|date:"Y-m-d H:i" }}</td>
+                        <td>
+                            {% if payment.payment_type == 'conference_fee' %}
+                                <span class="badge bg-primary">Conference</span>
+                            {% elif payment.payment_type == 'booking_fee' %}
+                                <span class="badge bg-info text-dark">Booking</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ payment.get_payment_type_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if payment.payment_type == 'conference_fee' and payment.conference_registration %}
+                                <a href="{% url 'conference_detail' payment.conference_registration.conference.id %}"
+                                   class="text-decoration-none"
+                                   title="{{ payment.conference_registration.conference.title }}">
+                                    {{ payment.conference_registration.conference.title|truncatechars:30 }}
+                                </a>
+                            {% elif payment.payment_type == 'booking_fee' %}
+                                {% with be=payment.booking_event bp=payment.booking_payment %}
+                                    {% if be and be.booking_type %}{{ be.booking_type.name|truncatechars:30 }}
+                                    {% elif bp and bp.booking_type %}{{ bp.booking_type.name|truncatechars:30 }}
+                                    {% else %}Booking{% endif %}
+                                {% endwith %}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if payment.payment_type == 'conference_fee' and payment.conference_registration %}
+                                {{ payment.conference_registration.full_name }}
+                            {% elif payment.payment_type == 'booking_fee' %}
+                                {% with be=payment.booking_event bp=payment.booking_payment %}
+                                    {% if be %}{{ be.attendee_name|default:be.attendee_email|default:"—" }}
+                                    {% elif bp %}{{ bp.first_name }} {{ bp.last_name }}
+                                    {% elif payment.payer %}{{ payment.payer.name }}
+                                    {% else %}—{% endif %}
+                                {% endwith %}
+                            {% elif payment.payer %}
+                                {{ payment.payer.name }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                        <td class="text-end text-success fw-semibold">
+                            ₦{{ adjusted|floatformat:2|intcomma }}
+                        </td>
+                        <td>
+                            <span class="badge bg-{% if payment.status == 'success' %}success{% else %}warning{% endif %}">
+                                {{ payment.get_status_display }}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{% url 'tenant_transaction_detail' payment.id %}"
+                               class="btn btn-sm btn-outline-secondary" title="View breakdown">
+                                <i class="fas fa-chart-pie"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endwith %}
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">No transactions found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if ctx.page_obj.has_other_pages %}
+    <div class="card-footer">
+        <nav>
+            <ul class="pagination pagination-sm justify-content-center mb-0">
+                {% if ctx.page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link"
+                       href="?{{ page_param }}={{ ctx.page_obj.previous_page_number }}{% if from_date %}&from_date={{ from_date }}{% endif %}{% if to_date %}&to_date={{ to_date }}{% endif %}">
+                        &laquo;
+                    </a>
+                </li>
+                {% endif %}
+                {% for num in ctx.page_obj.paginator.page_range %}
+                    {% if ctx.page_obj.number == num %}
+                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                    {% elif num > ctx.page_obj.number|add:"-3" and num < ctx.page_obj.number|add:"3" %}
+                    <li class="page-item">
+                        <a class="page-link"
+                           href="?{{ page_param }}={{ num }}{% if from_date %}&from_date={{ from_date }}{% endif %}{% if to_date %}&to_date={{ to_date }}{% endif %}">
+                            {{ num }}
+                        </a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                {% if ctx.page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link"
+                       href="?{{ page_param }}={{ ctx.page_obj.next_page_number }}{% if from_date %}&from_date={{ from_date }}{% endif %}{% if to_date %}&to_date={{ to_date }}{% endif %}">
+                        &raquo;
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Recent Remittances -->
+{% if ctx.recent_remittances %}
+<div class="card mb-3">
+    <div class="card-header">
+        <h6 class="mb-0">Recent Remittances</h6>
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-sm mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Reference</th>
+                    <th class="text-end">Amount</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th>Bank Ref</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for remittance in ctx.recent_remittances %}
+                <tr>
+                    <td><code>{{ remittance.reference }}</code></td>
+                    <td class="text-end">₦{{ remittance.amount|floatformat:2|intcomma }}</td>
+                    <td>{{ remittance.completion_date|date:"Y-m-d" }}</td>
+                    <td><span class="badge bg-success">{{ remittance.get_status_display }}</span></td>
+                    <td>{{ remittance.bank_reference|default:"—" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}

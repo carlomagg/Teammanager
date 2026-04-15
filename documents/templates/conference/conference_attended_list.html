@@ -1,0 +1,332 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Attended Participants - {{ conference.title }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">
+                <i class="fas fa-check-circle text-success me-2"></i>
+                Attended Participants
+            </h2>
+            <p class="text-muted mb-0">{{ conference.title }}</p>
+        </div>
+        <div class="btn-group">
+            <a href="{% url 'conference_checkin_dashboard' conference.id %}" class="btn btn-outline-primary">
+                <i class="fas fa-dashboard me-2"></i>Dashboard
+            </a>
+            <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown">
+                <i class="fas fa-download me-2"></i>Export
+            </button>
+            <ul class="dropdown-menu">
+                <li>
+                    <a class="dropdown-item" href="{% url 'conference_checkin_export_csv' conference.id %}?filter=attended">
+                        <i class="fas fa-file-csv me-2"></i>Export as CSV
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item" href="{% url 'conference_checkin_export_pdf' conference.id %}?filter=attended">
+                        <i class="fas fa-file-pdf me-2"></i>Export as PDF
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-users fa-3x opacity-75"></i>
+                        </div>
+                        <div class="ms-3">
+                            <h6 class="mb-1 opacity-75">Total Attended</h6>
+                            <h2 class="mb-0">{{ stats.total_attended }}</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-building fa-3x opacity-75"></i>
+                        </div>
+                        <div class="ms-3">
+                            <h6 class="mb-1 opacity-75">Physical</h6>
+                            <h2 class="mb-0">{{ stats.physical_attended }}</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-video fa-3x opacity-75"></i>
+                        </div>
+                        <div class="ms-3">
+                            <h6 class="mb-1 opacity-75">Virtual</h6>
+                            <h2 class="mb-0">{{ stats.virtual_attended }}</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-qrcode fa-3x opacity-75"></i>
+                        </div>
+                        <div class="ms-3">
+                            <h6 class="mb-1 opacity-75">QR Scanned</h6>
+                            <h2 class="mb-0">{{ stats.qr_scan_count }}</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Check-in Methods Breakdown -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <h6 class="mb-3">Check-in Methods Breakdown</h6>
+            <div class="row text-center">
+                <div class="col-md-4">
+                    <div class="p-3">
+                        <i class="fas fa-qrcode fa-2x text-primary mb-2"></i>
+                        <h4 class="mb-0">{{ stats.qr_scan_count }}</h4>
+                        <small class="text-muted">QR Code Scan</small>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="p-3">
+                        <i class="fas fa-hand-pointer fa-2x text-info mb-2"></i>
+                        <h4 class="mb-0">{{ stats.manual_count }}</h4>
+                        <small class="text-muted">Manual Check-in</small>
+                    </div>
+                </div>
+                {% comment %} <div class="col-md-4">
+                    <div class="p-3">
+                        <i class="fas fa-laptop fa-2x text-success mb-2"></i>
+                        <h4 class="mb-0">{{ stats.online_count }}</h4>
+                        <small class="text-muted">Online Verification</small>
+                    </div>
+                </div> {% endcomment %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Attended Participants Table -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-bottom">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Participant List</h5>
+                <div class="d-flex gap-2 align-items-center">
+                    <input type="text" id="searchInput" class="form-control form-control-sm" 
+                           placeholder="Search by name or email..." style="width: 300px;">
+                    <select id="filterType" class="form-select form-select-sm" style="width: 150px;">
+                        <option value="all">All Types</option>
+                        <option value="physical">Physical</option>
+                        <option value="virtual">Virtual</option>
+                    </select>
+                    <select id="filterMethod" class="form-select form-select-sm" style="width: 150px;">
+                        <option value="all">All Methods</option>
+                        <option value="qr_scan">QR Scan</option>
+                        <option value="manual">Manual</option>
+                        <option value="online">Online</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped mb-0" id="participantsTable">
+                    <thead class="table-light sticky-top">
+                        <tr>
+                            <th>#</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Type</th>
+                            <th>Check-in Time</th>
+                            <th>Method</th>
+                            <th>Checked By</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for participant in attended_participants %}
+                        <tr data-name="{{ participant.name|lower }}" 
+                            data-email="{{ participant.email|lower }}"
+                            data-type="{{ participant.attendance_type }}"
+                            data-method="{{ participant.check_in_method }}">
+                            <td>{{ forloop.counter }}</td>
+                            <td>
+                                <strong>{{ participant.name }}</strong>
+                            </td>
+                            <td>{{ participant.email }}</td>
+                            <td>{{ participant.phone|default:'-' }}</td>
+                            <td>
+                                <span class="badge bg-{{ participant.attendance_type|yesno:'info,warning' }}">
+                                    {{ participant.get_attendance_type_display }}
+                                </span>
+                            </td>
+                            <td>
+                                <small>{{ participant.check_in_time|date:"M d, Y" }}</small><br>
+                                <small class="text-muted">{{ participant.check_in_time|date:"g:i A" }}</small>
+                            </td>
+                            <td>
+                                {% if participant.check_in_method == 'qr_scan' %}
+                                    <span class="badge bg-primary">
+                                        <i class="fas fa-qrcode me-1"></i>QR Scan
+                                    </span>
+                                {% elif participant.check_in_method == 'manual' %}
+                                    <span class="badge bg-info">
+                                        <i class="fas fa-hand-pointer me-1"></i>Manual
+                                    </span>
+                                {% else %}
+                                    {% comment %} <span class="badge bg-success">
+                                        <i class="fas fa-laptop me-1"></i>Online
+                                    </span> {% endcomment %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if participant.checked_in_by %}
+                                    <small>{{ participant.checked_in_by.get_full_name|default:participant.checked_in_by.username }}</small>
+                                {% else %}
+                                    <small class="text-muted">-</small>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-5">
+                                <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                                <p class="text-muted">No participants have checked in yet</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer bg-white border-top">
+            <div class="d-flex justify-content-between align-items-center">
+                <small class="text-muted">
+                    Showing <span id="visibleCount">{{ attended_participants.count }}</span> of {{ attended_participants.count }} participants
+                </small>
+                <small class="text-muted">
+                    Last updated: {{ attended_participants.first.check_in_time|date:"M d, Y g:i A"|default:"N/A" }}
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="mt-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <h6 class="mb-3">Quick Actions</h6>
+                <div class="d-flex gap-2 flex-wrap">
+                    <a href="{% url 'checkin_scanner' conference.id %}" class="btn btn-primary">
+                        <i class="fas fa-qrcode me-2"></i>Scan More QR Codes
+                    </a>
+                    <a href="{% url 'conference_checkin_dashboard' conference.id %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-users me-2"></i>View All Participants
+                    </a>
+                    <button onclick="window.print()" class="btn btn-outline-info">
+                        <i class="fas fa-print me-2"></i>Print This Page
+                    </button>
+                    <a href="{% url 'conference_detail' conference.id %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Conference
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    const filterType = document.getElementById('filterType');
+    const filterMethod = document.getElementById('filterMethod');
+    const tableRows = document.querySelectorAll('#participantsTable tbody tr[data-name]');
+    const visibleCount = document.getElementById('visibleCount');
+
+    function filterTable() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const selectedType = filterType.value;
+        const selectedMethod = filterMethod.value;
+        let visible = 0;
+
+        tableRows.forEach(row => {
+            const name = row.dataset.name;
+            const email = row.dataset.email;
+            const type = row.dataset.type;
+            const method = row.dataset.method;
+
+            const matchesSearch = name.includes(searchTerm) || email.includes(searchTerm);
+            const matchesType = selectedType === 'all' || type === selectedType;
+            const matchesMethod = selectedMethod === 'all' || method === selectedMethod;
+
+            if (matchesSearch && matchesType && matchesMethod) {
+                row.style.display = '';
+                visible++;
+                // Update row number
+                row.querySelector('td:first-child').textContent = visible;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        visibleCount.textContent = visible;
+    }
+
+    searchInput.addEventListener('input', filterTable);
+    filterType.addEventListener('change', filterTable);
+    filterMethod.addEventListener('change', filterTable);
+
+    // Auto-refresh every 30 seconds
+    setInterval(function() {
+        location.reload();
+    }, 30000);
+});
+</script>
+
+<style>
+    .sticky-top {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background-color: #f8f9fa;
+    }
+
+    @media print {
+        .btn, .card-footer, .card-header input, .card-header select {
+            display: none !important;
+        }
+        
+        .card {
+            box-shadow: none !important;
+            border: 1px solid #000 !important;
+        }
+    }
+</style>
+{% endblock %}

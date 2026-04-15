@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #f8d7da; padding: 20px; text-align: center; border-bottom: 3px solid #dc3545; }
+        .content { padding: 30px 20px; }
+        .footer { background-color: #f8f9fa; padding: 20px; text-align: center; font-size: 12px; color: #666; }
+        .warning-icon { color: #dc3545; font-size: 48px; text-align: center; margin: 20px 0; }
+        .details { background-color: #f8f9fa; padding: 15px; border-left: 4px solid #dc3545; margin: 20px 0; }
+        .button { display: inline-block; padding: 10px 20px; background-color: #319795; color: white; text-decoration: none; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Bank Verification - Action Required</h2>
+        </div>
+        
+        <div class="content">
+            <div class="warning-icon">⚠️</div>
+            
+            <p>Dear {{ company_profile.company_name }},</p>
+            
+            <p>We need your attention regarding your bank details verification.</p>
+            
+            <p><strong>Status:</strong> <span style="color: #dc3545;">✗ Not Verified</span></p>
+            
+            <div class="details">
+                <h4>Your Submitted Bank Details:</h4>
+                <p><strong>Bank Name:</strong> {{ company_profile.bank_name }}</p>
+                <p><strong>Account Number:</strong> {{ company_profile.bank_account_number }}</p>
+                <p><strong>Account Name:</strong> {{ company_profile.bank_account_name }}</p>
+                <p><strong>Bank Code:</strong> {{ company_profile.bank_code }}</p>
+            </div>
+                        
+            <p><strong>What you need to do:</strong></p>
+            <ol>
+                <li>Fill in your bank details</li>
+                <li>Review your bank details carefully</li>
+                <li>Update any incorrect information</li>
+                <li>Resubmit for verification</li>
+            </ol>
+            
+            <p style="text-align: center; margin: 30px 0;">
+                <a href="{{ edit_company_profile }}" class="button">Update Bank Details</a>
+            </p>
+            
+            <p><strong>Important:</strong> Remittances cannot be processed until your bank details are verified.</p>
+            
+            <p>If you need assistance, please contact our support team.</p>
+            
+            <p>Best regards,<br>The {{ "TeamManager" }} Team</p>
+        </div>
+        
+        <div class="footer">
+            <p>This is an automated message from {{ "TeamManager" }}</p>
+            <p>Please ensure your bank details are accurate to avoid payment delays.</p>
+        </div>
+    </div>
+</body>
+</html>

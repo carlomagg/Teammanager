@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+    500 - Internal Server Error
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <div class="card shadow-sm border-0 mt-4" style="border-radius: 12px;">
+                <div class="card-header bg-transparent">
+                    <h1 class="mb-0"><i class="fas fa-exclamation-circle me-2 text-primary"></i> 
+                        500 Error
+                    </h1>
+                </div>
+                <div class="card-body text-center">
+                    <h4 class="text-gray-700">
+                        Internal Server Error
+                    </h4>
+                    <p class="text-gray-700">Contact support. contact@teammanager.ng<br>
+                        Or use our <a href="{% url 'contact_support' %}" class="btn btn-primary"> Support Form</a>
+                    </p>
+                    <button type= "button" onclick="history.back()" class="btn btn-secondary btn-sm mt-3" data-bs-toggle="tooltip" title="Return to previous page">
+                        <i class="fas fa-arrow-left me-1"></i> Back
+                    </button>
+                    {% comment %} {% if not request.user.is_authenticated or request.user.is_superuser %}
+                        <a href="{% url 'tenant_home' %}" class="btn btn-primary btn-sm mt-3" data-bs-toggle="tooltip" title="Return to Home">
+                            <i class="fas fa-arrow-left me-1"></i> Back to Home
+                        </a>
+                    {% else %}
+                        <a href="{% url 'home' %}" class="btn btn-primary btn-sm mt-3" data-bs-toggle="tooltip" title="Return to Home">
+                            <i class="fas fa-arrow-left me-1"></i> Back to Home
+                        </a>
+                    {% endif %} {% endcomment %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        border-radius: 12px;
+    }
+    body.dark-mode .card {
+        background: #2d3748;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    body.dark-mode .card-body p {
+        color: #e2e8f0;
+    }
+    .text-primary {
+        color: #319795 !important;
+    }
+    .btn-primary {
+        background-color: #319795;
+        border-color: #319795;
+    }
+    .btn-primary:hover {
+        background-color: #2c7a7b;
+        border-color: #2c7a7b;
+    }
+    body.dark-mode .btn-primary {
+        background-color: #319795;
+        border-color: #319795;
+    }
+    body.dark-mode .btn-primary:hover {
+        background-color: #2c7a7b;
+        border-color: #2c7a7b;
+    }
+    .text-gray-700 {
+        color: #2d3748;
+    }
+    body.dark-mode .text-gray-700 {
+        color: #e2e8f0;
+    }
+    @media (max-width: 768px) {
+        .card-header h1 {
+            font-size: 1.5rem;
+        }
+        .card-body p {
+            font-size: 0.9rem;
+        }
+        .btn-sm {
+            font-size: 0.85rem;
+        }
+    }
+</style>
+
+<script>
+$(document).ready(function() {
+    // Initialize Bootstrap tooltips
+    $('[data-bs-toggle="tooltip"]').tooltip();
+});
+</script>
+{% endblock %}

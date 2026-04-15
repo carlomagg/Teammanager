@@ -1,0 +1,716 @@
+{% extends 'base.html' %}
+{% load static humanize i18n %}
+{% load custom_filters%}
+{% block title %}{{conference.title}}{% endblock %}
+
+{% block meta_description %}
+    {{ conference.title }} – {{ conference.description|striptags|truncatechars:140 }}
+{% endblock %}
+
+{% block meta_keywords %}
+{% for tag in conference.tags.all%}
+    {{ tag }}{% if not forloop.last %}, {% endif %}
+{% endfor %}
+{% endblock %}
+
+{% block content %}
+    <!-- Hero Banner -->
+    {% comment %} <div class="position-relative overflow-hidden">
+        {% if conference.banner %}
+            <img src="{{ conference.banner.url }}" class="w-100 hero-banner" alt="{{ conference.title }}">
+        {% else %}
+            <img src="{% static 'banner.jpg' %}" class="w-100 hero-banner opacity-75" alt="Conference">
+        {% endif %}
+
+        <div class="position-absolute top-0 start-0 end-0 bottom-0 bg-dark bg-opacity-50"></div>
+        <div class="position-absolute bottom-0 start-0 end-0 text-white p-5">
+            <div class="container">
+                <div class="row align-items-end">
+                    <div class="col-lg-8">
+                        {% comment %} <h2 class="fw-bold mb-3">{{ conference.title }}</h2> {% endcomment %}
+                        {% comment %} {% if conference.theme %}
+                            <p class="display-8 mb-3">{{ conference.theme }}</p>
+                        {% endif %} {% endcomment %}
+                        {% comment %} <p class="lead mb-4">{{ conference.description|truncatewords:30 }}</p> {% endcomment %}
+{% comment %} 
+                        <!-- Badges -->
+                        <div class="d-flex flex-wrap gap-3 mb-4">
+                            {% now "U" as now_ts %}
+                            {% with start_ts=conference.start_date|date:"U" end_ts=conference.end_date|date:"U" %}
+                                {% if start_ts > now_ts %}
+                                    <span class="badge bg-primary fs-6 px-4 py-2"><i class="fas fa-clock me-2"></i>Upcoming</span>
+                                {% elif end_ts >= now_ts %}
+                                    <span class="badge bg-success fs-6 px-4 py-2 badge-live"><i class="fas fa-circle-dot me-2"></i>Live Now</span>
+                                {% endif %}
+                            {% endwith %}
+
+                            {% if conference.is_virtual %}
+                                <span class="badge bg-purple text-white fs-6 px-4 py-2"><i class="fas fa-video me-2"></i>Virtual Event</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-lg-4 text-lg-end">
+                        {% if conference.ticket_price > 0 %}
+                            <h2 class="text-white mb-3">
+                                <span class="display-5 fw-bold">{% if conference.currency %}{{conference.currency}}{%endif%} {{ conference.ticket_price|intcomma }}</span>
+                                <small class="opacity-75">/ ticket</small>
+                            </h2>
+                        {% else %}
+                            <h2 class="text-success display-5 fw-bold mb-3">FREE EVENT</h2>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div> {% endcomment %}
+
+    <!-- Hero Section with Side-by-Side Layout -->
+    <div class="container-fluid py-5">
+        <div class="row g-4 align-items-start">
+            <!-- Banner Column -->
+            <div class="col-lg-6">
+                <div class="position-relative overflow-hidden rounded-4 shadow-lg" style="aspect-ratio: 16 / 9;">
+                    {% if conference.banner %}
+                        <img src="{{ conference.banner.url }}" 
+                            class="conference-banner w-100 h-100" 
+                            alt="{{ conference.title }}">
+                    {% else %}
+                        <img src="{% static 'banner.jpg' %}" 
+                            class="conference-banner w-100 h-100 opacity-75" 
+                            alt="Conference">
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Title & Info Column -->
+            <div class="col-lg-6">
+                <div class="pe-lg-5">
+                    <h1 class="display-3 fw-bold mb-3 text-dark">{{ conference.title }}</h1>
+                    <p class="lead mb-4 text-muted">{{ conference.description|truncatewords:30 }}</p>
+
+                    <!-- Badges -->
+                    <div class="d-flex flex-wrap gap-3 mb-4">
+                        {% now "U" as now_ts %}
+                        {% with start_ts=conference.start_date|date:"U" end_ts=conference.end_date|date:"U" %}
+                            {% if start_ts > now_ts %}
+                                <span class="badge bg-primary fs-6 px-4 py-2"><i class="fas fa-clock me-2"></i>Upcoming</span>
+                            {% elif end_ts >= now_ts %}
+                                <span class="badge bg-success fs-6 px-4 py-2 badge-live"><i class="fas fa-circle-dot me-2"></i>Live Now</span>
+                            {% endif %}
+                        {% endwith %}
+
+                        {% if conference.conference_type == 'virtual' %}
+                            <span class="badge bg-purple text-white fs-6 px-4 py-2"><i class="fas fa-video me-2"></i>Virtual Event</span>
+                        {% elif conference.conference_type == 'physical'%}
+                            <span class="badge bg-secondary"><i class="fas fa-map-marker-alt me-1"></i> In-person</span>
+                        {% else %}
+                            <span class="badge bg-primary"><i class="fas fa-map-marker-alt me-1"></i>/<i class="fas fa-video me-1"></i> Hybrid</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Price Display -->
+                    <div class="mb-4">
+                        {% if conference.price_tiers.exists %}
+                            {# Show the tier range instead of a single price #}
+                            {% with tiers=conference|active_tier_order %}
+                            {% if tiers %}
+                                <p class="text-muted small text-uppercase mb-1 fw-semibold">Tickets from</p>
+                                <h2 class="text-dark mb-0">
+                                    <span class="display-5 fw-bold text-teal">
+                                        {{ conference.currency|default:"NGN" }} {{ tiers.first.price|floatformat:2 }}
+                                    </span>
+                                    {% if tiers.last.price != tiers.first.price %}
+                                        <small class="text-muted fs-5">
+                                            — {{ conference.currency|default:"NGN" }} {{ tiers.last.price|floatformat:2 }}
+                                        </small>
+                                    {% endif %}
+                                </h2>
+                                <small class="text-muted">{{ tiers.count }} tier{{ tiers.count|pluralize }} available</small>
+                            {% endif %}
+                            {% endwith %}
+                        {% elif conference.ticket_price > 0 %}
+                            <h2 class="text-dark mb-0">
+                                <span class="display-5 fw-bold text-teal">
+                                    {% if conference.currency %}{{ conference.currency }}{% endif %} {{ conference.ticket_price|intcomma }}
+                                </span>
+                                <small class="text-muted">/ ticket</small>
+                            </h2>
+                        {% else %}
+                            <h2 class="text-success display-5 fw-bold mb-0">FREE EVENT</h2>
+                        {% endif %}
+                    </div>
+
+                    <!-- Quick Info Cards -->
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="bg-light rounded-3 p-3">
+                                <h6 class="text-teal mb-2"><i class="fas fa-calendar-alt me-2"></i>Start Date</h6>
+                                <p class="mb-0 small">{{ conference.start_date|date:"M d, Y \a\t g:i A" }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="bg-light rounded-3 p-3">
+                                <h6 class="text-teal mb-2"><i class="fas fa-map-marker-alt me-2"></i>Location</h6>
+                                {% if conference.is_virtual %}
+                                    <p class="mb-0 small">Virtual Event</p>
+                                {% else %}
+                                    <p class="mb-0 small">{{ conference.venue|default:"TBA" }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <div class="container py-5">
+        <div class="row">
+            <!-- Main Content -->
+            <div class="col-lg-8">
+                <!-- Pending Payment Alert (for current visitor) -->
+                {% if pending_participant %}
+                    <div class="alert alert-warning border-0 rounded-4 shadow-sm mb-4 d-flex align-items-center justify-content-between flex-wrap gap-3">
+                        <div>
+                            <strong><i class="fas fa-exclamation-triangle me-2"></i>Payment Incomplete</strong><br>
+                            <span>You started registration but haven't completed payment yet. Your spot is reserved temporarily.</span>
+                        </div>
+                        <a href="{% url 'conference_register' conference.id %}?retry={{ pending_participant.id }}"
+                           class="btn btn-warning btn-lg">
+                            <i class="fas fa-credit-card me-2"></i>Complete Payment Now
+                        </a>
+                    </div>
+                {% endif %}
+
+                <!-- Already Registered (Paid) -->
+                {% if is_registered and current_participant.ticket_paid %}
+                    <div class="alert alert-success border-0 rounded-4 shadow-sm mb-4">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <strong>You're registered!</strong> Check your email for access details.
+                        <a href="{% url 'conference_access' conference.id current_participant.unique_token %}" class="btn btn-sm btn-outline-success ms-3">
+                            View Ticket
+                        </a>
+                    </div>
+                {% endif %}
+
+                <div class="bg-white rounded-4 shadow-sm p-4 mb-5">
+                    <h2 class="text-primary fw-bold mb-3">{{ conference.title }}</h2>
+                    {% if conference.theme %}
+                        <p class="mb-3"><strong>Theme: </strong>{{ conference.theme }}</p>
+                    {% endif %}
+                    <h3 class="text-teal mb-4"><i class="fas fa-info-circle me-2"></i>About This Conference</h3>
+                    <div class="lead text-dark">
+                        {{ conference.description|linebreaks }}
+                    </div>
+                </div>
+
+                <!-- Details Grid -->
+                <div class="row g-4 mb-5">
+                    <div class="col-md-6">
+                        <div class="bg-white rounded-4 shadow-sm p-4 h-100">
+                            <h5 class="text-teal"><i class="fas fa-calendar-alt me-2"></i>Date & Time</h5>
+                            <p class="mb-1"><strong>Start:</strong> {{ conference.start_date|date:"l, F d, Y \a\t g:i A" }}</p>
+                            <p><strong>End:</strong> {{ conference.end_date|date:"l, F d, Y \a\t g:i A" }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="bg-white rounded-4 shadow-sm p-4 h-100">
+                            <h5 class="text-teal"><i class="fas fa-map-marker-alt me-2"></i>Location</h5>
+                            {% if conference.conference_type == "virtual" %}
+                                <p class="mb-0">
+                                    <span class="badge bg-purple text-white">Virtual Event</span>
+                                </p>
+
+                            {% elif conference.conference_type == "hybrid" %}
+                                <p class="mb-0">
+                                    <span class="badge bg-teal text-white">Hybrid Event</span>
+                                </p>
+
+                            {% else %}
+                                <p class="mb-0">
+                                    <span class="badge bg-secondary text-white">In-Person Event</span>
+                                </p>
+                            {% endif %}
+
+                            {% if conference.conference_type in "physical hybrid" %}
+                                <p class="fw-600 mb-0">
+                                    {{ conference.venue|default:"Venue to be announced" }}
+                                </p>
+                            {% endif %}
+
+                            {% if conference.conference_type in "virtual hybrid" %}
+                                <small class="text-muted">
+                                    {% if conference.virtual_link %}
+                                        {% comment %} <a href="{{ conference.virtual_link }}" target="_blank" rel="noopener">
+                                            Join virtually
+                                        </a> {% endcomment %}
+                                        Vitual Link will be shared after registration
+                                    {% else %}
+                                        Join from anywhere in the world
+                                    {% endif %}
+                                </small>
+                            {% endif %}
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Speakers Slider (auto) -->
+                {% if conference.speakers.all %}
+                <div class="bg-white rounded-4 shadow-sm p-4 mb-5">
+                    <h4 class="mb-3">Speakers</h4>
+
+                    <div class="position-relative">
+                        <div id="speakerSlider" class="d-flex gap-3 overflow-hidden" style="scroll-behavior: smooth; -webkit-overflow-scrolling: touch;">
+                            {% for s in conference.speakers.all %}
+                                <div class="card text-center speaker-card" style="min-width:220px; max-width:220px; flex: 0 0 auto;">
+                                    <div class="card-body">
+                                        <div class="mb-3 d-flex justify-content-center">
+                                            {% if s.photo %}
+                                                <img src="{{ s.photo.url }}" class="rounded-circle" width="80" height="80" alt="{{ s.full_name }}">
+                                            {% else %}
+                                                <div class="bg-teal text-white rounded-circle d-flex align-items-center justify-content-center" style="width:80px;height:80px;">
+                                                    <i class="fas fa-user fa-2x"></i>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+
+                                        {% if s.title %}
+                                            <div class="text-primary fw-bold small mb-1">{{ s.title }}</div>
+                                        {% endif %}
+
+                                        <div class="fw-bold text-primary mb-1" style="min-height:2.2em;">{{ s.full_name }}</div>
+
+                                        {% if s.company %}
+                                            <div class="text-muted small">{{ s.company }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- optional controls (kept but not required) -->
+                        <button id="speakerPrev" class="btn btn-sm btn-outline-secondary position-absolute top-50 start-0 translate-middle-y ms-2" aria-label="Previous speaker">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <button id="speakerNext" class="btn btn-sm btn-outline-secondary position-absolute top-50 end-0 translate-middle-y me-2" aria-label="Next speaker">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Scroll Hint (if many speakers) -->
+                {% if conference.speakers.count > 3 %}
+                <div class="text-center mt-2">
+                    <small class="text-muted">
+                        <i class="fas fa-arrow-left me-1"></i>
+                        Scroll to see all {{ conference.speakers.count }} speakers
+                        <i class="fas fa-arrow-right ms-1"></i>
+                    </small>
+                </div>
+                {% endif %}
+
+                <!-- Organizer -->
+                {% if conference.organizer %}
+                <div class="bg-white rounded-4 shadow-sm p-4 mb-5">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            {% if conference.tenant.company_profile.photo %}
+                                <img src="{{ conference.tenant.company_profile.photo.url }}" class="rounded-circle" width="80" height="80" alt="{{ conference.organizer.get_full_name }}">
+                            {% else %}
+                                <div class="bg-teal text-white rounded-circle d-flex align-items-center justify-content-center" style="width:80px;height:80px;">
+                                    <i class="fas fa-user fa-2x"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="flex-grow-1 ms-4">
+                            <h5 class="mb-1">Organized by</h5>
+                            {% comment %} <p class="mb-1 fw-bold">{{ conference.organizer.get_full_name|default:conference.organizer.username }}</p>
+                            <small class="text-muted">{{ conference.organizer.email }}</small> {% endcomment %}
+                            {% if not conference.organizer.is_personal %}
+                                <p class='mb-1 fw-bold text-primary'>{{ conference.tenant.name }}</p>
+                            {% else %}
+                                <p class='mb-1 fw-bold text-primary'>{{ conference.organizer.get_full_name }}</p>
+                            {% endif %}
+                            <!-- Conference Host Description -->
+                            {% if conference.tenant.company_profile.description %}
+                                <small class="text-muted">{{ conference.tenant.company_profile.description }}</small>
+                            {% elif conference.about_host %}
+                                <small class="text-muted">{{ conference.about_host }}</small>
+                            {% else %}
+                                <small class="text-muted"></small>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Sidebar: Registration Card -->
+            <div class="col-lg-4">
+                <div class="bg-white rounded-4 shadow-sm p-4 sticky-top" style="top: 100px;">
+                    <h4 class="fw-bold text-center mb-4">Register Now</h4>
+
+                    <!-- Spots Left (includes recent pending) -->
+                    {% if conference.max_participants_physical %}
+                        <div class="text-center mb-4">
+                            {% comment %} <h5>{{ reserved_spots }} / {{ conference.max_participants_physical }} spots filled</h5> {% endcomment %}
+                            {% comment %} <div class="progress" style="height: 12px;"> {% endcomment %}
+                                {% widthratio reserved_spots conference.max_participants_physical 100 as progress %}
+                                {% comment %} <div class="progress-bar {% if progress > 80 %}bg-danger{% else %}bg-teal{% endif %}" style="width: {{ progress }}%"></div> {% endcomment %}
+                            {% comment %} </div> {% endcomment %}
+                            {% if progress == 100 %}
+                                <small class="text-danger fw-bold mt-2 d-block"><i class="fas fa-exclamation-triangle"></i> Conference Sold Out!</small>
+                            {% elif progress > 80 %}
+                                <small class="text-danger fw-bold mt-2 d-block"><i class="fas fa-exclamation-triangle"></i> Almost sold out!</small>
+                            {% elif progress > 60 %}
+                                <small class="text-warning fw-bold mt-2 d-block">Limited spots remaining</small>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+
+                    {% if conference.max_participants_virtual %}
+                        <div class="text-center mb-4">
+                            {% comment %} <h5>{{ reserved_spots }} / {{ conference.max_participants_virtual }} spots filled</h5> {% endcomment %}
+                            {% comment %} <div class="progress" style="height: 12px;"> {% endcomment %}
+                                {% widthratio reserved_spots conference.max_participants_virtual 100 as progress %}
+                                {% comment %} <div class="progress-bar {% if progress > 80 %}bg-danger{% else %}bg-teal{% endif %}" style="width: {{ progress }}%"></div> {% endcomment %}
+                            {% comment %} </div> {% endcomment %}
+                            {% if progress == 100 %}
+                                <small class="text-danger fw-bold mt-2 d-block"><i class="fas fa-exclamation-triangle"></i> Conference Sold Out!</small>
+                            {% elif progress > 80 %}
+                                <small class="text-danger fw-bold mt-2 d-block"><i class="fas fa-exclamation-triangle"></i> Almost sold out!</small>
+                            {% elif progress > 60 %}
+                                <small class="text-warning fw-bold mt-2 d-block">Limited spots remaining</small>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+
+                    {% if conference.price_tiers.exists %}
+                    <div class="mb-4">
+                        <h6 class="fw-semibold text-dark mb-3">
+                            <i class="fas fa-tags me-1 text-teal"></i>Registration Tiers
+                        </h6>
+                        <div class="d-flex flex-column gap-2">
+                            {% for tier in conference|active_tier_order %}
+                            {% with remaining=tier.slots_remaining %}
+                            <div class="border rounded-3 px-3 py-2 d-flex justify-content-between align-items-center
+                                        {% if not tier.is_available %}opacity-50{% endif %}">
+                                <div>
+                                    <span class="fw-semibold small">{{ tier.name }}</span>
+                                    {% if tier.description %}
+                                        <div class="text-muted" style="font-size:0.78rem;">{{ tier.description }}</div>
+                                    {% endif %}
+                                    {% if remaining == 0 %}
+                                        <span class="badge bg-danger" style="font-size:0.7rem;">Sold Out</span>
+                                    {% elif remaining is not None and remaining <= 5 %}
+                                        <span class="badge bg-warning text-dark" style="font-size:0.7rem;">{{ remaining }} left</span>
+                                    {% endif %}
+                                </div>
+                                <span class="fw-bold text-teal ms-3 text-nowrap">
+                                    {{ conference.currency|default:"NGN" }} {{ tier.price|floatformat:2 }}
+                                </span>
+                            </div>
+                            {% endwith %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Registration Button Logic -->
+                    <div class="d-grid gap-3">
+                        {% if view_mode == 'past' %}
+                            <span class="badge bg-secondary px-3 py-2">Ended {{ conference.end_date|date:"M d, Y" }}</span>
+                        {% elif current_participant %}
+                            {% if current_participant.ticket_paid %}
+                                <button class="btn btn-success btn-lg" disabled>
+                                    <i class="fas fa-check-circle me-2"></i>Registered Successfully
+                                </button>
+                                <a href="{% url 'conference_access' conference.id current_participant.unique_token %}"
+                                   class="btn btn-outline-success">
+                                    <i class="fas fa-ticket-alt me-2"></i>View My Ticket
+                                </a>
+                            {% else %}
+                                <!-- Pending or failed payment -->
+                                <a href="{% url 'conference_register' conference.id %}?retry={{ current_participant.id }}"
+                                   class="btn btn-warning btn-lg text-white">
+                                    <i class="fas fa-credit-card me-2"></i>Complete Payment
+                                </a>
+                                <small class="text-muted text-center d-block">Your registration is pending payment</small>
+                            {% endif %}
+                        {% else %}
+                            <!-- Not registered yet -->
+                            <a href="{% url 'conference_register' conference.id %}"
+                            class="btn btn-teal btn-lg text-white">
+                                <i class="fas fa-ticket-alt me-2"></i>
+                                {% if conference.price_tiers.exists %}
+                                    Choose a Tier & Register
+                                {% elif conference.ticket_price > 0 %}
+                                    Pay & Register
+                                {% else %}
+                                    Register Free
+                                {% endif %}
+                            </a>
+                        {% endif %}
+                    </div>
+
+                    <!-- Share -->
+                    <div class="text-center mt-4 pt-4 border-top">
+                        <small class="text-muted d-block mb-3">Share this event</small>
+                        <div class="d-flex justify-content-center gap-3">
+                            <a href="https://twitter.com/intent/tweet?text={{ conference.title|urlencode }}&url={{ request.build_absolute_uri }}" class="btn btn-outline-secondary btn-sm" target="_blank">
+                                <i class="fab fa-twitter"></i>
+                            </a>
+                            <a href="https://www.linkedin.com/shareArticle?mini=true&url={{ request.build_absolute_uri }}" class="btn btn-outline-secondary btn-sm" target="_blank">
+                                <i class="fab fa-linkedin"></i>
+                            </a>
+                            <a href="mailto:?subject={{ conference.title|urlencode }}&body=Check out this conference: {{ request.build_absolute_uri }}" class="btn btn-outline-secondary btn-sm">
+                                <i class="fas fa-envelope"></i>
+                            </a>
+                            <button 
+                                type="button"
+                                class="btn btn-sm btn-outline-teal text-teal border-teal"
+                                onclick="copyConferenceLink()"
+                                title="Copy link to clipboard">
+                                <i class="fas fa-copy me-1"></i> Copy Link
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast notification -->
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1050;">
+        <div id="copyToast" class="toast align-items-center text-white bg-teal border-0" role="alert">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="fas fa-check me-2"></i> Link copied to clipboard!
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        :root { --teal: #319795; --teal-dark: #2c7a7b; }
+        .btn-teal { background-color: var(--teal); border-color: var(--teal); }
+        .btn-teal:hover { background-color: var(--teal-dark); border-color: var(--teal-dark); }
+        .text-teal { color: var(--teal) !important; }
+        .bg-teal { background-color: var(--teal) !important; }
+        .hero-banner { height: 60vh; min-height: 400px; object-fit: cover; }
+        .badge-live { animation: pulse 2s infinite; }
+        body.dark-mode p,h1,h2,h3,h4,h5,h6 {color: #000000}
+        .border-teal { border-color: var(--teal) !important; }
+        .btn-outline-teal:hover { background-color: var(--teal); border-color: var(--teal); color: white !important; }
+        
+        .conference-banner { 
+            object-fit: cover;      /* This ensures the image covers the container fully */
+            object-position: center; /* Centers the focal point */
+            width: 100%;
+            height: 100%;
+            transition: all 0.3s ease;
+        }
+
+        .position-relative.rounded-4.shadow-lg {
+            aspect-ratio: 16 / 9;   /* You can adjust this ratio if needed */
+            overflow: hidden;
+        }
+        
+        @media (max-width: 991px) {
+            .conference-banner {
+                height: 350px;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .conference-banner {
+                height: 250px;
+            }
+            .lead {
+                overflow-y: auto;
+                height: 250px;
+                text-align: left;
+                font-size: 14px !important;
+            }
+        }
+
+        #speakerSlider {
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 8px;
+        }
+        .speaker-card {
+            scroll-snap-align: center;
+            border: none;
+        }
+        #speakerSlider::-webkit-scrollbar { height: 8px; }
+        #speakerSlider::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 4px; }
+        @media (max-width: 767px) {
+            #speakerSlider .card { min-width: 180px; max-width: 180px; }
+        }
+
+
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(40, 167, 69, 0); } 100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); } }
+    </style>
+
+    <script>
+        function copyConferenceLink() {
+            const url = "{{ request.build_absolute_uri|escapejs }}";
+            navigator.clipboard.writeText(url).then(() => {
+                const toast = new bootstrap.Toast(document.getElementById('copyToast'));
+                toast.show();
+            }).catch(() => {
+                prompt("Copy this link:", url);
+            });
+        }
+
+        // Auto card slider for speakers
+        document.addEventListener('DOMContentLoaded', function () {
+            const slider = document.getElementById('speakerSlider');
+            if (!slider) return;
+
+            const cards = Array.from(slider.querySelectorAll('.speaker-card'));
+            if (cards.length <= 1) return; // nothing to slide
+
+            // compute positions for each card (left offset relative to slider content)
+            const positions = cards.map(c => c.offsetLeft);
+
+            let index = 0;
+            let intervalId = null;
+            const intervalMs = 3500; // time between auto slides
+            const pauseOnHover = true;
+            let isPausedByHover = false;
+            let userInteracted = false;
+            let resumeTimeout = null;
+
+            function goTo(i, smooth = true) {
+                index = (i + cards.length) % cards.length;
+                const left = positions[index];
+                slider.scrollTo({ left: left, behavior: smooth ? 'smooth' : 'auto' });
+            }
+
+            function next() {
+                goTo(index + 1);
+            }
+            function prev() {
+                goTo(index - 1);
+            }
+
+            function startAuto() {
+                stopAuto();
+                intervalId = setInterval(next, intervalMs);
+            }
+            function stopAuto() {
+                if (intervalId) {
+                    clearInterval(intervalId);
+                    intervalId = null;
+                }
+            }
+
+            // Pause/resume logic on hover and interaction
+            if (pauseOnHover) {
+                slider.addEventListener('mouseenter', function () {
+                    isPausedByHover = true;
+                    stopAuto();
+                });
+                slider.addEventListener('mouseleave', function () {
+                    isPausedByHover = false;
+                    // resume only if user hasn't manually interacted recently
+                    if (!userInteracted) startAuto();
+                });
+            }
+
+            // Pause/resume on touch (mobile)
+            slider.addEventListener('touchstart', function () {
+                isPausedByHover = true;
+                stopAuto();
+            }, { passive: true });
+            slider.addEventListener('touchend', function () {
+                isPausedByHover = false;
+                if (!userInteracted) startAuto();
+            });
+
+            // Recalculate positions on resize (cards can change width)
+            let resizeTimer = null;
+            window.addEventListener('resize', function () {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(function () {
+                    // recalc positions
+                    const newCards = Array.from(slider.querySelectorAll('.speaker-card'));
+                    // if count changed, rebuild positions array
+                    if (newCards.length !== cards.length) {
+                        cards.length = 0;
+                        newCards.forEach(c => cards.push(c));
+                    }
+                    for (let i = 0; i < cards.length; i++) {
+                        positions[i] = cards[i].offsetLeft;
+                    }
+                    // ensure slider stays on the correct card after resize
+                    goTo(index, false);
+                }, 150);
+            });
+
+            // Prev/Next controls
+            const btnPrev = document.getElementById('speakerPrev');
+            const btnNext = document.getElementById('speakerNext');
+            if (btnPrev) {
+                btnPrev.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    userInteracted = true;
+                    stopAuto();
+                    prev();
+                    // resume auto after short inactivity
+                    if (resumeTimeout) clearTimeout(resumeTimeout);
+                    resumeTimeout = setTimeout(function () {
+                        userInteracted = false;
+                        if (!isPausedByHover) startAuto();
+                    }, 5000);
+                });
+            }
+            if (btnNext) {
+                btnNext.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    userInteracted = true;
+                    stopAuto();
+                    next();
+                    if (resumeTimeout) clearTimeout(resumeTimeout);
+                    resumeTimeout = setTimeout(function () {
+                        userInteracted = false;
+                        if (!isPausedByHover) startAuto();
+                    }, 5000);
+                });
+            }
+
+            // also detect manual scroll to update index
+            let scrollTimer = null;
+            slider.addEventListener('scroll', function () {
+                // throttle
+                if (scrollTimer) clearTimeout(scrollTimer);
+                scrollTimer = setTimeout(function () {
+                    // find nearest card to current scrollLeft
+                    const scrollLeft = slider.scrollLeft;
+                    let nearest = 0;
+                    let nearestDist = Infinity;
+                    for (let i = 0; i < positions.length; i++) {
+                        const d = Math.abs(positions[i] - scrollLeft);
+                        if (d < nearestDist) {
+                            nearestDist = d;
+                            nearest = i;
+                        }
+                    }
+                    index = nearest;
+                }, 100);
+            }, { passive: true });
+
+            // Start autoplay
+            startAuto();
+        });
+
+    </script>
+
+{% endblock %}

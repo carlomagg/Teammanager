@@ -1,0 +1,308 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Check-in Dashboard - {{ conference.title }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">Check-in Dashboard</h2>
+            <p class="text-muted mb-0">{{ conference.title }}</p>
+        </div>
+        <div class="btn-group">
+            <a href="{% url 'checkin_scanner' conference.id %}" class="btn btn-primary">
+                <i class="fas fa-qrcode me-2"></i>Scan QR Code
+            </a>
+            <a href="{% url 'conference_attended_list' conference.id %}" class="btn btn-success">
+                <i class="fas fa-check-circle me-2"></i>View Attended
+            </a>
+            <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                <i class="fas fa-download me-2"></i>Export
+            </button>
+            <ul class="dropdown-menu">
+                <li>
+                    <a class="dropdown-item" href="{% url 'conference_checkin_export_csv' conference.id %}?filter=all">
+                        <i class="fas fa-file-csv me-2"></i>All Participants (CSV)
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item" href="{% url 'conference_checkin_export_csv' conference.id %}?filter=attended">
+                        <i class="fas fa-file-csv me-2"></i>Attended Only (CSV)
+                    </a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                    <a class="dropdown-item" href="{% url 'conference_checkin_export_pdf' conference.id %}?filter=all">
+                        <i class="fas fa-file-pdf me-2"></i>All Participants (PDF)
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item" href="{% url 'conference_checkin_export_pdf' conference.id %}?filter=attended">
+                        <i class="fas fa-file-pdf me-2"></i>Attended Only (PDF)
+                    </a>
+                </li>
+            </ul>
+            <a href="{% url 'conference_detail' conference.id %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Back
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0 bg-primary bg-opacity-10 p-3 rounded">
+                            <i class="fas fa-users fa-2x text-primary"></i>
+                        </div>
+                        <div class="ms-3">
+                            <h6 class="text-muted mb-1">Total Registered</h6>
+                            <h3 class="mb-0">{{ stats.total }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0 bg-success bg-opacity-10 p-3 rounded">
+                            <i class="fas fa-check-circle fa-2x text-success"></i>
+                        </div>
+                        <div class="ms-3">
+                            <h6 class="text-muted mb-1">Checked In</h6>
+                            <h3 class="mb-0">{{ stats.checked_in }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0 bg-info bg-opacity-10 p-3 rounded">
+                            <i class="fas fa-building fa-2x text-info"></i>
+                        </div>
+                        <div class="ms-3">
+                            <h6 class="text-muted mb-1">Physical</h6>
+                            <h3 class="mb-0">{{ stats.physical }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0 bg-warning bg-opacity-10 p-3 rounded">
+                            <i class="fas fa-video fa-2x text-warning"></i>
+                        </div>
+                        <div class="ms-3">
+                            <h6 class="text-muted mb-1">Virtual</h6>
+                            <h3 class="mb-0">{{ stats.virtual }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="mb-0">Check-in Progress</h6>
+                <span class="badge bg-primary">{{ stats.checked_in }} / {{ stats.total }}</span>
+            </div>
+            {% widthratio stats.checked_in stats.total 100 as percentage %}
+            <div class="progress" style="height: 25px;">
+                <div class="progress-bar bg-success" role="progressbar" 
+                     style="width: {{ percentage }}%;" 
+                     aria-valuenow="{{ percentage }}" 
+                     aria-valuemin="0" 
+                     aria-valuemax="100">
+                    {{ percentage }}%
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Recent Check-ins -->
+        <div class="col-lg-5 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0">Recent Check-ins</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush" style="max-height: 500px; overflow-y: auto;">
+                        {% for participant in recent_checkins %}
+                        <div class="list-group-item">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-shrink-0 bg-success bg-opacity-10 rounded-circle p-2">
+                                    <i class="fas fa-check text-success"></i>
+                                </div>
+                                <div class="ms-3 flex-grow-1">
+                                    <h6 class="mb-0">{{ participant.name }}</h6>
+                                    <small class="text-muted">
+                                        {{ participant.check_in_time|date:"M d, Y h:i A" }}
+                                        {% if participant.check_in_method %}
+                                        | {{ participant.get_check_in_method_display }}
+                                        {% endif %}
+                                    </small>
+                                </div>
+                                <span class="badge bg-{{ participant.attendance_type|yesno:'info,warning' }}">
+                                    {{ participant.get_attendance_type_display }}
+                                </span>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="list-group-item text-center text-muted py-5">
+                            <i class="fas fa-inbox fa-3x mb-3 opacity-25"></i>
+                            <p>No check-ins yet</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Participants List -->
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">All Participants</h5>
+                        <input type="text" id="searchParticipant" class="form-control form-control-sm" 
+                               placeholder="Search..." style="max-width: 250px;">
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+                        <table class="table table-hover mb-0" id="participantsTable">
+                            <thead class="table-light sticky-top">
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for participant in participants %}
+                                <tr data-name="{{ participant.name|lower }}" data-email="{{ participant.email|lower }}">
+                                    <td>
+                                        <div>
+                                            <strong>{{ participant.name }}</strong><br>
+                                            <small class="text-muted">{{ participant.email }}</small>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ participant.attendance_type|yesno:'info,warning' }}">
+                                            {{ participant.get_attendance_type_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if participant.check_in_status %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check me-1"></i>Checked In
+                                        </span><br>
+                                        <small class="text-muted">{{ participant.check_in_time|date:"M d, h:i A" }}</small>
+                                        {% else %}
+                                        <span class="badge bg-secondary">Not Checked In</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if not participant.check_in_status %}
+                                        <button class="btn btn-sm btn-primary check-in-btn" 
+                                                data-participant-id="{{ participant.id }}"
+                                                data-participant-name="{{ participant.name }}">
+                                            <i class="fas fa-check me-1"></i>Check In
+                                        </button>
+                                        {% else %}
+                                        <button class="btn btn-sm btn-success" disabled>
+                                            <i class="fas fa-check-circle me-1"></i>Done
+                                        </button>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Search functionality
+    const searchInput = document.getElementById('searchParticipant');
+    const tableRows = document.querySelectorAll('#participantsTable tbody tr');
+    
+    searchInput.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        
+        tableRows.forEach(row => {
+            const name = row.dataset.name;
+            const email = row.dataset.email;
+            
+            if (name.includes(searchTerm) || email.includes(searchTerm)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
+    
+    // Manual check-in functionality
+    document.querySelectorAll('.check-in-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const participantId = this.dataset.participantId;
+            const participantName = this.dataset.participantName;
+            
+            if (confirm(`Check in ${participantName}?`)) {
+                fetch(`/conference/{{ conference.id }}/checkin/manual/${participantId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    alert('Error checking in participant');
+                    console.error(error);
+                });
+            }
+        });
+    });
+});
+</script>
+
+<style>
+    .sticky-top {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,320 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Loan {{ loan.reference_number }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>Loan Application {{ loan.reference_number }}</h2>
+            <p class="text-muted">{{ loan.conference.title }}</p>
+        </div>
+        <div class="col-md-4 text-right">
+            {% if loan.status == 'draft' and loan.applicant == request.user %}
+            <a href="{% url 'conference_loan:loan_edit' loan.pk %}" class="btn btn-secondary">
+                <i class="fas fa-edit"></i> Edit
+            </a>
+            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#submitLoanModal">
+                <i class="fas fa-paper-plane"></i> Submit for Review
+            </button>
+            {% endif %}
+            {% if request.user.is_superuser or request.user.tenant.admin == request.user %}
+                {% if loan.status == 'pending' %}
+                <a href="{% url 'conference_loan:loan_review' loan.pk %}" class="btn btn-primary">
+                    <i class="fas fa-gavel"></i> Review
+                </a>
+                {% endif %}
+            {% endif %}
+            <a href="{% url 'conference_loan:loan_list' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Back to List
+            </a>
+        </div>
+    </div>
+
+    <!-- Status Banner -->
+    <div class="row mb-4">
+        <div class="col-12">
+            {% if loan.status == 'draft' %}
+                <div class="alert alert-secondary">
+                    <i class="fas fa-file"></i> This loan is in draft status. Submit it for review when ready.
+                </div>
+            {% elif loan.status == 'pending' %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-clock"></i> This loan is pending review.
+                </div>
+            {% elif loan.status == 'approved' %}
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle"></i> This loan has been approved!
+                    Approved Amount: {{ loan.currency }} {{ loan.approved_amount|floatformat:2 }}
+                </div>
+            {% elif loan.status == 'rejected' %}
+                <div class="alert alert-danger">
+                    <i class="fas fa-times-circle"></i> This loan was rejected.
+                    {% if loan.rejection_reason %}
+                    <br><strong>Reason:</strong> {{ loan.rejection_reason }}
+                    {% endif %}
+                </div>
+            {% elif loan.status == 'disbursed' %}
+                <div class="alert alert-info">
+                    <i class="fas fa-money-bill-wave"></i> Loan disbursed on {{ loan.disbursement_date|date:"M d, Y" }}
+                </div>
+            {% endif %}
+
+            {% if not is_eligible %}
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i> <strong>KYC/KYB Not Complete:</strong> {{ kyc_message }}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-md-8">
+            <!-- Loan Details -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>Loan Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Amount Requested:</strong><br>{{ loan.currency }} {{ loan.amount|floatformat:2 }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Expected Date:</strong><br>{{ loan.expected_date|date:"M d, Y" }}</p>
+                        </div>
+                    </div>
+                    <p><strong>Reason:</strong><br>{{ loan.reason }}</p>
+                    
+                    {% if loan.approved_amount %}
+                    <hr>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <p><strong>Approved Amount:</strong><br>{{ loan.currency }} {{ loan.approved_amount|floatformat:2 }}</p>
+                        </div>
+                        <div class="col-md-4">
+                            <p><strong>Interest Rate:</strong><br>{{ loan.interest_rate }}%</p>
+                        </div>
+                        <div class="col-md-4">
+                            <p><strong>Repayment Period:</strong><br>{{ loan.repayment_period_months }} months</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Conference Information -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>Conference Information</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Conference:</strong> {{ loan.conference.title }}</p>
+                    <p><strong>Date:</strong> {{ loan.conference.start_date|date:"M d, Y" }} - {{ loan.conference.end_date|date:"M d, Y" }}</p>
+                    <p><strong>Venue:</strong> {{ loan.conference.venue }}</p>
+                    <p><strong>Description:</strong><br>{{ loan.conference_description }}</p>
+                    {% if loan.expected_revenue %}
+                    <p><strong>Expected Revenue:</strong> {{ loan.currency }} {{ loan.expected_revenue|floatformat:2 }}</p>
+                    {% endif %}
+                    {% if loan.expected_expenses %}
+                    <p><strong>Expected Expenses:</strong> {{ loan.currency }} {{ loan.expected_expenses|floatformat:2 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Guarantor Information -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>Guarantor Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Name:</strong> {{ loan.guarantor_name }}</p>
+                            <p><strong>Phone:</strong> {{ loan.guarantor_phone }}</p>
+                            <p><strong>Email:</strong> {{ loan.guarantor_email }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Relationship:</strong> {{ loan.guarantor_relationship }}</p>
+                            {% if loan.guarantor_occupation %}
+                            <p><strong>Occupation:</strong> {{ loan.guarantor_occupation }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <p><strong>Address:</strong><br>{{ loan.guarantor_address }}</p>
+                </div>
+            </div>
+
+            <!-- Documents -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Supporting Documents</h5>
+                    <a href="{% url 'conference_loan:loan_upload_document' loan.pk %}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-upload"></i> Upload Document
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if documents %}
+                    <div class="list-group">
+                        {% for doc in documents %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">{{ doc.get_document_type_display }}</h6>
+                                    <small class="text-muted">{{ doc.original_name }}</small>
+                                    {% if doc.description %}
+                                    <p class="mb-0 mt-1">{{ doc.description }}</p>
+                                    {% endif %}
+                                </div>
+                                <a href="{{ doc.file.url }}" class="btn btn-sm btn-outline-primary" target="_blank">
+                                    <i class="fas fa-download"></i> Download
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No documents uploaded yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Comments -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>Comments</h5>
+                </div>
+                <div class="card-body">
+                    {% if comments %}
+                    {% for comment in comments %}
+                    <div class="media mb-3">
+                        <div class="media-body">
+                            <h6 class="mt-0">
+                                {{ comment.author.get_full_name|default:comment.author.username }}
+                                {% if comment.is_internal %}
+                                <span class="badge badge-warning">Internal</span>
+                                {% endif %}
+                            </h6>
+                            <small class="text-muted">{{ comment.created_at|date:"M d, Y H:i" }}</small>
+                            <p class="mt-2">{{ comment.content }}</p>
+                        </div>
+                    </div>
+                    <hr>
+                    {% endfor %}
+                    {% endif %}
+
+                    <!-- Add Comment Form -->
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="add_comment" value="1">
+                        <div class="form-group">
+                            {{ comment_form.content }}
+                        </div>
+                        {% if request.user.is_superuser or request.user.tenant.admin == request.user %}
+                        <div class="form-check mb-3">
+                            {{ comment_form.is_internal }}
+                            <label class="form-check-label" for="{{ comment_form.is_internal.id_for_label }}">
+                                Internal comment (not visible to applicant)
+                            </label>
+                        </div>
+                        {% endif %}
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-comment"></i> Add Comment
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-md-4">
+            <!-- Status Card -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>Application Status</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Status:</strong> <span class="badge badge-primary">{{ loan.get_status_display }}</span></p>
+                    <p><strong>Created:</strong> {{ loan.created_at|date:"M d, Y H:i" }}</p>
+                    {% if loan.submitted_at %}
+                    <p><strong>Submitted:</strong> {{ loan.submitted_at|date:"M d, Y H:i" }}</p>
+                    {% endif %}
+                    {% if loan.reviewed_at %}
+                    <p><strong>Reviewed:</strong> {{ loan.reviewed_at|date:"M d, Y H:i" }}</p>
+                    <p><strong>Reviewed By:</strong> {{ loan.reviewed_by.get_full_name|default:loan.reviewed_by.username }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- KYC Status -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>KYC/KYB Status</h5>
+                </div>
+                <div class="card-body">
+                    {% if loan.kyc_verified %}
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle"></i> Verified
+                        <br><small>{{ loan.kyc_verification_date|date:"M d, Y" }}</small>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i> Not Verified
+                        <br><small>{{ kyc_message }}</small>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Repayment Info (if disbursed) -->
+            {% if loan.status in 'disbursed,repaying,completed' %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>Repayment Status</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Total Repaid:</strong><br>{{ loan.currency }} {{ loan.total_repaid|floatformat:2 }}</p>
+                    <p><strong>Outstanding:</strong><br>{{ loan.currency }} {{ loan.outstanding_balance|floatformat:2 }}</p>
+                    {% if loan.next_payment_date %}
+                    <p><strong>Next Payment:</strong><br>{{ loan.next_payment_date|date:"M d, Y" }}<br>{{ loan.currency }} {{ loan.next_payment_amount|floatformat:2 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Submit Loan Confirmation Modal -->
+<div class="modal fade" id="submitLoanModal" tabindex="-1" aria-labelledby="submitLoanModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="submitLoanModalLabel">
+                    <i class="fas fa-paper-plane"></i> Submit Loan for Review
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to submit this loan application for review?</p>
+                <p class="text-muted">Once submitted, you will not be able to edit the application until it is reviewed.</p>
+                {% if not is_eligible %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i> <strong>Warning:</strong> Your KYC/KYB verification is incomplete. The loan may not be processed until verification is complete.
+                </div>
+                {% endif %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <a href="{% url 'conference_loan:loan_submit' loan.pk %}" class="btn btn-success">
+                    <i class="fas fa-check"></i> Yes, Submit
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

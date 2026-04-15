@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}No Upload Folder - {{ conference.title }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6 text-center">
+            <div class="mb-4">
+                <i class="fas fa-folder-open fa-5x text-muted"></i>
+            </div>
+            
+            <h2 class="mb-3">No Upload Folder Configured</h2>
+            
+            <p class="text-muted mb-4">
+                The organizer has not set up an upload folder for this conference yet.
+                Please contact the organizer if you need to submit files.
+            </p>
+            
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                <strong>Conference:</strong> {{ conference.title }}
+            </div>
+            
+            <a href="{% url 'conference_detail' conference.id %}" class="btn btn-primary">
+                <i class="fas fa-arrow-left me-2"></i>Back to Conference
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

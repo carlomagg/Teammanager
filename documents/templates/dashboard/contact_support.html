@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{%block title %}Contact Support - TeamManager{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <h2>Contact Support</h2>
+    {% include 'partials/help_icon.html' with faq_key='contact_support' %}
+    <p>
+        Need assistance? Reach out to our support team via the contact details below or send us a message directly.</br>
+        Open Mondays - Fridays from 9:00 - 19:00
+    </p>
+
+    <!-- Support Contact Details -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Support Contact Information</h5>
+            <p><strong>Phone:</strong> +234-907-557-9816</p>
+            <p><strong>Email:</strong> contact@teammanager.ng</p>
+            
+            <!-- Support Button -->
+            <div class="support-button-section mt-4">
+                <a href="https://tm.teammanager.ng/tickets/submit/" target="_blank" class="btn btn-support">
+                    <i class="fas fa-ticket-alt me-2"></i>Submit a Support Ticket
+                    <i class="fas fa-external-link-alt ms-2 small"></i>
+                </a>
+                <p class="text-muted small mt-2 mb-0">For faster response, submit a ticket through our support system</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Support Form -->
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Send a Support Message</h5>
+            <form id="support-form" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="subject" class="form-label">Subject</label>
+                    <input type="text" class="form-control" id="subject" name="subject" required>
+                </div>
+                <div class="mb-3">
+                    <label for="message" class="form-label">Message</label>
+                    <textarea class="form-control" id="message" name="message" rows="5" required></textarea>
+                </div>
+                <div class="mb-3">
+                    <label for="attachments" class="form-label">Attachments (optional)</label>
+                    <input type="file" class="form-control" id="attachments" name="attachments" multiple>
+                </div>
+                <button type="submit" class="btn btn-primary">Send Message</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Include Bootstrap and jQuery -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<style>
+    /* Support Button Styles */
+    .support-button-section {
+        border-top: 1px solid #e2e8f0;
+        padding-top: 1.5rem;
+    }
+
+    body.dark-mode .support-button-section {
+        border-top-color: #4a5568;
+    }
+
+    .btn-support {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #319795, #2c7a7b);
+        color: white !important;
+        padding: 14px 28px;
+        font-size: 1rem;
+        font-weight: 600;
+        border-radius: 10px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(49, 151, 149, 0.3);
+        border: none;
+        position: relative;
+        overflow: hidden;
+        z-index: 1;
+    }
+
+    .btn-support * {
+        color: white !important;
+        position: relative;
+        z-index: 2;
+    }
+
+    .btn-support::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s ease;
+        z-index: 1;
+    }
+
+    .btn-support:hover::before {
+        left: 100%;
+    }
+
+    .btn-support:hover {
+        background: linear-gradient(135deg, #2c7a7b, #234e52);
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(49, 151, 149, 0.4);
+        color: white !important;
+        text-decoration: none;
+    }
+
+    .btn-support:active {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 15px rgba(49, 151, 149, 0.3);
+    }
+
+    .btn-support i.fa-ticket-alt {
+        font-size: 1.1rem;
+        color: white !important;
+    }
+
+    .btn-support i.fa-external-link-alt {
+        opacity: 0.8;
+        font-size: 0.8rem;
+        color: white !important;
+    }
+
+    @media (max-width: 576px) {
+        .btn-support {
+            width: 100%;
+            padding: 12px 20px;
+            font-size: 0.95rem;
+        }
+    }
+</style>
+
+<script>
+$(document).ready(function() {
+    $('#support-form').on('submit', function(e) {
+        e.preventDefault();
+        
+        // Validate file input
+        var files = $('#attachments')[0].files;
+        console.log('Selected files:', files.length, Array.from(files).map(f => f.name));
+        
+        var formData = new FormData(this);
+        // Log FormData contents
+        for (var pair of formData.entries()) {
+            console.log('FormData entry:', pair[0], pair[1]);
+        }
+        
+        $.ajax({
+            url: "{% url 'contact_support' %}",
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            headers: {
+                'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val()
+            },
+            success: function(response) {
+                if (response.success) {
+                    alert('Message sent successfully!');
+                    $('#support-form')[0].reset();
+                } else {
+                    alert('Error: ' + response.error + (response.form_errors ? '\nDetails: ' + response.form_errors : ''));
+                }
+            },
+            error: function(xhr) {
+                alert('An error occurred while sending your message. Please try again.');
+                console.log('AJAX error:', xhr.responseText);
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

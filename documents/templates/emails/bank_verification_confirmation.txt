@@ -1,0 +1,29 @@
+BANK DETAILS VERIFIED
+
+Dear {{ company_profile.company_name }},
+
+Great news! Your bank details have been verified and approved.
+
+VERIFICATION DETAILS:
+Verified by: {{ admin_user.get_full_name|default:admin_user.username }}
+Verification Date: {{ verification_date|date:"F d, Y" }}
+Status: ✓ Verified
+
+YOUR BANK DETAILS:
+Bank Name: {{ company_profile.bank_name }}
+Account Number: {{ company_profile.bank_account_number }}
+Account Name: {{ company_profile.bank_account_name }}
+
+WHAT THIS MEANS:
+- Your bank details are now ready for remittance payments
+- Future remittances will be processed to this account
+- You can update your bank details anytime if needed
+
+If you need to update your bank details in the future, you can do so from your Wallet Dashboard.
+
+Best regards,
+The {{ "TeamManager" }} Team
+
+---
+This is an automated message from {{ "TeamManager" }}
+If you believe this verification is incorrect, please contact support immediately.

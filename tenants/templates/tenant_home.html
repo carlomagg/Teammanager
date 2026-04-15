@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+{% load pagination_tags %}
+{% block title%}Welcome to Team Manager{% endblock %}
+{%block content %}
+    <style scoped>
+        body {
+            background-color: #f8f9fa;
+        }
+        .hero-section {
+            position: relative;
+            background: linear-gradient(135deg, #319795 0%, #2d3748 100%);
+            height: 70vh;
+            color: #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border-radius:5px;
+        }
+        .feature-card {
+            transition: transform 0.3s;
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+        .cta-button {
+            font-size: 1.2rem;
+            padding: 0.75rem 2rem;
+        }
+    </style>
+
+    <!-- Navigation Bar -->
+    
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container">
+            <h1 class="display-4 fw-bold">Welcome to TeamManager</h1>
+            <p class="lead">Streamline your company's collaboration, document management, and task tracking with your own dedicated workspace.</p>
+            <a href="{% url 'apply_for_tenant' %}" class="btn btn-light cta-button mt-3">Get Started with Your Company</a>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="py-5">
+        <div class="container">
+            <a href="{% url 'job_board' %}" class="text-decoration-none"><h6 class="text-center mb-3">Browse over {{vacancy_count}} available job{% if vacancy_count != 1 %}s{% endif %} <i class="fas fa-sign-in-alt mb-3 text-primary"></i></h6></a>
+            <a href="{% url 'conference_board' %}" class="text-decoration-none"><h6 class="text-center mb-3">Browse over {{conference_count}} available conference{% if conference_count != 1 %}s{% endif %} & event{% if conference_count != 1 %}s{% endif %}<i class="fas fa-sign-in-alt mb-3 text-primary"></i></h6></a>
+        </div>
+        <div class="container">
+            <h2 class="text-center mb-5">Powerful Features for Your Team</h2>
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <a href="{% url 'job_board' %}" class="quick-link-card card h-100 shadow-sm text-decoration-none">
+                        <div class="card-body text-center">
+                            <i class="fas fa-briefcase fa-2x mb-3 text-primary"></i>
+                            <h5 class="card-title">Job Board</h5>
+                            <p class="card-text small text-muted">Discover your next role.</p>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <a href="{% url 'conference_board' %}" class="quick-link-card card h-100 shadow-sm text-decoration-none">
+                        <div class="card-body text-center">
+                            <i class="fas fa-users fa-2x mb-3 text-primary"></i>
+                            <h5 class="card-title">Conference & Events</h5>
+                            <p class="card-text small text-muted">Discover upcoming professional conferences, summits, and workshops.</p>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="card feature-card shadow-sm">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Dedicated Workspace</h5>
+                            <p class="card-text">Operate in your own subdomain (e.g., raadaa.teammanager.ng) with complete data isolation for security and privacy.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="card feature-card shadow-sm">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Role-Based Permissions</h5>
+                            <p class="card-text">Assign roles like Admin, Member, or Sales Rep to control access and streamline workflows.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="card feature-card shadow-sm">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Document & Task Management</h5>
+                            <p class="card-text">Organize documents, assign tasks, and collaborate efficiently within your team.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Why Join Section -->
+    <section id="why-join" class="py-5 bg-light">
+        <div class="container">
+            <h2 class="text-center mb-5">Why Choose TeamManager for Your Company?</h2>
+            <div class="row">
+                <div class="col-md-6 mb-4">
+                    <h4>Secure & Scalable</h4>
+                    <p>Your company's data is isolated in a dedicated tenant, ensuring privacy and scalability as your team grows.</p>
+                </div>
+                <div class="col-md-6 mb-4">
+                    <h4>Easy Onboarding</h4>
+                    <p>Apply for a tenant, get approved, and start inviting team members to your subdomain in minutes.</p>
+                </div>
+                <div class="col-md-6 mb-4">
+                    <h4>Customizable Workflows</h4>
+                    <p>Tailor permissions and roles to fit your company's unique needs, from small startups to large enterprises.</p>
+                </div>
+                <div class="col-md-6 mb-4">
+                    <h4>Seamless Collaboration</h4>
+                    <p>Integrate documents, tasks, and team communication in one platform, accessible from anywhere.</p>
+                </div>
+            </div>
+            <div class="text-center">
+                <a href="{% url 'apply_for_tenant' %}" class="btn btn-primary cta-button">Apply Now to Create Your Company Account</a>
+            </div>
+        </div>
+    </section>
+
+    {% comment %} <!-- Footer -->
+    <footer class="bg-dark text-white text-center py-3">
+        <p>&copy; 2025 TeamManager. All rights reserved.</p>
+    </footer> {% endcomment %}
+{% endblock %}

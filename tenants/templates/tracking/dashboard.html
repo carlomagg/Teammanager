@@ -1,0 +1,39 @@
+{% extends 'base.html' %}  
+{% block title %}Tracking{% endblock %}
+{% block content %}
+<div class="container my-4">
+    <h2 class="mb-4 text-center" style="color: #319795;"><i class="fas fa-chart-line me-2"></i>Tracking Dashboard</h2>
+    
+    <!-- Bootstrap Tabs Navigation -->
+    <ul class="nav nav-tabs mb-4" id="dashboardTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="tasks-tab" data-bs-toggle="tab" data-bs-target="#tasks-content" type="button" role="tab" aria-controls="tasks-content" aria-selected="true" style="color: #2c7a7b;">Tasks</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="folders-files-tab" data-bs-toggle="tab" data-bs-target="#folders-files-content" type="button" role="tab" aria-controls="folders-files-content" aria-selected="false" style="color: #2c7a7b;">Folders & Files</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="vacancies-tab" data-bs-toggle="tab" data-bs-target="#vacancies-content" type="button" role="tab" aria-controls="vacancies-content" aria-selected="false" style="color: #2c7a7b;">Vacancies & Applications</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="users-tab" data-bs-toggle="tab" data-bs-target="#users-content" type="button" role="tab" aria-controls="users-content" aria-selected="false" style="color: #2c7a7b;">Logged In Users</button>
+        </li>
+    </ul>
+
+    <!-- Tab Content -->
+    <div class="tab-content" id="dashboardTabsContent">
+        <div class="tab-pane fade show active" id="tasks-content" role="tabpanel" aria-labelledby="tasks-tab">
+            {% include 'tracking/tasks_dashboard.html' %}
+        </div>
+        <div class="tab-pane fade" id="folders-files-content" role="tabpanel" aria-labelledby="folders-files-tab">
+            {% include 'tracking/folder_file_dashboard.html' %}
+        </div>
+        <div class="tab-pane fade" id="vacancies-content" role="tabpanel" aria-labelledby="vacancies-tab">
+            {% include 'tracking/vacancy_dashboard.html' %}
+        </div>
+        <div class="tab-pane fade" id="users-content" role="tabpanel" aria-labelledby="users-tab">
+            {% include 'tracking/loggedin_users_dashboard.html' %}
+        </div>
+    </div>
+</div>
+{% endblock %}

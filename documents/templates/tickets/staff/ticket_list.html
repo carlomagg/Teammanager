@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Tickets{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+
+  {# ── Header ── #}
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+      <h4 class="mb-0"><i class="fas fa-ticket-alt me-2 text-primary"></i>Tickets</h4>
+      <small class="text-muted">All support requests for your organisation</small>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{% url 'ticket_create_staff' %}" class="btn btn-primary btn-sm">
+        <i class="fas fa-plus me-1"></i>New Ticket
+      </a>
+      <a href="{% url 'queue_dashboard' %}" class="btn btn-outline-info btn-sm">
+        <i class="fas fa-list-ol me-1"></i>Queue
+      </a>
+    </div>
+  </div>
+
+  {# ── Summary badges ── #}
+  <div class="row g-3 mb-3">
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm text-center h-100" style="border-left:4px solid #0d6efd!important;">
+        <div class="card-body py-3">
+          <div class="fs-3 fw-bold text-primary">{{ count_open }}</div>
+          <div class="small text-muted">Open</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm text-center h-100" style="border-left:4px solid #dc3545!important;">
+        <div class="card-body py-3">
+          <div class="fs-3 fw-bold text-danger">{{ count_escalated }}</div>
+          <div class="small text-muted">Escalated</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm text-center h-100" style="border-left:4px solid #fd7e14!important;">
+        <div class="card-body py-3">
+          <div class="fs-3 fw-bold text-warning">{{ count_unassigned }}</div>
+          <div class="small text-muted">Unassigned</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# ── Filters ── #}
+  <div class="card border-0 shadow-sm mb-3">
+    <div class="card-body py-2">
+      <form method="get" class="d-flex gap-2 flex-wrap align-items-end">
+        <div>
+          <label class="form-label small fw-semibold mb-1">Status</label>
+          <select name="status" class="form-select form-select-sm" style="min-width:130px;">
+            <option value="">All</option>
+            {% for val, label in status_choices %}
+            <option value="{{ val }}" {% if filters.status == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="form-label small fw-semibold mb-1">Category</label>
+          <select name="category" class="form-select form-select-sm" style="min-width:130px;">
+            <option value="">All</option>
+            {% for cat in categories %}
+            <option value="{{ cat.pk }}" {% if filters.category == cat.pk|stringformat:"s" %}selected{% endif %}>
+              {{ cat.name }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="form-label small fw-semibold mb-1">Priority</label>
+          <select name="priority" class="form-select form-select-sm" style="min-width:110px;">
+            <option value="">All</option>
+            {% for p in priorities %}
+            <option value="{{ p.pk }}" {% if filters.priority == p.pk|stringformat:"s" %}selected{% endif %}>
+              {{ p.name }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="form-label small fw-semibold mb-1">Assigned</label>
+          <select name="assigned" class="form-select form-select-sm" style="min-width:110px;">
+            <option value="">All</option>
+            <option value="me"         {% if filters.assigned == 'me' %}selected{% endif %}>Me</option>
+            <option value="unassigned" {% if filters.assigned == 'unassigned' %}selected{% endif %}>Unassigned</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label small fw-semibold mb-1">Search</label>
+          <input type="search" name="q" value="{{ filters.q }}"
+                 class="form-control form-control-sm" placeholder="Ticket #, title, name…"
+                 style="min-width:180px;">
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+        <a href="{% url 'ticket_list' %}" class="btn btn-outline-secondary btn-sm">Clear</a>
+      </form>
+    </div>
+  </div>
+
+  {# ── Table ── #}
+  <div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Ticket #</th>
+              <th>Title</th>
+              <th>Category</th>
+              <th>Priority</th>
+              <th>Submitter</th>
+              <th>Assigned To</th>
+              <th>Status</th>
+              <th>Created</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for ticket in tickets %}
+            <tr>
+              <td>
+                <a href="{% url 'ticket_detail' ticket.ticket_number %}"
+                   class="fw-semibold text-decoration-none">
+                  {{ ticket.ticket_number }}
+                </a>
+              </td>
+              <td class="small">{{ ticket.title|truncatechars:50 }}</td>
+              <td class="small text-muted">{{ ticket.category.name|default:"—" }}</td>
+              <td>
+                {% if ticket.priority %}
+                <span class="badge {{ ticket.priority.badge_class }}">
+                  {{ ticket.priority.name }}
+                </span>
+                {% else %}—{% endif %}
+              </td>
+              <td class="small">{{ ticket.submitter_display }}</td>
+              <td class="small">
+                {% if ticket.assigned_to %}
+                  {{ ticket.assigned_to.get_full_name|default:ticket.assigned_to.username }}
+                {% else %}
+                  <span class="text-warning small"><i class="fas fa-exclamation-circle me-1"></i>Unassigned</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if ticket.status == 'new' %}
+                  <span class="badge bg-info">New</span>
+                {% elif ticket.status == 'in_progress' %}
+                  <span class="badge bg-primary">In Progress</span>
+                {% elif ticket.status == 'escalated' %}
+                  <span class="badge bg-danger">Escalated</span>
+                {% elif ticket.status == 'resolved' or ticket.status == 'closed' %}
+                  <span class="badge bg-secondary">{{ ticket.get_status_display }}</span>
+                {% elif ticket.status == 'pending' or ticket.status == 'pending_info' %}
+                  <span class="badge bg-warning text-dark">{{ ticket.get_status_display }}</span>
+                {% else %}
+                  <span class="badge bg-light text-dark border">{{ ticket.get_status_display }}</span>
+                {% endif %}
+              </td>
+              <td class="small text-muted">{{ ticket.created_at|date:"d M" }}</td>
+              <td>
+                <a href="{% url 'ticket_detail' ticket.ticket_number %}"
+                   class="btn btn-xs btn-outline-secondary py-0 px-2">
+                  <i class="fas fa-eye"></i>
+                </a>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="9" class="text-center text-muted py-5">
+                <i class="fas fa-ticket-alt fa-2x d-block mb-2 opacity-25"></i>
+                No tickets found matching your filters.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% if tickets.has_other_pages %}
+    <div class="card-footer bg-transparent d-flex justify-content-center py-2">
+      {% include 'partials/pagination.html' with page_obj=tickets %}
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

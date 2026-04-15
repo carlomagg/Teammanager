@@ -1,0 +1,631 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Home - {{ tenant.company_profile.company_name|default:"TeamManager" }}{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+
+    {% if user.is_authenticated and tenant.company_profile %}
+        <div class="hero-section">
+            <div class="hero-content-base aha">
+                <div class="calendar-widget animate__animated animate__fadeIn">
+                    <div class="calendar-day"></div>
+                    <div class="calendar-month-year"></div>
+                </div>
+                <div class="hero-content animate__animated animate__fadeInUp">
+                        <div class="company-profile text-center ah">
+                            {% if tenant.company_profile.photo %}
+                                <div class="company-logo-container mb-3 ah">
+                                    <img src="{{ tenant.company_profile.photo.url }}" alt="{{ tenant.company_profile.company_name }} Logo" class="company-logo rounded-circle shadow-sm" style="max-width: 100px; max-height: 100px; object-fit: contain; background: rgba(255, 255, 255, 0.95); padding: 8px;">
+                                </div>
+                            {% else%}
+                                <div class="company-logo-container mb-3 ah">
+                                    <img src="{% static 'teammanager_logo.png' %}" alt="TeamManager Logo" class="company-logo rounded-circle shadow-sm" style="max-width: 100px; max-height: 100px; object-fit: contain; background: rgba(255, 255, 255, 0.95); padding: 8px;">
+                                </div>
+                            {% endif %}
+                            <h1 class="display-4 fw-bold company-name ah">{{ tenant.company_profile.company_name }}</h1>
+                            {% if tenant.company_profile.description %}
+                                <p class="lead mb-4 mx-auto" style="max-width: 600px;">{{ tenant.company_profile.description|truncatewords:20 }}</p>
+                            {% endif %}
+                            <div class="cta-buttons ah">
+                                <a href="{% url 'folder_view' %}" class="btn btn-primary btn-lg me-2">Go to Folders</a>
+                                <a href="{% url 'create_document' %}" class="btn btn-outline-light btn-lg">Create Document</a>
+                            </div>
+                        </div>
+                        </div>
+            </div>
+            <div class="wave-pattern"></div>
+        </div>
+                
+    {% else %}
+        <div class="hero-section hero-section-unauthenticated">
+            <div class="hero-content-base aha">
+                <div class="calendar-widget animate__animated animate__fadeIn">
+                    <div class="calendar-day"></div>
+                    <div class="calendar-month-year"></div>
+                </div>
+                <div class="hero-content animate__animated animate__fadeInUp">  
+                    <div class="unauthenticated-home">
+                        <h1 class="display-4 fw-bold aha">Streamline Your Workplace</h1>
+                        <div class="aha"><p class="lead typing" style="max-width: 600px;">Automate, manage, and collaborate on documents and tasks with ease.</p></div>
+                        <div class="cta-buttons aha">
+                            {% if user.is_authenticated %}
+                                <a href="{% url 'folder_view' %}" class="btn btn-primary btn-lg me-2">Go to Folders</a>
+                                <a href="{% url 'create_document' %}" class="btn btn-outline-light btn-lg">Create Document</a>
+                            {% else %}
+                                <a href="{% url 'unified_signup' %}" class="btn btn-outline-light btn-lg signup-btn-main">
+                                    <i class="fas fa-user-plus me-2"></i>Sign Up Now
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    </div>
+            </div>
+            <div class="wave-pattern"></div>
+        </div>
+    {% endif %}
+        
+
+    <!-- Quick Links Section (for authenticated users) -->
+    {% if user.is_authenticated %}
+    <section class="quick-links-section py-5">
+        <div class="container">
+            <h2 class="text-center mb-5">Quick Links</h2>
+            <div class="row row-cols-1 row-cols-md-3 g-4">
+                <div class="col">
+                    <a href="{% url 'create_task' %}" class="quick-link-card card h-100 shadow-sm text-decoration-none">
+                        <div class="card-body text-center">
+                            <i class="fas fa-tasks fa-2x mb-3 text-primary"></i>
+                            <h5 class="card-title">Create Task</h5>
+                            <p class="card-text small text-muted">Assign and track tasks for your team.</p>
+                        </div>
+                    </a>
+                </div>
+                <div class="col">
+                    <a href="{% url 'folder_view' %}" class="quick-link-card card h-100 shadow-sm text-decoration-none">
+                        <div class="card-body text-center">
+                            <i class="fas fa-upload fa-2x mb-3 text-primary"></i>
+                            <h5 class="card-title">Upload File</h5>
+                            <p class="card-text small text-muted">Add documents to your folders.</p>
+                        </div>
+                    </a>
+                </div>
+                <div class="col">
+                    <a href="{% url 'booking_dashboard' %}" class="quick-link-card card h-100 shadow-sm text-decoration-none">
+                        <div class="card-body text-center">
+                            <i class="fas fa-calendar fa-2x mb-3 text-primary"></i>
+                            <h5 class="card-title">View Calendar</h5>
+                            <p class="card-text small text-muted">Check upcoming events and deadlines.</p>
+                        </div>
+                    </a>
+                </div>
+                <div class="col">
+                    <a href="{% url 'job_board' %}" class="quick-link-card card h-100 shadow-sm text-decoration-none">
+                        <div class="card-body text-center">
+                            <i class="fas fa-briefcase fa-2x mb-3 text-primary"></i>
+                            <h5 class="card-title">Job Board</h5>
+                            <p class="card-text small text-muted">Discover your next role.</p>
+                        </div>
+                    </a>
+                </div>
+                <div class="col">
+                    <a href="{% url 'conference_board' %}" class="quick-link-card card h-100 shadow-sm text-decoration-none">
+                        <div class="card-body text-center">
+                            <i class="fas fa-users fa-2x mb-3 text-primary"></i>
+                            <h5 class="card-title">Conference Board</h5>
+                            <p class="card-text small text-muted">Find, register and attend events around you.</p>
+                        </div>
+                    </a>
+                </div>
+                <div class="col">
+                    <a href="https://tm.teammanager.ng/tickets/submit/" target="_blank" class="quick-link-card card h-100 shadow-sm text-decoration-none support-card">
+                        <div class="card-body text-center">
+                            <i class="fas fa-ticket-alt fa-2x mb-3 text-primary"></i>
+                            <h5 class="card-title">Support Tickets</h5>
+                            <p class="card-text small text-muted">Get help from our support team.</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+    {% endif %}
+    <!-- Conferences Carousel Section -->
+    <section class="carousel-section py-4">
+        <div class="container-fluid">
+            {% include 'conference_carousel.html' with items=conferences %}
+        </div>
+    </section>
+
+    <!-- Job Board Carousel Section -->
+    <section class="carousel-section py-4">
+        <div class="container-fluid">
+            {% include 'job_carousel.html' with vacancies=vacancies %}
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features-section py-5">
+        <div class="container">
+            <h2 class="text-center mb-5">Why Choose TeamManager?</h2>
+            <div class="row row-cols-1 row-cols-md-3 g-4">
+                <div class="col">
+                    <div class="card h-100 shadow-sm animate__animated animate__fadeInLeft">
+                        <div class="card-body text-center">
+                            <i class="fas fa-file-alt fa-3x mb-3 text-primary"></i>
+                            <h5 class="card-title">Document Creation</h5>
+                            <p class="card-text">Create professional documents quickly with customizable templates.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card h-100 shadow-sm animate__animated animate__fadeInUp">
+                        <div class="card-body text-center">
+                            <i class="fas fa-users fa-3x mb-3 text-primary"></i>
+                            <h5 class="card-title">Team Collaboration</h5>
+                            <p class="card-text">Collaborate in real-time with version control and feedback.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card h-100 shadow-sm animate__animated animate__fadeInRight">
+                        <div class="card-body text-center">
+                            <i class="fas fa-shield-alt fa-3x mb-3 text-primary"></i>
+                            <h5 class="card-title">Secure Storage</h5>
+                            <p class="card-text">Store documents securely with encryption and access controls.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Support CTA Section -->
+    <section class="support-cta-section py-5">
+        <div class="container">
+            <div class="support-cta-card card shadow-lg">
+                <div class="card-body text-center p-5">
+                    <i class="fas fa-headset fa-4x mb-4 text-primary"></i>
+                    <h3 class="mb-3">Need Help? We're Here for You</h3>
+                    <p class="lead mb-4">Our support team is ready to assist you with any questions or issues.</p>
+                    <a href="https://tm.teammanager.ng/tickets/submit/" target="_blank" class="btn btn-support-cta">
+                        <i class="fas fa-ticket-alt me-2"></i>Submit a Support Ticket
+                        <i class="fas fa-external-link-alt ms-2 small"></i>
+                    </a>
+                    <p class="text-muted small mt-3 mb-0">Available Monday - Friday, 9:00 AM - 7:00 PM</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <style>
+        .hero-section {
+            position: relative;
+            background: linear-gradient(135deg, #319795 0%, #2d3748 100%);
+            height: 70vh;
+            color: #e2e8f0;
+            display: flex;
+            align-items: center;
+            /* text-align: left; */
+            justify-content: center;
+            overflow: hidden;
+        }
+        body.dark-mode .hero-section {
+            background: linear-gradient(135deg, #1a202c 0%, #319795 100%);
+        }
+        .hero-content-base {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            padding: 20px;
+        }
+        .hero-content .ah {
+            text-align: center!important;
+            max-width: 700px!important;
+            margin: 0 auto!important;
+        }
+        .hero-content .aha {
+            /* text-align: left; */
+            max-width: 700px!important;
+            /* margin: 0 auto; */
+        }
+        .hero-content {
+            /* text-align: left; */
+            max-width: 700px!important;
+            margin: 0 auto;
+        }
+        .hero-content h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+        }
+        .hero-content .lead {
+            font-size: 1.2rem;
+            font-weight: 400;
+            color: #e2e8f0;
+            margin-top: -10px;
+        }
+        .company-logo-container {
+            display: inline-block;
+        }
+        .company-logo {
+            transition: transform 0.3s ease;
+        }
+        .company-logo:hover {
+            transform: scale(1.05);
+        }
+        
+        .cta-buttons .btn-primary {
+            background-color: #319795;
+            border-color: #319795;
+        }
+        .cta-buttons .btn-primary:hover {
+            background-color: #2c7a7b;
+            border-color: #2c7a7b;
+        }
+        .cta-buttons .btn-outline-light {
+            border-color: #e2e8f0;
+            color: #e2e8f0;
+        }
+        .cta-buttons .btn-outline-light:hover {
+            background-color: rgba(226, 232, 240, 0.2);
+            color: #e2e8f0;
+        }
+        .calendar-widget {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            color: #2d3748;
+        }
+        body.dark-mode .calendar-widget {
+            background: rgba(45, 55, 72, 0.95);
+            color: #e2e8f0;
+        }
+        .calendar-day {
+            font-size: 2rem;
+            font-weight: 600;
+        }
+        .calendar-month-year {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .wave-pattern {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100px;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='%23ffffff' fill-opacity='0.1' d='M0,192L48,181.3C96,171,192,149,288,149.3C384,149,480,171,576,181.3C672,192,768,192,864,181.3C960,171,1056,149,1152,138.7C1248,128,1344,128,1392,128L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z'%3E%3C/path%3E%3C/svg%3E") no-repeat bottom;
+        }
+        body.dark-mode .wave-pattern {
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='%232d3748' fill-opacity='0.1' d='M0,192L48,181.3C96,171,192,149,288,149.3C384,149,480,171,576,181.3C672,192,768,192,864,181.3C960,171,1056,149,1152,138.7C1248,128,1344,128,1392,128L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z'%3E%3C/path%3E%3C/svg%3E") no-repeat bottom;
+        }
+        body.dark-mode .nav-f :hover {
+            color: #2c7a7b !important;
+        }
+        body.dark-mode .nav-f {
+            color: #e2e8f0;
+        }
+        body.dark-mode .dropdown-content a {
+            background-color: #2d3748;
+            color: #e2e8f0 !important;
+        }
+        .unauthenticated-home{
+            margin-top: 70px;
+        }
+        .signup-btn-main {
+            background-color: rgba(255, 255, 255, 0.15) !important;
+            border: 2px solid #ffffff !important;
+            color: #ffffff !important;
+            font-weight: 600;
+            padding: 14px 32px !important;
+            font-size: 1.1rem !important;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        .signup-btn-main:hover {
+            background-color: #ffffff !important;
+            color: #319795 !important;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(255, 255, 255, 0.3);
+        }
+        .signup-btn-main i {
+            font-size: 1.2rem;
+        }
+        .display-4 {
+            color: #e2e8f0;
+            margin-top: -100px;
+        }
+        
+        .typing {
+        overflow: hidden; /* Hide text beyond width */
+        white-space: nowrap; /* Keep text on one line */
+        position: relative;
+        animation: typing 3.5s steps(65, end) forwards /* Typing effect (adjust steps to char count) */
+        }
+        .typing::after {
+        content: '';
+        display: inline-block;
+        width: 0.08em; /* Cursor thickness */
+        height: 1.6em; /* Matches font-size height */
+        background-color: orange;
+        animation: blink 0.8s infinite;
+        vertical-align: -0.4em; /* Adjust to align with text baseline */
+        }
+        /* Typing animation: Expand width from 0 to full */
+        @keyframes typing {
+        from { width: 0; }
+        to { width: 100%; }
+        }
+
+        /* Blinking cursor animation */
+        @keyframes blink {
+        from { opacity: 0; }
+        to { opacity: 1; }
+        }
+        .quick-links-section {
+            background: #ffffff;
+            padding: 40px 0;
+        }
+        body.dark-mode .quick-links-section {
+            background: #2d3748;
+        }
+        .quick-link-card {
+            border-radius: 12px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            color: #2d3748;
+        }
+        body.dark-mode .quick-link-card {
+            color: #e2e8f0;
+            background: #3b4a6b;
+        }
+        .quick-link-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        body.dark-mode .quick-link-card:hover {
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+        .quick-link-card .card-title {
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+        .carousel-section {
+            background: #f8f9fa;
+            padding: 60px 0;
+            height: fit-content;
+            margin-top: 20px;
+        }
+        body.dark-mode .carousel-section {
+            background: #1a202c;
+        }
+        .carousel-section .container-fluid {
+            background: inherit;
+        }
+        body.dark-mode .carousel-section .container-fluid {
+            background: #1a202c;
+        }
+        .carousel-container {
+            height: 260px;
+        }
+        .features-section {
+            background: #f8f9fa;
+            padding: 60px 0;
+        }
+        body.dark-mode .features-section {
+            background: #1a202c;
+        }
+        .features-section .card {
+            border-radius: 12px;
+            border: none;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        body.dark-mode .features-section .card {
+            background: #3b4a6b;
+        }
+        .features-section .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        body.dark-mode .features-section .card:hover {
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+        .features-section .card-title {
+            font-size: 1.2rem;
+            font-weight: 500;
+            color: #2d3748;
+        }
+        body.dark-mode .features-section .card-title {
+            color: #e2e8f0;
+        }
+        .features-section .card-text {
+            color: #718096;
+        }
+        body.dark-mode .features-section .card-text {
+            color: #a0aec0;
+        }
+        
+        /* Support CTA Section */
+        .support-cta-section {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e2e7ec 100%);
+        }
+        
+        body.dark-mode .support-cta-section {
+            background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+        }
+        
+        .support-cta-card {
+            border: none;
+            border-radius: 20px;
+            background: #ffffff;
+            overflow: hidden;
+        }
+        
+        body.dark-mode .support-cta-card {
+            background: #2d3748;
+        }
+        
+        .support-cta-card h3 {
+            color: #2d3748;
+            font-weight: 700;
+        }
+        
+        body.dark-mode .support-cta-card h3 {
+            color: #e2e8f0;
+        }
+        
+        .support-cta-card .lead {
+            color: #4a5568;
+        }
+        
+        body.dark-mode .support-cta-card .lead {
+            color: #cbd5e0;
+        }
+        
+        .btn-support-cta {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #319795, #2c7a7b);
+            color: white !important;
+            padding: 16px 32px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 12px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(49, 151, 149, 0.3);
+            border: none;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+        
+        .btn-support-cta * {
+            color: white !important;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .btn-support-cta::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+            z-index: 1;
+        }
+        
+        .btn-support-cta:hover::before {
+            left: 100%;
+        }
+        
+        .btn-support-cta:hover {
+            background: linear-gradient(135deg, #2c7a7b, #234e52);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(49, 151, 149, 0.4);
+            color: white !important;
+            text-decoration: none;
+        }
+        
+        .btn-support-cta:active {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(49, 151, 149, 0.3);
+        }
+        
+        .support-card {
+            background: linear-gradient(135deg, rgba(49, 151, 149, 0.05), rgba(44, 122, 123, 0.05));
+            border: 2px solid rgba(49, 151, 149, 0.2) !important;
+        }
+        
+        body.dark-mode .support-card {
+            background: linear-gradient(135deg, rgba(49, 151, 149, 0.1), rgba(44, 122, 123, 0.1));
+            border: 2px solid rgba(49, 151, 149, 0.3) !important;
+        }
+        
+        .support-card:hover {
+            border-color: #319795 !important;
+            background: linear-gradient(135deg, rgba(49, 151, 149, 0.1), rgba(44, 122, 123, 0.1));
+        }
+        
+        @media (width < 768px) {
+            .support-cta-card .card-body {
+                padding: 2rem 1.5rem !important;
+            }
+            
+            .support-cta-card h3 {
+                font-size: 1.5rem;
+            }
+            
+            .btn-support-cta {
+                width: 100%;
+                padding: 14px 24px;
+                font-size: 1rem;
+            }
+        }
+        
+        @media (width > 768px) {
+            .hero-section-unauthenticated {
+                height: 40vh;
+            }
+            .hero-content h1 {
+                font-size: 2rem;
+            }
+            .hero-content .lead {
+                font-size: 1rem;
+            }
+            .calendar-widget {
+                top: 10px;
+                right: 10px;
+                padding: 10px;
+            }
+            .calendar-day {
+                font-size: 1.5rem;
+            }
+            .calendar-month-year {
+                font-size: 0.8rem;
+            }
+            .cta-buttons .btn-lg {
+                font-size: 0.9rem;
+                padding: 8px 16px;
+            }
+        }
+        @media (width < 1025px) {
+            .hero-content {
+                padding: 0 15px;
+            }
+            .calendar-widget {
+                display: none;
+            }
+            .quick-links-section h2,
+            .features-section h2 {
+                font-size: 1.5rem;
+            }
+            .company-logo {
+                max-width: 80px;
+                max-height: 80px;
+            }
+        }
+    </style>
+
+    <script>
+    $(document).ready(function() {
+        const today = new Date();
+        const day = today.getDate();
+        const month = today.toLocaleString('default', { month: 'long' });
+        const year = today.getFullYear();
+        $('.calendar-day').text(day);
+        $('.calendar-month-year').text(`${month} ${year}`);
+    });
+    </script>
+{% endblock %}

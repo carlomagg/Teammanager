@@ -1,0 +1,192 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Payroll Details{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>Payroll Details</h2>
+            <p class="text-muted">{{ payroll.period_start|date:"F Y" }}</p>
+        </div>
+        <div class="col-md-4 text-right">
+            <a href="{% url 'payroll_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to List
+            </a>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <strong>Period:</strong><br>
+                            {{ payroll.period_start|date:"d M Y" }} - {{ payroll.period_end|date:"d M Y" }}
+                        </div>
+                        <div class="col-md-2">
+                            <strong>Status:</strong><br>
+                            <span class="badge badge-{{ payroll.status }}">{{ payroll.get_status_display }}</span>
+                        </div>
+                        <div class="col-md-2">
+                            <strong>Employees:</strong><br>
+                            {{ summary.employee_count }}
+                        </div>
+                        <div class="col-md-2">
+                            <strong>Total Gross:</strong><br>
+                            ₦{{ summary.total_gross|floatformat:2 }}
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Total Net:</strong><br>
+                            <span class="text-success">₦{{ summary.total_net|floatformat:2 }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if payroll.status == 'draft' and can_approve %}
+    <div class="alert alert-info">
+        <strong>Actions Available:</strong>
+        <a href="{% url 'payroll_edit' payroll.pk %}" class="btn btn-sm btn-warning ml-2">
+            <i class="fas fa-edit"></i> Edit Payroll
+        </a>
+        {% if payroll.submitted_at %}
+        <a href="{% url 'approve_payroll' payroll.pk %}" class="btn btn-sm btn-success ml-2">
+            <i class="fas fa-check"></i> Approve
+        </a>
+        {% else %}
+        <a href="{% url 'submit_for_approval' payroll.pk %}" class="btn btn-sm btn-primary ml-2">
+            <i class="fas fa-paper-plane"></i> Submit for Approval
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% if payroll.is_fully_approved and payroll.status == 'approved' and can_pay %}
+    <div class="alert alert-success">
+        <strong>Ready for Payment!</strong>
+        <a href="{% url 'pay_payroll' payroll.pk %}" class="btn btn-sm btn-success ml-2">
+            <i class="fas fa-money-bill"></i> Pay Now
+        </a>
+    </div>
+    {% endif %}
+
+    {% if payroll.approval_trail %}
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>Approval Trail</h5>
+        </div>
+        <div class="card-body">
+            <div class="timeline">
+                {% for approval in payroll.approval_trail %}
+                <div class="timeline-item">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <strong>{{ approval.username }}</strong> ({{ approval.role }})
+                        <span class="badge badge-{{ approval.action }}">{{ approval.action }}</span>
+                        <br>
+                        <small class="text-muted">{{ approval.timestamp }}</small>
+                        {% if approval.comments %}
+                        <p class="mt-2">{{ approval.comments }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="card">
+        <div class="card-header">
+            <h5>Payroll Items ({{ items.count }} employees)</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-sm table-hover">
+                    <thead>
+                        <tr>
+                            <th>Staff Name</th>
+                            <th>Bank Details</th>
+                            <th>Gross Amount</th>
+                            {% for field in custom_fields %}
+                            <th>{{ field.label }}</th>
+                            {% endfor %}
+                            <th>Net Amount</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in items %}
+                        <tr>
+                            <td>{{ item.staff_name }}</td>
+                            <td>
+                                <small>
+                                    {{ item.bank_name }}<br>
+                                    {{ item.account_number }}
+                                </small>
+                            </td>
+                            <td>₦{{ item.gross_amount|floatformat:2 }}</td>
+                            {% for field in custom_fields %}
+                            <td>
+                                {% if field.operation == 'subtract' %}-{% endif %}
+                                ₦{{ item.custom_field_values|get_item_payroll:field.name|default:0|floatformat:2 }}
+                            </td>
+                            {% endfor %}
+                            <td><strong>₦{{ item.net_amount|floatformat:2 }}</strong></td>
+                            <td>
+                                {% if item.payment %}
+                                <span class="badge badge-success">Paid</span>
+                                {% else %}
+                                <span class="badge badge-secondary">Pending</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr class="table-info">
+                            <td colspan="2"><strong>TOTAL</strong></td>
+                            <td><strong>₦{{ summary.total_gross|floatformat:2 }}</strong></td>
+                            {% for field in custom_fields %}
+                            <td></td>
+                            {% endfor %}
+                            <td><strong>₦{{ summary.total_net|floatformat:2 }}</strong></td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {% if payroll.notes %}
+    <div class="card mt-3">
+        <div class="card-header">Notes</div>
+        <div class="card-body">{{ payroll.notes }}</div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.badge-draft { background-color: #6c757d; }
+.badge-approved { background-color: #28a745; }
+.badge-paid { background-color: #007bff; }
+.badge-cancelled { background-color: #dc3545; }
+.badge-submitted { background-color: #17a2b8; }
+.badge-rejected { background-color: #dc3545; }
+.badge-returned { background-color: #ffc107; }
+
+.timeline { position: relative; padding-left: 30px; }
+.timeline-item { position: relative; padding-bottom: 20px; }
+.timeline-marker { position: absolute; left: -30px; width: 12px; height: 12px; border-radius: 50%; background: #007bff; }
+.timeline-content { padding-left: 10px; }
+</style>
+
+{% load custom_filters %}
+{% endblock %}

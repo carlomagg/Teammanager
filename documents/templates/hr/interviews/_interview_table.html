@@ -1,0 +1,150 @@
+<!-- _interview_table.html -->
+{% if interviews %}
+<div class="table-responsive">
+    <table class="table table-hover align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>Date & Time</th>
+                <th>Vacancy</th>
+                <th>Candidates</th>
+                <th>Interviewers</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for interview in interviews %}
+            <tr>
+                <td>
+                    <strong>{{ interview.schedule_start|date:"M d, Y" }}</strong><br>
+                    <small class="text-muted">
+                        {{ interview.schedule_start|time:"h:i A" }} – {{ interview.schedule_end|time:"h:i A" }}
+                        <br>{{ interview.get_timezone_display }}
+                    </small>
+                </td>
+                <td>
+                    <a href="{% url 'vacancy_detail' interview.vacancy.id %}" class="text-decoration-none">
+                        {{ interview.vacancy.title }}
+                    </a>
+                    {% if interview.vacancy.department %}
+                    <br><small class="text-muted">{{ interview.vacancy.department.name }}</small>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if interview.applications %}
+                        {% for app in interview.applications.all|slice:":3" %}
+                            <span class="badge bg-light text-dark border me-1" title="{{ app.email }}">
+                                {{ app.get_full_name|default:app.email }}
+                            </span>
+                        {% empty %}
+                            <span class="text-muted">—</span>
+                        {% endfor %}
+                    {% endif %}
+                    {% if interview.applications.count > 3 %}
+                        <small class="text-muted">+{{ interview.applications.count|add:"-3" }} more</small>
+                    {% endif %}
+                </td>
+                <td>
+                    {% for user in interview.interviewers.all|slice:":5" %}
+                        <span class="d-inline-block text-center me-1" title="{{ user.staff_profile.get_full_name|default:user.email }}">
+                            <div class="bg-primary text-white rounded-circle" style="width:28px;height:28px;font-size:11px;line-height:28px;">
+                                {{ user.username|slice:":2"|upper }}
+                            </div>
+                        </span>
+                    {% empty %}
+                        <span class="text-muted">—</span>
+                    {% endfor %}
+                </td>
+                <td>
+                    {% if interview.is_virtual %}
+                        <span class="badge bg-info text-dark">Virtual</span>
+                    {% else %}
+                        <span class="badge bg-secondary">Physical</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <span class="badge
+                        {% if interview.status == 'scheduled' %}bg-warning text-dark
+                        {% elif interview.status == 'completed' %}bg-success
+                        {% elif interview.status == 'rescheduled' %}bg-info text-dark
+                        {% elif interview.status == 'cancelled' %}bg-danger
+                        {% endif %}">
+                        {{ interview.get_status_display }}
+                    </span>
+                </td>
+                <td>
+                    <div class="btn-group btn-group-sm">
+                        <a href="{% url 'interview_detail' interview.pk %}" class="btn btn-outline-primary">View</a>
+                        {% if interview.status in 'scheduled,rescheduled' %}
+                            <a href="{% url 'update_interview' interview.id %}?next={{ request.get_full_path }}" class="btn btn-outline-secondary">Edit</a>
+                            <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cancelModal{{ interview.pk }}">
+                                Cancel
+                            </button>
+                        {% endif %}
+                        {% if interview.is_virtual and interview.virtual_link or interview.google_meet and interview.google_meet_link %}
+                            <a href="{{ interview.virtual_link|default:interview.google_meet_link }}" target="_blank" class="btn btn-success">Join</a>
+                        {% endif %}
+                    </div>
+
+                    <!-- Cancel Modal -->
+                    <div class="modal fade" id="cancelModal{{ interview.pk }}" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Cancel Interview?</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <p>Are you sure you want to cancel this interview?</p>
+                                    <strong>{{ interview.vacancy.title }}</strong><br>
+                                    {{ interview.schedule_start|date:"M d, Y \a\t h:i A" }} ({{ interview.get_timezone_display }})
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                    <form action="{% url 'cancel_interview' interview.id %}?next={{ request.get_full_path }}" method="post" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-primary">Yes, Cancel</button>
+                                    </form>
+                                    <form action="{% url 'delete_interview' interview.id %}?next={{ request.get_full_path }}" method="post" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-danger"><i class="fas fa-trash"></i> DELETE this Interview</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Pagination (optional per tab) -->
+{% if interviews.has_other_pages %}
+<nav class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if interviews.has_previous %}
+            <li class="page-item"><a class="page-link" href="?tab={{ request.GET.tab|default:'all' }}&page={{ interviews.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.vacancy %}&vacancy={{ request.GET.vacancy }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}&search={{ request.GET.search }}">Previous</a></li>
+        {% endif %}
+        <li class="page-item disabled"><span class="page-link">Page {{ interviews.number }} of {{ interviews.paginator.num_pages }}</span></li>
+        {% if interviews.has_next %}
+            <li class="page-item"><a class="page-link" href="?tab={{ request.GET.tab|default:'all' }}&page={{ interviews.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.vacancy %}&vacancy={{ request.GET.vacancy }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}&search={{ request.GET.search }}">Next</a></li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+{% else %}
+<div class="text-center py-5 text-muted">
+    <h5>No interviews found</h5>
+    <p>
+        {% if request.GET.status or request.GET.vacancy %}
+            Try adjusting your filters.
+        {% else %}
+            No interviews in this category yet.
+        {% endif %}
+    </p>
+</div>
+{% endif %}

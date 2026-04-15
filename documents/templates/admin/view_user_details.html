@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% load custom_filters%}
+{% block title %}{{ user_view.username }}'s Details{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <h1>User Details: {{ user_view.username }}</h1>
+    <div class="card">
+        <div class="card-body">
+            <dl class="row">
+                {% for field in details %}
+                <dt class="col-sm-3">{{ field|title }}</dt>
+                <dd class="col-sm-9">
+                    {% if field == 'is_active' or field == 'is_staff' %}
+                        {{ user_view|dict_get:field|yesno:"Yes,No" }}
+                    {% elif field == 'roles' %}
+                        {{ user_view.roles.all|join:", " }}
+                    {% elif field == 'teams' %}
+                        {{ user_view.teams.all|join:", " }}
+                    {% else %}
+                        {{ user_view|dict_get:field|default:"N/A" }}
+                    {% endif %}
+                </dd>
+                {% endfor %}
+            </dl>
+            <a href="{% url 'edit_user' user_id=user_view.id %}" class="btn btn-primary">Edit</a>
+            <a href="{% url 'users_list' %}" class="btn btn-secondary">Back to List</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

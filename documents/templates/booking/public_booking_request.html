@@ -1,0 +1,266 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Book Appointment - {{ tenant.name|default:"TeamManager" }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+            <!-- Header -->
+            <div class="text-center mb-4">
+                {% if tenant and tenant.company_profile and tenant.company_profile.photo %}
+                    <img src="{{ tenant.company_profile.photo.url }}" alt="{{ tenant.name }}" class="mb-3" style="height: 60px; width: auto;">
+                {% endif %}
+                <h2 class="fw-bold" style="color: #319795;">
+                    <i class="fas fa-calendar-check me-2"></i>Book an Appointment
+                </h2>
+                <p class="text-muted">Schedule a meeting with {{ tenant.company_profile.company_name|default:tenant.name }}</p>
+            </div>
+
+            <!-- Booking Request Form -->
+            <div class="card shadow-sm border-0" style="border-radius: 12px;">
+                <div class="card-body p-4">
+                    <form method="post" id="bookingRequestForm">
+                        {% csrf_token %}
+                        
+                        <div class="row g-3">
+                            <!-- Full Name -->
+                            <div class="col-md-6">
+                                <label for="full_name" class="form-label fw-medium">
+                                    Full Name <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="full_name" name="full_name" required>
+                            </div>
+
+                            <!-- Email -->
+                            <div class="col-md-6">
+                                <label for="email" class="form-label fw-medium">
+                                    Email Address <span class="text-danger">*</span>
+                                </label>
+                                <input type="email" class="form-control" id="email" name="email" required>
+                            </div>
+
+                            <!-- Phone -->
+                            <div class="col-md-6">
+                                <label for="phone" class="form-label fw-medium">
+                                    Phone Number <span class="text-danger">*</span>
+                                </label>
+                                <input type="tel" class="form-control" id="phone" name="phone" required>
+                            </div>
+
+                            <!-- Company/Organization (Optional) -->
+                            <div class="col-md-6">
+                                <label for="company" class="form-label fw-medium">
+                                    Company/Organization
+                                </label>
+                                <input type="text" class="form-control" id="company" name="company">
+                            </div>
+
+                            <!-- Preferred Date -->
+                            <div class="col-md-6">
+                                <label for="preferred_date" class="form-label fw-medium">
+                                    Preferred Date <span class="text-danger">*</span>
+                                </label>
+                                <input type="date" class="form-control" id="preferred_date" name="preferred_date" required>
+                            </div>
+
+                            <!-- Preferred Time -->
+                            <div class="col-md-6">
+                                <label for="preferred_time" class="form-label fw-medium">
+                                    Preferred Time <span class="text-danger">*</span>
+                                </label>
+                                <input type="time" class="form-control" id="preferred_time" name="preferred_time" required>
+                            </div>
+
+                            <!-- Meeting Type -->
+                            <div class="col-12">
+                                <label for="meeting_type" class="form-label fw-medium">
+                                    Meeting Type <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select" id="meeting_type" name="meeting_type" required>
+                                    <option value="">Select meeting type...</option>
+                                    <option value="consultation">Consultation</option>
+                                    <option value="business_meeting">Business Meeting</option>
+                                    <option value="interview">Interview</option>
+                                    <option value="support">Support/Help</option>
+                                    <option value="sales">Sales Inquiry</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+
+                            <!-- Purpose/Message -->
+                            <div class="col-12">
+                                <label for="purpose" class="form-label fw-medium">
+                                    Purpose of Meeting <span class="text-danger">*</span>
+                                </label>
+                                <textarea class="form-control" id="purpose" name="purpose" rows="4" 
+                                          placeholder="Please describe what you'd like to discuss..." required></textarea>
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Provide details to help us prepare for your meeting
+                                </div>
+                            </div>
+
+                            <!-- Duration (Optional) -->
+                            <div class="col-md-6">
+                                <label for="duration" class="form-label fw-medium">
+                                    Expected Duration
+                                </label>
+                                <select class="form-select" id="duration" name="duration">
+                                    <option value="30">30 minutes</option>
+                                    <option value="60" selected>1 hour</option>
+                                    <option value="90">1.5 hours</option>
+                                    <option value="120">2 hours</option>
+                                </select>
+                            </div>
+
+                            <!-- Meeting Format -->
+                            <div class="col-md-6">
+                                <label for="format" class="form-label fw-medium">
+                                    Meeting Format <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select" id="format" name="format" required>
+                                    <option value="">Select format...</option>
+                                    <option value="in_person">In-Person</option>
+                                    <option value="virtual">Virtual (Online)</option>
+                                    <option value="phone">Phone Call</option>
+                                    <option value="no_preference">No Preference</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg" style="background-color: #319795; border-color: #319795;">
+                                <i class="fas fa-paper-plane me-2"></i>Submit Booking Request
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Success Message -->
+                    <div id="successMessage" class="alert alert-success mt-3 d-none" role="alert">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <strong>Request Submitted!</strong> We'll contact you shortly to confirm your appointment.
+                    </div>
+
+                    <!-- Error Message -->
+                    <div id="errorMessage" class="alert alert-danger mt-3 d-none" role="alert">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        <span id="errorText">An error occurred. Please try again.</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info Box -->
+            <div class="alert alert-light mt-4 border" role="alert" style="border-radius: 12px;">
+                <div class="d-flex align-items-start">
+                    <i class="fas fa-info-circle me-3 mt-1" style="color: #319795; font-size: 1.5rem;"></i>
+                    <div>
+                        <h6 class="fw-bold mb-2">What Happens Next?</h6>
+                        <ul class="small mb-0">
+                            <li>We'll review your booking request</li>
+                            <li>You'll receive a confirmation email within 24 hours</li>
+                            <li>We may suggest alternative times if your preferred slot isn't available</li>
+                            <li>You'll receive meeting details and any preparation instructions</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Back Button -->
+            <div class="text-center mt-4">
+                <a href="{% url 'quick_services' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Quick Services
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Set minimum date to today
+document.getElementById('preferred_date').min = new Date().toISOString().split('T')[0];
+
+document.getElementById('bookingRequestForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const submitBtn = this.querySelector('button[type="submit"]');
+    const successMsg = document.getElementById('successMessage');
+    const errorMsg = document.getElementById('errorMessage');
+    
+    // Hide previous messages
+    successMsg.classList.add('d-none');
+    errorMsg.classList.add('d-none');
+    
+    // Disable submit button
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Submitting...';
+    
+    fetch(window.location.href, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            successMsg.classList.remove('d-none');
+            this.reset();
+            // Scroll to success message
+            successMsg.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Redirect after 3 seconds
+            setTimeout(() => {
+                window.location.href = "{% url 'quick_services' %}";
+            }, 3000);
+        } else {
+            errorMsg.classList.remove('d-none');
+            document.getElementById('errorText').textContent = 
+                data.message || 'An error occurred. Please try again.';
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Submit Booking Request';
+        }
+    })
+    .catch(error => {
+        errorMsg.classList.remove('d-none');
+        document.getElementById('errorText').textContent = 'An error occurred. Please try again.';
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Submit Booking Request';
+    });
+});
+</script>
+
+<style>
+    body.dark-mode .card {
+        background-color: #2d3748;
+        border-color: #4a5568 !important;
+    }
+    
+    body.dark-mode .alert-light {
+        background-color: #2d3748;
+        border-color: #4a5568 !important;
+        color: #e2e8f0;
+    }
+    
+    body.dark-mode .form-label {
+        color: #e2e8f0;
+    }
+    
+    body.dark-mode .form-control,
+    body.dark-mode .form-select {
+        background-color: #1a202c;
+        border-color: #4a5568;
+        color: #e2e8f0;
+    }
+    
+    body.dark-mode .form-control:focus,
+    body.dark-mode .form-select:focus {
+        background-color: #1a202c;
+        border-color: #319795;
+        color: #e2e8f0;
+    }
+</style>
+{% endblock %}

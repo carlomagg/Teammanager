@@ -1,0 +1,266 @@
+{% extends 'base.html' %}
+{% block title %}Teams - TeamManager{% endblock %}
+{% load custom_filters %}
+{% block content %}
+<div class="teams-page">
+    <div class="card shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h4 class="card-title mb-0">
+                <i class="fas fa-users me-2 text-primary" aria-hidden="true"></i>
+                Teams ({{ teams|page_obj_count }})
+            </h4>
+            <div class="mb-3">
+                <a href="{% url 'create_team' %}" class="btn btn-success">Add Team</a>
+            </div>
+            <div class="input-group w-50 w-md-25">
+                <span class="input-group-text bg-transparent border-end-0">
+                    <i class="fas fa-search text-muted"></i>
+                </span>
+                {% comment %} <input type="text" class="form-control border-start-0" id="searchTeams" placeholder="Search teams..." aria-label="Search teams"> {% endcomment %}
+                <form method="get" class="input-group w-50 w-md-25">
+                    <input
+                        type="text"
+                        name="search"
+                        class="form-control"
+                        placeholder="Search teams..."
+                        value="{{ request.GET.search }}"
+                    >
+                </form>
+            </div>
+            <a href="{% url 'admin_dashboard' %}" class="btn btn-outline-secondary btn-sm" title="Back to Admin Dashboard">
+                <i class="fas fa-arrow-left me-1"></i> Back
+            </a>
+        </div>
+
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover table-bordered align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col">No.</th>
+                            <th scope="col">Name</th>
+                            <th scope="col">Department</th>
+                            <th scope="col">Created At</th>
+                            <th scope="col">Members</th>
+                            <th scope="col">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="teamTableBody">
+                        {% for team in teams %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td><a href="{% url 'edit_team' team_id=team.id %}">{{ team.name }}</a></td>
+                            <td>{{ team.department.name|default:'—' }}</td>
+                            <td>{{ team.created_at|date:"d M Y" }}</td>
+                            <td><a href="{% url 'team_members' team.id %}">{{ team.members.count|default:'0' }}</a></td>
+                            <td>
+                                <a href="{% url 'edit_team' team_id=team.id %}?next={{ request.get_full_path }}" class="btn btn-outline-primary btn-sm me-1" title="Edit Team">
+                                    <i class="fas fa-edit me-1"></i> Edit
+                                </a>
+                                <form action="{% url 'delete_team' team_id=team.id %}?next={{ request.get_full_path }}" method="POST" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger btn-sm" title="Delete Team" onclick="return confirm('Are you sure you want to delete {{ team.name }}?');">
+                                        <i class="fas fa-trash-alt me-1"></i> Delete
+                                    </button>
+                                </form>
+                                <a href="{% url 'assign_teams_to_users' team.id %}" class="btn btn-primary">Add Users to Team</a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr class="no-results">
+                            <td colspan="7" class="text-center text-muted">No teams found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% if teams.has_other_pages %}
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center mt-3">
+                            {% if teams.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ teams.previous_page_number }}&search={{ request.GET.search }}" aria-label="Previous">
+                                        <span aria-hidden="true">«</span>
+                                    </a>
+                                </li>
+                            {% endif %}
+                            <!--First page-->
+                            <li class="page-item {% if teams.number == 1 %}active{% endif %}">
+                                <a class="page-link" href="?page=1&search={{ request.GET.search }}">1</a>
+                            </li>
+                            {% if teams.number != 1 and teams.number != 2 %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">...</span>
+                                </li>
+                            {% endif %}
+                            {% if teams.number != 1 %}
+                                <li class="page-item {% if teams.number %}active{% endif %}">
+                                    <a class="page-link" href="?page={{ teams.number }}&search={{ request.GET.search }}">{{ teams.number }}</a>
+                                </li>
+                            {% endif %}
+                            {% if teams.number != teams.paginator.num_pages and teams.number != teams.paginator.num_pages|add:-1 %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">...</span>
+                                </li>
+                            {% endif %}
+                            <!-- Last page (only if not already shown) -->
+                            {% if teams.number != teams.paginator.num_pages %}
+                                <li class="page-item {% if teams.number == teams.paginator.num_pages %}active{% endif %}">
+                                    <a class="page-link" href="?page={{ teams.paginator.num_pages }}&search={{ request.GET.search }}">{{ teams.paginator.num_pages }}</a>
+                                </li>
+                            {% endif %}
+                            {% if teams.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ teams.next_page_number }}&search={{ request.GET.search }}" aria-label="Next">
+                                        <span aria-hidden="true">»</span>
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style scoped>
+    .pagination .page-link {
+        color: #319795;
+        border-radius: 8px;
+        margin: 0 2px;
+    }
+    .pagination .page-item.active .page-link {
+        background-color: #319795;
+        border-color: #319795;
+        color: #ffffff;
+    }
+    .pagination .page-link:hover {
+        background-color: #f1f5f9;
+        color: #2c7a7b;
+    }
+    .teams-page {
+        padding: 20px;
+    }
+    .teams-page .card {
+        border: none;
+        border-radius: 12px;
+        background: #ffffff;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+    .teams-page .card-header {
+        background: #f8fafc;
+        border-bottom: 1px solid #e2e8f0;
+        border-radius: 12px 12px 0 0;
+        padding: 15px 20px;
+    }
+    .teams-page .card-title {
+        font-weight: 600;
+        color: #2d3748;
+    }
+    .teams-page .table {
+        margin-bottom: 0;
+        font-size: 0.95rem;
+    }
+    .teams-page .table th {
+        font-weight: 500;
+        color: #2d3748;
+        background: #f8fafc;
+        border-bottom: 2px solid #e2e8f0;
+    }
+    .teams-page .table td {
+        vertical-align: middle;
+        border-color: #e2e8f0;
+    }
+    .teams-page .table-hover tbody tr:hover {
+        background-color: #f1f5f9;
+    }
+    .teams-page .btn-primary {
+        background-color: #319795;
+        border-color: #319795;
+        border-radius: 8px;
+        padding: 6px 12px;
+        font-size: 0.9rem;
+        transition: background-color 0.2s ease;
+    }
+    .teams-page .btn-primary:hover {
+        background-color: #2c7a7b;
+        border-color: #2c7a7b;
+    }
+    .teams-page .btn-danger {
+        background-color: #dc3545;
+        border-color: #dc3545;
+        border-radius: 8px;
+        padding: 6px 12px;
+        font-size: 0.9rem;
+        transition: background-color 0.2s ease;
+    }
+    .teams-page .btn-danger:hover {
+        background-color: #c82333;
+        border-color: #c82333;
+    }
+    .teams-page .form-control, .teams-page .form-select {
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        font-size: 0.9rem;
+        padding: 8px;
+    }
+    .teams-page .form-control:focus, .teams-page .form-select:focus {
+        border-color: #319795;
+        box-shadow: 0 0 0 0.2rem rgba(49, 151, 149, 0.25);
+    }
+    .teams-page .input-group-text {
+        border-radius: 8px 0 0 8px;
+        border: 1px solid #e2e8f0;
+    }
+    .teams-page a:focus, .teams-page button:focus, .teams-page input:focus {
+        outline: 2px solid #319795;
+        outline-offset: 2px;
+        border-radius: 4px;
+    }
+    @media (max-width: 768px) {
+        .teams-page {
+            padding: 15px;
+        }
+        .teams-page .card-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .teams-page .input-group {
+            width: 100% !important;
+        }
+        .teams-page .table {
+            font-size: 0.85rem;
+        }
+        .teams-page .btn-sm {
+            padding: 4px 8px;
+            font-size: 0.85rem;
+        }
+    }
+</style>
+
+<script>
+    // Search functionality
+    document.getElementById('searchTeams').addEventListener('input', function(e) {
+        const searchTerm = e.target.value.toLowerCase();
+        const rows = document.querySelectorAll('#teamTableBody tr:not(.no-results)');
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(searchTerm) ? '' : 'none';
+        });
+        const noResultsRow = document.querySelector('#teamTableBody tr.no-results');
+        if (noResultsRow) {
+            noResultsRow.style.display = Array.from(rows).every(row => row.style.display === 'none') ? '' : 'none';
+        }
+    });
+
+    // Form submission spinner for single actions
+    document.querySelectorAll('form:not(#bulkActionForm)').forEach(form => {
+        form.addEventListener('submit', function() {
+            const btn = form.querySelector('button[type="submit"]');
+            btn.querySelector('.spinner-border').classList.remove('d-none');
+            btn.disabled = true;
+        });
+    });
+</script>
+{% endblock %}

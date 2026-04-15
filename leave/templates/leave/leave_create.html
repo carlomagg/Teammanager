@@ -1,0 +1,486 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Create Leave{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4 leave-create-page">
+    <div class="row mb-4">
+        <div class="col-12 d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <h2 class="fw-semibold mb-1">
+                    <i class="fas fa-file-alt me-2 text-primary"></i>Create New Leave
+                </h2>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-0 small text-muted">
+                        <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'leave:dashboard' %}">Leave</a></li>
+                        <li class="breadcrumb-item active">Create</li>
+                    </ol>
+                </nav>
+            </div>
+            <a href="{% url 'leave:leave_list' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-list me-1"></i> View All
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
+
+                        <div class="mb-3">
+                            <label for="id_title" class="form-label">
+                                <span class="text-primary">
+                                    <i class="fas fa-file-signature me-1"></i> Title
+                                </span>
+                            </label>
+                            {{ form.title }}
+                            {% if form.title.errors %}<div class="text-danger">{{ form.title.errors }}</div>{% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_description" class="form-label">
+                                <span class="text-info">
+                                    <i class="fas fa-align-left me-1"></i> Description
+                                </span>
+                            </label>
+                            {{ form.description }}
+                            {% if form.description.errors %}<div class="text-danger">{{ form.description.errors }}</div>{% endif %}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="id_category" class="form-label">
+                                    <span class="text-secondary">
+                                        <i class="fas fa-tags me-1"></i> Category
+                                    </span>
+                                </label>
+                                {{ form.category }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="id_priority" class="form-label">
+                                    <span class="text-warning">
+                                        <i class="fas fa-exclamation-circle me-1"></i> Priority
+                                    </span>
+                                </label>
+                                {{ form.priority }}
+                            </div>
+                        </div>
+
+                        <!-- Leave-specific fields -->
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="id_start_date" class="form-label">
+                                    <span class="text-info">
+                                        <i class="fas fa-calendar-day me-1"></i> Start Date
+                                    </span>
+                                </label>
+                                {{ form.start_date }}
+                                {% if form.start_date.errors %}<div class="text-danger">{{ form.start_date.errors }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="id_end_date" class="form-label">
+                                    <span class="text-info">
+                                        <i class="fas fa-calendar-check me-1"></i> End Date
+                                    </span>
+                                </label>
+                                {{ form.end_date }}
+                                {% if form.end_date.errors %}<div class="text-danger">{{ form.end_date.errors }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="id_days_requested" class="form-label">
+                                    <span class="text-success">
+                                        <i class="fas fa-hashtag me-1"></i> Days Requested
+                                    </span>
+                                </label>
+                                {{ form.days_requested }}
+                                {% if form.days_requested.errors %}<div class="text-danger">{{ form.days_requested.errors }}</div>{% endif %}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="d-flex align-items-center justify-content-between mb-1">
+                                <label for="id_forward_to" class="form-label mb-0">
+                                    <span class="text-primary">
+                                        <i class="fas fa-user-check me-1"></i> Send To
+                                    </span>
+                                </label>
+                                <button type="button" class="btn btn-outline-primary btn-sm rounded-pill" id="selectAllBtn">
+                                    <i class="fas fa-users me-1"></i> Select All
+                                </button>
+                            </div>
+                            {{ form.forward_to }}
+                            <small class="text-muted">{{ form.forward_to.help_text }}</small>
+                        </div>
+
+                        <!-- CC/BCC Toggle -->
+                        <div class="mb-3">
+                            <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill" id="ccBccToggle">
+                                <i class="fas fa-plus me-1"></i> CC / BCC
+                            </button>
+                        </div>
+
+                        <!-- CC/BCC Fields (Collapsible) -->
+                        <div id="ccBccSection" class="cc-bcc-container" style="display: none;">
+                            <div class="recipients-card">
+                                <div class="recipient-field">
+                                    <label for="id_cc_users" class="recipient-label cc-label">
+                                        <i class="fas fa-users me-1"></i> CC
+                                    </label>
+                                    {{ form.cc_users }}
+                                    <small class="field-hint">Carbon copy - visible to all recipients</small>
+                                </div>
+                                <div class="recipient-field mb-0">
+                                    <label for="id_bcc_users" class="recipient-label bcc-label">
+                                        <i class="fas fa-eye-slash me-1"></i> BCC
+                                    </label>
+                                    {{ form.bcc_users }}
+                                    <small class="field-hint">Blind carbon copy - hidden from other recipients</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_note" class="form-label">
+                                <span class="text-muted">
+                                    <i class="fas fa-sticky-note me-1"></i> Note for Recipient
+                                </span>
+                            </label>
+                            {{ form.note }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_attachments" class="form-label">
+                                <span class="text-secondary">
+                                    <i class="fas fa-paperclip me-1"></i> Attachments
+                                </span>
+                            </label>
+                            {{ form.attachments }}
+                            <small class="text-muted">{{ form.attachments.help_text }}</small>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" name="action" value="send" class="btn btn-primary"><i class="fas fa-paper-plane me-1"></i> Submit Leave Request</button>
+                            <button type="submit" name="action" value="draft" class="btn btn-outline-primary"><i class="fas fa-save me-1"></i> Save as Draft</button>
+                            <a href="{% url 'leave:dashboard' %}" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-0">
+                    <h6 class="mb-0 text-muted text-uppercase small">Tips</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2"><i class="fas fa-info-circle text-info me-1"></i> Choose a clear, descriptive title</li>
+                        <li class="mb-2"><i class="fas fa-info-circle text-info me-1"></i> Select a recipient or leave blank to assign to Receptionist</li>
+                        <li class="mb-2"><i class="fas fa-info-circle text-info me-1"></i> You can attach files with each leave</li>
+                        <li class="mb-2"><i class="fas fa-camera text-info me-1"></i> Select <strong>"Scanned"</strong> as document type to upload a photo or scan of a hard copy</li>
+                        <li><i class="fas fa-info-circle text-info me-1"></i> Priority helps the recipient prioritize</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Show/hide scan upload based on document type
+    const docTypeSelect = document.getElementById('id_document_type');
+    const scanSection = document.getElementById('scannedFileSection');
+
+    function toggleScanSection() {
+        if (docTypeSelect && scanSection) {
+            scanSection.style.display = docTypeSelect.value === 'scanned' ? 'block' : 'none';
+        }
+    }
+
+    if (docTypeSelect) {
+        docTypeSelect.addEventListener('change', toggleScanSection);
+        toggleScanSection(); // Run on page load
+    }
+
+    // Colorful priority background based on selected value
+    const prioritySelect = document.getElementById('id_priority');
+
+    function applyPriorityColor() {
+        if (!prioritySelect) return;
+        prioritySelect.classList.remove('priority-low', 'priority-medium', 'priority-high', 'priority-urgent');
+        const val = prioritySelect.value;
+        if (val === 'low') {
+            prioritySelect.classList.add('priority-low');
+        } else if (val === 'medium') {
+            prioritySelect.classList.add('priority-medium');
+        } else if (val === 'high') {
+            prioritySelect.classList.add('priority-high');
+        } else if (val === 'urgent') {
+            prioritySelect.classList.add('priority-urgent');
+        }
+    }
+
+    if (prioritySelect) {
+        prioritySelect.addEventListener('change', applyPriorityColor);
+        applyPriorityColor(); // Run on page load
+    }
+
+    // CC/BCC Toggle functionality
+    const ccBccToggle = document.getElementById('ccBccToggle');
+    const ccBccSection = document.getElementById('ccBccSection');
+    if (ccBccToggle && ccBccSection) {
+        ccBccToggle.addEventListener('click', function() {
+            const isVisible = ccBccSection.style.display === 'block';
+            ccBccSection.style.display = isVisible ? 'none' : 'block';
+            ccBccToggle.innerHTML = isVisible 
+                ? '<i class="fas fa-plus me-1"></i> CC / BCC'
+                : '<i class="fas fa-minus me-1"></i> CC / BCC';
+            ccBccToggle.classList.toggle('btn-outline-secondary', isVisible);
+            ccBccToggle.classList.toggle('btn-secondary', !isVisible);
+        });
+    }
+
+    // Auto-calculate days requested based on start and end dates
+    const startDateInput = document.getElementById('id_start_date');
+    const endDateInput = document.getElementById('id_end_date');
+    const daysRequestedInput = document.getElementById('id_days_requested');
+
+    function calculateDays() {
+        if (startDateInput && endDateInput && daysRequestedInput) {
+            const startDate = startDateInput.value;
+            const endDate = endDateInput.value;
+
+            if (startDate && endDate) {
+                const start = new Date(startDate);
+                const end = new Date(endDate);
+
+                // Calculate difference in days (inclusive)
+                const diffTime = end - start;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+
+                // Only update if the result is positive
+                if (diffDays > 0) {
+                    daysRequestedInput.value = diffDays;
+                } else {
+                    daysRequestedInput.value = 1;
+                }
+            }
+        }
+    }
+
+    if (startDateInput && endDateInput) {
+        startDateInput.addEventListener('change', calculateDays);
+        endDateInput.addEventListener('change', calculateDays);
+    }
+
+    // Initialize Select2 for CC/BCC with tag-style selection
+    $(document).ready(function() {
+        $('.select2-multiple').select2({
+            placeholder: function() {
+                return $(this).data('placeholder');
+            },
+            allowClear: true,
+            closeOnSelect: false,
+            tags: false,
+            tokenSeparators: [','],
+            templateSelection: function(data, container) {
+                // Add close button to each selected tag
+                var $selection = $('<span class="select2-selection__tag">' + data.text + '</span>');
+                return $selection;
+            }
+        });
+
+        // Select All / Deselect All toggle for Send To field
+        var allSelected = false;
+        var $selectAllBtn = $('#selectAllBtn');
+        var $forwardTo = $('#id_forward_to');
+
+        $selectAllBtn.on('click', function() {
+            if (!allSelected) {
+                // Select all options
+                var allValues = $forwardTo.find('option').map(function() {
+                    return this.value;
+                }).get();
+                $forwardTo.val(allValues).trigger('change');
+                $selectAllBtn.html('<i class="fas fa-times me-1"></i> Deselect All');
+                $selectAllBtn.removeClass('btn-outline-primary').addClass('btn-primary');
+                allSelected = true;
+            } else {
+                // Deselect all
+                $forwardTo.val(null).trigger('change');
+                $selectAllBtn.html('<i class="fas fa-users me-1"></i> Select All');
+                $selectAllBtn.removeClass('btn-primary').addClass('btn-outline-primary');
+                allSelected = false;
+            }
+        });
+
+        // Keep button state in sync when user manually changes selection
+        $forwardTo.on('change', function() {
+            var totalOptions = $forwardTo.find('option').length;
+            var selectedOptions = ($forwardTo.val() || []).length;
+            if (selectedOptions === totalOptions && totalOptions > 0) {
+                $selectAllBtn.html('<i class="fas fa-times me-1"></i> Deselect All');
+                $selectAllBtn.removeClass('btn-outline-primary').addClass('btn-primary');
+                allSelected = true;
+            } else {
+                $selectAllBtn.html('<i class="fas fa-users me-1"></i> Select All');
+                $selectAllBtn.removeClass('btn-primary').addClass('btn-outline-primary');
+                allSelected = false;
+            }
+        });
+    });
+</script>
+
+<style>
+    /* Colorful priority dropdown background */
+    #id_priority.priority-low {
+        background-color: #e5f9e7;
+        color: #166534;
+        border-color: #bbf7d0;
+    }
+    #id_priority.priority-medium {
+        background-color: #e0f2fe;
+        color: #0f172a;
+        border-color: #bfdbfe;
+    }
+    #id_priority.priority-high {
+        background-color: #fef9c3;
+        color: #92400e;
+        border-color: #facc15;
+    }
+    #id_priority.priority-urgent {
+        background-color: #fee2e2;
+        color: #b91c1c;
+        border-color: #fecaca;
+    }
+
+    /* Elegant CC/BCC Section Styling */
+    .cc-bcc-container {
+        animation: slideDown 0.2s ease-out;
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .recipients-card {
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 1.25rem;
+        margin-bottom: 1rem;
+    }
+
+    .recipient-field {
+        margin-bottom: 1rem;
+    }
+
+    .recipient-label {
+        display: flex;
+        align-items: center;
+        font-size: 0.875rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        padding: 0.375rem 0.75rem;
+        border-radius: 6px;
+        width: fit-content;
+    }
+
+    .cc-label {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .bcc-label {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .field-hint {
+        display: block;
+        margin-top: 0.375rem;
+        font-size: 0.75rem;
+        color: #64748b;
+    }
+
+    /* Select2 Tag Styling */
+    .select2-container--default .select2-selection--multiple {
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        min-height: 44px;
+        padding: 4px;
+    }
+
+    .select2-container--default .select2-selection--multiple:focus {
+        border-color: #319795;
+        box-shadow: 0 0 0 3px rgba(49, 151, 149, 0.1);
+    }
+
+    .select2-container--default .select2-selection__choice {
+        background: linear-gradient(135deg, #319795 0%, #2c7a7b 100%);
+        color: white;
+        border: none;
+        border-radius: 20px;
+        padding: 4px 12px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        margin: 2px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .select2-container--default .select2-selection__choice__remove {
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 1rem;
+        font-weight: 400;
+        margin-right: 0;
+        order: 2;
+    }
+
+    .select2-container--default .select2-selection__choice__remove:hover {
+        color: white;
+        background: none;
+    }
+
+    .select2-container--default .select2-search--inline .select2-search__field {
+        margin-top: 4px;
+        font-size: 0.875rem;
+    }
+
+    .select2-dropdown {
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .select2-results__option {
+        padding: 8px 12px;
+        font-size: 0.875rem;
+    }
+
+    .select2-results__option--highlighted {
+        background: #319795 !important;
+    }
+</style>
+
+{# CKEditor scripts for rich-text description (same as document editor) #}
+<script>
+    window.CKEDITOR_BASEPATH = '/static/ckeditor/ckeditor/';
+</script>
+<script src="{% static 'ckeditor/ckeditor/ckeditor.js' %}"></script>
+<script src="{% static 'ckeditor/ckeditor-init.js' %}"></script>
+{% endblock %}

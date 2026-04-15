@@ -1,0 +1,256 @@
+{% extends 'base.html' %}
+
+{% block title %}Register Biometric{% endblock %}
+
+{% block content %}
+<div class="container py-4" style="max-width:520px;">
+
+  {# ── Header ── #}
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h4 class="mb-0"><i class="fas fa-fingerprint me-2 text-primary"></i>Biometric Check-in</h4>
+      <small class="text-muted">Register your fingerprint or Face ID for fast check-in.</small>
+    </div>
+    <a href="{% url 'checkin:checkin_dashboard' %}" class="btn btn-outline-secondary btn-sm">
+      <i class="fas fa-arrow-left me-1"></i>Back
+    </a>
+  </div>
+
+  {# ── Browser support warning ── #}
+  <div id="unsupportedBanner" class="alert alert-danger py-2 small d-none">
+    <i class="fas fa-exclamation-triangle me-1"></i>
+    Your browser does not support WebAuthn. Please use Chrome, Edge, Safari, or Firefox on a
+    supported device.
+  </div>
+
+  {# ── Register card ── #}
+  <div class="card border-0 shadow-sm mb-3">
+    <div class="card-header bg-transparent border-bottom fw-semibold py-2">
+      <i class="fas fa-plus-circle me-1 text-success"></i>Add New Credential
+    </div>
+    <div class="card-body">
+
+      <div class="row g-3 mb-3">
+        <div class="col-6">
+          <button class="btn btn-outline-primary w-100 py-3" onclick="startRegister('fingerprint')" id="fpBtn">
+            <i class="fas fa-fingerprint fa-2x d-block mb-2"></i>
+            Fingerprint
+          </button>
+        </div>
+        <div class="col-6">
+          <button class="btn btn-outline-info w-100 py-3" onclick="startRegister('faceid')" id="faceBtn">
+            <i class="fas fa-user-circle fa-2x d-block mb-2"></i>
+            Face ID
+          </button>
+        </div>
+      </div>
+
+      {# Status area #}
+      <div id="regStatus" class="d-none">
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <div class="spinner-border spinner-border-sm text-primary" id="regSpinner"></div>
+          <span id="regMsg" class="small text-muted">Waiting for device…</span>
+        </div>
+        <div class="progress" style="height:4px;">
+          <div id="regProgress" class="progress-bar bg-primary progress-bar-striped progress-bar-animated"
+               style="width:0%;transition:width .4s;"></div>
+        </div>
+      </div>
+
+      <div id="regResult" class="d-none mt-3"></div>
+
+    </div>
+  </div>
+
+  {# ── Registered credentials ── #}
+  <div class="card border-0 shadow-sm">
+    <div class="card-header bg-transparent border-bottom fw-semibold py-2">
+      <i class="fas fa-list me-1 text-secondary"></i>Registered Credentials
+      <span class="badge bg-secondary ms-1">{{ credentials.count }}</span>
+    </div>
+    <div class="card-body p-0" id="credentialList">
+      {% if credentials %}
+      <ul class="list-group list-group-flush">
+        {% for cred in credentials %}
+        <li class="list-group-item d-flex justify-content-between align-items-center px-3 py-2">
+          <div class="d-flex align-items-center gap-3">
+            <div class="text-center" style="width:36px;">
+              {% if cred.authenticator_type == "fingerprint" %}
+                <i class="fas fa-fingerprint fa-lg text-primary"></i>
+              {% else %}
+                <i class="fas fa-user-circle fa-lg text-info"></i>
+              {% endif %}
+            </div>
+            <div>
+              <div class="small fw-semibold">{{ cred.get_authenticator_type_display }}</div>
+              <div class="text-muted" style="font-size:.7rem;">
+                Registered {{ cred.created_at|date:"d M Y" }}
+                {% if cred.last_used_at %}
+                  &middot; Last used {{ cred.last_used_at|date:"d M Y, H:i" }}
+                {% else %}
+                  &middot; Never used
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          <form method="post" action="{% url 'checkin:biometric_delete' cred.pk %}"
+                onsubmit="return confirm('Remove this credential?')">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2">
+              <i class="fas fa-trash"></i>
+            </button>
+          </form>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <div class="text-center text-muted py-4 small">
+        <i class="fas fa-fingerprint fa-2x d-block mb-2 opacity-25"></i>
+        No biometric credentials registered yet.
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  {# ── Info note ── #}
+  <div class="card border-0 bg-light mt-3">
+    <div class="card-body py-2 small text-muted">
+      <i class="fas fa-shield-alt me-1 text-primary"></i>
+      <strong>Privacy:</strong> Your biometric data never leaves your device. Only a
+      cryptographic public key is stored on the server — your fingerprint or face cannot be
+      reconstructed from it.
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+(function () {
+  "use strict";
+
+  const CSRF = "{{ csrf_token }}";
+
+  /* ── Check browser support on load ── */
+  if (!window.PublicKeyCredential) {
+    document.getElementById('unsupportedBanner').classList.remove('d-none');
+    document.getElementById('fpBtn').disabled   = true;
+    document.getElementById('faceBtn').disabled = true;
+  }
+
+  /* ── Base64URL helpers ── */
+  function b64ToBuffer(b64) {
+    const bin = atob(b64.replace(/-/g, '+').replace(/_/g, '/'));
+    return Uint8Array.from(bin, c => c.charCodeAt(0)).buffer;
+  }
+  function bufferToB64(buf) {
+    return btoa(String.fromCharCode(...new Uint8Array(buf)))
+      .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+  }
+
+  /* ── UI helpers ── */
+  function setStatus (msg, progress) {
+    const wrap = document.getElementById('regStatus');
+    wrap.classList.remove('d-none');
+    document.getElementById('regMsg').textContent      = msg;
+    document.getElementById('regProgress').style.width = progress + '%';
+  }
+
+  function showResult (ok, msg) {
+    const el = document.getElementById('regResult');
+    el.classList.remove('d-none');
+    el.className = ok
+      ? 'alert alert-success py-2 small mt-3'
+      : 'alert alert-danger py-2 small mt-3';
+    el.innerHTML = `<i class="fas fa-${ok ? 'check' : 'times'}-circle me-1"></i>${msg}`;
+    document.getElementById('regStatus').classList.add('d-none');
+  }
+
+  function resetButtons (disabled) {
+    document.getElementById('fpBtn').disabled   = disabled;
+    document.getElementById('faceBtn').disabled = disabled;
+  }
+
+  /* ════════════════════════════════════════════════════════════════════
+     REGISTRATION
+  ════════════════════════════════════════════════════════════════════ */
+  window.startRegister = async function (type) {
+    resetButtons(true);
+    document.getElementById('regResult').classList.add('d-none');
+    setStatus('Requesting registration options…', 10);
+
+    try {
+      /* ── Step 1: Get options from server ── */
+      const optResp = await fetch("{% url 'checkin:biometric_register_begin' %}", {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+        body:    JSON.stringify({ type }),
+      });
+
+      if (!optResp.ok) {
+        const err = await optResp.json();
+        throw new Error(err.error || 'Server error getting options.');
+      }
+
+      const options = await optResp.json();
+      setStatus('Touch your sensor or follow the device prompt…', 35);
+
+      /* ── Decode binary fields ── */
+      options.challenge = b64ToBuffer(options.challenge);
+      options.user.id   = b64ToBuffer(options.user.id);
+      if (options.excludeCredentials) {
+        options.excludeCredentials = options.excludeCredentials.map(c => ({
+          ...c, id: b64ToBuffer(c.id)
+        }));
+      }
+
+      // Use server-provided rpId — avoids any client/server mismatch
+      options.rp.id = "{{ rp_id }}";   // "raadaa.localhost" in dev, "teammanager.ng" in prod
+
+      /* ── Step 2: Trigger device authenticator ── */
+      const credential = await navigator.credentials.create({ publicKey: options });
+      setStatus('Verifying with server…', 70);
+
+      /* ── Step 3: Send attestation to server ── */
+      const payload = {
+        id:    credential.id,
+        rawId: bufferToB64(credential.rawId),
+        type:  credential.type,
+        response: {
+          attestationObject: bufferToB64(credential.response.attestationObject),
+          clientDataJSON:    bufferToB64(credential.response.clientDataJSON),
+        },
+      };
+
+      const verResp = await fetch("{% url 'checkin:biometric_register_complete' %}", {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+        body:    JSON.stringify(payload),
+      });
+
+      const result = await verResp.json();
+      if (result.ok) {
+        setStatus('', 100);
+        showResult(true, `${type === 'faceid' ? 'Face ID' : 'Fingerprint'} registered successfully! Reloading…`);
+        setTimeout(() => location.reload(), 1500);
+      } else {
+        throw new Error(result.error || 'Verification failed.');
+      }
+
+    } catch (err) {
+      if (err.name === 'NotAllowedError') {
+        showResult(false, 'Cancelled or timed out. Please try again.');
+      } else if (err.name === 'InvalidStateError') {
+        showResult(false, 'This device is already registered.');
+      } else {
+        showResult(false, err.message || 'An unexpected error occurred.');
+      }
+      resetButtons(false);
+    }
+  };
+
+})();
+</script>
+{% endblock %}

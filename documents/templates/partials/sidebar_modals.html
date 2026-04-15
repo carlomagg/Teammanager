@@ -1,0 +1,461 @@
+{% load feature_utils %}
+{% load custom_filters %}
+
+<!-- Sidebar Group Modals with Custom Styling & Animations -->
+<!-- These modals appear beside the sidebar with pointer arrows and bounce animations -->
+
+<!-- Personal Productivity & Communication Modal -->
+<div class="sidebar-group-modal" id="groupPersonalModal" data-group="personal">
+    <div class="sidebar-modal-content">
+        <div class="sidebar-modal-pointer"></div>
+        <div class="sidebar-modal-header">
+            <h5 class="sidebar-modal-title"><i class="fas fa-user"></i> Personal Productivity & Communication</h5>
+            <button class="sidebar-modal-close" onclick="closeSidebarModal()" aria-label="Close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <ul class="sidebar-modal-list">
+            {% comment %} <li><a href="{% url 'calendar' %}" class="sidebar-modal-link"><i class="fas fa-calendar"></i><span>Calendar</span>{% feature_badge 'calendar' feature_badges %}</a></li> {% endcomment %}
+            <li><a href="{% url 'contact_list' %}" class="sidebar-modal-link"><i class="fas fa-address-book"></i><span>Contacts</span>{% feature_badge 'contact_list' feature_badges %}</a></li>
+            <li><a href="{% url 'email_list' %}" class="sidebar-modal-link"><i class="fas fa-envelope"></i><span>Emails</span>{% feature_badge 'email_list' feature_badges %}</a></li>
+            
+            <li>
+                {% if user.is_personal %}
+                    <a href="{% url 'view_user_profile' %}" class="sidebar-modal-link"><i class="fas fa-user"></i><span>Profile</span>{% feature_badge 'view_user_profile' feature_badges %}</a>
+                {% else %}
+                    <a href="{% url 'view_my_profile' %}" class="sidebar-modal-link"><i class="fas fa-user"></i><span>My Profile</span>{% feature_badge 'view_my_profile' feature_badges %}</a>
+                {% endif %}
+            </li>
+            <li>
+                <a href="{% url 'checkin:my_qr_code' %}" class="sidebar-modal-link">
+                    <i class="fas fa-qrcode text-primary"></i>
+                    <span>
+                        My QR Code
+                        <small class="d-block text-muted" style="font-size:.72rem;line-height:1.2;">
+                            Scan for access &amp; attendance
+                        </small>
+                    </span>
+                </a>
+            </li>
+            <li><a href="{% url 'notifications' %}" class="sidebar-modal-link"><i class="fas fa-bell"></i><span>Notifications</span>{% feature_badge 'notifications' feature_badges %}</a></li>
+        </ul>
+    </div>
+</div>
+
+<!-- HR & People Management Modal -->
+<div class="sidebar-group-modal" id="groupHRModal" data-group="hr">
+    <div class="sidebar-modal-content">
+        <div class="sidebar-modal-pointer"></div>
+        <div class="sidebar-modal-header">
+            <h5 class="sidebar-modal-title"><i class="fas fa-users-cog"></i> HR & People Management</h5>
+            <button class="sidebar-modal-close" onclick="closeSidebarModal()" aria-label="Close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <ul class="sidebar-modal-list">
+            {% if user.tenant %}
+                <li><a href="{% url 'staff_list' %}" class="sidebar-modal-link"><i class="fas fa-user-friends"></i><span>Staff List</span>{% feature_badge 'staff_list' feature_badges %}</a></li>
+                <li><a href="{% url 'view_company_profile' %}" class="sidebar-modal-link"><i class="fas fa-building"></i><span>Company Profile</span>{% feature_badge 'view_company_profile' feature_badges %}</a></li>
+            {% endif %}
+            {% if user.is_authenticated %}
+            {% for role in user.roles.all %}
+                {% if role.name == "HR" %}
+                    <li><a href="{% url 'hr_dashboard' %}" class="sidebar-modal-link"><i class="fas fa-briefcase"></i><span>HR Dashboard</span>{% feature_badge 'hr_dashboard' feature_badges %}</a></li>
+                {% endif %}
+            {% endfor %}
+            {% endif %}
+            {% if user.is_personal %}
+                <li><a href="{% url 'hr_dashboard' %}" class="sidebar-modal-link"><i class="fas fa-briefcase"></i><span>HR Dashboard</span>{% feature_badge 'hr_dashboard' feature_badges %}</a></li>
+            {% endif %}
+            {% if user.is_authenticated %}
+            {% for role in user.roles.all %}
+                {% if role.name == "HOD" %}
+                    <li><a href="{% url 'hod_performance_dashboard' %}" class="sidebar-modal-link"><i class="fas fa-chart-bar"></i><span>Department Performance</span>{% feature_badge 'hod_performance_dashboard' feature_badges %}</a></li>
+                {% endif %}
+            {% endfor %}
+            {% endif %}
+            <li><a href="{% url 'job_board' %}" class="sidebar-modal-link"><i class="fas fa-briefcase"></i><span>Job Board</span>{% feature_badge 'job_board' feature_badges %}</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li class="sidebar-modal-section-title">Staff Requests</li>
+            <li><a href="{% url 'leave:dashboard' %}" class="sidebar-modal-link"><i class="fas fa-calendar-alt"></i><span>Leave</span>{% feature_badge 'leave' feature_badges %}</a></li>
+            <li><a href="{% url 'permissions:dashboard' %}" class="sidebar-modal-link"><i class="fas fa-clock"></i><span>Permissions</span>{% feature_badge 'permissions' feature_badges %}</a></li>
+            <li><a href="{% url 'fund_request:dashboard' %}" class="sidebar-modal-link"><i class="fas fa-money-bill-wave"></i><span>Fund Request</span>{% feature_badge 'fund_request' feature_badges %}</a></li>
+        </ul>
+    </div>
+</div>
+
+<!-- Events & Collaboration Modal -->
+<div class="sidebar-group-modal" id="groupEventsModal" data-group="events">
+    <div class="sidebar-modal-content">
+        <div class="sidebar-modal-pointer"></div>
+        <div class="sidebar-modal-header">
+            <h5 class="sidebar-modal-title"><i class="fas fa-users"></i> Conferences and Events</h5>
+            <button class="sidebar-modal-close" onclick="closeSidebarModal()" aria-label="Close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <ul class="sidebar-modal-list">
+            {% comment %} <li><a href="{% url 'booking_dashboard' %}" class="sidebar-modal-link"><i class="fas fa-calendar"></i><span>Smart Calendar/Bookings</span>{% feature_badge 'booking_dashboard' feature_badges %}</a></li> {% endcomment %}
+            <li><a href="{% url 'conference_list' %}" class="sidebar-modal-link"><i class="fas fa-users"></i><span>Conference</span>{% feature_badge 'conference_list' feature_badges %}</a></li>
+            <li><a href="{% url 'conference_board' %}" class="sidebar-modal-link"><i class="fas fa-users"></i><span>Conference & Events</span>{% feature_badge 'conference_board' feature_badges %}</a></li>
+            <li><a href="{% url 'conference_loan:dashboard' %}" class="sidebar-modal-link"><i class="fas fa-hand-holding-usd"></i><span>Conference Financing</span>{% feature_badge 'conference_loan:dashboard' feature_badges %}</a></li>
+        </ul>
+    </div>
+</div>
+
+<div class="sidebar-group-modal" id="groupCheckinModal" data-group="checkin">
+    <div class="sidebar-modal-content">
+        <div class="sidebar-modal-pointer"></div>
+        <div class="sidebar-modal-header">
+            <h5 class="sidebar-modal-title">
+                <i class="fas fa-clock"></i> Clock In / Out
+            </h5>
+            <button class="sidebar-modal-close" onclick="closeSidebarModal()" aria-label="Close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <ul class="sidebar-modal-list">
+
+            {# ── Staff Check-in / Check-out ── #}
+            <li class="sidebar-modal-group-label">
+                <span class="text-uppercase" style="font-size:.68rem;letter-spacing:.1em;color:#adb5bd;padding:.5rem 1rem .2rem;display:block;">
+                    Staff Attendance
+                </span>
+            </li>
+
+            {% if request.user.is_staff or request.user.is_superuser %}
+                <li>
+                    <a href="{% url 'checkin:checkin_dashboard' %}"
+                       class="sidebar-modal-link {% if request.resolver_match.app_name == 'checkin' and request.resolver_match.url_name == 'checkin_dashboard' %}active{% endif %}">
+                        <i class="fas fa-fingerprint"></i>
+                        <span>Staff Check-in / Check-out</span>
+                    </a>
+                </li>
+            {% else %}
+                {% comment %} {% for role in request.user.roles.all %} {% endcomment %}
+                    {% if user.is_authenticated and user|check_admin_hr_receptionist %}
+                        <li>
+                            <a href="{% url 'checkin:checkin_dashboard' %}"
+                               class="sidebar-modal-link {% if request.resolver_match.app_name == 'checkin' %}active{% endif %}">
+                                <i class="fas fa-fingerprint"></i>
+                                <span>Staff Check-in / Check-out</span>
+                            </a>
+                        </li>
+                    {% endif %}
+                {% comment %} {% endfor %} {% endcomment %}
+            {% endif %}
+
+            {# ── Visitor Check-in / Check-out ── #}
+            <li class="sidebar-modal-group-label">
+                <span class="text-uppercase" style="font-size:.68rem;letter-spacing:.1em;color:#adb5bd;padding:.5rem 1rem .2rem;display:block;">
+                    Visitor Management
+                </span>
+            </li>
+
+            {% if request.user.is_staff or request.user.is_superuser %}
+                <li>
+                    <a href="{% url 'checkin:visitor_checkin' %}" class="sidebar-modal-link">
+                        <i class="fas fa-user-plus"></i>
+                        <span>Visitor Check-in</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'checkin:visitor_dashboard' %}" class="sidebar-modal-link">
+                        <i class="fas fa-id-badge"></i>
+                        <span>Visitor Log & Check-out</span>
+                    </a>
+                </li>
+            {% else %}
+                {% comment %} {% for role in request.user.roles.all %} {% endcomment %}
+                    {% if user.is_authenticated and user|check_admin_hr_receptionist %}
+                        <li>
+                            <a href="{% url 'checkin:visitor_checkin' %}" class="sidebar-modal-link">
+                                <i class="fas fa-user-plus"></i>
+                                <span>Visitor Check-in</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'checkin:visitor_dashboard' %}" class="sidebar-modal-link">
+                                <i class="fas fa-id-badge"></i>
+                                <span>Visitor Log & Check-out</span>
+                            </a>
+                        </li>
+                    {% endif %}
+                {% comment %} {% endfor %} {% endcomment %}
+            {% endif %}
+
+            {# ── Self Service — authenticated users only ── #}
+            {% if request.user.is_authenticated %}
+            <li class="sidebar-modal-group-label">
+                <span class="text-uppercase" style="font-size:.68rem;letter-spacing:.1em;color:#adb5bd;padding:.5rem 1rem .2rem;display:block;">
+                    Self Service
+                </span>
+            </li>
+
+            {# Organisation QR Code — single QR all staff use for access / attendance #}
+            <li>
+                <a href="{% url 'checkin:my_qr_code' %}" class="sidebar-modal-link">
+                    <i class="fas fa-qrcode text-primary"></i>
+                    <span>
+                        My QR Code
+                        <small class="d-block text-muted" style="font-size:.72rem;line-height:1.2;">
+                            Scan for access &amp; attendance
+                        </small>
+                    </span>
+                </a>
+            </li>
+
+            <li>
+                <a href="{% url 'checkin:set_staff_pin' %}" class="sidebar-modal-link">
+                    <i class="fas fa-key"></i>
+                    <span>Set Check-in PIN</span>
+                </a>
+            </li>
+
+            <li>
+                <a href="{% url 'checkin:biometric_register_page' %}" class="sidebar-modal-link">
+                    <i class="fas fa-fingerprint"></i>
+                    <span>Register Biometric</span>
+                </a>
+            </li>
+            {% endif %}
+            {# /self-service #}
+
+        </ul>
+    </div>
+</div>
+
+
+<!-- Documents & Content Modal -->
+<div class="sidebar-group-modal" id="groupDocsModal" data-group="docs">
+    <div class="sidebar-modal-content">
+        <div class="sidebar-modal-pointer"></div>
+        <div class="sidebar-modal-header">
+            <h5 class="sidebar-modal-title"><i class="fas fa-file-alt"></i> Documents & Folders</h5>
+            <button class="sidebar-modal-close" onclick="closeSidebarModal()" aria-label="Close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <ul class="sidebar-modal-list">
+            <li><a href="{% url 'document_list' %}" class="sidebar-modal-link"><i class="fas fa-file-alt"></i><span>Document List</span>{% feature_badge 'document_list' feature_badges %}</a></li>
+            {% if user.tenant and user.tenant.slug == 'raadaa' or user.tenant and user.tenant.slug == 'transnet-cloud' %}
+                <li><a href="{% url 'create_document' %}" class="sidebar-modal-link"><i class="fas fa-bolt"></i><span>Generate Document</span>{% feature_badge 'create_document' feature_badges %}</a></li>
+            {% endif %}
+            <li><a href="{% url 'create_from_editor' %}" class="sidebar-modal-link"><i class="fas fa-edit"></i><span>Document Editor</span>{% feature_badge 'create_from_editor' feature_badges %}</a></li>
+            <li><a href="{% url 'folder_view' %}" class="sidebar-modal-link"><i class="fas fa-folder"></i><span>My Folders</span>{% feature_badge 'folder_view' feature_badges %}</a></li>
+        </ul>
+    </div>
+</div>
+
+<!-- Task & Performance Modal -->
+<div class="sidebar-group-modal" id="groupTasksModal" data-group="tasks">
+    <div class="sidebar-modal-content">
+        <div class="sidebar-modal-pointer"></div>
+        <div class="sidebar-modal-header">
+            <h5 class="sidebar-modal-title"><i class="fas fa-chart-line"></i> Task & Performance</h5>
+            <button class="sidebar-modal-close" onclick="closeSidebarModal()" aria-label="Close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <ul class="sidebar-modal-list">
+            <li><a href="{% url 'task_list' %}" class="sidebar-modal-link"><i class="fas fa-tasks"></i><span>Tasks</span>{% feature_badge 'task_list' feature_badges %}</a></li>
+            <li><a href="{% url 'performance_dashboard' %}" class="sidebar-modal-link"><i class="fas fa-chart-line"></i><span>Performance</span>{% feature_badge 'performance_dashboard' feature_badges %}</a></li>
+        </ul>
+    </div>
+</div>
+
+<!-- Admin & System Management Modal -->
+<div class="sidebar-group-modal" id="groupAdminModal" data-group="admin">
+    <div class="sidebar-modal-content">
+        <div class="sidebar-modal-pointer"></div>
+        <div class="sidebar-modal-header">
+            <h5 class="sidebar-modal-title"><i class="fas fa-cog"></i> Admin & System Management</h5>
+            <button class="sidebar-modal-close" onclick="closeSidebarModal()" aria-label="Close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <ul class="sidebar-modal-list">
+            {% if user.is_superuser %}
+                <li><a href="{% url 'superuser_dashboard' %}" class="sidebar-modal-link"><i class="fas fa-user-shield"></i><span>Dashboard</span>{% feature_badge 'superuser_dashboard' feature_badges %}</a></li>
+                <li><a href="{% url 'all_users_list' %}" class="sidebar-modal-link"><i class="fas fa-user-shield"></i><span>All Users</span>{% feature_badge 'all_users_list' feature_badges %}</a></li>
+                <li><a href="{% url 'tenant_applications' %}" class="sidebar-modal-link"><i class="fas fa-user-shield"></i><span>Tenant Applications</span>{% feature_badge 'tenant_applications' feature_badges %}</a></li>
+                <li><a href="{% url 'tenant_list' %}" class="sidebar-modal-link"><i class="fas fa-user-shield"></i><span>Tenants</span>{% feature_badge 'tenant_list' feature_badges %}</a></li>
+                <li><a href="{% url 'company_group_dashboard_admin' %}" class="sidebar-modal-link"><i class="fas fa-user-shield"></i><span>Company Groups</span>{% feature_badge 'company_group_dashboard_admin' feature_badges %}</a></li>
+                <li><a href="{% url 'admin:index' %}" class="sidebar-modal-link"><i class="fas fa-key"></i><span>Admin Panel</span>{% feature_badge 'admin:index' feature_badges %}</a></li>
+                <li><a href="{% url 'admin_remittance_dashboard' %}" class="sidebar-modal-link"><i class="fas fa-wallet"></i><span>Wallets</span>{% feature_badge 'admin_remittance_dashboard' feature_badges %}</a></li>
+                <li><a href="{% url 'subscription_base' %}" class="sidebar-modal-link"><i class="fas fa-crown"></i> Subscriptions {% feature_badge 'subscriptions' feature_badges %}</a></li>
+            {% endif %}
+            {% if user.is_staff %}
+                <li><a href="{% url 'track_conference' %}" class="sidebar-modal-link"><i class="fas fa-chalkboard-teacher"></i><span>Conference Dashboard</span>{% feature_badge 'track_conference' feature_badges %}</a></li>
+            {% endif %}
+
+            {# Show different links based on user type #}
+            {% if user.is_superuser %}
+                {# Superusers see everything including KYC #}
+                <li><a href="{% url 'staff_directory' %}" class="sidebar-modal-link"><i class="fas fa-users"></i><span>Staff Directory</span>{% feature_badge 'staff_directory' feature_badges %}</a></li>
+                <li><a href="{% url 'admin_dashboard' %}" class="sidebar-modal-link"><i class="fas fa-key"></i><span>Admin Dashboard</span>{% feature_badge 'admin_dashboard' feature_badges %}</a></li>
+                <li><a href="{% url 'admin_kyc_dashboard' %}" class="sidebar-modal-link"><i class="fas fa-shield-alt"></i><span>KYC Verification Dashboard</span>{% feature_badge 'admin_kyc_dashboard' feature_badges %}</a></li>
+            {% else %}
+                {# Check for Admin role - they see everything except KYC #}
+                {% if user.is_authenticated %}
+                {% for role in user.roles.all %}
+                    {% if role.name == "Admin" %}
+                        <li><a href="{% url 'staff_directory' %}" class="sidebar-modal-link"><i class="fas fa-users"></i><span>Staff Directory</span>{% feature_badge 'staff_directory' feature_badges %}</a></li>
+                        <li><a href="{% url 'admin_dashboard' %}" class="sidebar-modal-link"><i class="fas fa-key"></i><span>Admin Dashboard</span>{% feature_badge 'admin_dashboard' feature_badges %}</a></li>
+                    {% endif %}
+                {% empty %}
+                    {# No roles assigned - is_staff users don't see KYC #}
+                {% endfor %}
+                {% endif %}
+            {% endif %}
+
+            {% if not user.is_staff %}
+                <li><a href="{% url 'tenant_wallet' %}" class="sidebar-modal-link"><i class="fas fa-wallet"></i><span>Wallet</span>{% feature_badge 'tenant_wallet' feature_badges %}</a></li>
+            {% endif %}
+            
+            {# Show Wallet and Subscriptions only for Admin role #}
+            {% if user.is_authenticated %}
+            {% for role in user.roles.all %}
+                {% if role.name == "Admin" %}
+                    {% comment %} <li><a href="{% url 'tenant_wallet' %}" class="sidebar-modal-link"><i class="fas fa-wallet"></i><span>Wallet</span>{% feature_badge 'tenant_wallet' feature_badges %}</a></li> {% endcomment %}
+                    <li><a href="{% url 'subscription_base' %}" class="sidebar-modal-link"><i class="fas fa-crown"></i> Subscriptions {% feature_badge 'subscriptions' feature_badges %}</a></li>
+                {% endif %}
+            {% endfor %}
+            {% endif %}
+            <li><a href="{% url 'custom_settings' %}" class="sidebar-modal-link"><i class="fas fa-cog"></i><span>Settings</span>{% feature_badge 'custom_settings' feature_badges %}</a></li>
+            {% if user.is_personal%}
+                <li><a href="{% url 'subscription_base' %}" class="sidebar-modal-link"><i class="fas fa-crown"></i> Subscriptions {% feature_badge 'subscriptions' feature_badges %}</a></li>
+            {% endif %}
+            {% if request.tenant and request.tenant.slug == 'track' %}
+                <li><a href="{% url 'tracking_dashboard' %}" class="sidebar-modal-link"><i class="fas fa-chart-line"></i><span>Tracking</span>{% feature_badge 'tracking_dashboard' feature_badges %}</a></li>
+            {% endif %}
+        </ul>
+    </div>
+</div>
+
+<!-- Support & Assistance Modal -->
+<div class="sidebar-group-modal" id="groupSupportModal" data-group="support">
+    <div class="sidebar-modal-content">
+        <div class="sidebar-modal-pointer"></div>
+        <div class="sidebar-modal-header">
+            <h5 class="sidebar-modal-title"><i class="fas fa-headset"></i> Support & Assistance</h5>
+            <button class="sidebar-modal-close" onclick="closeSidebarModal()" aria-label="Close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <ul class="sidebar-modal-list">
+            <li><a href="{% url 'contact_support' %}" class="sidebar-modal-link"><i class="fa fa-question-circle"></i><span>Contact Support</span>{% feature_badge 'contact_support' feature_badges %}</a></li>
+            {% if user.is_superuser or user.is_staff %}
+                <li><a href="{% url 'support_dashboard' %}" class="sidebar-modal-link"><i class="fas fa-headset"></i><span>Customer Support Dashboard</span>{% feature_badge 'support_dashboard' feature_badges %}</a></li>
+            {% else %}
+                {% for group in user.groups.all %}
+                    {% if group.name == "Customer Support" %}
+                        <li><a href="{% url 'support_dashboard' %}" class="sidebar-modal-link"><i class="fas fa-headset"></i><span>Customer Support Dashboard</span>{% feature_badge 'support_dashboard' feature_badges %}</a></li>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+        </ul>
+    </div>
+</div>
+
+<!-- ── Ticket & Queue Management Modal ── -->
+<div class="sidebar-group-modal" id="groupTicketsModal" data-group="tickets">
+    <div class="sidebar-modal-content">
+        <div class="sidebar-modal-pointer"></div>
+        <div class="sidebar-modal-header">
+            <h5 class="sidebar-modal-title"><i class="fas fa-ticket-alt"></i> Ticket & Queue Management</h5>
+            <button class="sidebar-modal-close" onclick="closeSidebarModal()" aria-label="Close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <ul class="sidebar-modal-list">
+            {% if user.is_authenticated %}
+            {% with roles=request.user.roles.all|join:"," %}
+
+            {# All staff see tickets #}
+            <li><a href="{% url 'ticket_list' %}" class="sidebar-modal-link"><i class="fas fa-list"></i><span>All Tickets</span></a></li>
+            <li><a href="{% url 'ticket_create_staff' %}" class="sidebar-modal-link"><i class="fas fa-plus"></i><span>New Ticket</span></a></li>
+            <li><a href="{% url 'ticket_status_lookup' %}" class="sidebar-modal-link"><i class="fas fa-search"></i><span>Check Ticket Status</span></a></li>
+
+            {# Public submission link — Admin & Receptionist only #}
+            {% if request.user.is_staff or request.user.is_superuser or "Admin" in roles or "Receptionist" in roles %}
+            <li><a href="{% url 'ticket_submit_public' %}" class="sidebar-modal-link"><i class="fas fa-globe"></i><span>Public Submission Form</span></a></li>
+            {% endif %}
+
+            {# Queue section — Admin, Receptionist, HR, or department member #}
+            {% if request.user.is_staff or request.user.is_superuser or "Admin" in roles or "Receptionist" in roles or "HR" in roles or request.user.department %}
+            <li class="sidebar-modal-section-label">Queue</li>
+            <li>
+                <a href="{% url 'queue_dashboard' %}" class="sidebar-modal-link">
+                    <i class="fas fa-list-ol"></i>
+                    <span>Queue Dashboard
+                        {% if not request.user.is_staff and not request.user.is_superuser and "Admin" not in roles and "Receptionist" not in roles %}
+                        <small class="text-muted">(Dept. view)</small>
+                        {% endif %}
+                    </span>
+                </a>
+            </li>
+            {% endif %}
+
+            {# Issue queue number — Admin & Receptionist only #}
+            {% if request.user.is_staff or request.user.is_superuser or "Admin" in roles or "Receptionist" in roles %}
+            <li><a href="{% url 'queue_issue' %}" class="sidebar-modal-link"><i class="fas fa-plus-circle"></i><span>Issue Queue Number</span></a></li>
+            {% endif %}
+
+            {% endwith %}
+            {% endif %}
+        </ul>
+    </div>
+</div>
+
+
+<!-- ── Receipts & Invoices Modal ── -->
+<div class="sidebar-group-modal" id="groupInvoicesModal" data-group="invoices">
+    <div class="sidebar-modal-content">
+        <div class="sidebar-modal-pointer"></div>
+        <div class="sidebar-modal-header">
+            <h5 class="sidebar-modal-title"><i class="fas fa-file-invoice-dollar"></i> Receipts & Invoices</h5>
+            <button class="sidebar-modal-close" onclick="closeSidebarModal()" aria-label="Close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <ul class="sidebar-modal-list">
+            {% if user.is_authenticated %}
+            {% with roles=request.user.roles.all|join:"," %}
+
+            {# Invoices — Admin, Finance, HR #}
+            {% if request.user.is_staff or request.user.is_superuser or "Admin" in roles or "Finance" in roles or "HR" in roles %}
+            <li class="sidebar-modal-section-label">Invoices</li>
+            <li><a href="{% url 'sent_invoices_list' %}" class="sidebar-modal-link"><i class="fas fa-file-invoice-dollar"></i><span>Sent Invoices</span></a></li>
+            <li><a href="{% url 'received_invoices_list' %}" class="sidebar-modal-link"><i class="fas fa-file-import"></i><span>Received Invoices</span></a></li>
+
+            {# Create — Admin & Finance only #}
+            {% if request.user.is_staff or request.user.is_superuser or "Admin" in roles or "Finance" in roles %}
+            <li><a href="{% url 'create_send_invoice' %}" class="sidebar-modal-link"><i class="fas fa-plus"></i><span>Create Invoice</span></a></li>
+            <li><a href="{% url 'create_receive_invoice' %}" class="sidebar-modal-link"><i class="fas fa-plus"></i><span>Record Received Invoice</span></a></li>
+            {% endif %}
+            {% endif %}
+
+            {# Receipts — Admin & Finance only #}
+            {% if request.user.is_staff or request.user.is_superuser or "Admin" in roles or "Finance" in roles %}
+            <li class="sidebar-modal-section-label">Receipts</li>
+            <li><a href="{% url 'receipt_create' %}" class="sidebar-modal-link"><i class="fas fa-receipt"></i><span>New Receipt</span></a></li>
+            {% endif %}
+
+            {# No access fallback #}
+            {% if not request.user.is_staff and not request.user.is_superuser and "Admin" not in roles and "Finance" not in roles and "HR" not in roles %}
+            <li class="sidebar-modal-link text-muted text-center py-3 small">
+                <i class="fas fa-lock d-block mb-1 opacity-50"></i>
+                No access to invoices or receipts.
+            </li>
+            {% endif %}
+
+            {% endwith %}
+            {% endif %}
+        </ul>
+    </div>
+</div>
+
+<!-- Overlay for closing modal -->
+<div class="sidebar-modal-overlay" onclick="closeSidebarModal()"></div>

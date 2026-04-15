@@ -1,0 +1,443 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load subscription_extras %}
+
+{% block title %}Subscription Payment{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            {%comment%}<!-- Header -->
+            <div class="d-flex align-items-center mb-4">
+                <a href="{% url 'create_subscription' %}" class="btn btn-outline-secondary me-3">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+                <div>
+                    <h1 class="display-6 fw-bold" style="color: var(--primary-dark);">
+                        <i class="fas fa-credit-card me-2"></i>Complete Payment
+                    </h1>
+                    <p class="text-muted">Review and complete your subscription payment</p>
+                </div>
+            </div>{%endcomment%}
+
+            <!-- Header - Update the back button -->
+            <div class="d-flex align-items-center mb-4">
+                <button type="button" onclick="goBackWithData()" class="btn btn-outline-secondary me-3" style="cursor: pointer;">
+                    <i class="fas fa-arrow-left"></i> Back
+                </button>
+                <div>
+                    <h1 class="display-6 fw-bold" style="color: var(--primary-dark);">
+                        <i class="fas fa-credit-card me-2"></i>Complete Payment
+                    </h1>
+                    <p class="text-muted">Review and complete your subscription payment</p>
+                </div>
+            </div>
+
+            <!-- Hidden fallback link -->
+            <div style="display: none;">
+                <a id="fallbackBackLink" href="{% url 'create_subscription' %}"></a>
+            </div>
+
+            <!-- User Coverage Info (if applicable) -->
+            {% if is_tenant and user_scope_display %}
+            <div class="alert alert-info mb-4">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-users fa-2x me-3"></i>
+                    <div>
+                        <strong>User Scope: {{ user_scope_display }}</strong>
+                        <p class="mb-0">
+                            {% if user_scope_display == 'All Users' %}
+                                This subscription will cover <strong>all users</strong> in your organization.
+                                New users added later would have to be subscribed for.
+                            {% else %}
+                                This subscription covers <strong>{{ user_count }} selected user(s)</strong>.
+                                Only the selected users will have access.
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Duration Info -->
+            <div class="alert alert-success mb-4">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-calendar-week fa-2x me-3"></i>
+                    <div>
+                        <strong>Subscription Duration: {{ duration_months }} month{{ duration_months|pluralize }}</strong>
+                        <p class="mb-0">
+                            You're purchasing a <strong>{{ duration_months }}-month subscription</strong>.
+                            You'll be charged the total amount today, and your subscription will be valid until 
+                            <strong>{{ subscription.end_date|date:"F j, Y" }}</strong>.
+                            {% if duration_months > 1 %}
+                                <br>
+                                <span class="text-success">
+                                    <i class="fas fa-gift"></i> 
+                                    You're saving <strong>{{ plan_discount_percent|floatformat:1 }}%</strong> compared to monthly billing!
+                                </span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sequential Subscription Alert -->
+            {% if is_sequential and existing_sub %}
+            <div class="alert alert-info mb-4">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-calendar-alt fa-2x me-3"></i>
+                    <div>
+                        <strong>Sequential Subscription</strong>
+                        <p class="mb-0">
+                            You have an existing subscription that ends on {{ existing_sub.end_date|date:"F j, Y" }}.
+                            This new subscription will start on <strong>{{ subscription.start_date|date:"F j, Y" }}</strong>.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Subscription Summary Card -->
+            <div class="card mb-4">
+                <div class="card-header" style="background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%); color: white;">
+                    <i class="fas fa-receipt me-2"></i>Payment Breakdown
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h5 class="mb-3">{{ subscription.plan.name }} Plan</h5>
+                        <p class="text-muted mb-2">{{ subscription.plan.description|default:"Access to all premium features"|linebreaks }}</p>
+                        
+                        <!-- User Scope Badge -->
+                        {% if is_tenant %}
+                        <div class="mt-2">
+                            {% if subscription.user_scope == 'all' %}
+                            <span class="badge bg-info">
+                                <i class="fas fa-users me-1"></i> Covers All Users
+                            </span>
+                            {% else %}
+                            <span class="badge bg-primary">
+                                <i class="fas fa-user-check me-1"></i> Covers Selected Users
+                            </span>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Duration Badge -->
+                        <div class="mt-2">
+                            <span class="badge bg-success">
+                                <i class="fas fa-clock me-1"></i> {{ duration_months }} Month{{ duration_months|pluralize }} Subscription
+                            </span>
+                        </div>
+                    </div>
+
+                    <table class="table table-borderless">
+                        <tr>
+                            <td>Monthly Price (per user):</td>
+                            <td class="text-end">₦{{ monthly_price|floatformat:2 }}</td>
+                        </tr>
+                        
+                        {% if is_tenant %}
+                        <tr>
+                            <td>
+                                Number of Users:
+                                {% if subscription.user_scope == 'selected' %}
+                                <i class="fas fa-info-circle text-muted" data-toggle="tooltip" title="Only selected users are covered by this subscription"></i>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                {{ user_count }}
+                                {% if subscription.user_scope == 'selected' and user_count > 0 %}
+                                <br>
+                                <small class="text-muted">
+                                    <a href="javascript:void(0)" onclick="showCoveredUsers()" class="text-muted">
+                                        <i class="fas fa-eye me-1"></i>View selected users
+                                    </a>
+                                </small>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Monthly Subtotal ({{ user_count }} user{% if user_count != 1 %}s{% endif %}):</td>
+                            <td class="text-end">₦{{ monthly_price|multiply:user_count|floatformat:2 }}/month</td>
+                        </tr>
+                        <tr class="border-top">
+                            <td><strong>Original Amount for {{ duration_months }} month{{ duration_months|pluralize }}:</strong></td>
+                            <td class="text-end"><strong>₦{{initial_base|floatformat:2}}</strong></td>
+                        </tr>
+
+                        {% else %}
+                        <tr>
+                            <td>Monthly Subtotal:</td>
+                            <td class="text-end">₦{{ monthly_price|floatformat:2 }}/month</td>
+                        </tr>
+                        tr class="border-top">
+                            <td><strong>Original Amount for {{ duration_months }} month{{ duration_months|pluralize }}:</strong></td>
+                            <td class="text-end"><strong>₦{{initial_base|floatformat:2}} </strong></td>
+                        </tr>
+                        {% endif %}
+                        
+                        {%comment%}<!-- Duration Discount Row -->
+                        {% if duration_discount_percent > 0 %}
+                        <tr class="text-success">
+                            <td>
+                                <i class="fas fa-percent me-1"></i>
+                                Duration Discount ({{ duration_discount_percent }}% off for {{ duration_months }} months):
+                            </td>
+                            <td class="text-end">-₦{{ duration_discount_amount|floatformat:2 }}</td>
+                        </tr>
+                        {% endif %}{%endcomment%}
+
+                        <!-- Plan Discount Row (instead of Duration Discount Row) -->
+                        {% if plan_discount_percent > 0 %}
+                        <tr class="text-success">
+                            <td>
+                                <i class="fas fa-percent me-1"></i>
+                                Applied Discount of {{ plan_discount_percent }}%:
+                            </td>
+                            <td class="text-end">-₦{{ plan_discount_amount|floatformat:2 }}</td>
+                        </tr>
+                        {% endif %}
+                        
+                        <!-- Promo Discount Row -->
+                        {% if subscription.promo %}
+                        <tr class="text-success">
+                            <td>
+                                <i class="fas fa-tag me-1"></i>
+                                Promo: {{ subscription.promo_code }}
+                                {% if subscription.promo.discount_type == 'percentage' %}
+                                    ({{ subscription.promo.discount_value }}% off)
+                                {% elif subscription.promo.discount_type == 'fixed' %}
+                                    (₦{{ subscription.promo.discount_value }} off)
+                                {% endif %}
+                            </td>
+                            <td class="text-end">-₦{{ promo_discount_amount|floatformat:2 }}</td>
+                        </tr>
+                        {% endif %}
+
+                        
+                        <tr class="border-top">
+                            <th class="h5 mb-0">Total Payable for {{ duration_months }} month{{ duration_months|pluralize }}:</th>
+                            <td class="text-end h5 mb-0 text-primary-custom">₦{{ monthly_price|multiply:user_count|multiply:duration_months|floatformat:2  }}</td>
+                        </tr>
+
+                    </table>
+
+                    <!-- Savings Summary -->
+                    {% if total_savings > 0 %}
+                    <div class="alert alert-success mt-3">
+                        <i class="fas fa-chart-line me-2"></i>
+                        <strong>Total Savings: ₦{{ total_savings|floatformat:2 }}</strong>
+                        <br>
+                        <small>
+                            By choosing a {{ duration_months }}-month subscription instead of monthly billing, 
+                            you've saved <strong>{{ plan_discount_percent|floatformat:1 }}%</strong>.
+                            {% if duration_months >= 12 %}
+                            That's like getting {{ duration_months|divide:3|floatformat:0 }} months free!
+                            {% elif duration_months >= 6 %}
+                            That's like getting {{ duration_months|divide:6|floatformat:1 }} months free!
+                            {% endif %}
+                        </small>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Payment Info -->
+                    <div class="alert alert-info mt-3">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>One-time Payment:</strong> You'll be charged <strong>₦{{ monthly_price|multiply:user_count|multiply:duration_months|floatformat:2  }}</strong> today.
+                        No recurring charges until your subscription expires on <strong>{{ subscription.end_date|date:"F j, Y" }}</strong>.
+                        {% comment %}{% if duration_months == 1 %}
+                        Your subscription will renew monthly unless cancelled.
+                        {% else %}
+                        After {{ duration_months }} months, you'll need to renew for another period.
+                        {% endif %}{% endcomment %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Button -->
+            <div class="card">
+                <div class="card-body text-center">
+                    <form method="post">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-lock me-2"></i>
+                            Pay ₦{{ monthly_price|multiply:user_count|multiply:duration_months|floatformat:2  }} via Paystack
+                        </button>
+                    </form>
+                    
+                    <p class="text-muted small mt-3">
+                        <i class="fas fa-shield-alt me-1"></i>
+                        Secured by Paystack. Your payment information is encrypted.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Viewing Covered Users -->
+<div class="modal fade" id="coveredUsersModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Covered Users</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="coveredUsersModalBody">
+                <div class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+    // Initialize tooltips
+    $(document).ready(function() {
+        $('[data-toggle="tooltip"]').tooltip();
+    });
+    
+    // Prevent double form submission
+    $('form').on('submit', function() {
+        $(this).find('button[type="submit"]').prop('disabled', true).html(
+            '<i class="fas fa-spinner fa-spin me-2"></i>Redirecting to Paystack...'
+        );
+    });
+
+    // Add this to your extra_js block
+    $(document).ready(function() {
+        // Check if we're coming back from payment
+        const returningFromPayment = sessionStorage.getItem('returning_from_payment');
+        if (returningFromPayment === 'true') {
+            console.log('Returning from payment - data should be restored');
+            // Clear the flag after detection
+            // Don't clear immediately, let the form handle it
+        }
+        
+        // Handle back button via browser back as well
+        window.addEventListener('popstate', function(event) {
+            console.log('Popstate event - user clicked browser back');
+            // Store data before leaving
+            const restoreData = {
+                plan_id: {{ subscription.plan.id }},
+                plan_name: "{{ subscription.plan.name|escapejs }}",
+                plan_price: {{ monthly_price }},
+                duration_months: {{ duration_months }},
+                user_scope: "{{ subscription.user_scope }}",
+                tenant_id: {% if subscription.tenant %}{{ subscription.tenant.id }}{% else %}null{% endif %}
+            };
+            
+            {% if subscription.user_scope == 'selected' %}
+            restoreData.selected_users = [
+                {% for user in subscription.covered_users.all %}
+                {{ user.id }}{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ];
+            {% endif %}
+            
+            sessionStorage.setItem('returning_from_payment', 'true');
+            sessionStorage.setItem('restore_subscription_data', JSON.stringify(restoreData));
+        });
+    });
+
+    // Function to go back with preserved data
+    function goBackWithData() {
+        console.log('goBackWithData called');
+        
+        try {
+            // Store subscription data in sessionStorage
+            const restoreData = {
+                plan_id: {{ subscription.plan.id }},
+                plan_name: "{{ subscription.plan.name|escapejs }}",
+                plan_price: {{ monthly_price }},
+                duration_months: {{ duration_months }},
+                user_scope: "{{ subscription.user_scope }}",
+                tenant_id: {% if subscription.tenant %}{{ subscription.tenant.id }}{% else %}null{% endif %}
+            };
+            
+            // Add selected users if applicable
+            {% if subscription.user_scope == 'selected' %}
+            restoreData.selected_users = [
+                {% for user in subscription.covered_users.all %}
+                {{ user.id }}{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ];
+            {% endif %}
+            
+            console.log('Storing restore data:', restoreData);
+            sessionStorage.setItem('returning_from_payment', 'true');
+            sessionStorage.setItem('restore_subscription_data', JSON.stringify(restoreData));
+            
+            // Navigate back to create subscription page
+            // Use the full URL to ensure it works
+            const createUrl = "{% url 'create_subscription' %}";
+            window.location.href = createUrl + '?restore=true';
+            
+        } catch(e) {
+            console.error('Error in goBackWithData:', e);
+            // Fallback: just go back in history
+            window.history.back();
+        }
+    }
+    
+    // Function to show covered users
+    function showCoveredUsers() {
+        $('#coveredUsersModal').modal('show');
+        $('#coveredUsersModalBody').html('<div class="text-center"><div class="spinner-border text-primary"></div></div>');
+        
+        $.ajax({
+            url: "{% url 'subscription_covered_users' subscription.id %}",
+            method: 'GET',
+            success: function(response) {
+                if (response.users && response.users.length > 0) {
+                    let html = '<div class="list-group">';
+                    response.users.forEach(user => {
+                        html += `
+                            <div class="list-group-item">
+                                <div class="d-flex align-items-center">
+                                    <div class="user-avatar me-3" style="width: 40px; height: 40px; border-radius: 50%; background: var(--primary-color); color: white; display: flex; align-items: center; justify-content: center;">
+                                        ${user.email.charAt(0).toUpperCase()}
+                                    </div>
+                                    <div>
+                                        <strong>${user.name || 'No name'}</strong><br>
+                                        <small class="text-muted">${user.email}</small>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                    $('#coveredUsersModalBody').html(html);
+                } else {
+                    $('#coveredUsersModalBody').html('<div class="alert alert-info">No users selected for this subscription.</div>');
+                }
+            },
+            error: function() {
+                $('#coveredUsersModalBody').html('<div class="alert alert-danger">Failed to load users. Please try again.</div>');
+            }
+        });
+    }
+</script>
+
+<style>
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+</style>
+{% endblock %}

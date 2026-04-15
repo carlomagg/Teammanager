@@ -1,0 +1,48 @@
+REMITTANCE COMPLETED SUCCESSFULLY
+=================================
+
+Dear {% if tenant %}{{ tenant.name }}{% else %}Administrator{% endif %},
+
+We're pleased to inform you that your remittance has been completed successfully.
+
+TRANSACTION DETAILS:
+────────────────────
+Remittance Reference: {{ remittance.reference }}
+Amount: ₦{{ amount|floatformat:2|intcomma }}
+Bank Reference: {{ bank_reference|default:"Processing" }}
+Completion Date: {{ completion_date|date:"F d, Y H:i" }}
+Status: ✅ Completed
+
+BANK DETAILS USED:
+──────────────────
+Bank Name: {{ company_profile.bank_name }}
+Account Name: {{ company_profile.bank_account_name }}
+Account Number: {{ company_profile.bank_account_number }}
+
+IMPORTANT NOTES:
+────────────────
+• Funds should reflect in your bank account within 1-24 hours
+• Processing time depends on your bank's internal processes
+• Keep this reference for any inquiries: {{ remittance.reference }}
+
+NEXT STEPS:
+───────────
+1. Monitor your bank account for the credit
+2. Contact your bank if funds aren't received within 24 hours
+3. Keep this notification for your records
+
+{% if tenant %}
+VIEW YOUR WALLET:
+─────────────────
+{{ wallet_url }}
+{% endif %}
+
+Need Help?
+──────────
+If you have any questions or notice any discrepancies, please contact our support team immediately.
+
+This is an automated notification. Please do not reply to this email.
+
+Best regards,
+TeamManager Team
+{{ current_date|date:"F d, Y" }}

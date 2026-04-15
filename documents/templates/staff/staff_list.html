@@ -1,0 +1,539 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Staff List - TeamManager{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-md-12">
+            <div class="card shadow-sm border-0 mb-4" style="border-radius: 12px;">
+                <div class="card-header bg-transparent d-flex align-items-center justify-content-between flex-wrap gap-3">
+                    <h2 class="mb-0"><i class="fas fa-users me-2 text-primary"></i> Staff List ({{ profiles.paginator.count }})</h2>
+                    <div class="d-flex flex-wrap gap-3 align-items-center">
+                        <a href="{% url 'staff_directory' %}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-sitemap me-1"></i> Hierarchical View
+                        </a>
+                        <input type="text" id="searchInput" class="form-control" placeholder="Search by name..." style="max-width: 200px;" value="{{ search_query|default:'' }}">
+                        <select id="filterSelect" class="form-select" style="max-width: 200px;">
+                            <option value="">All Departments</option>
+                            {% for dept in departments %}
+                                <option value="{{ dept.name }}" {% if dept.name == filter_dept %}selected{% endif %}>{{ dept.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <button id="resetButton" class="btn btn-outline-secondary btn-sm" title="Reset filters and search">
+                            <i class="fas fa-undo me-1"></i> Reset
+                        </button>
+                        <button class="btn btn-primary btn-sm" type="button">
+                            <a class="dropdown-item" href="#" id="exportCsv">Export Selected to CSV</a>
+                        </button>
+                        {% comment %} <div class="dropdown">
+                            <button class="btn btn-primary btn-sm dropdown-toggle" type="button" id="bulkActions" data-bs-toggle="dropdown" aria-expanded="false" disabled>
+                                <i class="fas fa-cog me-1"></i> Bulk Actions
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="bulkActions">
+                                <li><a class="dropdown-item" href="#" id="exportCsv">Export Selected to CSV</a></li>
+                            </ul>
+                        </div> {% endcomment %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form id="staffForm" method="post">
+                        {% csrf_token %}
+                        <div class="table-responsive">
+                            <table class="table table-hover table-striped align-middle">
+                                <thead>
+                                    <tr>
+                                        <th><input type="checkbox" id="selectAll"></th>
+                                        <th>
+                                            <a href="{% url 'staff_list' %}?sort_by=photo&sort_order={% if sort_by == 'photo' and sort_order == 'asc' %}desc{% else %}asc{% endif %}&search={{ search_query|urlencode }}&dept={{ filter_dept|urlencode }}&page={{ profiles.number }}" class="text-decoration-none text-dark">
+                                                Photo
+                                                {% if sort_by == 'photo' %}
+                                                    <i class="fas fa-sort-{% if sort_order == 'asc' %}up{% else %}down{% endif %} ms-1"></i>
+                                                {% else %}
+                                                    <i class="fas fa-sort ms-1"></i>
+                                                {% endif %}
+                                            </a>
+                                        </th>
+                                        <th>
+                                            <a href="{% url 'staff_list' %}?sort_by=name&sort_order={% if sort_by == 'name' and sort_order == 'asc' %}desc{% else %}asc{% endif %}&search={{ search_query|urlencode }}&dept={{ filter_dept|urlencode }}&page={{ profiles.number }}" class="text-decoration-none text-dark">
+                                                Name
+                                                {% if sort_by == 'name' %}
+                                                    <i class="fas fa-sort-{% if sort_order == 'asc' %}up{% else %}down{% endif %} ms-1"></i>
+                                                {% else %}
+                                                    <i class="fas fa-sort ms-1"></i>
+                                                {% endif %}
+                                            </a>
+                                        </th>
+                                        <th>
+                                            <a href="{% url 'staff_list' %}?sort_by=phone_number&sort_order={% if sort_by == 'phone_number' and sort_order == 'asc' %}desc{% else %}asc{% endif %}&search={{ search_query|urlencode }}&dept={{ filter_dept|urlencode }}&page={{ profiles.number }}" class="text-decoration-none text-dark">
+                                                Phone Number
+                                                {% if sort_by == 'phone_number' %}
+                                                    <i class="fas fa-sort-{% if sort_order == 'asc' %}up{% else %}down{% endif %} ms-1"></i>
+                                                {% else %}
+                                                    <i class="fas fa-sort ms-1"></i>
+                                                {% endif %}
+                                            </a>
+                                        </th>
+                                        <th>
+                                            <a href="{% url 'staff_list' %}?sort_by=email&sort_order={% if sort_by == 'email' and sort_order == 'asc' %}desc{% else %}asc{% endif %}&search={{ search_query|urlencode }}&dept={{ filter_dept|urlencode }}&page={{ profiles.number }}" class="text-decoration-none text-dark">
+                                                Email
+                                                {% if sort_by == 'email' %}
+                                                    <i class="fas fa-sort-{% if sort_order == 'asc' %}up{% else %}down{% endif %} ms-1"></i>
+                                                {% else %}
+                                                    <i class="fas fa-sort ms-1"></i>
+                                                {% endif %}
+                                            </a>
+                                        </th>
+                                        <th>
+                                            <a href="{% url 'staff_list' %}?sort_by=sex&sort_order={% if sort_by == 'sex' and sort_order == 'asc' %}desc{% else %}asc{% endif %}&search={{ search_query|urlencode }}&dept={{ filter_dept|urlencode }}&page={{ profiles.number }}" class="text-decoration-none text-dark">
+                                                Sex
+                                                {% if sort_by == 'sex' %}
+                                                    <i class="fas fa-sort-{% if sort_order == 'asc' %}up{% else %}down{% endif %} ms-1"></i>
+                                                {% else %}
+                                                    <i class="fas fa-sort ms-1"></i>
+                                                {% endif %}
+                                            </a>
+                                        </th>
+                                        <th>
+                                            <a href="{% url 'staff_list' %}?sort_by=designation&sort_order={% if sort_by == 'designation' and sort_order == 'asc' %}desc{% else %}asc{% endif %}&search={{ search_query|urlencode }}&dept={{ filter_dept|urlencode }}&page={{ profiles.number }}" class="text-decoration-none text-dark">
+                                                Designation
+                                                {% if sort_by == 'designation' %}
+                                                    <i class="fas fa-sort-{% if sort_order == 'asc' %}up{% else %}down{% endif %} ms-1"></i>
+                                                {% else %}
+                                                    <i class="fas fa-sort ms-1"></i>
+                                                {% endif %}
+                                            </a>
+                                        </th>
+                                        {% comment %} <th>
+                                            <a href="{% url 'staff_list' %}?sort_by=organization&sort_order={% if sort_by == 'organization' and sort_order == 'asc' %}desc{% else %}asc{% endif %}&search={{ search_query|urlencode }}&dept={{ filter_dept|urlencode }}&page={{ profiles.number }}" class="text-decoration-none text-dark">
+                                                Organization
+                                                {% if sort_by == 'organization' %}
+                                                    <i class="fas fa-sort-{% if sort_order == 'asc' %}up{% else %}down{% endif %} ms-1"></i>
+                                                {% else %}
+                                                    <i class="fas fa-sort ms-1"></i>
+                                                {% endif %}
+                                            </a>
+                                        </th> {% endcomment %}
+                                        <th>
+                                            <a href="{% url 'staff_list' %}?sort_by=department&sort_order={% if sort_by == 'department' and sort_order == 'asc' %}desc{% else %}asc{% endif %}&search={{ search_query|urlencode }}&dept={{ filter_dept|urlencode }}&page={{ profiles.number }}" class="text-decoration-none text-dark">
+                                                Department
+                                                {% if sort_by == 'department' %}
+                                                    <i class="fas fa-sort-{% if sort_order == 'asc' %}up{% else %}down{% endif %} ms-1"></i>
+                                                {% else %}
+                                                    <i class="fas fa-sort ms-1"></i>
+                                                {% endif %}
+                                            </a>
+                                        </th>
+                                        <th>
+                                            <a href="{% url 'staff_list' %}?sort_by=team&sort_order={% if sort_by == 'team' and sort_order == 'asc' %}desc{% else %}asc{% endif %}&search={{ search_query|urlencode }}&dept={{ filter_dept|urlencode }}&page={{ profiles.number }}" class="text-decoration-none text-dark">
+                                                Team
+                                                {% if sort_by == 'team' %}
+                                                    <i class="fas fa-sort-{% if sort_order == 'asc' %}up{% else %}down{% endif %} ms-1"></i>
+                                                {% else %}
+                                                    <i class="fas fa-sort ms-1"></i>
+                                                {% endif %}
+                                            </a>
+                                        </th>
+                                        <th>Roles</th>
+                                        <th>
+                                            <a href="{% url 'staff_list' %}?sort_by=employment_date&sort_order={% if sort_by == 'employment_date' and sort_order == 'asc' %}desc{% else %}asc{% endif %}&search={{ search_query|urlencode }}&dept={{ filter_dept|urlencode }}&page={{ profiles.number }}" class="text-decoration-none text-dark">
+                                                Employment Date
+                                                {% if sort_by == 'employment_date' %}
+                                                    <i class="fas fa-sort-{% if sort_order == 'asc' %}up{% else %}down{% endif %} ms-1"></i>
+                                                {% else %}
+                                                    <i class="fas fa-sort ms-1"></i>
+                                                {% endif %}
+                                            </a>
+                                        </th>
+                                        <th>
+                                            <a href="{% url 'staff_list' %}?sort_by=location&sort_order={% if sort_by == 'location' and sort_order == 'asc' %}desc{% else %}asc{% endif %}&search={{ search_query|urlencode }}&dept={{ filter_dept|urlencode }}&page={{ profiles.number }}" class="text-decoration-none text-dark">
+                                                Location
+                                                {% if sort_by == 'location' %}
+                                                    <i class="fas fa-sort-{% if sort_order == 'asc' %}up{% else %}down{% endif %} ms-1"></i>
+                                                {% else %}
+                                                    <i class="fas fa-sort ms-1"></i>
+                                                {% endif %}
+                                            </a>
+                                        </th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="staffTable">
+                                    {% for profile in profiles %}
+                                        <tr data-department="{{ profile.user.department.name|default:'' }}">
+                                            <td><input type="checkbox" name="selected_profiles" value="{{ profile.user.id }}"></td>
+                                            <td>
+                                                {% if profile.photo %}
+                                                    <a href="#" 
+                                                       data-media-url="{{ profile.photo.url }}" 
+                                                       data-media-type="image" 
+                                                       data-media-name="{{ profile.first_name }} {{ profile.last_name }}'s Photo">
+                                                        <img src="{{ profile.photo.url }}" alt="{{ profile.first_name }} {{ profile.last_name }}" class="rounded-circle" style="width: 32px; height: 32px; object-fit: cover;">
+                                                    </a>
+                                                {% else %}
+                                                    <img src="{% static 'raadaa/no_photo.jpeg' %}" alt="No Photo" class="rounded-circle" style="width: 32px; height: 32px; object-fit: cover;">
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ profile.first_name }} {{ profile.middle_name|default:"" }} {{ profile.last_name }}</td>
+                                            <td>{{ profile.phone_number|default:"N/A" }}</td>
+                                            <td>{{ profile.email|default:"N/A" }}</td>
+                                            <td>{{ profile.sex|default:"N/A" }}</td>
+                                            <td>{{ profile.designation|default:"N/A" }}</td>
+                                            {% comment %} <td>{{ profile.organization.name|default:"N/A" }}</td> {% endcomment %}
+                                            <td>{{ profile.user.department.name|default:"N/A" }}</td>
+                                            <td>{{ profile.user.teams.all|join:", "|default:"N/A" }}</td>
+                                            <td>
+                                                {% for role in profile.user.roles.all %}
+                                                    <span class="badge role-pill">{{ role.name }}</span>
+                                                {% empty %}
+                                                    <span class="text-muted">N/A</span>
+                                                {% endfor %}
+                                            </td>
+                                            <td>{{ profile.employment_date|date:"M d, Y"|default:"N/A" }}</td>
+                                            <td>{{ profile.location|default:"N/A" }}</td>
+                                            <td>
+                                                <a href="{% url 'view_staff_profile' profile.user.id %}" 
+                                                   class="text-primary" 
+                                                   data-bs-toggle="tooltip" 
+                                                   title="View Profile">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% empty %}
+                                        <tr>
+                                            <td colspan="14" class="text-center text-muted">No staff profiles found.</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </form>
+                    <!-- Pagination -->
+                    {% if profiles.has_other_pages %}
+                        <nav aria-label="Page navigation">
+                            <ul class="pagination justify-content-center mt-3">
+                                {% if profiles.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ profiles.previous_page_number }}" aria-label="Previous">
+                                            <span aria-hidden="true">«</span>
+                                        </a>
+                                    </li>
+                                {% endif %}
+                                <!--First page-->
+                                <li class="page-item {% if profiles.number == 1 %}active{% endif %}">
+                                    <a class="page-link" href="?page=1">1</a>
+                                </li>
+                                {% if profiles.number != 1 and profiles.number != 2 %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link">...</span>
+                                    </li>
+                                {% endif %}
+                                {% if profiles.number != 1 %}
+                                    <li class="page-item {% if profiles.number %}active{% endif %}">
+                                        <a class="page-link" href="?page={{ profiles.number }}">{{ profiles.number }}</a>
+                                    </li>
+                                {% endif %}
+                                {% if profiles.number != profiles.paginator.num_pages and profiles.number != profiles.paginator.num_pages|add:-1 %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link">...</span>
+                                    </li>
+                                {% endif %}
+                                <!-- Last page (only if not already shown) -->
+                                {% if profiles.number != profiles.paginator.num_pages %}
+                                    <li class="page-item {% if profiles.number == profiles.paginator.num_pages %}active{% endif %}">
+                                        <a class="page-link" href="?page={{ profiles.paginator.num_pages }}">{{ profiles.paginator.num_pages }}</a>
+                                    </li>
+                                {% endif %}
+                                {% if profiles.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ profiles.next_page_number }}" aria-label="Next">
+                                            <span aria-hidden="true">»</span>
+                                        </a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .role-pill {
+        background: linear-gradient(135deg, #319795 0%, #2c7a7b 100%);
+        color: #fff;
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 0.25em 0.65em;
+        border-radius: 50px;
+        margin: 2px;
+        display: inline-block;
+        letter-spacing: 0.3px;
+    }
+    .role-pill:nth-child(2n) {
+        background: linear-gradient(135deg, #6b46c1 0%, #553c9a 100%);
+    }
+    .role-pill:nth-child(3n) {
+        background: linear-gradient(135deg, #d69e2e 0%, #b7791f 100%);
+    }
+    .role-pill:nth-child(4n) {
+        background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
+    }
+    .table {
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    .table th {
+        background: #f8f9fa;
+        color: #2d3748;
+        font-weight: 600;
+    }
+    body.dark-mode .table th {
+        background: #2d3748;
+        color: #e2e8f0;
+    }
+    .table td {
+        vertical-align: middle;
+        font-size: 0.95rem;
+    }
+    .table tr:hover {
+        background: #e2e8f0;
+    }
+    body.dark-mode .table tr:hover {
+        background: #4a5568;
+    }
+    .table img {
+        transition: transform 0.2s ease;
+    }
+    .table img:hover {
+        transform: scale(1.1);
+    }
+    .form-control, .form-select {
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+    }
+    body.dark-mode .form-control,
+    body.dark-mode .form-select {
+        background: #2d3748;
+        border-color: #4a5568;
+        color: #e2e8f0;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: #319795;
+        box-shadow: 0 0 0 0.2rem rgba(49, 151, 149, 0.25);
+    }
+    .text-primary {
+        color: #319795 !important;
+    }
+    .text-primary:hover {
+        color: #2c7a7b !important;
+    }
+    .page-link {
+        border-radius: 6px;
+        margin: 0 2px;
+        color: #319795;
+    }
+    .page-link:hover {
+        background: #e2e8f0;
+        color: #2c7a7b;
+    }
+    body.dark-mode .page-link {
+        color: #319795;
+        background: #2d3748;
+    }
+    body.dark-mode .page-link:hover {
+        background: #4a5568;
+        color: #2c7a7b;
+    }
+    .page-item.active .page-link {
+        background: #319795;
+        border-color: #319795;
+        color: #fff;
+    }
+    .dropdown-menu {
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    body.dark-mode .dropdown-menu {
+        background: #2d3748;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    }
+    .dropdown-item:hover {
+        background: #319795;
+        color: #fff;
+    }
+    /* Select2 Custom Styles */
+    .select2-container--bootstrap-5 .select2-selection {
+        border-radius: 8px !important;
+        border: 1px solid #e2e8f0 !important;
+        background: #fff !important;
+        font-size: 0.95rem;
+        height: 38px;
+        line-height: 38px;
+        padding: 0 12px;
+    }
+    body.dark-mode .select2-container--bootstrap-5 .select2-selection {
+        background: #2d3748 !important;
+        border-color: #4a5568 !important;
+        color: #e2e8f0 !important;
+    }
+    .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+        line-height: 36px;
+        padding-left: 0;
+    }
+    .select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow {
+        height: 38px;
+        right: 12px;
+    }
+    .select2-container--bootstrap-5 .select2-dropdown {
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        z-index: 1055;
+    }
+    body.dark-mode .select2-container--bootstrap-5 .select2-dropdown {
+        background: #2d3748;
+        border-color: #4a5568;
+    }
+    .select2-container--bootstrap-5 .select2-results__option {
+        padding: 8px 12px;
+        font-size: 0.95rem;
+        color: #2d3748;
+    }
+    body.dark-mode .select2-container--bootstrap-5 .select2-results__option {
+        color: #e2e8f0;
+    }
+    .select2-container--bootstrap-5 .select2-results__option--highlighted {
+        background: #319795 !important;
+        color: #fff !important;
+    }
+    .select2-container--bootstrap-5 .select2-selection:focus {
+        border-color: #319795 !important;
+        box-shadow: 0 0 0 0.2rem rgba(49, 151, 149, 0.25) !important;
+    }
+    @media (max-width: 768px) {
+        .table th, .table td {
+            font-size: 0.85rem;
+        }
+        .table img {
+            width: 24px;
+            height: 24px;
+        }
+        #searchInput, #filterSelect, #resetButton {
+            max-width: 100%;
+            margin-bottom: 10px;
+        }
+        .card-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .pagination {
+            flex-wrap: wrap;
+        }
+        .select2-container--bootstrap-5 .select2-selection {
+            font-size: 0.85rem;
+            height: 34px;
+            line-height: 34px;
+        }
+        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+            line-height: 32px;
+        }
+        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow {
+            height: 34px;
+        }
+    }
+</style>
+
+<script>
+$(document).ready(function() {
+    // Initialize Select2 for filter dropdown
+    $('#filterSelect').select2({
+        theme: 'bootstrap-5',
+        width: '100%',
+        placeholder: 'All Departments'
+    });
+
+    // Initialize Bootstrap tooltips
+    $('[data-bs-toggle="tooltip"]').tooltip();
+
+    // Handle select all checkbox
+    $('#selectAll').on('change', function() {
+        $('input[name="selected_profiles"]').prop('checked', this.checked);
+        $('#bulkActions').prop('disabled', !$('input[name="selected_profiles"]:checked').length);
+    });
+
+    // Enable/disable bulk actions based on selection
+    $('input[name="selected_profiles"]').on('change', function() {
+        const allChecked = $('input[name="selected_profiles"]').length === $('input[name="selected_profiles"]:checked').length;
+        $('#selectAll').prop('checked', allChecked);
+        $('#bulkActions').prop('disabled', !$('input[name="selected_profiles"]:checked').length);
+    });
+
+    // Search functionality with debounce
+    let searchTimeout;
+    $('#searchInput').on('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            const searchTerm = $(this).val();
+            window.location.href = `{% url 'staff_list' %}?search=${encodeURIComponent(searchTerm)}&dept=${encodeURIComponent($('#filterSelect').val())}&sort_by={{ sort_by }}&sort_order={{ sort_order }}&page=1`;
+        }, 300);
+    });
+
+    // Filter by department
+    $('#filterSelect').on('change', function() {
+        const selectedDept = $(this).val();
+        window.location.href = `{% url 'staff_list' %}?search=${encodeURIComponent($('#searchInput').val())}&dept=${encodeURIComponent(selectedDept)}&sort_by={{ sort_by }}&sort_order={{ sort_order }}&page=1`;
+    });
+
+    // Reset button
+    $('#resetButton').on('click', function(e) {
+        e.preventDefault();
+        window.location.href = "{% url 'staff_list' %}";
+    });
+
+    // Export selected profiles to CSV
+    $('#exportCsv').on('click', function(e) {
+        e.preventDefault();
+        const selectedIds = $('input[name="selected_profiles"]:checked').map(function() {
+            return $(this).val();
+        }).get();
+        if (!selectedIds.length) {
+            alert('Please select at least one profile to export.');
+            return;
+        }
+        const formData = new FormData();
+        selectedIds.forEach(id => formData.append('profile_ids', id));
+        formData.append('csrfmiddlewaretoken', $('input[name="csrfmiddlewaretoken"]').val());
+        $.ajax({
+            url: '{% url "export_staff_csv" %}',
+            method: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            xhrFields: {
+                responseType: 'blob'
+            },
+            success: function(data) {
+                const url = window.URL.createObjectURL(data);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'staff_export.csv';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            },
+            error: function(xhr) {
+                alert('Error exporting profiles: ' + (xhr.responseJSON?.error || 'Please try again.'));
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,261 @@
+{% extends 'base.html' %}
+{% block title %}Notifications - TeamManager{% endblock %}
+{% load custom_filters %}
+{% block content %}
+<div class="notifications-page">
+    <div class="card shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h4 class="card-title mb-0">
+                <i class="fas fa-bell me-2 text-primary" aria-hidden="true"></i>
+                Notifications ({{ notifications|page_obj_count }})
+            </h4>
+            <div class="mb-3">
+                <a href="{% url 'create_notification' %}" class="btn btn-success">Add Notification</a>
+            </div>
+            <div class="input-group w-50 w-md-25">
+                <span class="input-group-text bg-transparent border-end-0">
+                    <i class="fas fa-search text-muted"></i>
+                </span>
+                <input type="text" class="form-control border-start-0" id="searchNotifications" placeholder="Search notifications..." aria-label="Search notifications">
+            </div>
+            <a href="{% url 'admin_dashboard' %}" class="btn btn-outline-secondary btn-sm" title="Back to Admin Dashboard">
+                <i class="fas fa-arrow-left me-1"></i> Back
+            </a>
+        </div>
+
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover table-bordered align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col">No.</th>
+                            <th scope="col">Title</th>
+                            <th scope="col">Type</th>
+                            <th scope="col">Active</th>
+                            <th scope="col">Created At</th>
+                            <th scope="col">Expires At</th>
+                            <th scope="col">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="notificationTableBody">
+                        {% for notification in notifications %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td><a href="{% url 'edit_notification' notification_id=notification.id %}">{{ notification.title }}</a></td>
+                            <td>{{ notification.get_type_display }}</td>
+                            <td>
+                                <i class="fas {% if notification.is_active %}fa-check-circle text-success{% else %}fa-times-circle text-danger{% endif %}"></i>
+                            </td>
+                            <td>{{ notification.created_at|date:"d M Y H:i" }}</td>
+                            <td>{{ notification.expires_at|date:"d M Y H:i"|default:'—' }}</td>
+                            <td>
+                                <a href="{% url 'edit_notification' notification_id=notification.id %}" class="btn btn-outline-primary btn-sm me-1" title="Edit Notification">
+                                    <i class="fas fa-edit me-1"></i> Edit
+                                </a>
+                                <form action="{% url 'delete_notification' notification_id=notification.id %}" method="POST" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger btn-sm" title="Delete Notification" onclick="return confirm('Are you sure you want to delete the notification {{ notification.title }}?');">
+                                        <i class="fas fa-trash-alt me-1"></i> Delete
+                                        <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr class="no-results">
+                            <td colspan="7" class="text-center text-muted">No notifications found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% if notifications.has_other_pages %}
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center mt-3">
+                            {% if notifications.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ notifications.previous_page_number }}" aria-label="Previous">
+                                        <span aria-hidden="true">«</span>
+                                    </a>
+                                </li>
+                            {% endif %}
+                            <!--First page-->
+                            <li class="page-item {% if notifications.number == 1 %}active{% endif %}">
+                                <a class="page-link" href="?page=1">1</a>
+                            </li>
+                            {% if notifications.number != 1 and notifications.number != 2 %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">...</span>
+                                </li>
+                            {% endif %}
+                            {% if notifications.number != 1 %}
+                                <li class="page-item {% if notifications.number %}active{% endif %}">
+                                    <a class="page-link" href="?page={{ notifications.number }}">{{ notifications.number }}</a>
+                                </li>
+                            {% endif %}
+                            {% if notifications.number != notifications.paginator.num_pages and notifications.number != notifications.paginator.num_pages|add:-1 %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">...</span>
+                                </li>
+                            {% endif %}
+                            <!-- Last page (only if not already shown) -->
+                            {% if notifications.number != notifications.paginator.num_pages %}
+                                <li class="page-item {% if notifications.number == notifications.paginator.num_pages %}active{% endif %}">
+                                    <a class="page-link" href="?page={{ notifications.paginator.num_pages }}">{{ notifications.paginator.num_pages }}</a>
+                                </li>
+                            {% endif %}
+                            {% if notifications.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ notifications.next_page_number }}" aria-label="Next">
+                                        <span aria-hidden="true">»</span>
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style scoped>
+    .pagination .page-link {
+        color: #319795;
+        border-radius: 8px;
+        margin: 0 2px;
+    }
+    .pagination .page-item.active .page-link {
+        background-color: #319795;
+        border-color: #319795;
+        color: #ffffff;
+    }
+    .pagination .page-link:hover {
+        background-color: #f1f5f9;
+        color: #2c7a7b;
+    }
+    .notifications-page {
+        padding: 20px;
+    }
+    .notifications-page .card {
+        border: none;
+        border-radius: 12px;
+        background: #ffffff;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+    .notifications-page .card-header {
+        background: #f8fafc;
+        border-bottom: 1px solid #e2e8f0;
+        border-radius: 12px 12px 0 0;
+        padding: 15px 20px;
+    }
+    .notifications-page .card-title {
+        font-weight: 600;
+        color: #2d3748;
+    }
+    .notifications-page .table {
+        margin-bottom: 0;
+        font-size: 0.95rem;
+    }
+    .notifications-page .table th {
+        font-weight: 500;
+        color: #2d3748;
+        background: #f8fafc;
+        border-bottom: 2px solid #e2e8f0;
+    }
+    .notifications-page .table td {
+        vertical-align: middle;
+        border-color: #e2e8f0;
+    }
+    .notifications-page .table-hover tbody tr:hover {
+        background-color: #f1f5f9;
+    }
+    .notifications-page .btn-primary {
+        background-color: #319795;
+        border-color: #319795;
+        border-radius: 8px;
+        padding: 6px 12px;
+        font-size: 0.9rem;
+        transition: background-color 0.2s ease;
+    }
+    .notifications-page .btn-primary:hover {
+        background-color: #2c7a7b;
+        border-color: #2c7a7b;
+    }
+    .notifications-page .btn-danger {
+        background-color: #dc3545;
+        border-color: #dc3545;
+        border-radius: 8px;
+        padding: 6px 12px;
+        font-size: 0.9rem;
+        transition: background-color 0.2s ease;
+    }
+    .notifications-page .btn-danger:hover {
+        background-color: #c82333;
+        border-color: #c82333;
+    }
+    .notifications-page .form-control {
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        font-size: 0.9rem;
+        padding: 8px;
+    }
+    .notifications-page .form-control:focus {
+        border-color: #319795;
+        box-shadow: 0 0 0 0.2rem rgba(49, 151, 149, 0.25);
+    }
+    .notifications-page .input-group-text {
+        border-radius: 8px 0 0 8px;
+        border: 1px solid #e2e8f0;
+    }
+    .notifications-page a:focus, .notifications-page button:focus, .notifications-page input:focus {
+        outline: 2px solid #319795;
+        outline-offset: 2px;
+        border-radius: 4px;
+    }
+    @media (max-width: 768px) {
+        .notifications-page {
+            padding: 15px;
+        }
+        .notifications-page .card-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .notifications-page .input-group {
+            width: 100% !important;
+        }
+        .notifications-page .table {
+            font-size: 0.85rem;
+        }
+        .notifications-page .btn-sm {
+            padding: 4px 8px;
+            font-size: 0.85rem;
+        }
+    }
+</style>
+
+<script>
+    // Search functionality
+    document.getElementById('searchNotifications').addEventListener('input', function(e) {
+        const searchTerm = e.target.value.toLowerCase();
+        const rows = document.querySelectorAll('#notificationTableBody tr:not(.no-results)');
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(searchTerm) ? '' : 'none';
+        });
+        const noResultsRow = document.querySelector('#notificationTableBody tr.no-results');
+        if (noResultsRow) {
+            noResultsRow.style.display = Array.from(rows).every(row => row.style.display === 'none') ? '' : 'none';
+        }
+    });
+
+    // Form submission spinner for delete actions
+    document.querySelectorAll('form').forEach(form => {
+        form.addEventListener('submit', function() {
+            const btn = form.querySelector('button[type="submit"]');
+            btn.querySelector('.spinner-border').classList.remove('d-none');
+            btn.disabled = true;
+        });
+    });
+</script>
+{% endblock %}

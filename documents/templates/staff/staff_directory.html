@@ -1,0 +1,168 @@
+{% extends 'base.html' %} {% load static %} {% block title %}Staff Directory -
+TeamManager{% endblock %} {% block content %}
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-lg-10 col-md-12">
+      <div class="card shadow-sm border-0 mb-4" style="border-radius: 12px">
+        <div class="card-header bg-transparent">
+          <h2 class="mb-0 text-center">
+            <i class="fas fa-users me-2 text-primary"></i> Staff Directory
+          </h2>
+        </div>
+        <div class="card-body">
+          {% if grouped %} {% for dept, teams in grouped.items %}
+          <div class="dept mb-3">
+            <h3
+              class="toggle d-flex align-items-center"
+              data-bs-toggle="collapse"
+              data-bs-target="#dept-{{ dept|slugify }}"
+              aria-expanded="false"
+              aria-controls="dept-{{ dept|slugify }}"
+            >
+              <i class="fas fa-sitemap me-2 text-primary"></i>
+              <span class="caret me-2">▸</span> {{ dept }}
+            </h3>
+            <div class="team-container collapse" id="dept-{{ dept|slugify }}">
+              {% for team, members in teams.items %}
+              <div class="team ms-3 mt-2">
+                <h5
+                  class="toggle d-flex align-items-center"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#team-{{ dept|slugify }}-{{ team|slugify }}"
+                  aria-expanded="false"
+                  aria-controls="team-{{ dept|slugify }}-{{ team|slugify }}"
+                >
+                  <i class="fas fa-users me-2 text-primary"></i>
+                  <span class="caret me-2">▸</span> {{ team }}
+                </h5>
+                <ul
+                  class="list-group list-group-flush members collapse"
+                  id="team-{{ dept|slugify }}-{{ team|slugify }}"
+                >
+                  {% for profile in members %}
+                  <li class="list-group-item d-flex align-items-center">
+                    {% if profile.photo %}
+                    <a
+                      href="#"
+                      data-media-url="{{ profile.photo.url }}"
+                      data-media-type="image"
+                      data-media-name="{{ profile.first_name }} {{ profile.last_name }}'s Photo"
+                      class="me-2"
+                    >
+                      <img
+                        src="{{ profile.photo.url }}"
+                        alt="{{ profile.first_name }} {{ profile.last_name }}"
+                        class="rounded-circle"
+                        style="width: 32px; height: 32px; object-fit: cover"
+                      />
+                    </a>
+                    {% else %}
+                    <img
+                      src="{% static 'raadaa/no_photo.jpeg' %}"
+                      alt="No Photo"
+                      class="rounded-circle me-2"
+                      style="width: 32px; height: 32px; object-fit: cover"
+                    />
+                    {% endif %}
+                    <a
+                      href="{% url 'view_staff_profile' profile.user.id %}"
+                      class="text-decoration-none"
+                      >{{ profile.first_name }} {{ profile.last_name }}</a
+                    >
+                  </li>
+                  {% endfor %}
+                </ul>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          {% endfor %} {% else %}
+          <div class="alert alert-info text-center">
+            No staff profiles found.
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .card {
+    border-radius: 12px;
+  }
+  body.dark-mode .card {
+    background: #2d3748;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    color: #ffffff;
+  }
+  .toggle {
+    cursor: pointer;
+    transition: color 0.2s ease;
+  }
+  .toggle:hover {
+    color: #319795;
+  }
+  .caret {
+    display: inline-block;
+    transition: transform 0.3s ease;
+    margin-right: 8px;
+  }
+  .caret.rotated {
+    transform: rotate(90deg);
+  }
+  .list-group-item {
+    background: transparent;
+    border: none;
+    padding: 8px 0;
+    font-size: 0.95rem;
+  }
+  body.dark-mode .list-group-item {
+    color: #e2e8f0;
+  }
+  .list-group-item a:hover {
+    color: #319795;
+  }
+  .list-group-item img {
+    transition: transform 0.2s ease;
+  }
+  .list-group-item img:hover {
+    transform: scale(1.1);
+  }
+  @media (max-width: 768px) {
+    .toggle {
+      font-size: 0.9rem;
+    }
+    .list-group-item {
+      font-size: 0.85rem;
+    }
+    .list-group-item img {
+      width: 24px;
+      height: 24px;
+    }
+    .dept {
+      margin-left: 10px !important;
+    }
+    .team {
+      margin-left: 20px !important;
+    }
+  }
+</style>
+
+<script>
+  $(document).ready(function () {
+    // Use Bootstrap collapse for toggling
+    $(".toggle").on("click", function () {
+      const caret = $(this).find(".caret");
+      const target = $(this).data("bs-target");
+      $(target)
+        .on("show.bs.collapse", function () {
+          caret.addClass("rotated");
+        })
+        .on("hide.bs.collapse", function () {
+          caret.removeClass("rotated");
+        });
+    });
+  });
+</script>
+{% endblock %}

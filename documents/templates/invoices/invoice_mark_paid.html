@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Mark Invoice Paid — {{ invoice.invoice_number }}{% endblock %}
+
+{% block content %}
+<div class="container py-4" style="max-width:560px;">
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h4 class="mb-0">
+        <i class="fas fa-check-circle me-2 text-success"></i>Mark as Paid
+      </h4>
+      <small class="text-muted">Invoice {{ invoice.invoice_number }}</small>
+    </div>
+    <a href="{% url 'invoice_detail' invoice.pk %}"
+       class="btn btn-outline-secondary btn-sm">
+      <i class="fas fa-arrow-left me-1"></i>Back
+    </a>
+  </div>
+
+  {# ── Invoice summary ── #}
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+      <dl class="row small mb-0">
+        <dt class="col-5 text-muted">Invoice #</dt>
+        <dd class="col-7 fw-semibold">{{ invoice.invoice_number }}</dd>
+
+        <dt class="col-5 text-muted">
+          {% if invoice.direction == 'out' %}Billed To{% else %}Billed From{% endif %}
+        </dt>
+        <dd class="col-7">{{ invoice.party_display }}</dd>
+
+        <dt class="col-5 text-muted">Total Amount</dt>
+        <dd class="col-7 fw-bold fs-6 text-primary">
+          {{ invoice.currency }} {{ invoice.total_amount|floatformat:2|intcomma }}
+        </dd>
+
+        <dt class="col-5 text-muted">Due Date</dt>
+        <dd class="col-7 {% if invoice.is_overdue %}text-danger fw-semibold{% endif %}">
+          {{ invoice.due_date|date:"d M Y" }}
+          {% if invoice.is_overdue %}
+            <span class="badge bg-danger ms-1">Overdue</span>
+          {% endif %}
+        </dd>
+
+        <dt class="col-5 text-muted">Current Status</dt>
+        <dd class="col-7">
+          <span class="badge bg-secondary">{{ invoice.get_status_display }}</span>
+        </dd>
+      </dl>
+    </div>
+  </div>
+
+  {# ── Payment form ── #}
+  <div class="card border-0 shadow-sm">
+    <div class="card-header bg-transparent border-bottom fw-semibold py-2">
+      <i class="fas fa-money-bill-wave me-1 text-success"></i>Payment Details
+    </div>
+    <div class="card-body">
+      <form method="post" novalidate>
+        {% csrf_token %}
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">
+            Amount Paid <span class="text-danger">*</span>
+          </label>
+          <div class="input-group">
+            <span class="input-group-text">{{ invoice.currency }}</span>
+            {{ form.amount_paid }}
+          </div>
+          {% if form.amount_paid.errors %}
+            <div class="invalid-feedback d-block">
+              {{ form.amount_paid.errors|join:", " }}
+            </div>
+          {% endif %}
+          <div class="form-text">
+            Invoice total: {{ invoice.currency }} {{ invoice.total_amount|floatformat:2|intcomma }}
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">
+            Date & Time Paid <span class="text-danger">*</span>
+          </label>
+          {{ form.paid_at }}
+          {% if form.paid_at.errors %}
+            <div class="invalid-feedback d-block">
+              {{ form.paid_at.errors|join:", " }}
+            </div>
+          {% endif %}
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label fw-semibold">
+            Payment Reference <span class="text-muted fw-normal">(optional)</span>
+          </label>
+          {{ form.notes }}
+          <div class="form-text">
+            Bank transfer ID, Paystack reference, cheque number, etc.
+          </div>
+        </div>
+
+        <div class="alert alert-info py-2 small mb-4">
+          <i class="fas fa-info-circle me-1"></i>
+          Marking as paid will automatically generate a receipt and
+          email it to <strong>{{ invoice.party_email|default:"the counterparty" }}</strong>.
+        </div>
+
+        <div class="d-flex gap-2">
+          <a href="{% url 'invoice_detail' invoice.pk %}"
+             class="btn btn-outline-secondary px-4">Cancel</a>
+          <button type="submit" class="btn btn-success flex-grow-1" id="markPaidBtn">
+            <i class="fas fa-check me-2"></i>Confirm Payment & Generate Receipt
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.querySelector('form').addEventListener('submit', function () {
+  const btn = document.getElementById('markPaidBtn');
+  btn.disabled  = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing…';
+});
+</script>
+{% endblock %}

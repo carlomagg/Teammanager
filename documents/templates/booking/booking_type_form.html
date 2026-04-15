@@ -1,0 +1,506 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --teal: #319795;
+        --teal-dark: #2c7a7b;
+    }
+    .section-title {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: var(--teal-dark);
+        margin: 2rem 0 1.1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #edf2f7;
+        position: relative;
+    }
+    .section-title::before {
+        content: "";
+        position: absolute;
+        left: 0; bottom: -2px;
+        width: 56px; height: 2px;
+        background: var(--teal);
+    }
+
+    /* ── Schedule rows ──────────────────────────────────── */
+    #schedule-table thead th {
+        font-size: .78rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        color: #718096;
+        background: #f7fafc;
+        border-bottom: 2px solid #e2e8f0;
+        white-space: nowrap;
+        padding: .5rem .75rem;
+    }
+    .schedule-row td {
+        vertical-align: middle;
+        padding: .45rem .6rem;
+        border-color: #edf2f7;
+    }
+    .schedule-row:last-child td {
+        border-bottom: none;
+    }
+    .schedule-row .form-select,
+    .schedule-row .form-control {
+        font-size: .85rem;
+    }
+    .delete-row-btn {
+        background: none;
+        border: none;
+        color: #e53e3e;
+        opacity: .6;
+        transition: opacity .15s;
+        cursor: pointer;
+        padding: .2rem .4rem;
+    }
+    .delete-row-btn:hover { opacity: 1; }
+    .deleted-row { display: none !important; }
+
+    .color-preview {
+        width: 42px; height: 42px;
+        border-radius: 10px;
+        border: 2px solid #e2e8f0;
+    }
+    .form-text { font-size: .8rem; color: #718096; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5" style="max-width: 960px;">
+
+    <!-- Page header -->
+    <div class="d-flex justify-content-between align-items-center mb-5 flex-wrap gap-3">
+        <div>
+            <a href="{% url 'booking_type_list' %}" class="small fw-medium text-decoration-none" style="color:var(--teal)">
+                <i class="fas fa-arrow-left me-1"></i>Back to Booking Services
+            </a>
+            <h1 class="h3 fw-bold mt-2 mb-0">{{ action }} Booking Service</h1>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'booking_type_list' %}" class="btn btn-outline-secondary px-4">Cancel</a>
+            <button form="booking-type-form" class="btn btn-primary px-5">
+                <i class="fas fa-check me-2"></i>{{ action }}
+            </button>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+        <div class="card-body p-4 p-md-5">
+            <form id="booking-type-form" method="post" class="row g-4" novalidate>
+                {% csrf_token %}
+
+                <!-- ══ CORE INFO ════════════════════════════════════════════ -->
+                <div class="col-12"><h2 class="section-title">Core Information</h2></div>
+
+                <div class="col-12 col-md-8">
+                    <label class="form-label required">Booking Service Name</label>
+                    {{ form.name }}
+                    <div class="form-text">e.g. "30-min Strategy Call"</div>
+                </div>
+
+                {% if not is_personal %}
+                <div class="col-12 col-md-4">
+                    <label class="form-label required">For Self / Organization</label>
+                    {{ form.booking_for }}
+                </div>
+                <div class="col-12 col-md-6">
+                    <label class="form-label">Host / Owner</label>
+                    {{ form.host_user }}
+                </div>
+                <div class="col-12 col-md-6">
+                    <label class="form-label">Managers</label>
+                    {{ form.managers }}
+                </div>
+                {% endif %}
+
+                <div class="col-12 col-md-4">
+                    <label class="form-label required">Duration</label>
+                    <div class="input-group">
+                        {{ form.duration_minutes }}
+                        <span class="input-group-text">minutes</span>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-5">
+                    <label class="form-label">Price</label>
+                    <div class="input-group">
+                        {{ form.price }}
+                        {{ form.currency }}
+                    </div>
+                    <div class="form-text">Leave 0 for free sessions</div>
+                </div>
+
+                <div class="col-12 col-md-3">
+                    <label class="form-label">Display Colour</label>
+                    <div class="d-flex align-items-center gap-3">
+                        {{ form.color }}
+                        <div id="colorPreview" class="color-preview"
+                             style="background:{{ form.color.value|default:'#319795' }};"></div>
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label">Description</label>
+                    {{ form.description }}
+                </div>
+
+                <!-- ══ WEEKLY SCHEDULE ══════════════════════════════════════ -->
+                <div class="col-12">
+                    <h2 class="section-title">Weekly Schedule</h2>
+                    <p class="text-muted small mb-3">
+                        Add one or more recurring time windows. You can add multiple windows
+                        on the same day (e.g. Mon 09:00–12:00 <em>and</em> Mon 14:00–17:00).
+                    </p>
+                </div>
+
+                <div class="col-12">
+                    {{ schedule_fs.management_form }}
+
+                    <div class="table-responsive rounded-3 border">
+                        <table class="table table-sm mb-0" id="schedule-table">
+                            <thead>
+                                <tr>
+                                    <th style="min-width:130px">Day</th>
+                                    <th style="min-width:110px">From</th>
+                                    <th style="min-width:110px">To</th>
+                                    <th style="min-width:180px">Timezone</th>
+                                    <th style="min-width:80px">Buf. before</th>
+                                    <th style="min-width:80px">Buf. after</th>
+                                    <th style="min-width:60px">Active</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="schedule-body">
+                                {% for sf in schedule_fs %}
+                                <tr class="schedule-row" id="schedule-row-{{ forloop.counter0 }}">
+                                    {# Hidden fields #}
+                                    {% for hidden in sf.hidden_fields %}{{ hidden }}{% endfor %}
+
+                                    <td>{{ sf.weekday }}</td>
+                                    <td>{{ sf.start_time }}</td>
+                                    <td>{{ sf.end_time }}</td>
+                                    <td>{{ sf.timezone }}</td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            {{ sf.buffer_before_minutes }}
+                                            <span class="input-group-text px-1">m</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            {{ sf.buffer_after_minutes }}
+                                            <span class="input-group-text px-1">m</span>
+                                        </div>
+                                    </td>
+                                    <td class="text-center">{{ sf.is_active }}</td>
+                                    <td class="text-center">
+                                        {% if sf.instance.pk %}
+                                            {# Mark existing rows for deletion via Django formset DELETE field #}
+                                            <button type="button" class="delete-row-btn"
+                                                    data-delete-field="{{ sf.DELETE.id_for_label }}"
+                                                    title="Remove this window">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                            {# Render DELETE checkbox (hidden — toggled by JS) #}
+                                            <div style="display:none">{{ sf.DELETE }}</div>
+                                        {% else %}
+                                            <button type="button" class="delete-row-btn remove-new-row"
+                                                    title="Remove this window">
+                                                <i class="fas fa-times-circle"></i>
+                                            </button>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Empty-row template (cloned by JS) -->
+                    <template id="empty-schedule-row">
+                        <tr class="schedule-row new-row">
+                            <td>__WEEKDAY__</td>
+                            <td>__START__</td>
+                            <td>__END__</td>
+                            <td>__TIMEZONE__</td>
+                            <td>
+                                <div class="input-group input-group-sm">
+                                    __BUF_BEFORE__
+                                    <span class="input-group-text px-1">m</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="input-group input-group-sm">
+                                    __BUF_AFTER__
+                                    <span class="input-group-text px-1">m</span>
+                                </div>
+                            </td>
+                            <td class="text-center">__IS_ACTIVE__</td>
+                            <td class="text-center">
+                                <button type="button" class="delete-row-btn remove-new-row" title="Remove">
+                                    <i class="fas fa-times-circle"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    </template>
+
+                    <button type="button" id="add-schedule-row"
+                            class="btn btn-sm btn-outline-primary mt-3">
+                        <i class="fas fa-plus me-1"></i>Add Time Window
+                    </button>
+                </div>
+
+                <!-- ══ LIMITS & DEADLINES ═══════════════════════════════════ -->
+                <div class="col-12"><h2 class="section-title">Limits & Deadlines</h2></div>
+
+                <div class="col-6 col-md-4">
+                    <label class="form-label">Max per Day</label>
+                    {{ form.max_bookings_per_day }}
+                    <div class="form-text">blank = unlimited</div>
+                </div>
+                <div class="col-6 col-md-4">
+                    <label class="form-label">Booking Deadline</label>
+                    <div class="input-group input-group-sm">
+                        {{ form.booking_deadline_hours }}
+                        <span class="input-group-text">hrs before</span>
+                    </div>
+                </div>
+
+                <!-- ══ VISIBILITY ════════════════════════════════════════════ -->
+                <div class="col-12"><h2 class="section-title">Visibility & Access</h2></div>
+
+                <div class="col-12 col-md-4">
+                    <div class="form-check form-switch">
+                        {{ form.is_public }}
+                        <label class="form-check-label fw-medium"
+                               for="{{ form.is_public.id_for_label }}">
+                            Make this type public
+                        </label>
+                    </div>
+                </div>
+
+                <!-- ══ LOCATION / MODE ════════════════════════════════════════ -->
+                <div class="col-12"><h2 class="section-title">Location / Mode</h2></div>
+
+                <div class="col-12 col-md-auto">
+                    <div class="form-check form-switch">
+                        {{ form.is_hybrid }}
+                        <label class="form-check-label" for="{{ form.is_hybrid.id_for_label }}">
+                            Allow hybrid attendance
+                        </label>
+                    </div>
+                </div>
+                <div class="col-12 col-md-5">
+                    <label class="form-label">Physical Location</label>
+                    {{ form.location }}
+                </div>
+                <div class="col-12 col-md-5">
+                    <label class="form-label">Virtual Link</label>
+                    {{ form.virtual_link }}
+                </div>
+
+                <!-- ══ ACTIVE WINDOW ══════════════════════════════════════════ -->
+                <div class="col-12"><h2 class="section-title">Active Window <small class="text-muted fw-normal">(optional)</small></h2></div>
+
+                <div class="col-12 col-md-6">
+                    <label class="form-label">Start Date</label>
+                    <div class="form-text mb-1">Leave blank to start accepting bookings immediately.</div>
+                    {{ form.start_date }}
+                    {% if form.start_date.errors %}
+                        <div class="text-danger small">{{ form.start_date.errors }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-12 col-md-6">
+                    <label class="form-label">End Date</label>
+                    <div class="form-text mb-1">Leave blank for no expiry.</div>
+                    {{ form.end_date }}
+                    {% if form.end_date.errors %}
+                        <div class="text-danger small">{{ form.end_date.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- ══ GROUP BOOKINGS ══════════════════════════════════════════ -->
+                <div class="col-12"><h2 class="section-title">Group / Collective Booking</h2></div>
+
+                <div class="col-12">
+                    <div class="form-check form-switch">
+                        {{ form.is_multiple }}
+                        <label class="form-check-label" for="{{ form.is_multiple.id_for_label }}">
+                            Allow multiple bookings per slot
+                        </label>
+                    </div>
+                </div>
+                <div class="col-12 col-md-4" id="max-capacity-wrapper"
+                     style="{% if not form.is_multiple.value %}display:none;{% endif %}">
+                    <label class="form-label">Max capacity / slot</label>
+                    {{ form.max_capacity }}
+                </div>
+
+                <!-- Global form errors -->
+                {% if form.non_field_errors %}
+                <div class="col-12 alert alert-danger py-2 mt-2">{{ form.non_field_errors }}</div>
+                {% endif %}
+                {% if schedule_fs.non_form_errors %}
+                <div class="col-12 alert alert-danger py-2 mt-2">{{ schedule_fs.non_form_errors }}</div>
+                {% endif %}
+
+            </form>
+        </div>
+
+        <div class="card-footer bg-white border-0 p-4 d-flex justify-content-end gap-2">
+            <a href="{% url 'booking_type_list' %}" class="btn btn-outline-secondary px-4">Cancel</a>
+            <button form="booking-type-form" class="btn btn-primary px-5">
+                <i class="fas fa-check me-2"></i>{{ action }}
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    // ── Colour preview ────────────────────────────────────────────────────────
+    const colorInput = document.querySelector('input[type="color"]');
+    const colorPreview = document.getElementById('colorPreview');
+    if (colorInput && colorPreview) {
+        colorInput.addEventListener('input', e => {
+            colorPreview.style.backgroundColor = e.target.value;
+        });
+    }
+
+    // ── Show/hide max-capacity field ──────────────────────────────────────────
+    const multipleChk  = document.getElementById('id_is_multiple');
+    const capacityWrap = document.getElementById('max-capacity-wrapper');
+    if (multipleChk && capacityWrap) {
+        const toggle = () => capacityWrap.style.display = multipleChk.checked ? 'block' : 'none';
+        multipleChk.addEventListener('change', toggle);
+        toggle();
+    }
+
+    // ── Select2 for org fields ────────────────────────────────────────────────
+    if (typeof $ !== 'undefined') {
+        $('#id_host_user').select2({ placeholder: "Select owner", allowClear: true, width: '100%' });
+        $('#id_managers').select2({ placeholder: "Choose managers", allowClear: true, width: '100%' });
+    }
+
+    // ── Inline schedule formset ───────────────────────────────────────────────
+    const totalFormsInput = document.getElementById('id_schedules-TOTAL_FORMS');
+    const tableBody       = document.getElementById('schedule-body');
+    const emptyTemplate   = document.getElementById('empty-schedule-row');
+    const addBtn          = document.getElementById('add-schedule-row');
+
+    // The "empty form" prefix Django uses is TOTAL_FORMS index before adding
+    function getCurrentTotal() {
+        return parseInt(totalFormsInput.value, 10);
+    }
+
+    // Build a new row from the empty form HTML provided by Django
+    // We use the __prefix__ replacement pattern Django expects.
+    // Because we're using a <template> tag with placeholder strings,
+    // we clone the formset's empty_form instead via a hidden div.
+    // Simpler: we just ask Django to render the empty form via a data attribute.
+
+    if (addBtn && emptyTemplate && totalFormsInput) {
+
+        // The template's innerHTML contains __WEEKDAY__ etc. — we need
+        // actual Django form widgets. Render them via the empty_form approach:
+        // Since Django inlineformset_factory gives us `schedule_fs.empty_form`,
+        // we capture its rendered HTML in a hidden container in the page.
+        const emptyFormContainer = document.getElementById('empty-form-container');
+
+        addBtn.addEventListener('click', () => {
+            const idx   = getCurrentTotal();
+            const clone = emptyFormContainer.querySelector('tr').cloneNode(true);
+
+            // Replace __prefix__ with the actual index
+            clone.innerHTML = clone.innerHTML.replaceAll('__prefix__', idx);
+            clone.id        = `schedule-row-${idx}`;
+            clone.classList.add('schedule-row', 'new-row');
+
+            tableBody.appendChild(clone);
+            totalFormsInput.value = idx + 1;
+
+            // Bind remove button on the new row
+            bindRemoveBtn(clone);
+
+            // Re-init select2 on new row's timezone select if present
+            if (typeof $ !== 'undefined') {
+                $(clone).find('.schedule-tz').select2({ width: '100%' });
+            }
+        });
+    }
+
+    // Delete existing (saved) rows via Django's DELETE checkbox
+    document.querySelectorAll('.delete-row-btn[data-delete-field]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const cbId = btn.dataset.deleteField;
+            const cb   = document.getElementById(cbId);
+            if (cb) {
+                cb.checked = true;
+                btn.closest('tr').classList.add('deleted-row');
+            }
+        });
+    });
+
+    // Remove unsaved new rows entirely
+    function bindRemoveBtn(row) {
+        const btn = row.querySelector('.remove-new-row');
+        if (btn) {
+            btn.addEventListener('click', () => {
+                row.remove();
+                // Decrement total forms
+                totalFormsInput.value = parseInt(totalFormsInput.value, 10) - 1;
+            });
+        }
+    }
+
+    // Bind existing new-row remove buttons (extra=1 blank row rendered server-side)
+    document.querySelectorAll('.remove-new-row').forEach(btn => {
+        bindRemoveBtn(btn.closest('tr'));
+    });
+
+    // Init timezone select2 on existing rows
+    if (typeof $ !== 'undefined') {
+        $('.schedule-tz').select2({ width: '100%' });
+    }
+});
+</script>
+
+{#  Hidden container holding Django's empty form for the formset.  The "empty_form" uses __prefix__ as the index placeholder — JS replaces it.#}
+<div id="empty-form-container" style="display:none">
+    <table><tbody>
+        <tr class="schedule-row">
+            {% with sf=schedule_fs.empty_form %}
+            {% for hidden in sf.hidden_fields %}{{ hidden }}{% endfor %}
+            <td>{{ sf.weekday }}</td>
+            <td>{{ sf.start_time }}</td>
+            <td>{{ sf.end_time }}</td>
+            <td>{{ sf.timezone }}</td>
+            <td>
+                <div class="input-group input-group-sm">
+                    {{ sf.buffer_before_minutes }}
+                    <span class="input-group-text px-1">m</span>
+                </div>
+            </td>
+            <td>
+                <div class="input-group input-group-sm">
+                    {{ sf.buffer_after_minutes }}
+                    <span class="input-group-text px-1">m</span>
+                </div>
+            </td>
+            <td class="text-center">{{ sf.is_active }}</td>
+            <td class="text-center">
+                <button type="button" class="delete-row-btn remove-new-row" title="Remove">
+                    <i class="fas fa-times-circle"></i>
+                </button>
+            </td>
+            {% endwith %}
+        </tr>
+    </tbody></table>
+</div>
+
+{% endblock %}

@@ -1,0 +1,162 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Manage Custom Fields{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>Manage Custom Payroll Fields</h2>
+            <p class="text-muted">Define custom deductions and additions for your payroll</p>
+        </div>
+        <div class="col-md-4 text-right">
+            <a href="{% url 'payroll_dashboard' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-5">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Add New Field</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="form-group">
+                            <label for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+                            {{ form.name }}
+                            <small class="form-text text-muted">{{ form.name.help_text }}</small>
+                            {% if form.name.errors %}
+                            <div class="text-danger">{{ form.name.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.label.id_for_label }}">{{ form.label.label }}</label>
+                            {{ form.label }}
+                            <small class="form-text text-muted">{{ form.label.help_text }}</small>
+                            {% if form.label.errors %}
+                            <div class="text-danger">{{ form.label.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.operation.id_for_label }}">{{ form.operation.label }}</label>
+                            {{ form.operation }}
+                            <small class="form-text text-muted">{{ form.operation.help_text }}</small>
+                            {% if form.operation.errors %}
+                            <div class="text-danger">{{ form.operation.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.order.id_for_label }}">{{ form.order.label }}</label>
+                            {{ form.order }}
+                            <small class="form-text text-muted">{{ form.order.help_text }}</small>
+                            {% if form.order.errors %}
+                            <div class="text-danger">{{ form.order.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group form-check">
+                            {{ form.is_active }}
+                            <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                Active
+                            </label>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Add Field
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6>Examples</h6>
+                </div>
+                <div class="card-body">
+                    <small>
+                        <strong>Tax:</strong> name=tax, operation=Subtract<br>
+                        <strong>Pension:</strong> name=pension, operation=Subtract<br>
+                        <strong>Bonus:</strong> name=bonus, operation=Add<br>
+                        <strong>Loan:</strong> name=loan, operation=Subtract
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-7">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Existing Fields ({{ fields.count }})</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Order</th>
+                                <th>Name</th>
+                                <th>Label</th>
+                                <th>Operation</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for field in fields %}
+                            <tr>
+                                <td>{{ field.order }}</td>
+                                <td><code>{{ field.name }}</code></td>
+                                <td>{{ field.label }}</td>
+                                <td>
+                                    <span class="badge badge-{{ field.operation }}">
+                                        {{ field.get_operation_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if field.is_active %}
+                                    <span class="badge badge-active">Active</span>
+                                    {% else %}
+                                    <span class="badge badge-inactive">Inactive</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'edit_custom_field' field.pk %}" class="btn btn-sm btn-primary" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <form method="post" action="{% url 'delete_custom_field' field.pk %}" style="display: inline;">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this field?')" title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center">No custom fields defined yet.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.badge-add { background-color: #28a745; color: white; }
+.badge-subtract { background-color: #dc3545; color: white; }
+.badge-set_net { background-color: #007bff; color: white; }
+.badge-active { background-color: #28a745; color: white; }
+.badge-inactive { background-color: #6c757d; color: white; }
+</style>
+{% endblock %}

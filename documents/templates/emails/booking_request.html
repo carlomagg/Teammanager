@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New Booking Request</title>
+</head>
+<body style="margin:0; padding:0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f4f7fa; color: #333333;">
+  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f4f7fa; padding: 30px 10px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="600" border="0" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+          
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #319795 0%, #2c7a7b 100%); padding: 40px 30px; text-align: center; color: white;">
+              <h1 style="margin: 0; font-size: 28px; font-weight: 600;">New Booking Request</h1>
+              <p style="margin: 12px 0 0; font-size: 16px; opacity: 0.95;">
+                Someone would like to book time with you
+              </p>
+            </td>
+          </tr>
+
+          <!-- Content -->
+          <tr>
+            <td style="padding: 40px 50px 30px;">
+              <p style="font-size: 16px; line-height: 1.6; margin: 0 0 24px;">
+                Hi {{ booking.booking_type.host_user.get_full_name|default:booking.booking_type.host_user.username }},
+              </p>
+              
+              <p style="font-size: 16px; line-height: 1.6; margin: 0 0 24px;">
+                <strong>{{ booking.first_name }} {{ booking.last_name|default:"" }}</strong> 
+                {% if booking.user %}({{ booking.user.email }}){% else %}({{ booking.email }}){% endif %}
+                has requested a booking:
+              </p>
+
+              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background: #f8fafc; border-radius: 8px; margin: 24px 0; font-size: 15px;">
+                <tr>
+                  <td style="padding: 20px 24px;">
+                    <strong>Type:</strong> {{ booking.booking_type.name }}<br>
+                    <strong>Duration:</strong> {{ booking.booking_type.duration_minutes }} minutes<br>
+                    <strong>When:</strong> {{ booking.event.start_time|date:"D, d M Y" }} at {{ booking.event.start_time|date:"H:i" }} – {{ booking.event.end|date:"H:i" }}<br>
+                    {% if booking.attendance_mode == 'offline' %}
+                    <strong>Location:</strong> {{ booking.booking_type.location|default:"To be confirmed" }}<br>
+                    {% else %}
+                    <strong>Mode:</strong> Online (virtual link will be shared upon confirmation)<br>
+                    {% endif %}
+                    {% if booking.booking_type.price > 0 %}
+                    <strong>Price:</strong> {{ booking.booking_type.price }} {{ booking.booking_type.currency|default:"NGN" }}<br>
+                    {% endif %}
+                  </td>
+                </tr>
+              </table>
+
+              <p style="font-size: 15px; color: #555; line-height: 1.5; margin: 24px 0 32px;">
+                You can accept or decline this request in your dashboard.
+              </p>
+
+              <table role="presentation" border="0" cellspacing="0" cellpadding="0" style="margin: 0 auto;">
+                <tr>
+                  <td style="border-radius: 8px; background-color: #319795;">
+                    <a href="{{ booking_list_url }}" target="_blank" 
+                       style="display: inline-block; padding: 14px 32px; font-size: 16px; color: white; text-decoration: none; font-weight: 500;">
+                      Review Booking Request →
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background: #f8fafc; padding: 30px; text-align: center; font-size: 14px; color: #64748b; border-top: 1px solid #e2e8f0;">
+              <p style="margin: 0 0 12px;">
+                This is an automated message from TeamManager.
+              </p>
+              <p style="margin: 0;">
+                © {{ 'now'|date:"Y" }} TeamManager – All rights reserved.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

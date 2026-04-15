@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% load custom_filters %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Transaction Breakdown</h2>
+        <a href="{% url 'tenant_wallet' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i> Back to Wallet
+        </a>
+    </div>
+    
+    <!-- Transaction Summary -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Transaction Summary</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <p><strong>Transaction ID:</strong><br>#{{ payment.id }}</p>
+                    <p><strong>Date:</strong><br>{{ payment.payment_date|date:"F j, Y, g:i a" }}</p>
+                </div>
+                <div class="col-md-4">
+                    <p><strong>Participant:</strong><br>
+                        {% if payment.payment_type == 'conference_fee' %}
+                            {{ participant.full_name }}
+                        {% else %}
+                            {{booking_event.attendee_name}}
+                        {% endif %}
+                    </p>
+                    <p><strong>Email:</strong><br>
+                        {% if payment.payment_type == 'conference_fee' %}
+                            {{ participant.email }}
+                        {% else %}
+                            {{booking_event.attendee_email}}
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="col-md-4">
+                    {% if payment.payment_type == 'conference_fee' %}
+                        <p><strong>Conference:</strong><br>
+                            {% comment %} <a href="{% url 'conference_detail' conference.id %}" class="text-decoration-none">
+                                {{ conference.title }}
+                            </a> {% endcomment %}
+                            {% if conference.conference_id != 'error' and conference.conference_id != 'unlinked' and conference.conference_id != None %}
+                                <a href="{% url 'conference_detail' conference.conference_id %}"
+                                    class="text-decoration-none">
+                                    {{ conference.title|truncatechars:60 }}
+                                </a>
+                            {% else %}
+                                <span class="text-muted fst-italic">{{ conference.title|truncatechars:60 }}</span>
+                            {% endif %}
+                        </p>
+                        <p><strong>Registration Date:</strong><br>{{ participant.registered_at|date:"F j, Y" }}</p>
+                    {% else %}
+                        <p><strong>Booking:</strong><br>
+                            <span class="text-muted fst-italic">{{ booking_event.title|truncatechars:60 }}</span>
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="alert alert-info mt-3">
+                <i class="fas fa-info-circle me-2"></i>
+                <strong>Payment Status:</strong> 
+                <span class="badge bg-{% if payment.status == 'success' %}success{% else %}warning{% endif %}">
+                    {{ payment.get_status_display }}
+                </span>
+                &nbsp;&nbsp;
+                <strong>Remittance Status:</strong>
+                <span class="badge bg-{% if payment.remittance_status == 'unremitted' %}warning{% elif payment.remittance_status == 'remitted' %}success{% else %}info{% endif %}">
+                    {{ payment.get_remittance_status_display }}
+                </span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Detailed Breakdown -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i> Payment Breakdown</h5>
+        </div>
+        <div class="card-body">
+            <!-- Step 1: Original Payment -->
+            <div class="row mb-3 align-items-center">
+                <div class="col-md-3">
+                    <h6 class="mb-0">1. Original Payment</h6>
+                </div>
+                <div class="col-md-6">
+                    <div class="progress" style="height: 30px;">
+                        <div class="progress-bar bg-primary" style="width: 100%"></div>
+                    </div>
+                </div>
+                <div class="col-md-3 text-end">
+                    <h5 class="mb-0">₦{{ breakdown.original_payment|floatformat:2|intcomma }}</h5>
+                    <small class="text-muted">100%</small>
+                </div>
+            </div>
+            
+            <!-- Step 2: Platform Fees -->
+            <div class="row mb-3 align-items-center">
+                <div class="col-md-3">
+                    <h6 class="mb-0">2. Platform Fees</h6>
+                    <small class="text-muted">
+                        {% if breakdown.platform_fee_percent > 0 %}
+                            {{ breakdown.platform_fee_percent|floatformat:1 }}%
+                        {% endif %}
+                        {% if breakdown.platform_fee_fixed > 0 %}
+                            + ₦{{ breakdown.platform_fee_fixed|floatformat:2 }}
+                        {% endif %}
+                    </small>
+                </div>
+                <div class="col-md-6">
+                    <div class="progress" style="height: 30px;">
+                        <div class="progress-bar bg-danger" 
+                             style="width: {{ breakdown.platform_fee_amount|divide:breakdown.original_payment|multiply:100 }}%">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 text-end">
+                    <h5 class="mb-0 text-danger">-₦{{ breakdown.platform_fee_amount|floatformat:2|intcomma }}</h5>
+                    <small class="text-muted">
+                        {{ breakdown.platform_fee_amount|divide:breakdown.original_payment|multiply:100|floatformat:1 }}%
+                    </small>
+                </div>
+            </div>
+            
+            <!-- Step 3: Tenant Share Before Deductions -->
+            <div class="row mb-4 align-items-center">
+                <div class="col-md-3">
+                    <h6 class="mb-0">3. Your Share (Before Deductions)</h6>
+                </div>
+                <div class="col-md-6">
+                    <div class="progress" style="height: 30px;">
+                        <div class="progress-bar bg-warning" 
+                             style="width: {{ breakdown.tenant_share_before_deductions|divide:breakdown.original_payment|multiply:100 }}%">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 text-end">
+                    <h5 class="mb-0 text-warning">₦{{ breakdown.tenant_share_before_deductions|floatformat:2|intcomma }}</h5>
+                    <small class="text-muted">
+                        {{ breakdown.tenant_share_before_deductions|divide:breakdown.original_payment|multiply:100|floatformat:1 }}%
+                    </small>
+                </div>
+            </div>
+            
+            <hr class="my-4">
+            
+            {%comment%}<!-- Step 4: Fixed ₦100 Deduction -->
+            <div class="row mb-3 align-items-center">
+                <div class="col-md-3">
+                    <h6 class="mb-0">4. Fixed Deduction</h6>
+                    <small class="text-muted">- ₦100.00</small>
+                </div>
+                <div class="col-md-6">
+                    <div class="progress" style="height: 30px;">
+                        <div class="progress-bar bg-info" 
+                             style="width: {{ breakdown.fixed_deduction|divide:breakdown.tenant_share_before_deductions|multiply:100 }}%">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 text-end">
+                    <h5 class="mb-0 text-info">-₦{{ breakdown.fixed_deduction|floatformat:2|intcomma }}</h5>
+                    <small class="text-muted">
+                        {{ breakdown.fixed_deduction|divide:breakdown.tenant_share_before_deductions|multiply:100|floatformat:1 }}%
+                    </small>
+                </div>
+            </div>
+            
+            <!-- Step 5: Amount After Fixed Deduction -->
+            {% if breakdown.amount_after_fixed > 0 %}
+            <div class="row mb-3 align-items-center">
+                <div class="col-md-3">
+                    <h6 class="mb-0">5. After Fixed Deduction</h6>
+                </div>
+                <div class="col-md-6">
+                    <div class="progress" style="height: 30px;">
+                        <div class="progress-bar bg-secondary" 
+                             style="width: {{ breakdown.amount_after_fixed|divide:breakdown.tenant_share_before_deductions|multiply:100 }}%">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 text-end">
+                    <h5 class="mb-0 text-secondary">₦{{ breakdown.amount_after_fixed|floatformat:2|intcomma }}</h5>
+                </div>
+            </div>
+            
+            <!-- Step 6: 1/11 Deduction -->
+            <div class="row mb-3 align-items-center">
+                <div class="col-md-3">
+                    <h6 class="mb-0">6. 1/11 Deduction</h6>
+                    <small class="text-muted">(Amount - 100) ÷ 11</small>
+                </div>
+                <div class="col-md-6">
+                    <div class="progress" style="height: 30px;">
+                        <div class="progress-bar bg-danger" 
+                             style="width: {{ breakdown.one_eleventh_deduction|divide:breakdown.tenant_share_before_deductions|multiply:100 }}%">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 text-end">
+                    <h5 class="mb-0 text-danger">-₦{{ breakdown.one_eleventh_deduction|floatformat:2|intcomma }}</h5>
+                    <small class="text-muted">9.09% of remaining</small>
+                </div>
+            </div>
+            {% endif %}
+            
+            <hr class="my-4">
+            
+            <!-- Final Result -->
+            <div class="row mb-3 align-items-center">
+                <div class="col-md-3">
+                    <h6 class="mb-0">7. Your Final Amount</h6>
+                    <small class="text-muted">After all deductions</small>
+                </div>
+                <div class="col-md-6">
+                    <div class="progress" style="height: 40px;">
+                        <div class="progress-bar bg-success" 
+                             style="width: {{ breakdown.final_amount|divide:breakdown.original_payment|multiply:100 }}%">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 text-end">
+                    <h3 class="mb-0 text-success">₦{{ breakdown.final_amount|floatformat:2|intcomma }}</h3>
+                    <small class="text-muted">
+                        {{ breakdown.final_amount|divide:breakdown.original_payment|multiply:100|floatformat:1 }}% of original
+                    </small>
+                </div>
+            </div>
+            
+            <!-- Summary Box -->
+            <div class="alert alert-success mt-4">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-receipt me-2"></i> Payment Summary</h6>
+                        <p class="mb-1"><strong>Original Payment:</strong> ₦{{ breakdown.original_payment|floatformat:2|intcomma }}</p>
+                        <p class="mb-1"><strong>Total Deductions:</strong> -₦{{ breakdown.total_deduction|floatformat:2|intcomma }}</p>
+                        <p class="mb-0"><strong>Your Net Earnings:</strong> ₦{{ breakdown.final_amount|floatformat:2|intcomma }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-chart-line me-2"></i> Efficiency</h6>
+                        <p class="mb-1"><strong>Deduction Rate:</strong> {{ breakdown.deduction_percentage|floatformat:1 }}%</p>
+                        <p class="mb-1"><strong>Retention Rate:</strong> {{ 100|subtract:breakdown.deduction_percentage|floatformat:1 }}%</p>
+                        <p class="mb-0"><strong>Net per ₦100:</strong> ₦{{ 100|subtract:breakdown.deduction_percentage|floatformat:2 }}</p>
+                    </div>
+                </div>
+            </div>{%endcomment%}
+        </div>
+    </div>
+    
+</div>
+
+<style>
+.progress {
+    border-radius: 10px;
+    overflow: hidden;
+}
+.progress-bar {
+    transition: width 0.5s ease-in-out;
+}
+code {
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+}
+</style>
+{% endblock %}

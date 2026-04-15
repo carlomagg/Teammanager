@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+{% load crispy_forms_tags %}
+{% block title %}User Profile - {{ user.get_full_name|default:user.username }}{% endblock %}
+
+{% block content %}
+<div style="position: relative; min-height: 100vh;">
+    <!-- Include the profile layout -->
+    {% include "staff/profile_detail.html" with is_user_profile=True %}
+
+    <!-- Include the modals -->
+    {% include "staff/profile_modals.html" %}
+
+    
+    {% endif %}
+</div>
+
+{% endblock %}

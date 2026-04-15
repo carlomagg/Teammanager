@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Subscription Activated</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #319795 0%, #2c7a7a 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 8px 8px 0 0;
+        }
+        .content {
+            background: #f9f9f9;
+            padding: 30px;
+            border-radius: 0 0 8px 8px;
+        }
+        .details {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #319795;
+        }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+        .label {
+            font-weight: bold;
+            color: #555;
+        }
+        .value {
+            color: #319795;
+            font-weight: bold;
+        }
+        .button {
+            display: inline-block;
+            background: #319795;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 6px;
+            margin-top: 20px;
+        }
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            color: #777;
+            font-size: 12px;
+        }
+        .trial-note {
+            background: #e6fffa;
+            border-left: 4px solid #319795;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Subscription Activated!</h1>
+    </div>
+    
+    <div class="content">
+        <p>Hello {% if subscription.user %}{{ subscription.user.get_full_name|default:subscription.user.email }}{% elif subscription.tenant %}{{ subscription.tenant.name }}{% endif %},</p>
+        
+        <p>Thank you for subscribing to the <strong>{{ plan_name }}</strong> plan. Your subscription is now active!</p>
+        
+        {% comment %}{% if is_trial %}
+        <div class="trial-note">
+            <strong>✨ Trial Period Active</strong>
+            <p>Your 14-day free trial is now active. Your first payment will be processed on {{ trial_end_date|date:"F j, Y" }}.</p>
+        </div>
+        {% endif %}{% endcomment %}
+        
+        <div class="details">
+            <h3 style="margin-top: 0;">Subscription Details</h3>
+            
+            <div class="detail-row">
+                <span class="label">Plan:</span>
+                <span class="value">{{ plan_name }}</span>
+            </div>
+            
+            <div class="detail-row">
+                <span class="label">Amount:</span>
+                <span class="value">₦{{ amount|floatformat:2 }}/month</span>
+            </div>
+            
+            <div class="detail-row">
+                <span class="label">Start Date:</span>
+                <span class="value">{{ start_date|date:"F j, Y" }}</span>
+            </div>
+            
+            <div class="detail-row">
+                <span class="label">End Date:</span>
+                <span class="value">{{ end_date|date:"F j, Y" }}</span>
+            </div>
+            
+            {% comment %}{% if not is_trial %}
+            
+            {% endif %}
+
+            <div class="detail-row">
+                <span class="label">Next Billing:</span>
+                <span class="value">{{ next_billing_date|date:"F j, Y" }}</span>
+            </div>
+        </div>
+        
+        <p>You can now access all the premium features included in your plan. To manage your subscription or view details, click the button below:</p>
+        
+        <div style="text-align: center;">
+            <a href="{{ detail_url }}" class="button">View Subscription Details</a>
+        </div>
+        
+        <p style="margin-top: 30px;">If you have any questions, feel free to reply to this email or contact our support team.</p>
+        
+        <p>Best regards,<br>The TeamManager Team</p>
+    </div>
+    
+    <div class="footer">
+        <p>&copy; {% now "Y" %} TeamManager. All rights reserved.</p>
+        <p>This email was sent to {% if subscription.user %}{{ subscription.user.email }}{% elif subscription.tenant %}{{ subscription.tenant.admin.email }}{% endif %} regarding your subscription.</p>
+    </div>
+</body>
+</html>

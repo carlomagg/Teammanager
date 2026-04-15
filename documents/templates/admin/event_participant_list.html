@@ -1,0 +1,257 @@
+{% extends 'base.html' %}
+{% block title %}Event Participants - TeamManager{% endblock %}
+{% load custom_filters %}
+{% block content %}
+<div class="event-participants-page">
+    <div class="card shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h4 class="card-title mb-0">
+                <i class="fas fa-user-friends me-2 text-primary" aria-hidden="true"></i>
+                Event Participants ({{ participants|page_obj_count }})
+            </h4>
+            <div class="mb-3">
+                <a href="{% url 'create_event_participant' %}" class="btn btn-success">Add Event Participant</a>
+            </div>
+            <div class="input-group w-50 w-md-25">
+                <span class="input-group-text bg-transparent border-end-0">
+                    <i class="fas fa-search text-muted"></i>
+                </span>
+                <input type="text" class="form-control border-start-0" id="searchEventParticipants" placeholder="Search event participants..." aria-label="Search event participants">
+            </div>
+            <a href="{% url 'admin_dashboard' %}" class="btn btn-outline-secondary btn-sm" title="Back to Admin Dashboard">
+                <i class="fas fa-arrow-left me-1"></i> Back
+            </a>
+        </div>
+
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover table-bordered align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col">No.</th>
+                            <th scope="col">Event</th>
+                            <th scope="col">User</th>
+                            <th scope="col">Response</th>
+                            <th scope="col">Invited At</th>
+                            <th scope="col">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="eventParticipantTableBody">
+                        {% for participant in participants %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td><a href="{% url 'edit_event_participant' event_participant_id=participant.id %}">{{ participant.event.title }}</a></td>
+                            <td>{{ participant.user.username|default:'—' }}</td>
+                            <td>{{ participant.response|default:'—' }}</td>
+                            <td>{{ participant.invited_at|date:"d M Y" }}</td>
+                            <td>
+                                <a href="{% url 'edit_event_participant' event_participant_id=participant.id %}" class="btn btn-outline-primary btn-sm me-1" title="Edit Event Participant">
+                                    <i class="fas fa-edit me-1"></i> Edit
+                                </a>
+                                <form action="{% url 'delete_event_participant' event_participant_id=participant.id %}" method="POST" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger btn-sm" title="Delete Event Participant" onclick="return confirm('Are you sure you want to remove {{ participant.user.username }} from {{ participant.event.title }}?');">
+                                        <i class="fas fa-trash-alt me-1"></i> Delete
+                                        <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr class="no-results">
+                            <td colspan="6" class="text-center text-muted">No event participants found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% if participants.has_other_pages %}
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center mt-3">
+                            {% if participants.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ participants.previous_page_number }}" aria-label="Previous">
+                                        <span aria-hidden="true">«</span>
+                                    </a>
+                                </li>
+                            {% endif %}
+                            <!--First page-->
+                            <li class="page-item {% if participants.number == 1 %}active{% endif %}">
+                                <a class="page-link" href="?page=1">1</a>
+                            </li>
+                            {% if participants.number != 1 and participants.number != 2 %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">...</span>
+                                </li>
+                            {% endif %}
+                            {% if participants.number != 1 %}
+                                <li class="page-item {% if participants.number %}active{% endif %}">
+                                    <a class="page-link" href="?page={{ participants.number }}">{{ participants.number }}</a>
+                                </li>
+                            {% endif %}
+                            {% if participants.number != participants.paginator.num_pages and participants.number != participants.paginator.num_pages|add:-1 %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">...</span>
+                                </li>
+                            {% endif %}
+                            <!-- Last page (only if not already shown) -->
+                            {% if participants.number != participants.paginator.num_pages %}
+                                <li class="page-item {% if participants.number == participants.paginator.num_pages %}active{% endif %}">
+                                    <a class="page-link" href="?page={{ participants.paginator.num_pages }}">{{ participants.paginator.num_pages }}</a>
+                                </li>
+                            {% endif %}
+                            {% if participants.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ participants.next_page_number }}" aria-label="Next">
+                                        <span aria-hidden="true">»</span>
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style scoped>
+    .pagination .page-link {
+        color: #319795;
+        border-radius: 8px;
+        margin: 0 2px;
+    }
+    .pagination .page-item.active .page-link {
+        background-color: #319795;
+        border-color: #319795;
+        color: #ffffff;
+    }
+    .pagination .page-link:hover {
+        background-color: #f1f5f9;
+        color: #2c7a7b;
+    }
+    .event-participants-page {
+        padding: 20px;
+    }
+    .event-participants-page .card {
+        border: none;
+        border-radius: 12px;
+        background: #ffffff;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+    .event-participants-page .card-header {
+        background: #f8fafc;
+        border-bottom: 1px solid #e2e8f0;
+        border-radius: 12px 12px 0 0;
+        padding: 15px 20px;
+    }
+    .event-participants-page .card-title {
+        font-weight: 600;
+        color: #2d3748;
+    }
+    .event-participants-page .table {
+        margin-bottom: 0;
+        font-size: 0.95rem;
+    }
+    .event-participants-page .table th {
+        font-weight: 500;
+        color: #2d3748;
+        background: #f8fafc;
+        border-bottom: 2px solid #e2e8f0;
+    }
+    .event-participants-page .table td {
+        vertical-align: middle;
+        border-color: #e2e8f0;
+    }
+    .event-participants-page .table-hover tbody tr:hover {
+        background-color: #f1f5f9;
+    }
+    .event-participants-page .btn-primary {
+        background-color: #319795;
+        border-color: #319795;
+        border-radius: 8px;
+        padding: 6px 12px;
+        font-size: 0.9rem;
+        transition: background-color 0.2s ease;
+    }
+    .event-participants-page .btn-primary:hover {
+        background-color: #2c7a7b;
+        border-color: #2c7a7b;
+    }
+    .event-participants-page .btn-danger {
+        background-color: #dc3545;
+        border-color: #dc3545;
+        border-radius: 8px;
+        padding: 6px 12px;
+        font-size: 0.9rem;
+        transition: background-color 0.2s ease;
+    }
+    .event-participants-page .btn-danger:hover {
+        background-color: #c82333;
+        border-color: #c82333;
+    }
+    .event-participants-page .form-control {
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        font-size: 0.9rem;
+        padding: 8px;
+    }
+    .event-participants-page .form-control:focus {
+        border-color: #319795;
+        box-shadow: 0 0 0 0.2rem rgba(49, 151, 149, 0.25);
+    }
+    .event-participants-page .input-group-text {
+        border-radius: 8px 0 0 8px;
+        border: 1px solid #e2e8f0;
+    }
+    .event-participants-page a:focus, .event-participants-page button:focus, .event-participants-page input:focus {
+        outline: 2px solid #319795;
+        outline-offset: 2px;
+        border-radius: 4px;
+    }
+    @media (max-width: 768px) {
+        .event-participants-page {
+            padding: 15px;
+        }
+        .event-participants-page .card-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .event-participants-page .input-group {
+            width: 100% !important;
+        }
+        .event-participants-page .table {
+            font-size: 0.85rem;
+        }
+        .event-participants-page .btn-sm {
+            padding: 4px 8px;
+            font-size: 0.85rem;
+        }
+    }
+</style>
+
+<script>
+    // Search functionality
+    document.getElementById('searchEventParticipants').addEventListener('input', function(e) {
+        const searchTerm = e.target.value.toLowerCase();
+        const rows = document.querySelectorAll('#eventParticipantTableBody tr:not(.no-results)');
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(searchTerm) ? '' : 'none';
+        });
+        const noResultsRow = document.querySelector('#eventParticipantTableBody tr.no-results');
+        if (noResultsRow) {
+            noResultsRow.style.display = Array.from(rows).every(row => row.style.display === 'none') ? '' : 'none';
+        }
+    });
+
+    // Form submission spinner for delete actions
+    document.querySelectorAll('form').forEach(form => {
+        form.addEventListener('submit', function() {
+            const btn = form.querySelector('button[type="submit"]');
+            btn.querySelector('.spinner-border').classList.remove('d-none');
+            btn.disabled = true;
+        });
+    });
+</script>
+{% endblock %}

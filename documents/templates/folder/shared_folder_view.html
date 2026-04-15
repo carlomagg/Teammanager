@@ -1,0 +1,289 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+{% block title %}Shared Folder{% endblock %}
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-md-12">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card">
+                    <div class="card-header bg-transparent d-flex align-items-center justify-content-between">
+                        <h2 class="mb-0"><i class="fas fa-folder-open me-2" style="color: rgba(211, 182, 76, 0.89);"></i> {{ folder.name }}</h2>
+                        {% if folder.parent %}
+                            <a href="{% url 'shared_folder_view' folder.parent.share_token %}" class="btn btn-outline-secondary btn-sm" title="Back to {{ folder.parent.name }}">
+                                <i class="fas fa-arrow-left me-1"></i> Back
+                            </a>
+                        {% endif %}
+                    </div>
+                    <div class="card-body">
+                        {% if folder.description %}
+                        <div class="description-bar mb-2">
+                            <span class="text-primary"><strong>Folder Info:</strong> {{ folder.description }}</span>
+                        </div>
+                        {% endif %}
+                        <!-- Action Bar -->
+                        <div class="action-bar mb-4">
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadFileModal">
+                                <i class="fas fa-upload me-1"></i> Upload File
+                            </button>
+                        </div>
+
+                        <!-- Folder and File Grid -->
+                        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-3" id="sortable-row">
+                            {% for fold in folders %}
+                                {% if fold.id %}
+                                    <div class="col" data-folder-id="{{ fold.id }}">
+                                        <div class="card h-100 position-relative">
+                                            <div class="card-body text-center">
+                                                <a href="{% url 'shared_folder_view' fold.share_token %}" class="text-decoration-none">
+                                                    <i class="fas fa-folder fa-3x mb-2" style="color: rgba(211, 182, 76, 0.89);"></i>
+                                                    <h6 class="card-title">{{ fold.name }}</h6>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                            {% for file in files %}
+                                {% if file.id %}
+                                    <div class="col" data-file-id="{{ file.id }}">
+                                        <div class="card h-100 position-relative">
+                                            <div class="card-body text-center">
+                                                <a href="{{ file.file.url }}" 
+                                                    data-media-url="{{ file.file.url }}" 
+                                                    data-media-type="{% if file.original_name|get_file_extension == 'pdf' %}pdf{% else %}image{% endif %}" 
+                                                    data-media-name="{{ file.original_name }}"
+                                                target="_blank" class="text-decoration-none">
+                                                    {% if file.original_name|get_file_extension == "jpeg" %}
+                                                        <i class="fas fa-file-image fa-3x mb-2" style="color: rgba(8, 66, 142, 0.89);"></i>
+                                                    {% elif file.original_name|get_file_extension == 'pdf' %}
+                                                        <i class="fas fa-file-pdf fa-3x mb-2" style="color: rgba(161, 7, 7, 0.89);"></i>
+                                                    {% elif file.original_name|get_file_extension == 'docx' %}
+                                                        <i class="fas fa-file-word fa-3x mb-2" style="color: rgba(42, 110, 198, 0.89);"></i>
+                                                    {% elif file.original_name|get_file_extension == 'csv' %}
+                                                        <i class="fas fa-file-csv fa-3x mb-2" style="color: rgba(23, 137, 57, 0.89);"></i>
+                                                    {% elif file.original_name|get_file_extension == 'xlsx' %}
+                                                        <i class="fas fa-file-excel fa-3x mb-2" style="color: rgba(23, 137, 57, 0.89);"></i>
+                                                    {% else %}
+                                                        <i class="fas fa-file fa-3x mb-2" style="color: rgba(14, 15, 17, 0.89);"></i>
+                                                    {% endif %}
+                                                    <h6 class="card-title">{{ file.original_name|truncatechars:20 }}</h6>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                            {% if not folder and not files %}
+                                <div class="col-12">
+                                    <p class="text-muted text-center">No folders or files here.</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload File Modal -->
+    <div class="modal fade" id="uploadFileModal" tabindex="-1" aria-labelledby="uploadFileModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="uploadFileModalLabel">Upload File</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="uploadFileForm" method="post" action="{% if folder.is_public %}{% url 'upload_file_public_anon' public_folder_id=folder.id %}{% elif not folder.is_public %}{% url 'upload_file_personal_anon' personal_folder_id=folder.id %}{% else %}{% url 'upload_file_anon' %}{% endif %}" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <input type="hidden" name="folder" value="{{ folder.id|default:"" }}">
+                        <div class="mb-3">
+                            <label for="{{ file_form.file.id_for_label }}" class="form-label fw-medium">Choose File <span class="text-danger">*</span></label>
+                            {{ file_form.file }}
+                            <label for="{{ file_form.anon_name.id_for_label }}" class="form-label fw-medium">Name <span class="text-danger">*</span></label>
+                            {{ file_form.anon_name }}
+                            <label for="{{ file_form.anon_email.id_for_label }}" class="form-label fw-medium">Email</label>
+                            {{ file_form.anon_email }}
+                            <label for="{{ file_form.anon_phone.id_for_label }}" class="form-label fw-medium">Phone</label>
+                            {{ file_form.anon_phone }}
+                            <div class="form-text small">Supported formats: PDF, DOCX, images, CSV, XLSX (max 5MB).</div>
+                            <div id="uploadFileError" class="text-danger small mt-1">
+                                {% if file_form.file.errors %}
+                                    {{ file_form.file.errors }}
+                                {% endif %}
+                                <!-- Hidden input for folder -->
+                                <input type="hidden" name="folder" value="{% if folder.is_public %}{{ folder.id }}{% elif not folder.is_public %}{{ folder.id }}{% endif %}">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="ajaxUploadFile()">
+                        <i class="fas fa-upload me-1"></i> Upload
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    .card {
+        border-radius: 12px;
+        {% comment %} transition: all 0.3s ease; {% endcomment %}
+    }
+    body.dark-mode .card {
+        background: #2d3748;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    .card-body {
+        padding: 1.5rem;
+    }
+    .card:hover {
+        {% comment %} transform: translateY(-4px); {% endcomment %}
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    }
+    body.dark-mode .card:hover {
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+    }
+    .card-title {
+        font-size: 1rem;
+        font-weight: 500;
+        word-break: break-all;
+        color: #2d3748;
+    }
+    body.dark-mode .card-title {
+        color: #e2e8f0;
+    }
+    .action-bar {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+    }
+    body.dark-mode .action-bar {
+        background: #3b4a6b;
+    }
+    .description-bar {
+        background: #f8f9fa;
+        padding: 0.5rem;
+        border-radius: 8px;
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+    }
+    body.dark-mode .description-bar {
+        background: #3b4a6b;
+    }
+    .form-label {
+        color: #2d3748;
+    }
+    body.dark-mode .form-label {
+        color: #e2e8f0;
+    }
+    .form-control, .form-select {
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    body.dark-mode .form-control,
+    body.dark-mode .form-select {
+        background: #4a5568;
+        border-color: #4a5568;
+        color: #e2e8f0;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: #319795;
+        box-shadow: 0 0 0 0.2rem rgba(49, 151, 149, 0.25);
+    }
+    .form-text {
+        color: #718096;
+    }
+    body.dark-mode .form-text {
+        color: #a0aec0;
+    }
+    .dropdown-menu {
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        z-index: 1000;
+    }
+    body.dark-mode .dropdown-menu {
+        background: #2d3748;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    .dropdown-item {
+        color: #2d3748;
+    }
+    body.dark-mode .dropdown-item {
+        color: #e2e8f0;
+    }
+    .dropdown-item:hover {
+        background: #e2e8f0;
+    }
+    body.dark-mode .dropdown-item:hover {
+        background: #4a5568;
+    }
+    .sortable-ghost {
+        opacity: 0.5;
+        background: #e2e8f0;
+    }
+    body.dark-mode .sortable-ghost {
+        background: #4a5568;
+    }
+    .badge {
+        font-size: 0.58em;
+        padding: 0.2em 0.3em;
+        background-color: #319795;
+    }
+    @media (max-width: 576px) {
+        .card-body {
+            padding: 1rem;
+        }
+        h2 {
+            font-size: 1.5rem;
+        }
+        .btn-sm {
+            font-size: 0.75rem;
+            padding: 4px 8px;
+        }
+        .action-bar {
+            flex-direction: column;
+            align-items: stretch;
+        }
+    }
+</style>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // AJAX Upload File
+        window.ajaxUploadFile = function() {
+            const form = document.getElementById('uploadFileForm');
+            const formData = new FormData(form);
+            const errorDiv = document.getElementById('uploadFileError');
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': form.querySelector('input[name="csrfmiddlewaretoken"]').value
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    $('#uploadFileModal').modal('hide');
+                    location.reload();
+                } else {
+                    errorDiv.textContent = data.errors.file ? data.errors.file.join(' ') : 'An error occurred.';
+                }
+            })
+            .catch(err => {
+                errorDiv.textContent = 'An error occurred. Please try again.';
+                console.error('Error uploading file:', err);
+            });
+        };
+    });
+</script>
+{% endblock %}

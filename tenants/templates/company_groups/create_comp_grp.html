@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Company Group{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header btn-update text-white">
+                    <h3 class="mb-0">
+                        <i class="bi bi-plus-circle"></i> Create New Company Group
+                    </h3>
+                    <p class="mb-0">Create a new oversight group</p>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="create-group-form">
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.name.id_for_label }}" class="form-label">
+                                    Group Name <span class="text-danger">*</span>
+                                </label>
+                                {{ form.name }}
+                                {% if form.name.errors %}
+                                    <div class="text-danger small mt-1">{{ form.name.errors }}</div>
+                                {% endif %}
+                                <div class="form-text">
+                                    e.g., "Lagos State 2025" or "Federal Government Oversight"
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.slug.id_for_label }}" class="form-label">
+                                    URL Slug <span class="text-danger">*</span>
+                                </label>
+                                {{ form.slug }}
+                                {% if form.slug.errors %}
+                                    <div class="text-danger small mt-1">{{ form.slug.errors }}</div>
+                                {% endif %}
+                                <div class="form-text">
+                                    Used in URLs, e.g., "lagos-state-2025"
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.owner.id_for_label }}" class="form-label">
+                                Group Owner <span class="text-danger">*</span>
+                            </label>
+                            {{ form.owner }}
+                            {% if form.owner.errors %}
+                                <div class="text-danger small mt-1">{{ form.owner.errors }}</div>
+                            {% endif %}
+                            <div class="form-text">
+                                Select the administrator who will manage this group
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.members.id_for_label }}" class="form-label">
+                                Member Companies
+                            </label>
+                            {{ form.members }}
+                            {% if form.members.errors %}
+                                <div class="text-danger small mt-1">{{ form.members.errors }}</div>
+                            {% endif %}
+                            <div class="form-text">
+                                Select companies to include in this oversight group (you can add more later)
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i>
+                            <strong>Note:</strong> The group will automatically be associated with the 'group' tenant.
+                            Only superusers can create and manage company groups.
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'company_group_dashboard_admin' %}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Back to Groups
+                            </a>
+                            <div>
+                                <button type="reset" class="btn btn-outline-secondary">
+                                    <i class="bi bi-arrow-clockwise"></i> Reset
+                                </button>
+                                <button type="submit" class="btn btn-update">
+                                    <i class="bi bi-save"></i> Create Group
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Quick Tips Card -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0">Quick Tips</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="mb-0">
+                        <li>Group names should be descriptive and indicate the purpose</li>
+                        <li>Slugs should be URL-friendly (lowercase, hyphens, no spaces)</li>
+                        <li>You can add/remove members later from the group detail page</li>
+                        <li>Each group must have an owner who will manage it</li>
+                        <li>Groups are automatically associated with the 'group' tenant</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-generate slug from name
+    const nameField = document.getElementById('{{ form.name.id_for_label }}');
+    const slugField = document.getElementById('{{ form.slug.id_for_label }}');
+    
+    nameField.addEventListener('blur', function() {
+        if (!slugField.value) {
+            const slug = this.value
+                .toLowerCase()
+                .replace(/[^\w\s-]/g, '')  // Remove special chars
+                .replace(/\s+/g, '-')      // Replace spaces with hyphens
+                .replace(/--+/g, '-');     // Replace multiple hyphens with single
+            
+            slugField.value = slug;
+        }
+    });
+    
+    // Initialize select2 if available
+    if (typeof $.fn.select2 !== 'undefined') {
+        $('#{{ form.members.id_for_label }}').select2({
+            placeholder: "Select companies...",
+            allowClear: true
+        });
+        $('#{{ form.owner.id_for_label }}').select2({
+            placeholder: "Select an owner...",
+            allowClear: false
+        });
+    }
+});
+</script>
+<style>
+    .btn-update{
+        background-color: #319795;
+    }
+</style>
+{% endblock %}

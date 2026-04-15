@@ -1,0 +1,47 @@
+{% if page_obj.has_other_pages %}
+<nav aria-label="Page navigation" class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+            <a class="page-link" href="?{{ param_name }}_page=1{% if current_query %}&{{ current_query }}{% endif %}" aria-label="First">
+                <i class="fas fa-angle-double-left"></i>
+            </a>
+        </li>
+        <li class="page-item">
+            <a class="page-link" href="?{{ param_name }}_page={{ page_obj.previous_page_number }}{% if current_query %}&{{ current_query }}{% endif %}" aria-label="Previous">
+                <i class="fas fa-angle-left"></i>
+            </a>
+        </li>
+        {% endif %}
+
+        {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+                <li class="page-item active">
+                    <span class="page-link">{{ num }}</span>
+                </li>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <li class="page-item">
+                    <a class="page-link" href="?{{ param_name }}_page={{ num }}{% if current_query %}&{{ current_query }}{% endif %}">{{ num }}</a>
+                </li>
+            {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?{{ param_name }}_page={{ page_obj.next_page_number }}{% if current_query %}&{{ current_query }}{% endif %}" aria-label="Next">
+                <i class="fas fa-angle-right"></i>
+            </a>
+        </li>
+        <li class="page-item">
+            <a class="page-link" href="?{{ param_name }}_page={{ page_obj.paginator.num_pages }}{% if current_query %}&{{ current_query }}{% endif %}" aria-label="Last">
+                <i class="fas fa-angle-double-right"></i>
+            </a>
+        </li>
+        {% endif %}
+    </ul>
+    
+    <div class="text-center text-muted small">
+        Showing {{ page_obj.start_index }} - {{ page_obj.end_index }} of {{ page_obj.paginator.count }} items
+    </div>
+</nav>
+{% endif %}

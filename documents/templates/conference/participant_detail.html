@@ -1,0 +1,378 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ participant.name }} - Participant Details{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Breadcrumb -->
+            <nav aria-label="breadcrumb" class="mb-3">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a href="{% url 'conference_list' %}">Conferences</a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="{% url 'conference_detail' participant.conference.id %}">
+                            {{ participant.conference.title }}
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item active">{{ participant.name }}</li>
+                </ol>
+            </nav>
+
+            <!-- Page Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-user me-2"></i>Participant Details</h2>
+                <a href="{% url 'conference_detail' participant.conference.id %}" 
+                   class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>Back
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Left Column -->
+        <div class="col-lg-4">
+            <!-- Participant Card -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-user-circle me-2"></i>Participant Info</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Profile Picture -->
+                    <div class="text-center mb-4">
+                        {% if participant.profile_picture %}
+                            <img src="{{ participant.profile_picture.url }}" 
+                                 alt="{{ participant.name }}" 
+                                 class="rounded-circle img-thumbnail"
+                                 style="width: 150px; height: 150px; object-fit: cover;">
+                        {% else %}
+                            <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center"
+                                 style="width: 150px; height: 150px; font-size: 3rem;">
+                                {{ participant.name|first|upper }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <h4 class="text-center mb-3">{{ participant.name }}</h4>
+
+                    <!-- Details -->
+                    <div class="list-group list-group-flush">
+                        <div class="list-group-item px-0">
+                            <div class="d-flex justify-content-between">
+                                <span class="text-muted"><i class="fas fa-envelope me-2"></i>Email</span>
+                                <a href="mailto:{{ participant.email }}">{{ participant.email }}</a>
+                            </div>
+                        </div>
+
+                        {% if participant.phone %}
+                        <div class="list-group-item px-0">
+                            <div class="d-flex justify-content-between">
+                                <span class="text-muted"><i class="fas fa-phone me-2"></i>Phone</span>
+                                <span>{{ participant.phone }}</span>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if participant.organization %}
+                        <div class="list-group-item px-0">
+                            <div class="d-flex justify-content-between">
+                                <span class="text-muted"><i class="fas fa-building me-2"></i>Organization</span>
+                                <span>{{ participant.organization }}</span>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <div class="list-group-item px-0">
+                            <div class="d-flex justify-content-between">
+                                <span class="text-muted"><i class="fas fa-calendar me-2"></i>Registered</span>
+                                <span>{{ participant.created_at|date:"M d, Y" }}</span>
+                            </div>
+                        </div>
+
+                        <div class="list-group-item px-0">
+                            <div class="d-flex justify-content-between">
+                                <span class="text-muted"><i class="fas fa-info-circle me-2"></i>Status</span>
+                                {% if participant.status == 'accepted' %}
+                                    <span class="badge bg-success">Accepted</span>
+                                {% elif participant.status == 'pending' %}
+                                    <span class="badge bg-warning">Pending</span>
+                                {% elif participant.status == 'rejected' %}
+                                    <span class="badge bg-danger">Rejected</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ participant.status|title }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="list-group-item px-0">
+                            <div class="d-flex justify-content-between">
+                                <span class="text-muted"><i class="fas fa-check-circle me-2"></i>Confirmed</span>
+                                {% if participant.is_confirmed %}
+                                    <span class="badge bg-success">Yes</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">No</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        {% if participant.attendance_type %}
+                        <div class="list-group-item px-0">
+                            <div class="d-flex justify-content-between">
+                                <span class="text-muted"><i class="fas fa-map-marker-alt me-2"></i>Attendance</span>
+                                <span class="badge bg-info">{{ participant.attendance_type|title }}</span>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Conference Card -->
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Conference</h6>
+                </div>
+                <div class="card-body">
+                    <h5>{{ participant.conference.title }}</h5>
+                    {% if participant.conference.theme %}
+                        <p class="text-muted mb-2">{{ participant.conference.theme }}</p>
+                    {% endif %}
+                    <p class="mb-2">
+                        <i class="fas fa-calendar me-2"></i>
+                        {{ participant.conference.start_date|date:"M d, Y" }}
+                        {% if participant.conference.end_date %}
+                            - {{ participant.conference.end_date|date:"M d, Y" }}
+                        {% endif %}
+                    </p>
+                    {% if participant.conference.venue %}
+                        <p class="mb-2">
+                            <i class="fas fa-map-marker-alt me-2"></i>{{ participant.conference.venue }}
+                        </p>
+                    {% endif %}
+                    <a href="{% url 'conference_detail' participant.conference.id %}" 
+                       class="btn btn-sm btn-outline-primary">
+                        View Conference
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="col-lg-8">
+            <!-- Actions (if pending) -->
+            {% if participant.status == 'pending' %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-tasks me-2"></i>Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex gap-2">
+                        <form method="post" action="{% url 'approve_participant' participant.id %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-check me-1"></i>Approve
+                            </button>
+                        </form>
+                        <form method="post" action="{% url 'reject_participant' participant.id %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-times me-1"></i>Reject
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Custom Questions Responses -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-question-circle me-2"></i>Custom Questions Responses</h6>
+                </div>
+                <div class="card-body">
+                    <!-- Loading State -->
+                    <div id="responsesLoading" class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="text-muted mt-3">Loading responses...</p>
+                    </div>
+                    
+                    <!-- Responses Container -->
+                    <div id="responsesContainer" style="display: none;"></div>
+                </div>
+            </div>
+
+            <!-- Notes -->
+            {% if participant.notes %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-sticky-note me-2"></i>Notes</h6>
+                </div>
+                <div class="card-body">
+                    <p class="mb-0">{{ participant.notes }}</p>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Payment Info -->
+            {% if participant.payment_status %}
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-credit-card me-2"></i>Payment</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="text-muted small">Status</label>
+                            <div>
+                                {% if participant.payment_status == 'paid' %}
+                                    <span class="badge bg-success">Paid</span>
+                                {% elif participant.payment_status == 'pending' %}
+                                    <span class="badge bg-warning">Pending</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ participant.payment_status|title }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% if participant.ticket_price %}
+                        <div class="col-md-6">
+                            <label class="text-muted small">Amount</label>
+                            <div class="fw-bold">{{ participant.conference.currency|default:"$" }} {{ participant.ticket_price }}</div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const participantId = {{ participant.id }};
+    fetchParticipantResponses(participantId);
+});
+
+function fetchParticipantResponses(participantId) {
+    const responsesLoading = document.getElementById('responsesLoading');
+    const responsesContainer = document.getElementById('responsesContainer');
+    
+    fetch(`/conference/participant/${participantId}/responses/`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to fetch responses');
+            }
+            return response.json();
+        })
+        .then(data => {
+            responsesLoading.style.display = 'none';
+            
+            if (data.success) {
+                displayResponses(data.responses);
+                responsesContainer.style.display = 'block';
+            } else {
+                responsesContainer.innerHTML = `
+                    <div class="alert alert-warning">
+                        ${data.error || 'Could not load responses'}
+                    </div>
+                `;
+                responsesContainer.style.display = 'block';
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching responses:', error);
+            responsesLoading.style.display = 'none';
+            responsesContainer.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Failed to load responses. Please try again.
+                </div>
+            `;
+            responsesContainer.style.display = 'block';
+        });
+}
+
+function displayResponses(responses) {
+    const responsesContainer = document.getElementById('responsesContainer');
+    
+    if (!responses || responses.length === 0) {
+        responsesContainer.innerHTML = `
+            <div class="alert alert-info mb-0">
+                <i class="fas fa-info-circle me-2"></i>
+                No custom questions were answered by this participant.
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '<div class="list-group list-group-flush">';
+    
+    responses.forEach((response, index) => {
+        html += `
+            <div class="list-group-item px-0">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div class="d-flex align-items-start flex-grow-1">
+                        <span class="badge bg-primary me-2 mt-1">Q${index + 1}</span>
+                        <div>
+                            <h6 class="mb-2">${escapeHtml(response.question)}</h6>
+                            <p class="mb-0 text-muted">
+                                ${response.answer ? escapeHtml(response.answer) : '<em>No answer</em>'}
+                            </p>
+                        </div>
+                    </div>
+                    ${response.required ? 
+                        '<span class="badge bg-danger ms-2">Required</span>' : 
+                        '<span class="badge bg-secondary ms-2">Optional</span>'}
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    responsesContainer.innerHTML = html;
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+</script>
+
+<style>
+.card {
+    border: none;
+    border-radius: 12px;
+}
+
+.card-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 12px 12px 0 0 !important;
+}
+
+.list-group-item {
+    border-left: none;
+    border-right: none;
+}
+
+.list-group-item:first-child {
+    border-top: none;
+}
+
+.img-thumbnail {
+    transition: transform 0.3s ease;
+}
+
+.img-thumbnail:hover {
+    transform: scale(1.05);
+}
+</style>
+{% endblock %}

@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-5">
+    <h2><i class="fas fa-plus-circle"></i> Create Vacancy</h2>
+    {% include 'partials/help_icon.html' with faq_key='create_vacancy' %}
+    <form method="POST" class="vacancy-form">
+        {% csrf_token %}
+        <div class="form-group mb-3">
+            <label for="{{ form.title.id_for_label }}" class="form-label"><i class="fas fa-heading"></i> Job Title</label>
+            {{ form.title }}
+            {% if form.title.errors %}
+                <div class="text-danger">{{ form.title.errors }}</div>
+            {% endif %}
+        </div>
+        <div class="form-group mb-3">
+            <label for="{{ form.description.id_for_label }}" class="form-label"><i class="fas fa-file-alt"></i> Description</label>
+            {{ form.description }}
+            {% if form.description.errors %}
+                <div class="text-danger">{{ form.description.errors }}</div>
+            {% endif %}
+        </div>
+        <div class="form-group mb-3">
+            <label for="{{ form.country.id_for_label }}" class="form-label"><i class="fas fa-globe"></i> Country</label>
+            {{ form.country }}
+            {% if form.country.errors %}
+                <div class="text-danger">{{ form.country.errors }}</div>
+            {% endif %}
+        </div>
+        <div class="form-group mb-3">
+            <label for="{{ form.city.id_for_label }}" class="form-label"><i class="fas fa-city"></i> State/Region</label>
+            {{ form.city }}
+            {% if form.city.errors %}
+                <div class="text-danger">{{ form.city.errors }}</div>
+            {% endif %}
+        </div>
+        <div class="form-group mb-3">
+            <label for="{{ form.work_mode.id_for_label }}" class="form-label"><i class="fas fa-building"></i> Work Mode</label>
+            {{ form.work_mode }}
+            {% if form.work_mode.errors %}
+                <div class="text-danger">{{ form.work_mode.errors }}</div>
+            {% endif %}
+        </div>
+        <div class="form-group mb-3">
+            <label for="{{ form.skills.id_for_label }}" class="form-label"><i class="fas fa-tools"></i> Skills</label>
+            {{ form.skills }}
+            {% if form.skills.errors %}
+                <div class="text-danger">{{ form.skills.errors }}</div>
+            {% endif %}
+        </div>
+        <div class="form-group mb-3">
+            <label for="{{ form.eligibility.id_for_label }}" class="form-label"><i class="fas fa-check-circle"></i> Eligibility</label>
+            {{ form.eligibility }}
+            {% if form.eligibility.errors %}
+                <div class="text-danger">{{ form.eligibility.errors }}</div>
+            {% endif %}
+        </div>
+        <div class="form-group mb-3">
+            <label for="{{ form.min_salary.id_for_label }}" class="form-label"><i class="fas fa-dollar-sign"></i> Minimum Salary</label>
+            {{ form.min_salary }}
+            {% if form.min_salary.errors %}
+                <div class="text-danger">{{ form.min_salary.errors }}</div>
+            {% endif %}
+        </div>
+        <div class="form-group mb-3">
+            <label for="{{ form.max_salary.id_for_label }}" class="form-label"><i class="fas fa-dollar-sign"></i> Maximum Salary</label>
+            {{ form.max_salary }}
+            {% if form.max_salary.errors %}
+                <div class="text-danger">{{ form.max_salary.errors }}</div>
+            {% endif %}
+        </div>
+        <div class="form-group mb-3">
+            <label for="{{ form.currency.id_for_label }}" class="form-label"><i class="fas fa-dollar-sign"></i> Currency</label>
+            {{ form.currency }}
+            {% if form.currency.errors %}
+                <div class="text-danger">{{ form.currency.errors }}</div>
+            {% endif %}
+        </div>
+        <div class="form-group mb-3">
+            <label for="{{ form.tags.id_for_label }}" class="form-label"><i class="fas fa-tools"></i> Tags</label>
+            {{ form.tags }}
+            {% if form.tags.errors %}
+                <div class="text-danger">{{ form.tags.errors }}</div>
+            {% endif %}
+        </div>
+        <div class="form-group mb-3">
+            <label for="{{ form.status.id_for_label }}" class="form-label"><i class="fas fa-info-circle"></i> Status</label>
+            {{ form.status }}
+            {% if form.status.errors %}
+                <div class="text-danger">{{ form.status.errors }}</div>
+            {% endif %}
+        </div>
+        {% if form.non_field_errors %}
+            <div class="text-danger">{{ form.non_field_errors }}</div>
+        {% endif %}
+        <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save</button>
+        <a href="{% url 'vacancy_list' %}" class="btn btn-secondary"><i class="fas fa-times"></i> Cancel</a>
+    </form>
+</div>
+
+<script>
+    $(document).ready(function () {
+        $('#id_country').select2({ 
+            width: '100%',
+            allowClear: true,
+        });
+        $('#id_city').select2({ 
+            width: '100%',
+            allowClear: true,
+        });
+        $('#id_skills').select2({ 
+            width: '100%',
+            allowClear: true,
+        });
+        $('#id_tags').select2({ 
+            width: '100%',
+            allowClear: true,
+        });
+        $('#id_currency').select2({ 
+            width: '100%',
+            allowClear: true,
+        });
+    });
+    document.getElementById('vacancy-form').addEventListener('submit', function(e) {
+        const submitButton = this.querySelector('button[type="submit"]');
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+    });
+</script>
+<style>
+    .select2-container {
+        border-radius: 8px;
+        border: 1px solid #cecacaff;
+        color: #000000;
+    }
+    .select2-container .select2-selection--multiple {
+        border-radius: 8px;
+        border: 1px solid #cecacaff;
+        color: #000000;
+    }
+    body.dark-mode .select2-container .select2-selection--multiple {
+        border-color: #4a5568;
+        background: #3b4a6b;
+        color: #000000;
+    }
+    .select2-container--default .select2-selection--multiple .select2-selection__choice {
+        background-color: #319795;
+        color: #000000;
+    }
+    body.dark-mode .select2-results__options {
+        color: #000000;
+    }
+</style>
+{% endblock %}

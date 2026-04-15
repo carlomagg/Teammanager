@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5">
+    <h1>Admin Panel</h1>
+    <p>Welcome, {{ user.get_full_name|default:user.username }}. Manage your Company's resources below.</p>
+    <div class="row">
+        {% comment %} <div class="col-md-4 mb-3">
+            <div class="card border-warning">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-shield-alt text-warning"></i> KYC/KYB Reviews</h5>
+                    <p class="card-text">Review and approve identity verifications.</p>
+                    <a href="{% url 'admin_kyc_dashboard' %}" class="btn btn-warning">
+                        <i class="fas fa-eye"></i> Review Submissions
+                    </a>
+                </div>
+            </div>
+        </div> {% endcomment %}
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Staff</h5>
+                    <p class="card-text">Manage staff accounts.</p>
+                    <a href="{% url 'users_list' %}" class="btn btn-primary">View Staff</a>
+                </div>
+            </div>
+        </div>
+        {% comment %} <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Documents</h5>
+                    <p class="card-text">Manage documents.</p,>
+                    <a href="{% url 'admin_document_list' %}" class="btn btn-primary">View Documents</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Folders</h5>
+                    <p class="card-text">Manage folders.</p>
+                    <a href="{% url 'admin_folder_list' %}" class="btn btn-primary">View Folders</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Files</h5>
+                    <p class="card-text">Manage files.</p>
+                    <a href="{% url 'admin_file_list' %}" class="btn btn-primary">View Files</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Tasks</h5>
+                    <p class="card-text">Manage tasks.</p>
+                    <a href="{% url 'admin_task_list' %}" class="btn btn-primary">View Tasks</a>
+                </div>
+            </div>
+        </div> {% endcomment %}
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Departments</h5>
+                    <p class="card-text">Manage departments.</p>
+                    <a href="{% url 'department_list' %}" class="btn btn-primary">View Departments</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Teams</h5>
+                    <p class="card-text">Manage teams.</p>
+                    <a href="{% url 'admin_team_list' %}" class="btn btn-primary">View Teams</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Events</h5>
+                    <p class="card-text">Manage events.</p>
+                    <a href="{% url 'event_list' %}" class="btn btn-primary">View Events</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Event Participants</h5>
+                    <p class="card-text">Manage event participants.</p>
+                    <a href="{% url 'event_participant_list' %}" class="btn btn-primary">View Participants</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Staff Profiles</h5>
+                    <p class="card-text">Manage staff profiles.</p>
+                    <a href="{% url 'staff_profile_list' %}" class="btn btn-primary">View Staff Profiles</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Notifications</h5>
+                    <p class="card-text">Manage notifications.</p>
+                    <a href="{% url 'admin_notification_list' %}" class="btn btn-primary">View Notifications</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Staff Notifications</h5>
+                    <p class="card-text">Manage staff notifications.</p>
+                    <a href="{% url 'user_notification_list' %}" class="btn btn-primary">View Staff Notifications</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

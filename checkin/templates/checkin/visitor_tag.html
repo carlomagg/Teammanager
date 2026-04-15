@@ -1,0 +1,190 @@
+{% extends 'base.html' %}
+
+{% block title %}Visitor Tag – {{ log.visitor_tag }}{% endblock %}
+
+{% block content %}
+<div class="container py-4" style="max-width:560px;">
+
+  {# ── Screen-only header ── #}
+  <div class="d-flex justify-content-between align-items-center mb-3 d-print-none">
+    <h5 class="mb-0"><i class="fas fa-id-badge me-2 text-success"></i>Check-in Successful</h5>
+    <div class="d-flex gap-2">
+      <a href="{% url 'checkin:visitor_checkin' %}" class="btn btn-outline-success btn-sm">
+        <i class="fas fa-user-plus me-1"></i>Next Visitor
+      </a>
+      <a href="{% url 'checkin:checkin_dashboard' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="fas fa-arrow-left me-1"></i>Dashboard
+      </a>
+    </div>
+  </div>
+
+    {# PRINTABLE TAG CARD #} 
+    
+  <div id="tagCard" class="card border-0 shadow-lg text-center overflow-hidden">
+
+    {# Coloured header strip #}
+    <div style="background:linear-gradient(135deg,#198754 0%,#0d6efd 100%);padding:1.4rem 1rem .8rem;">
+      <div class="text-white fw-bold" style="font-size:.75rem;letter-spacing:.18em;text-transform:uppercase;">
+        Visitor Pass
+      </div>
+      <div class="text-white opacity-75" style="font-size:.7rem;">
+        {% now "l, d F Y" %}
+      </div>
+    </div>
+
+    <div class="card-body px-4 py-3">
+
+      {# Large visitor tag number #}
+      <div style="
+        font-size: 5.5rem;
+        font-weight: 900;
+        line-height: 1;
+        letter-spacing: .08em;
+        color: #0d6efd;
+        font-variant-numeric: tabular-nums;
+      ">
+        {{ log.visitor_tag }}
+      </div>
+
+      <div class="text-muted small mb-3" style="font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;">
+        Visitor Tag No.
+      </div>
+
+      <hr class="my-2">
+
+      {# Visitor name + key details #}
+      <div class="fw-bold fs-5 mb-1">{{ log.visitor.name }}</div>
+
+      {% if log.visitor.phone_number %}
+      <div class="text-muted small mb-1">
+        <i class="fas fa-phone fa-xs me-1"></i>{{ log.visitor.phone_number }}
+      </div>
+      {% endif %}
+
+      {% if log.visitor.email %}
+      <div class="text-muted small mb-1">
+        <i class="fas fa-envelope fa-xs me-1"></i>{{ log.visitor.email }}
+      </div>
+      {% endif %}
+
+      <div class="d-flex justify-content-center gap-3 mt-2 mb-1 flex-wrap">
+
+        {% if log.purpose %}
+        <span class="badge bg-light text-dark border">
+          <i class="fas fa-bullseye me-1 text-primary"></i>{{ log.get_purpose_display }}
+        </span>
+        {% endif %}
+
+        {% if log.visitee %}
+        <span class="badge bg-light text-dark border">
+          <i class="fas fa-user me-1 text-info"></i>{{ log.visitee.get_full_name|default:log.visitee.username }}
+        </span>
+        {% endif %}
+
+        {% if log.on_appointment %}
+        <span class="badge bg-success">
+          <i class="fas fa-calendar-check me-1"></i>Appointment
+        </span>
+        {% endif %}
+
+      </div>
+
+      <hr class="my-2">
+
+      {# Time in #}
+      <div class="d-flex justify-content-between small text-muted px-2">
+        <span><i class="fas fa-clock me-1"></i>Time In</span>
+        <span class="fw-semibold text-dark">{{ log.time_in|date:"H:i" }} &middot; {{ log.time_in|date:"d M Y" }}</span>
+      </div>
+
+      {% if log.id_type %}
+      <div class="d-flex justify-content-between small text-muted px-2 mt-1">
+        <span><i class="fas fa-id-card me-1"></i>{{ log.get_id_type_display }}</span>
+        <span class="fw-semibold text-dark">{{ log.id_number|default:"—" }}</span>
+      </div>
+      {% endif %}
+
+    </div>
+
+    {# Footer strip #}
+    <div style="background:#f8f9fa;border-top:1px solid #dee2e6;padding:.5rem 1rem;" class="d-flex justify-content-between align-items-center">
+      <span class="text-muted" style="font-size:.65rem;">
+        Present this tag to sign out
+      </span>
+      {% if log.has_document %}
+      <span class="badge bg-warning text-dark" style="font-size:.65rem;">
+        <i class="fas fa-file me-1"></i>Doc on file
+      </span>
+      {% endif %}
+    </div>
+
+  </div>{# /tagCard #}
+
+  {# ── Screen-only action buttons ── #}
+  <div class="d-flex gap-2 mt-3 d-print-none">
+    <button onclick="window.print()" class="btn btn-primary flex-grow-1">
+      <i class="fas fa-print me-2"></i>Print Tag
+    </button>
+    <button onclick="shareTag()" class="btn btn-outline-success flex-grow-1" id="shareBtn">
+      <i class="fas fa-share-alt me-2"></i>Share / Save
+    </button>
+  </div>
+
+</div>
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+/* ── Share / Save (Web Share API with canvas fallback) ── */
+window.shareTag = async function () {
+  const name = "{{ log.visitor.name|escapejs }}";
+  const tag  = "{{ log.visitor_tag }}";
+
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: `Visitor Tag ${tag}`,
+        text:  `${name} – Visitor Tag: ${tag}\nTime in: {{ log.time_in|date:"H:i, d M Y"|escapejs }}`,
+      });
+    } catch (_) { /* user cancelled */ }
+  } else {
+    /* Fallback: copy tag number to clipboard */
+    try {
+      await navigator.clipboard.writeText(tag);
+      const btn = document.getElementById('shareBtn');
+      const orig = btn.innerHTML;
+      btn.innerHTML = '<i class="fas fa-check me-2"></i>Tag Copied!';
+      btn.classList.replace('btn-outline-success', 'btn-success');
+      setTimeout(() => {
+        btn.innerHTML = orig;
+        btn.classList.replace('btn-success', 'btn-outline-success');
+      }, 2000);
+    } catch (_) { alert(`Visitor Tag: ${tag}`); }
+  }
+};
+</script>
+{% endblock %}
+
+
+{% block extra_css %}
+<style>
+/* ── Print: hide everything except the tag card ── */
+@media print {
+  body *          { visibility: hidden !important; }
+  #tagCard,
+  #tagCard *      { visibility: visible !important; }
+  #tagCard {
+    position: fixed !important;
+    inset: 0 !important;
+    margin: auto !important;
+    width: 88mm !important;        /* standard badge width */
+    top: 10mm !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    box-shadow: none !important;
+    border: 1px solid #ccc !important;
+  }
+}
+</style>
+{% endblock %}

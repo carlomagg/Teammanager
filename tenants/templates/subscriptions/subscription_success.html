@@ -1,0 +1,385 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Subscription Activated{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <!-- Success Card -->
+            <div class="card text-center">
+                <div class="card-body py-5">
+                    <div class="mb-4">
+                        <i class="fas fa-check-circle fa-5x text-success"></i>
+                    </div>
+                    
+                    <h2 class="mb-3">Payment Successful!</h2>
+                    
+                    <p class="lead mb-4">
+                        Your subscription has been activated successfully.
+                    </p>
+                    
+                    <div class="alert alert-success">
+                        <i class="fas fa-envelope me-2"></i>
+                        A confirmation email has been sent to your inbox.
+                    </div>
+                    
+                    <div class="card bg-light mt-4">
+                        <div class="card-body">
+                            <h5 class="card-title">Subscription Summary</h5>
+                            <table class="table table-sm table-borderless mb-0">
+                                 <tr>
+                                    <td class="text-start">Plan:</td>
+                                    <td class="text-end"><strong>{{ subscription.plan.name }}</strong></td>
+                                </tr>
+                                {% if is_tenant %}
+                                <tr>
+                                    <td class="text-start">User Scope:</td>
+                                    <td class="text-end">
+                                        {% if user_scope == 'all' %}
+                                        <span class="badge bg-info">
+                                            <i class="fas fa-users me-1"></i>All Users
+                                        </span>
+                                        {% else %}
+                                        <span class="badge bg-primary">
+                                            <i class="fas fa-user-check me-1"></i>Selected Users
+                                        </span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="text-start">Covered Users:</td>
+                                    <td class="text-end">
+                                        <strong>{{ covered_users_info.count }}</strong> user{% if covered_users_info.count != 1 %}s{% endif %}
+                                        {% if covered_users_info.count > 0 and user_scope == 'selected' %}
+                                        <br>
+                                        <small>
+                                            <a href="javascript:void(0)" onclick="showCoveredUsers()" class="text-muted">
+                                                <i class="fas fa-eye me-1"></i>View users
+                                            </a>
+                                        </small>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endif %}
+                                <tr>
+                                    <td class="text-start">Start Date:</td>
+                                    <td class="text-end">{{ subscription.start_date|date:"F d, Y" }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-start">End Date:</td>
+                                    <td class="text-end">{{ subscription.end_date|date:"F d, Y" }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-start">Trial Period:</td>
+                                    <td class="text-end">
+                                        {% if subscription.trial_end_date %}
+                                            Until {{ subscription.trial_end_date|date:"F d, Y" }}
+                                            <br>
+                                            <small class="text-success">{{ subscription.trial_end_date|timeuntil }} left</small>
+                                        {% else %}
+                                            Trial ended
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="text-start">Amount Paid:</td>
+                                    <td class="text-end"><strong class="text-success">₦{{ payable_amount|floatformat:2 }}</strong></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <a href="{% url 'subscription_detail' subscription.id %}" class="btn btn-primary">
+                            <i class="fas fa-eye me-2"></i>View Subscription Details
+                        </a>
+                        
+                        <a href="{% url 'client_subscriptions' %}" class="btn btn-outline-primary ms-2">
+                            <i class="fas fa-list me-2"></i>My Subscriptions
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- User-Specific Information (for tenant subscriptions) -->
+            {% if is_tenant and covered_users_info and covered_users_info.users %}
+            <div class="card mt-4" id="coveredUsersCard" style="display: none;">
+                <div class="card-header light-header">
+                    <i class="fas fa-users me-2"></i>Users Covered by This Subscription
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for user in covered_users_info.users %}
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="user-avatar me-3">
+                                    {{ user.email|slice:":1"|upper }}
+                                </div>
+                                <div>
+                                    <div class="fw-bold">{{ user.get_full_name|default:user.email }}</div>
+                                    <small class="text-muted">{{ user.email }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% if covered_users_info.total_count > covered_users_info.users|length %}
+                    <div class="text-center mt-3">
+                        <small class="text-muted">
+                            +{{ covered_users_info.total_count|add:covered_users_info.users|length|add:"-10" }} more users
+                        </small>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Next Steps -->
+            <div class="card mt-4">
+                <div class="card-header light-header">
+                    <i class="fas fa-rocket me-2"></i>Next Steps
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex">
+                                <div class="me-3">
+                                    <span class="badge bg-primary rounded-circle p-2">1</span>
+                                </div>
+                                <div>
+                                    <h6>Explore Features</h6>
+                                    <p class="small text-muted">Start using all the premium features included in your plan.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% if is_tenant %}
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex">
+                                <div class="me-3">
+                                    <span class="badge bg-primary rounded-circle p-2">2</span>
+                                </div>
+                                <div>
+                                    <h6>Manage Team Members</h6>
+                                    <p class="small text-muted">
+                                        {% if user_scope == 'all' %}
+                                            New users added to your organization will be automatically covered.
+                                        {% else %}
+                                            You can add more users to this subscription from your subscription details page.
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex">
+                                <div class="me-3">
+                                    <span class="badge bg-primary rounded-circle p-2">2</span>
+                                </div>
+                                <div>
+                                    <h6>Invite Team Members</h6>
+                                    <p class="small text-muted">Add your team members to collaborate effectively.</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex">
+                                <div class="me-3">
+                                    <span class="badge bg-primary rounded-circle p-2">3</span>
+                                </div>
+                                <div>
+                                    <h6>Set Up Billing</h6>
+                                    <p class="small text-muted">Configure your billing preferences and payment methods.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex">
+                                <div class="me-3">
+                                    <span class="badge bg-primary rounded-circle p-2">4</span>
+                                </div>
+                                <div>
+                                    <h6>Get Support</h6>
+                                    <p class="small text-muted">Contact our support team if you need any assistance.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Share Subscription (Optional) -->
+            {% if is_tenant and user_scope == 'selected' and covered_users_info and covered_users_info.count > 0 %}
+            <div class="card mt-4">
+                <div class="card-header light-header">
+                    <i class="fas fa-share-alt me-2"></i>Share Access
+                </div>
+                <div class="card-body">
+                    <p class="small text-muted mb-3">
+                        The following users have been granted access to this subscription. You can share this page with them or notify them directly.
+                    </p>
+                    <button class="btn btn-sm btn-outline-primary" onclick="notifyUsers()">
+                        <i class="fas fa-envelope me-2"></i>Notify Users
+                    </button>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Viewing Covered Users (if not already shown) -->
+<div class="modal fade" id="coveredUsersModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Covered Users</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="coveredUsersModalBody">
+                {% if covered_users_info and covered_users_info.users %}
+                <div class="list-group">
+                    {% for user in covered_users_info.users %}
+                    <div class="list-group-item">
+                        <div class="d-flex align-items-center">
+                            <div class="user-avatar me-3">
+                                {{ user.email|slice:":1"|upper }}
+                            </div>
+                            <div>
+                                <strong>{{ user.get_full_name|default:user.email }}</strong><br>
+                                <small class="text-muted">{{ user.email }}</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% if covered_users_info.total_count > covered_users_info.users|length %}
+                <div class="text-center mt-3">
+                    <small class="text-muted">
+                        +{{ covered_users_info.total_count|add:covered_users_info.users|length|add:"-10" }} more users
+                    </small>
+                </div>
+                {% endif %}
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                    <p>No users selected for this subscription.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Show covered users card if there are users
+        {% if is_tenant and user_scope == 'selected' and covered_users_info and covered_users_info.count > 0 %}
+        $('#coveredUsersCard').fadeIn();
+        {% endif %}
+    });
+    
+    function showCoveredUsers() {
+        $('#coveredUsersModal').modal('show');
+    }
+    
+    function notifyUsers() {
+        // This could open an email composer or show a notification
+        toastr.info('Feature coming soon: Notify users about their subscription access.');
+    }
+    
+    // Toastr configuration
+    toastr.options = {
+        "closeButton": true,
+        "progressBar": true,
+        "positionClass": "toast-top-right",
+        "timeOut": "3000"
+    };
+</script>
+
+<style>
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+/* Card animations */
+.card {
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Success animation */
+@keyframes checkmark {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.fa-check-circle {
+    animation: checkmark 0.5s ease-out;
+}
+
+/* Badge styling */
+.badge {
+    font-size: 0.85rem;
+    padding: 0.35rem 0.65rem;
+}
+
+/* Alert styling */
+.alert-success {
+    background-color: #f0fff4;
+    border-color: #c6f6d5;
+    color: #2f855a;
+}
+</style>
+
+<!-- Include Toastr for notifications -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+{% endblock %}
+{% block extra_js %}
+    <!-- Meta Pixel - Successful Subscription (₦5,000 NGN) -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof fbq === 'function') {
+                fbq('track', 'Subscribe', {
+                    content_name: 'TeamManager Monthly Subscription',
+                    content_category: 'HR Software',
+                    content_type: 'subscription',
+                    value: 5000,
+                    currency: 'NGN',
+                    status: 'success'
+                });
+                console.log('✅ Meta Pixel: Subscribe event fired - ₦5,000 NGN');
+            } else {
+                console.warn('⚠️ fbq not available - Check Meta Pixel base code');
+            }
+        });
+    </script>
+{% endblock %}

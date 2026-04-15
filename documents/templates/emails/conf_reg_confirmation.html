@@ -1,0 +1,47 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Registration Confirmation</title>
+  <style>
+    body { font-family: Arial, Helvetica, sans-serif; color: #2d3748; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .btn { display: inline-block; padding: 10px 16px; background: #319795; color: #fff; text-decoration: none; border-radius: 6px; }
+    .muted { color: #6b7280; font-size: 0.95rem; }
+    code { background:#f1f5f9; padding:4px 6px; border-radius:4px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2 style="margin-top:0;">You're registered — {{ conference.title }}</h2>
+    <p class="muted">Hello {{ participant.full_name }},</p>
+
+    <p>Thanks for registering for <strong>{{ conference.title }}</strong> hosted by <strong>{{ conference.tenant }}</strong>.</p>
+
+    <p>
+      <strong>When:</strong>
+      {{ conference.start_date|date:"SHORT_DATETIME_FORMAT" }} — {{ conference.end_date|date:"SHORT_DATETIME_FORMAT" }}
+    </p>
+
+    <p>
+      <strong>Venue:</strong> {{ conference.venue|default:"Virtual / TBA" }}
+    </p>
+
+    <p>
+      Use the link below to view event updates and receive notifications:
+    </p>
+
+    <p>
+      <a class="btn" href="{{ access_url }}">{{ access_url }}</a>
+    </p>
+
+    <p class="muted">Your registration reference is: <code>{{ participant.unique_token }}</code></p>
+
+    <hr>
+
+    <p class="muted">If you did not register for this event, please ignore this email.</p>
+
+    <p style="font-size:0.9rem; color:#9CA3AF; margin-top:8px;">&copy; {{ conference.tenant }}</p>
+  </div>
+</body>
+</html>

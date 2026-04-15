@@ -1,0 +1,277 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Payment #{{ payment.id }} Details{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Header -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div class="d-flex align-items-center">
+            <a href="{% url 'client_subscription_payments' %}" class="btn btn-outline-secondary me-3">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <div>
+                <h1 class="display-6 fw-bold" style="color: var(--primary-dark);">
+                    <i class="fas fa-receipt me-2"></i>Payment Receipt
+                </h1>
+                <p class="text-muted">
+                    Transaction #{{ payment.transaction_id|default:payment.id }}
+                </p>
+            </div>
+        </div>
+        <div>
+            <button class="btn btn-outline-primary me-2" onclick="window.print()">
+                <i class="fas fa-print me-2"></i>Print
+            </button>
+            <button class="btn btn-primary" onclick="downloadReceipt({{ payment.id }})">
+                <i class="fas fa-download me-2"></i>Download PDF
+            </button>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Main Receipt Card -->
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-file-invoice me-2"></i>Payment Receipt
+                </div>
+                <div class="card-body">
+                    <!-- Receipt Header -->
+                    <div class="row mb-4">
+                        <div class="col-6">
+                            <h3 style="color: var(--primary-color);">SubManager</h3>
+                            <p class="text-muted small mb-0">123 Business Ave</p>
+                            <p class="text-muted small mb-0">Suite 100</p>
+                            <p class="text-muted small">City, State 12345</p>
+                        </div>
+                        <div class="col-6 text-end">
+                            <h5>Receipt #{{ payment.id }}</h5>
+                            <p class="text-muted small mb-0">Date: {{ payment.created_at|date:"F d, Y" }}</p>
+                            <p class="text-muted small">Time: {{ payment.created_at|time:"g:i A" }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Bill To -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-muted mb-2">BILL TO:</h6>
+                            {% if payment.tenant %}
+                            <h5 class="mb-1">{{ payment.tenant.name }}</h5>
+                            <p class="mb-0">{{ payment.tenant.email }}</p>
+                            <p class="mb-0">{{ payment.tenant.phone }}</p>
+                            {% elif payment.owner %}
+                            <h5 class="mb-1">{{ payment.owner.get_full_name|default:payment.owner.email }}</h5>
+                            <p class="mb-0">{{ payment.owner.email }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Payment Details Table -->
+                    <table class="table table-bordered">
+                        <thead style="background-color: var(--primary-soft);">
+                            <tr>
+                                <th>Description</th>
+                                <th class="text-end">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <strong>{{ payment.description }}</strong>
+                                    {% if payment.content_object %}
+                                    <br>
+                                    <small class="text-muted">
+                                        Subscription: {{ payment.content_object.plan.name }}
+                                        ({{ payment.content_object.start_date|date:"M d, Y" }} - {{ payment.content_object.end_date|date:"M d, Y" }})
+                                    </small>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    <strong>${{ payment.amount|floatformat:2 }}</strong>
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th class="text-end">Subtotal:</th>
+                                <td class="text-end">${{ payment.amount|floatformat:2 }}</td>
+                            </tr>
+                            {% if payment.tax_deductions > 0 %}
+                            <tr>
+                                <th class="text-end">Tax:</th>
+                                <td class="text-end">${{ payment.tax_deductions|floatformat:2 }}</td>
+                            </tr>
+                            {% endif %}
+                            {% if payment.other_deductions > 0 %}
+                            <tr>
+                                <th class="text-end">Other Deductions:</th>
+                                <td class="text-end">${{ payment.other_deductions|floatformat:2 }}</td>
+                            </tr>
+                            {% endif %}
+                            <tr>
+                                <th class="text-end h5">Total:</th>
+                                <td class="text-end h5" style="color: var(--primary-color);">
+                                    ${{ payment.net_amount|default:payment.amount|floatformat:2 }}
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+
+                    <!-- Payment Status -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between align-items-center p-3 rounded" style="background-color: var(--primary-soft);">
+                                <div>
+                                    <strong>Payment Status:</strong>
+                                    {% if payment.status == 'success' %}
+                                    <span class="badge bg-success ms-2">Paid</span>
+                                    {% elif payment.status == 'pending' %}
+                                    <span class="badge bg-warning ms-2">Pending</span>
+                                    {% elif payment.status == 'failed' %}
+                                    <span class="badge bg-danger ms-2">Failed</span>
+                                    {% elif payment.status == 'refunded' %}
+                                    <span class="badge bg-info ms-2">Refunded</span>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <strong>Payment Method:</strong>
+                                    <span class="ms-2">{{ payment.payment_method|default:"Credit Card"|title }}</span>
+                                </div>
+                                <div>
+                                    <strong>Transaction ID:</strong>
+                                    <span class="ms-2">{{ payment.transaction_id|default:"N/A" }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Footer Note -->
+                    <div class="row mt-4">
+                        <div class="col-12 text-center">
+                            <p class="text-muted small">
+                                Thank you for your business! For any questions regarding this receipt, please contact support.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Subscription Summary -->
+            <div class="card mb-4">
+                <div class="card-header light-header">
+                    <i class="fas fa-crown me-2"></i>Subscription Summary
+                </div>
+                <div class="card-body">
+                    {% if payment.content_object %}
+                    <div class="mb-3">
+                        <label class="text-muted small">Plan</label>
+                        <h5 class="mb-0">{{ payment.content_object.plan.name }}</h5>
+                    </div>
+                    <div class="mb-3">
+                        <label class="text-muted small">Period</label>
+                        <p class="mb-0">
+                            {{ payment.content_object.start_date|date:"M d, Y" }} - 
+                            {{ payment.content_object.end_date|date:"M d, Y" }}
+                        </p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="text-muted small">Status</label>
+                        <br>
+                        <span class="badge {% if payment.content_object.status == 'active' %}bg-success{% elif payment.content_object.status == 'expired' %}bg-secondary{% else %}bg-danger{% endif %}">
+                            {{ payment.content_object.get_status_display }}
+                        </span>
+                    </div>
+                    <a href="{% url 'subscription_detail' payment.content_object.id %}" class="btn btn-outline-primary w-100">
+                        <i class="fas fa-eye me-2"></i>View Subscription
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Payment Timeline -->
+            <div class="card mb-4">
+                <div class="card-header light-header">
+                    <i class="fas fa-history me-2"></i>Payment Timeline
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li class="mb-3">
+                            <div class="d-flex">
+                                <div class="me-3">
+                                    <i class="fas fa-circle" style="color: var(--primary-color); font-size: 10px;"></i>
+                                </div>
+                                <div>
+                                    <strong>Payment Created</strong>
+                                    <p class="text-muted small mb-0">{{ payment.created_at|date:"F d, Y g:i A" }}</p>
+                                </div>
+                            </div>
+                        </li>
+                        {% if payment.payment_date %}
+                        <li class="mb-3">
+                            <div class="d-flex">
+                                <div class="me-3">
+                                    <i class="fas fa-circle" style="color: #48bb78; font-size: 10px;"></i>
+                                </div>
+                                <div>
+                                    <strong>Payment {% if payment.status == 'success' %}Completed{% else %}Processed{% endif %}</strong>
+                                    <p class="text-muted small mb-0">{{ payment.payment_date|date:"F d, Y g:i A" }}</p>
+                                </div>
+                            </div>
+                        </li>
+                        {% endif %}
+                        {% if payment.updated_at != payment.created_at %}
+                        <li class="mb-3">
+                            <div class="d-flex">
+                                <div class="me-3">
+                                    <i class="fas fa-circle" style="color: #a0aec0; font-size: 10px;"></i>
+                                </div>
+                                <div>
+                                    <strong>Last Updated</strong>
+                                    <p class="text-muted small mb-0">{{ payment.updated_at|date:"F d, Y g:i A" }}</p>
+                                </div>
+                            </div>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Need Help? -->
+            <div class="card" style="background: linear-gradient(135deg, var(--primary-soft) 0%, white 100%);">
+                <div class="card-body text-center">
+                    <i class="fas fa-question-circle fa-3x mb-3" style="color: var(--primary-color);"></i>
+                    <h5>Questions about this payment?</h5>
+                    <p class="text-muted small">Our support team is here to help with any billing inquiries.</p>
+                    <a href="#" class="btn btn-outline-primary">
+                        <i class="fas fa-envelope me-2"></i>Contact Billing Support
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    function downloadReceipt(paymentId) {
+        // Add your PDF download logic here
+        window.location.href = '/payments/' + paymentId + '/download/';
+    }
+    
+    // Print optimization
+    window.onbeforeprint = function() {
+        // Add any print-specific formatting
+        document.body.style.backgroundColor = 'white';
+    };
+    
+    window.onafterprint = function() {
+        document.body.style.backgroundColor = '';
+    };
+</script>
+{% endblock %}
+{% endblock %}

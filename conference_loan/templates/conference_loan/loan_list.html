@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Loan Applications{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>Loan Applications</h2>
+        </div>
+        <div class="col-md-4 text-right">
+            <a href="{% url 'conference_loan:loan_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> New Application
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Total Applications</h5>
+                    <h2>{{ stats.total }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Pending Review</h5>
+                    <h2>{{ stats.pending }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Approved</h5>
+                    <h2>{{ stats.approved }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Disbursed</h5>
+                    <h2>{{ stats.disbursed }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="form-inline">
+                <div class="form-group mr-3">
+                    <label for="status" class="mr-2">Status:</label>
+                    <select name="status" id="status" class="form-control">
+                        <option value="">All</option>
+                        <option value="draft" {% if status_filter == 'draft' %}selected{% endif %}>Draft</option>
+                        <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+                        <option value="approved" {% if status_filter == 'approved' %}selected{% endif %}>Approved</option>
+                        <option value="rejected" {% if status_filter == 'rejected' %}selected{% endif %}>Rejected</option>
+                        <option value="disbursed" {% if status_filter == 'disbursed' %}selected{% endif %}>Disbursed</option>
+                    </select>
+                </div>
+                <div class="form-group mr-3">
+                    <input type="text" name="search" class="form-control" placeholder="Search..." value="{{ search_query|default:'' }}">
+                </div>
+                <button type="submit" class="btn btn-primary">Filter</button>
+                <a href="{% url 'conference_loan:loan_list' %}" class="btn btn-secondary ml-2">Clear</a>
+            </form>
+        </div>
+    </div>
+
+    <!-- Loans Table -->
+    <div class="card">
+        <div class="card-body">
+            {% if loans %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Reference</th>
+                            <th>Conference</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>KYC</th>
+                            <th>Submitted</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for loan in loans %}
+                        <tr>
+                            <td>
+                                <strong>{{ loan.reference_number }}</strong>
+                            </td>
+                            <td>{{ loan.conference.title|truncatewords:5 }}</td>
+                            <td>{{ loan.currency }} {{ loan.amount|floatformat:2 }}</td>
+                            <td>
+                                {% if loan.status == 'draft' %}
+                                    <span class="badge badge-secondary">Draft</span>
+                                {% elif loan.status == 'pending' %}
+                                    <span class="badge badge-warning">Pending</span>
+                                {% elif loan.status == 'approved' %}
+                                    <span class="badge badge-success">Approved</span>
+                                {% elif loan.status == 'rejected' %}
+                                    <span class="badge badge-danger">Rejected</span>
+                                {% elif loan.status == 'disbursed' %}
+                                    <span class="badge badge-info">Disbursed</span>
+                                {% else %}
+                                    <span class="badge badge-secondary">{{ loan.get_status_display }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if loan.kyc_verified %}
+                                    <span class="text-success"><i class="fas fa-check-circle"></i> Verified</span>
+                                {% else %}
+                                    <span class="text-muted"><i class="fas fa-times-circle"></i> Not Verified</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if loan.submitted_at %}
+                                    {{ loan.submitted_at|date:"M d, Y" }}
+                                {% else %}
+                                    <span class="text-muted">Not submitted</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'conference_loan:loan_detail' loan.pk %}" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-eye"></i> View
+                                </a>
+                                {% if loan.status == 'draft' and loan.applicant == request.user %}
+                                <a href="{% url 'conference_loan:loan_edit' loan.pk %}" class="btn btn-sm btn-secondary">
+                                    <i class="fas fa-edit"></i> Edit
+                                </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                <p class="text-muted">No loan applications found.</p>
+                <a href="{% url 'conference_loan:loan_create' %}" class="btn btn-primary">
+                    Apply for Your First Loan
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

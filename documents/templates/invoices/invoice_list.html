@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+      <h4 class="mb-0">
+        <i class="fas {% if direction == 'out' %}fa-file-invoice-dollar text-primary{% else %}fa-file-import text-warning{% endif %} me-2"></i>
+        {{ page_title }}
+      </h4>
+    </div>
+    <div class="d-flex gap-2">
+      {% if direction == 'out' %}
+      <a href="{% url 'create_send_invoice' %}" class="btn btn-primary btn-sm">
+        <i class="fas fa-plus me-1"></i>New Invoice
+      </a>
+      <a href="{% url 'received_invoices_list' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="fas fa-file-import me-1"></i>Received
+      </a>
+      {% else %}
+      <a href="{% url 'create_receive_invoice' %}" class="btn btn-warning btn-sm">
+        <i class="fas fa-plus me-1"></i>Record Received
+      </a>
+      <a href="{% url 'sent_invoices_list' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="fas fa-file-invoice-dollar me-1"></i>Sent
+      </a>
+      {% endif %}
+    </div>
+  </div>
+
+  {# ── Summary cards (sent only) ── #}
+  {% if direction == 'out' and summary %}
+  <div class="row g-3 mb-3">
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm text-center">
+        <div class="card-body py-3">
+          <div class="fs-4 fw-bold text-primary">{{ summary.total_sent|floatformat:2|intcomma }}</div>
+          <div class="small text-muted">Total Invoiced</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm text-center">
+        <div class="card-body py-3">
+          <div class="fs-4 fw-bold text-success">{{ summary.total_paid|default:0|floatformat:2|intcomma }}</div>
+          <div class="small text-muted">Paid</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm text-center">
+        <div class="card-body py-3">
+          <div class="fs-4 fw-bold text-danger">{{ summary.total_overdue|default:0|floatformat:2|intcomma }}</div>
+          <div class="small text-muted">Overdue</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  {# ── Filters ── #}
+  <div class="card border-0 shadow-sm mb-3">
+    <div class="card-body py-2">
+      <form method="get" class="d-flex gap-2 flex-wrap align-items-end">
+        <div>
+          <label class="form-label small fw-semibold mb-1">Status</label>
+          <select name="status" class="form-select form-select-sm" style="min-width:140px;">
+            <option value="">All statuses</option>
+            {% for val, label in status_choices %}
+            <option value="{{ val }}" {% if filters.status == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="form-label small fw-semibold mb-1">Search</label>
+          <input type="search" name="q" value="{{ filters.q }}"
+                 class="form-control form-control-sm" placeholder="Invoice #, name…"
+                 style="min-width:200px;">
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+        <a href="." class="btn btn-outline-secondary btn-sm">Clear</a>
+      </form>
+    </div>
+  </div>
+
+  {# ── Table ── #}
+  <div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Invoice #</th>
+              <th>{% if direction == 'out' %}To{% else %}From{% endif %}</th>
+              <th>Issue Date</th>
+              <th>Due Date</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for inv in invoices %}
+            <tr {% if inv.is_overdue %}class="table-danger"{% endif %}>
+              <td class="fw-semibold">
+                <a href="{% url 'invoice_detail' inv.pk %}">{{ inv.invoice_number }}</a>
+              </td>
+              <td class="small">{{ inv.party_display }}</td>
+              <td class="small">{{ inv.issue_date|date:"d M Y" }}</td>
+              <td class="small {% if inv.is_overdue %}text-danger fw-semibold{% endif %}">
+                {{ inv.due_date|date:"d M Y" }}
+                {% if inv.is_overdue %}<i class="fas fa-exclamation-triangle ms-1"></i>{% endif %}
+              </td>
+              <td class="small fw-semibold">{{ inv.currency }} {{ inv.total_amount|floatformat:2|intcomma }}</td>
+              <td>
+                {% if inv.status == 'paid' %}
+                  <span class="badge bg-success">Paid</span>
+                {% elif inv.status == 'overdue' or inv.is_overdue %}
+                  <span class="badge bg-danger">Overdue</span>
+                {% elif inv.status == 'draft' %}
+                  <span class="badge bg-secondary">Draft</span>
+                {% elif inv.status == 'sent' %}
+                  <span class="badge bg-primary">Sent</span>
+                {% elif inv.status == 'viewed' %}
+                  <span class="badge bg-info">Viewed</span>
+                {% elif inv.status == 'partial' %}
+                  <span class="badge bg-warning text-dark">Partial</span>
+                {% else %}
+                  <span class="badge bg-light text-dark border">{{ inv.get_status_display }}</span>
+                {% endif %}
+              </td>
+              <td>
+                <div class="d-flex gap-1">
+                  <a href="{% url 'invoice_detail' inv.pk %}" class="btn btn-xs btn-outline-secondary py-0 px-2">
+                    <i class="fas fa-eye"></i>
+                  </a>
+                  {% if inv.status not in 'paid cancelled' and direction == 'out' %}
+                  <a href="{% url 'mark_invoice_paid' inv.pk %}" class="btn btn-xs btn-outline-success py-0 px-2">
+                    <i class="fas fa-check"></i>
+                  </a>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="7" class="text-center text-muted py-5">
+                <i class="fas fa-file-invoice fa-2x d-block mb-2 opacity-25"></i>
+                No invoices found.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% if invoices.has_other_pages %}
+    <div class="card-footer bg-transparent d-flex justify-content-center py-2">
+      {% include 'partials/pagination.html' with page_obj=invoices %}
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

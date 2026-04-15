@@ -1,0 +1,763 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Pricing Plans - TeamManager{% endblock %}
+
+{% block meta_description %}Choose the perfect plan for your team. From Basic to Platinum, we have flexible pricing options to suit businesses of all sizes.{% endblock %}
+
+{% block content %}
+<div class="pricing-page">
+    <div class="pricing-header text-center mb-5" style="margin-bottom: 4rem !important;">
+        <h1 class="display-4 fw-bold mb-3">Choose Your Perfect Plan</h1>
+        <p class="lead text-muted">Flexible pricing options designed to grow with your business</p>
+    </div>
+
+    <!-- Sector Tabs -->
+    <div class="container mb-5">
+        <div class="sector-tabs-wrapper">
+            <button class="sector-tab active" data-sector="private">
+                <i class="fas fa-building me-2"></i>Private Sector / Organization
+            </button>
+            <button class="sector-tab" data-sector="government">
+                <i class="fas fa-landmark me-2"></i>Government / Public Sector
+            </button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="row g-4 justify-content-center">
+            <!-- Basic Plan -->
+            <div class="col-lg-3 col-md-6 plan-card private-plan">
+                <div class="pricing-card h-100">
+                    <div class="pricing-card-header">
+                        <div class="plan-icon">
+                            <i class="fas fa-rocket"></i>
+                        </div>
+                        <h3 class="plan-name">Basic</h3>
+                        <div class="plan-price">
+                            <span class="currency">₦</span>
+                            <span class="amount">10,000</span>
+                            <span class="period">/staff</span>
+                        </div>
+                        <p class="plan-description">Perfect for small teams getting started</p>
+                    </div>
+                    <div class="pricing-card-body">
+                        <ul class="features-list">
+                            <li><i class="fas fa-check"></i> <strong>HR Dashboard:</strong> Basic Metrics</li>
+                            <li><i class="fas fa-check"></i> <strong>Department Performance:</strong> Basic Tracking</li>
+                            <li><i class="fas fa-check"></i> <strong>Job Posting:</strong> 3</li>
+                            <li><i class="fas fa-check"></i> <strong>Applicant Management:</strong> 3</li>
+                            <li><i class="fas fa-check"></i> <strong>Payroll Management:</strong> 1</li>
+                            <li><i class="fas fa-check"></i> <strong>Leave Management:</strong> 3</li>
+                            <li><i class="fas fa-check"></i> <strong>Contacts & Email Integration</strong></li>
+                            <li><i class="fas fa-check"></i> <strong>Internal Communication:</strong> 3</li>
+                            <li><i class="fas fa-check"></i> <strong>Document Editor</strong></li>
+                            <li><i class="fas fa-check"></i> <strong>Folders:</strong> 5</li>
+                            <li><i class="fas fa-check"></i> <strong>Storage:</strong> 10GB</li>
+                            <li><i class="fas fa-check"></i> <strong>Version Control</strong></li>
+                            <li><i class="fas fa-check"></i> <strong>Task Management:</strong> 5</li>
+                            <li><i class="fas fa-check"></i> <strong>Performance Tracking:</strong> Basic</li>
+                            <li><i class="fas fa-check"></i> <strong>Clock-in/Clock-out & Visitor Management</strong></li>
+                            <li><i class="fas fa-check"></i> <strong>Attendance Reports:</strong> Basic</li>
+                            <li><i class="fas fa-check"></i> <strong>Smart Calendar:</strong> 10</li>
+                            <li><i class="fas fa-check"></i> <strong>Conference Creation:</strong> 1/Month</li>
+                            <li><i class="fas fa-check"></i> <strong>Ticket Management:</strong> Basic</li>
+                            <li><i class="fas fa-check"></i> <strong>Ticket Creation:</strong> 10</li>
+                            <li><i class="fas fa-check"></i> <strong>Create Invoice:</strong> 5</li>
+                            <li><i class="fas fa-check"></i> <strong>Financial Reports:</strong> Basic</li>
+                            <li><i class="fas fa-check"></i> <strong>CRM Contact Management:</strong> 15</li>
+                            <li><i class="fas fa-check"></i> <strong>Sales Pipeline & Reporting</strong></li>
+                        </ul>
+                    </div>
+                    <div class="pricing-card-footer">
+                        <a href="{% url 'create_subscription' %}" class="btn btn-pricing btn-outline get-started-btn" data-plan="basic">
+                            <i class="fas fa-rocket me-2"></i><span class="btn-text">Get Started</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Standard Plan -->
+            <div class="col-lg-3 col-md-6 plan-card private-plan">
+                <div class="pricing-card h-100 featured">
+                    <div class="popular-badge">Most Popular</div>
+                    <div class="pricing-card-header">
+                        <div class="plan-icon">
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <h3 class="plan-name">Standard</h3>
+                        <div class="plan-price">
+                            <span class="currency">₦</span>
+                            <span class="amount">22,000</span>
+                            <span class="period">/staff</span>
+                        </div>
+                        <p class="plan-description">Ideal for growing businesses</p>
+                    </div>
+                    <div class="pricing-card-body">
+                        <ul class="features-list">
+                            <li><i class="fas fa-check"></i> <strong>HR Dashboard:</strong> Advanced Analytics</li>
+                            <li><i class="fas fa-check"></i> <strong>Department Performance:</strong> Basic Tracking</li>
+                            <li><i class="fas fa-check"></i> <strong>Job Posting:</strong> 10</li>
+                            <li><i class="fas fa-check"></i> <strong>Applicant Management:</strong> 10</li>
+                            <li><i class="fas fa-check"></i> <strong>Payroll Management:</strong> 3</li>
+                            <li><i class="fas fa-check"></i> <strong>Leave Management:</strong> 5</li>
+                            <li><i class="fas fa-check"></i> <strong>Contacts & Email Integration</strong></li>
+                            <li><i class="fas fa-check"></i> <strong>Internal Communication:</strong> 5</li>
+                            <li><i class="fas fa-check"></i> <strong>Document Editor</strong></li>
+                            <li><i class="fas fa-check"></i> <strong>Folders:</strong> 10</li>
+                            <li><i class="fas fa-check"></i> <strong>Storage:</strong> 50GB</li>
+                            <li><i class="fas fa-check"></i> <strong>Version Control</strong></li>
+                            <li><i class="fas fa-check"></i> <strong>Task Management:</strong> 10</li>
+                            <li><i class="fas fa-check"></i> <strong>Performance Tracking:</strong> Standard</li>
+                            <li><i class="fas fa-check"></i> <strong>Clock-in/Clock-out & Visitor Management</strong></li>
+                            <li><i class="fas fa-check"></i> <strong>Attendance Reports:</strong> Standard</li>
+                            <li><i class="fas fa-check"></i> <strong>Smart Calendar:</strong> 20</li>
+                            <li><i class="fas fa-check"></i> <strong>Conference Creation:</strong> 2/Month</li>
+                            <li><i class="fas fa-check"></i> <strong>Ticket Management:</strong> Basic</li>
+                            <li><i class="fas fa-check"></i> <strong>Ticket Creation:</strong> 20</li>
+                            <li><i class="fas fa-check"></i> <strong>Create Invoice:</strong> 10</li>
+                            <li><i class="fas fa-check"></i> <strong>Financial Reports:</strong> Basic</li>
+                            <li><i class="fas fa-check"></i> <strong>CRM Contact Management:</strong> 30</li>
+                            <li><i class="fas fa-check"></i> <strong>Sales Pipeline & Basic Reporting</strong></li>
+                        </ul>
+                    </div>
+                    <div class="pricing-card-footer">
+                        <a href="{% url 'create_subscription' %}" class="btn btn-pricing btn-primary get-started-btn" data-plan="standard">
+                            <i class="fas fa-rocket me-2"></i><span class="btn-text">Get Started</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Premium Plan -->
+            <div class="col-lg-3 col-md-6 plan-card private-plan">
+                <div class="pricing-card h-100">
+                    <div class="pricing-card-header">
+                        <div class="plan-icon">
+                            <i class="fas fa-crown"></i>
+                        </div>
+                        <h3 class="plan-name">Premium</h3>
+                        <div class="plan-price">
+                            <span class="currency">₦</span>
+                            <span class="amount">45,000</span>
+                            <span class="period">/staff</span>
+                        </div>
+                        <p class="plan-description">For established organizations</p>
+                    </div>
+                    <div class="pricing-card-body">
+                        <ul class="features-list">
+                            <li><i class="fas fa-check"></i> <strong>HR Dashboard:</strong> Advanced + Reports</li>
+                            <li><i class="fas fa-check"></i> <strong>Department Performance:</strong> Advanced Analytics</li>
+                            <li><i class="fas fa-check"></i> <strong>Job Posting:</strong> 30</li>
+                            <li><i class="fas fa-check"></i> <strong>Applicant Management:</strong> 30</li>
+                            <li><i class="fas fa-check"></i> <strong>Payroll Management:</strong> 7</li>
+                            <li><i class="fas fa-check"></i> <strong>Leave Management:</strong> 15</li>
+                            <li><i class="fas fa-check"></i> <strong>Contacts & Email Integration</strong></li>
+                            <li><i class="fas fa-check"></i> <strong>Internal Communication:</strong> 15</li>
+                            <li><i class="fas fa-check"></i> <strong>Document Editor:</strong> Advanced</li>
+                            <li><i class="fas fa-check"></i> <strong>Folders:</strong> 20</li>
+                            <li><i class="fas fa-check"></i> <strong>Storage:</strong> 200GB</li>
+                            <li><i class="fas fa-check"></i> <strong>Version Control</strong></li>
+                            <li><i class="fas fa-check"></i> <strong>Task Management:</strong> 20</li>
+                            <li><i class="fas fa-check"></i> <strong>Performance Tracking:</strong> Advanced</li>
+                            <li><i class="fas fa-check"></i> <strong>Clock-in/Clock-out & Visitor Management</strong></li>
+                            <li><i class="fas fa-check"></i> <strong>Attendance Reports:</strong> Advanced</li>
+                            <li><i class="fas fa-check"></i> <strong>Smart Calendar:</strong> 30</li>
+                            <li><i class="fas fa-check"></i> <strong>Conference Creation:</strong> 10/Month</li>
+                            <li><i class="fas fa-check"></i> <strong>Ticket Management:</strong> Advanced</li>
+                            <li><i class="fas fa-check"></i> <strong>Ticket Creation:</strong> 30</li>
+                            <li><i class="fas fa-check"></i> <strong>Create Invoice:</strong> 15</li>
+                            <li><i class="fas fa-check"></i> <strong>Financial Reports:</strong> Standard</li>
+                            <li><i class="fas fa-check"></i> <strong>CRM Contact Management:</strong> 45</li>
+                            <li><i class="fas fa-check"></i> <strong>Sales Pipeline & Advanced Reporting</strong></li>
+                        </ul>
+                    </div>
+                    <div class="pricing-card-footer">
+                        <a href="{% url 'create_subscription' %}" class="btn btn-pricing btn-outline get-started-btn" data-plan="premium">
+                            <i class="fas fa-rocket me-2"></i><span class="btn-text">Get Started</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Platinum/Enterprise Plan -->
+            <div class="col-lg-3 col-md-6 plan-card private-plan government-plan">
+                <div class="pricing-card h-100 enterprise">
+                    <div class="pricing-card-header">
+                        <div class="plan-icon">
+                            <i class="fas fa-gem"></i>
+                        </div>
+                        <h3 class="plan-name" data-private-name="Platinum" data-govt-name="Enterprise">Platinum</h3>
+                        <div class="plan-price">
+                            <span class="currency">₦</span>
+                            <span class="amount">150,000</span>
+                            <span class="period">/staff</span>
+                        </div>
+                        <p class="plan-description" data-private-desc="Enterprise-grade solution" data-govt-desc="Custom solution for government agencies">Enterprise-grade solution</p>
+                    </div>
+                    <div class="pricing-card-body">
+                        <ul class="features-list">
+                            <li><i class="fas fa-check"></i> <strong>HR Dashboard:</strong> Custom Dashboards</li>
+                            <li><i class="fas fa-check"></i> <strong>Department Performance:</strong> Predictive Insights</li>
+                            <li><i class="fas fa-check"></i> <strong>Job Posting:</strong> Unlimited</li>
+                            <li><i class="fas fa-check"></i> <strong>Applicant Management:</strong> Unlimited</li>
+                            <li><i class="fas fa-check"></i> <strong>Payroll Management:</strong> Unlimited</li>
+                            <li><i class="fas fa-check"></i> <strong>Leave Management:</strong> Unlimited</li>
+                            <li><i class="fas fa-check"></i> <strong>Contacts & Email Integration</strong></li>
+                            <li><i class="fas fa-check"></i> <strong>Internal Communication:</strong> Unlimited</li>
+                            <li><i class="fas fa-check"></i> <strong>Document Editor:</strong> Advanced</li>
+                            <li><i class="fas fa-check"></i> <strong>Folders:</strong> Unlimited</li>
+                            <li><i class="fas fa-check"></i> <strong>Storage:</strong> Unlimited</li>
+                            <li><i class="fas fa-check"></i> <strong>Version Control</strong></li>
+                            <li><i class="fas fa-check"></i> <strong>Task Management:</strong> Unlimited</li>
+                            <li><i class="fas fa-check"></i> <strong>Performance Tracking:</strong> Advanced + Insights</li>
+                            <li><i class="fas fa-check"></i> <strong>Clock-in/Clock-out & Visitor Management</strong></li>
+                            <li><i class="fas fa-check"></i> <strong>Attendance Reports:</strong> Advanced</li>
+                            <li><i class="fas fa-check"></i> <strong>Smart Calendar:</strong> Unlimited</li>
+                            <li><i class="fas fa-check"></i> <strong>Conference Creation:</strong> Unlimited</li>
+                            <li><i class="fas fa-check"></i> <strong>Ticket Management:</strong> Advanced</li>
+                            <li><i class="fas fa-check"></i> <strong>Ticket Creation:</strong> Unlimited</li>
+                            <li><i class="fas fa-check"></i> <strong>Create Invoice:</strong> Unlimited</li>
+                            <li><i class="fas fa-check"></i> <strong>Financial Reports:</strong> Advanced</li>
+                            <li><i class="fas fa-check"></i> <strong>CRM Contact Management:</strong> Unlimited</li>
+                            <li><i class="fas fa-check"></i> <strong>Sales Pipeline & Advanced Reporting</strong></li>
+                        </ul>
+                    </div>
+                    <div class="pricing-card-footer">
+                        <a href="{% url 'contact_support' %}" class="btn btn-pricing btn-outline get-started-btn" data-plan="platinum">
+                            <i class="fas fa-phone me-2"></i><span class="btn-text">Contact Sales</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .pricing-page {
+        padding: 60px 20px;
+        background: linear-gradient(135deg, #f5f7fa 0%, #e2e7ec 100%);
+        min-height: calc(100vh - 70px);
+    }
+
+    body.dark-mode .pricing-page {
+        background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+    }
+
+    /* Sector Tabs Styling */
+    .sector-tabs-wrapper {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-bottom: 50px;
+        flex-wrap: wrap;
+        padding-bottom: 20px;
+    }
+
+    .sector-tab {
+        padding: 15px 30px;
+        background: #ffffff;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        color: #4a5568;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    body.dark-mode .sector-tab {
+        background: #2d3748;
+        border-color: #4a5568;
+        color: #cbd5e0;
+    }
+
+    .sector-tab:hover {
+        border-color: #319795;
+        color: #319795;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(49, 151, 149, 0.2);
+    }
+
+    .sector-tab.active {
+        background: linear-gradient(135deg, #319795, #2c7a7b);
+        border-color: #319795;
+        color: white;
+        box-shadow: 0 4px 12px rgba(49, 151, 149, 0.3);
+    }
+
+    body.dark-mode .sector-tab.active {
+        background: linear-gradient(135deg, #319795, #2c7a7b);
+    }
+
+    .sector-tab i {
+        font-size: 1.1rem;
+    }
+
+    /* Plan Card Visibility */
+    .plan-card {
+        display: none;
+    }
+
+    .plan-card.show {
+        display: block;
+    }
+
+    .pricing-header h1 {
+        color: #2d3748;
+        margin-bottom: 1rem;
+    }
+
+    body.dark-mode .pricing-header h1 {
+        color: #e2e8f0;
+    }
+
+    .pricing-card {
+        background: #ffffff;
+        border-radius: 20px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        overflow: hidden;
+        position: relative;
+    }
+
+    body.dark-mode .pricing-card {
+        background: #2d3748;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .pricing-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 20px 60px rgba(49, 151, 149, 0.2);
+    }
+
+    .pricing-card.featured {
+        border: 3px solid #319795;
+        transform: scale(1.05);
+        margin-top: 0;
+    }
+
+    .pricing-card.featured:hover {
+        transform: scale(1.08) translateY(-10px);
+    }
+
+    .popular-badge {
+        position: absolute;
+        top: 20px;
+        right: -35px;
+        background: linear-gradient(135deg, #319795, #2c7a7b);
+        color: white;
+        padding: 5px 40px;
+        transform: rotate(45deg);
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .pricing-card-header {
+        padding: 40px 30px 30px;
+        text-align: center;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    body.dark-mode .pricing-card-header {
+        border-bottom-color: #4a5568;
+    }
+
+    .plan-icon {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 20px;
+        background: linear-gradient(135deg, #319795, #2c7a7b);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        color: white;
+    }
+
+    .plan-name {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #2d3748;
+        margin-bottom: 15px;
+    }
+
+    body.dark-mode .plan-name {
+        color: #e2e8f0;
+    }
+
+    .plan-price {
+        margin: 20px 0;
+    }
+
+    .plan-price .currency {
+        font-size: 1.5rem;
+        color: #319795;
+        font-weight: 600;
+    }
+
+    .plan-price .amount {
+        font-size: 3rem;
+        font-weight: 700;
+        color: #2d3748;
+    }
+
+    body.dark-mode .plan-price .amount {
+        color: #e2e8f0;
+    }
+
+    .plan-price .period {
+        font-size: 1rem;
+        color: #718096;
+    }
+
+    .plan-description {
+        color: #718096;
+        font-size: 0.95rem;
+    }
+
+    .pricing-card-body {
+        padding: 30px;
+    }
+
+    .features-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .features-list li {
+        padding: 12px 0;
+        color: #4a5568;
+        font-size: 0.95rem;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    body.dark-mode .features-list li {
+        color: #cbd5e0;
+    }
+
+    .features-list li i {
+        color: #319795;
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+
+    .pricing-card-footer {
+        padding: 0 30px 40px;
+    }
+
+    .btn-pricing {
+        width: 100%;
+        padding: 14px 30px;
+        font-size: 1rem;
+        font-weight: 600;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .btn-pricing.btn-primary {
+        background: linear-gradient(135deg, #319795, #2c7a7b);
+        border: none;
+        color: white;
+    }
+
+    .btn-pricing.btn-primary:hover {
+        background: linear-gradient(135deg, #2c7a7b, #234e52);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(49, 151, 149, 0.3);
+    }
+
+    .btn-pricing.btn-outline {
+        background: transparent;
+        border: 2px solid #319795;
+        color: #319795;
+    }
+
+    .btn-pricing.btn-outline:hover {
+        background: #319795;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(49, 151, 149, 0.3);
+    }
+
+    @media (max-width: 991px) {
+        .pricing-card.featured {
+            transform: scale(1);
+            margin-top: 0;
+        }
+
+        .pricing-card.featured:hover {
+            transform: translateY(-10px);
+        }
+    }
+
+    @media (max-width: 767px) {
+        .pricing-header h1 {
+            font-size: 2rem;
+        }
+
+        .plan-price .amount {
+            font-size: 2.5rem;
+        }
+
+        .pricing-card-header {
+            padding: 30px 20px 20px;
+        }
+
+        .pricing-card-body {
+            padding: 20px;
+        }
+
+        .pricing-card-footer {
+            padding: 0 20px 30px;
+        }
+    }
+
+    /* Custom Alert Modal */
+    .custom-alert-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 9999;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .custom-alert-overlay.show {
+        display: flex;
+    }
+
+    .custom-alert-box {
+        background: white;
+        border-radius: 12px;
+        padding: 30px;
+        max-width: 500px;
+        width: 90%;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        animation: slideIn 0.3s ease;
+    }
+
+    body.dark-mode .custom-alert-box {
+        background: #2d3748;
+        color: #e2e8f0;
+    }
+
+    @keyframes slideIn {
+        from {
+            transform: translateY(-50px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    .custom-alert-header {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+
+    .custom-alert-icon {
+        width: 50px;
+        height: 50px;
+        background: linear-gradient(135deg, #319795, #2c7a7b);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+    }
+
+    .custom-alert-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #2d3748;
+        margin: 0;
+    }
+
+    body.dark-mode .custom-alert-title {
+        color: #e2e8f0;
+    }
+
+    .custom-alert-message {
+        color: #4a5568;
+        font-size: 1rem;
+        line-height: 1.6;
+        margin-bottom: 25px;
+    }
+
+    body.dark-mode .custom-alert-message {
+        color: #cbd5e0;
+    }
+
+    .custom-alert-footer {
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .custom-alert-btn {
+        padding: 12px 30px;
+        background: linear-gradient(135deg, #319795, #2c7a7b);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .custom-alert-btn:hover {
+        background: linear-gradient(135deg, #2c7a7b, #234e52);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(49, 151, 149, 0.3);
+    }
+</style>
+
+<!-- Custom Alert Modal -->
+<div class="custom-alert-overlay" id="customAlert">
+    <div class="custom-alert-box">
+        <div class="custom-alert-header">
+            <div class="custom-alert-icon">
+                <i class="fas fa-phone"></i>
+            </div>
+            <h3 class="custom-alert-title">Contact Sales</h3>
+        </div>
+        <div class="custom-alert-message">
+            Please contact our sales team for government/public sector pricing and setup.
+            <br><br>
+            <strong>Email:</strong> sales@teammanager.com<br>
+            <strong>Phone:</strong> +234 XXX XXX XXXX
+        </div>
+        <div class="custom-alert-footer">
+            <button class="custom-alert-btn" onclick="closeCustomAlert()">Got it</button>
+        </div>
+    </div>
+</div>
+
+<script>
+function showCustomAlert() {
+    document.getElementById('customAlert').classList.add('show');
+}
+
+function closeCustomAlert() {
+    document.getElementById('customAlert').classList.remove('show');
+}
+
+// Close on overlay click
+document.getElementById('customAlert').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeCustomAlert();
+    }
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    const tabs = document.querySelectorAll('.sector-tab');
+    const planCards = document.querySelectorAll('.plan-card');
+    
+    // Show private sector plans by default
+    showPlansForSector('private');
+    
+    tabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            // Remove active class from all tabs
+            tabs.forEach(t => t.classList.remove('active'));
+            
+            // Add active class to clicked tab
+            this.classList.add('active');
+            
+            // Get sector
+            const sector = this.dataset.sector;
+            
+            // Show plans for selected sector
+            showPlansForSector(sector);
+        });
+    });
+    
+    function showPlansForSector(sector) {
+        planCards.forEach(card => {
+            card.classList.remove('show');
+            
+            if (sector === 'private') {
+                // Show all plans for private sector
+                if (card.classList.contains('private-plan')) {
+                    card.classList.add('show');
+                }
+                
+                // Update plan name and description for Platinum
+                const planName = card.querySelector('.plan-name');
+                const planDesc = card.querySelector('.plan-description');
+                if (planName && planName.dataset.privateName) {
+                    planName.textContent = planName.dataset.privateName;
+                }
+                if (planDesc && planDesc.dataset.privateDesc) {
+                    planDesc.textContent = planDesc.dataset.privateDesc;
+                }
+                
+                // Update buttons for private sector
+                const btn = card.querySelector('.get-started-btn');
+                if (btn) {
+                    const planType = btn.dataset.plan;
+                    const btnText = btn.querySelector('.btn-text');
+                    const btnIcon = btn.querySelector('i');
+                    
+                    // For all plans in private sector, use normal Get Started
+                    btn.href = "{% url 'create_subscription' %}";
+                    btn.onclick = null;
+                    if (btnIcon) btnIcon.className = 'fas fa-rocket me-2';
+                    if (btnText) btnText.textContent = 'Get Started';
+                }
+            } else if (sector === 'government') {
+                // Show only Platinum (renamed to Enterprise) for government sector
+                if (card.classList.contains('government-plan')) {
+                    card.classList.add('show');
+                    
+                    // Update plan name and description for government
+                    const planName = card.querySelector('.plan-name');
+                    const planDesc = card.querySelector('.plan-description');
+                    if (planName && planName.dataset.govtName) {
+                        planName.textContent = planName.dataset.govtName;
+                    }
+                    if (planDesc && planDesc.dataset.govtDesc) {
+                        planDesc.textContent = planDesc.dataset.govtDesc;
+                    }
+                    
+                    // Update button to Contact Sales for government sector
+                    const btn = card.querySelector('.get-started-btn');
+                    if (btn) {
+                        const btnText = btn.querySelector('.btn-text');
+                        const btnIcon = btn.querySelector('i');
+                        
+                        btn.href = '#';
+                        btn.onclick = function(e) {
+                            e.preventDefault();
+                            showCustomAlert();
+                            return false;
+                        };
+                        if (btnIcon) btnIcon.className = 'fas fa-phone me-2';
+                        if (btnText) btnText.textContent = 'Contact Sales';
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

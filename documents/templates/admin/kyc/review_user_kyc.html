@@ -1,0 +1,250 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load field_approval_tags %}
+
+{% block title %}Review User KYC{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/field_approval.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-user-check"></i> Review User KYC</h4>
+                </div>
+                <div class="card-body">
+                    <h5>User Information</h5>
+                    <table class="table table-bordered">
+                        <tr>
+                            <th width="30%">Username</th>
+                            <td>{{ profile.user.username }}</td>
+                        </tr>
+                        <tr>
+                            <th>Email</th>
+                            <td>{{ profile.user.email }}</td>
+                        </tr>
+                        <tr>
+                            <th>Full Name</th>
+                            <td>{{ profile.get_full_name }}</td>
+                        </tr>
+                        <tr>
+                            <th>Phone</th>
+                            <td>{{ profile.phone_number|default:"N/A" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Date of Birth</th>
+                            <td>{{ profile.date_of_birth|date:"F d, Y"|default:"N/A" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Address</th>
+                            <td>{{ profile.home_address|default:"N/A" }}</td>
+                        </tr>
+                    </table>
+                    
+                    <h5 class="mt-4">KYC Information</h5>
+                    
+                    {% get_content_type_id kyc as content_type_id %}
+                    
+                    <!-- NIN Field -->
+                    {% render_field_approval instance=kyc field_name='nin' field_label='National Identification Number (NIN)' field_value=kyc.nin can_review=can_review %}
+                    
+                    <!-- BVN Field -->
+                    {% render_field_approval instance=kyc field_name='bvn' field_label='Bank Verification Number (BVN)' field_value=kyc.bvn can_review=can_review %}
+                    
+                    <!-- ID Type Field -->
+                    {% render_field_approval instance=kyc field_name='id_type' field_label='ID Type' field_value=kyc.get_id_type_display can_review=can_review %}
+                    
+                    <!-- ID Number Field -->
+                    {% render_field_approval instance=kyc field_name='id_number' field_label='ID Number' field_value=kyc.id_number can_review=can_review %}
+                    
+                    <div class="mt-3">
+                        <strong>Status:</strong>
+                        {% if kyc.kyc_status == 'submitted' %}
+                            <span class="badge bg-warning">Submitted</span>
+                        {% elif kyc.kyc_status == 'verified' %}
+                            <span class="badge bg-success">Verified</span>
+                        {% elif kyc.kyc_status == 'rejected' %}
+                            <span class="badge bg-danger">Rejected</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Pending</span>
+                        {% endif %}
+                    </div>
+                    <div class="mt-2">
+                        <strong>Submitted At:</strong> {{ kyc.created_at|date:"F d, Y H:i" }}
+                    </div>
+                    
+                    <h5 class="mt-4">Next of Kin Information</h5>
+                    
+                    <!-- Next of Kin Name -->
+                    {% render_field_approval instance=kyc field_name='next_of_kin_name' field_label='Next of Kin Full Name' field_value=kyc.next_of_kin_name can_review=can_review %}
+                    
+                    <!-- Next of Kin Relationship -->
+                    {% render_field_approval instance=kyc field_name='next_of_kin_relationship' field_label='Relationship' field_value=kyc.next_of_kin_relationship can_review=can_review %}
+                    
+                    <!-- Next of Kin Phone -->
+                    {% render_field_approval instance=kyc field_name='next_of_kin_phone' field_label='Next of Kin Phone' field_value=kyc.next_of_kin_phone can_review=can_review %}
+                    
+                    <!-- Next of Kin Address -->
+                    {% render_field_approval instance=kyc field_name='next_of_kin_address' field_label='Next of Kin Address' field_value=kyc.next_of_kin_address can_review=can_review %}
+                    
+                    <h5 class="mt-4">Uploaded Documents</h5>
+                    
+                    <!-- ID Front File -->
+                    {% render_field_approval instance=kyc field_name='id_front_file' field_label='ID Front Image' field_value=kyc.id_front_file field_type='file' can_review=can_review %}
+                    
+                    <!-- ID Back File -->
+                    {% render_field_approval instance=kyc field_name='id_back_file' field_label='ID Back Image' field_value=kyc.id_back_file field_type='file' can_review=can_review %}
+                    
+                    <!-- Utility Bill File -->
+                    {% render_field_approval instance=kyc field_name='utility_bill_file' field_label='Utility Bill / Proof of Address' field_value=kyc.utility_bill_file field_type='file' can_review=can_review %}
+                    
+                    {% if kyc.kyc_status == 'submitted' %}
+                    <div class="mt-4">
+                        <h5>Review Actions</h5>
+                        
+                        <!-- Approve All Button -->
+                        <div class="alert alert-success d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <i class="fas fa-check-double"></i>
+                                <strong>Quick Action:</strong> Approve all fields at once if everything looks good.
+                            </div>
+                            <button type="button" 
+                                    class="btn btn-success"
+                                    onclick="approveAllFields({{ content_type_id }}, {{ kyc.id }})">
+                                <i class="fas fa-check-all"></i> Approve All Fields
+                            </button>
+                        </div>
+                        
+                        <!-- Auto-Verify with YouVerify API -->
+                        {% if kyc.nin or kyc.bvn %}
+                        <div class="alert alert-info mb-3">
+                            <i class="fas fa-robot"></i> <strong>Auto-Verify Available:</strong> 
+                            This KYC can be automatically verified using YouVerify API.
+                            <button type="button" class="btn btn-sm btn-info ms-2" data-bs-toggle="modal" data-bs-target="#autoVerifyModal">
+                                <i class="fas fa-magic"></i> Auto-Verify Now
+                            </button>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'admin_kyc_dashboard' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Back
+                            </a>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="mt-4">
+                        <a href="{% url 'admin_kyc_dashboard' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Dashboard
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-clipboard-check"></i> Approval Summary</h5>
+                </div>
+                <div class="card-body">
+                    {% with summary=kyc.get_field_approval_summary %}
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Total Fields:</span>
+                            <strong>{{ summary.total }}</strong>
+                        </div>
+                        <div class="progress" style="height: 25px;">
+                            <div class="progress-bar bg-success" 
+                                 style="width: {% if summary.total > 0 %}{% widthratio summary.approved summary.total 100 %}{% else %}0{% endif %}%">
+                                {{ summary.approved }} Approved
+                            </div>
+                            <div class="progress-bar bg-danger" 
+                                 style="width: {% if summary.total > 0 %}{% widthratio summary.rejected summary.total 100 %}{% else %}0{% endif %}%">
+                                {{ summary.rejected }} Rejected
+                            </div>
+                            <div class="progress-bar bg-warning" 
+                                 style="width: {% if summary.total > 0 %}{% widthratio summary.pending summary.total 100 %}{% else %}0{% endif %}%">
+                                {{ summary.pending }} Pending
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-check-circle text-success"></i> Approved</span>
+                            <span class="badge bg-success rounded-pill">{{ summary.approved }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-times-circle text-danger"></i> Rejected</span>
+                            <span class="badge bg-danger rounded-pill">{{ summary.rejected }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-clock text-warning"></i> Pending</span>
+                            <span class="badge bg-warning text-dark rounded-pill">{{ summary.pending }}</span>
+                        </li>
+                    </ul>
+                    {% endwith %}
+                </div>
+            </div>
+            
+            <div class="card mt-3">
+                <div class="card-header bg-secondary text-white">
+                    <h6 class="mb-0"><i class="fas fa-info-circle"></i> Review Guidelines</h6>
+                </div>
+                <div class="card-body small">
+                    <ul class="mb-0 ps-3">
+                        <li>Review each field carefully</li>
+                        <li>Approve valid fields immediately</li>
+                        <li>Provide clear rejection reasons</li>
+                        <li>Use "Approve All" only when all fields are valid</li>
+                        <li>Rejected fields can be resubmitted by the user</li>
+                    </ul>
+                </div>
+            </div>
+            
+            {% if kyc.kyc_verified_at %}
+            <div class="card mt-3">
+                <div class="card-header bg-success text-white">
+                    <h6 class="mb-0">Verification Details</h6>
+                </div>
+                <div class="card-body">
+                    <p><strong>Verified At:</strong><br>{{ kyc.kyc_verified_at|date:"F d, Y H:i" }}</p>
+                    {% if kyc.verified_by %}
+                    <p><strong>Verified By:</strong><br>
+                        {{ kyc.verified_by.get_full_name|default:kyc.verified_by.username }}
+                        <span class="text-muted">({{ kyc.verified_by.email }})</span>
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if kyc.kyc_rejection_reason %}
+            <div class="card mt-3 border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h6 class="mb-0">Rejection Reason</h6>
+                </div>
+                <div class="card-body">
+                    <p>{{ kyc.kyc_rejection_reason }}</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/field_approval.js' %}"></script>
+<script src="{% static 'js/approve_all_helper.js' %}"></script>
+<script>
+// No additional inline functions needed - using approve_all_helper.js
+</script>
+{% endblock %}

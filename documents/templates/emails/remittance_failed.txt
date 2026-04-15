@@ -1,0 +1,55 @@
+REMITTANCE FAILED NOTIFICATION
+==============================
+
+Dear {% if tenant %}{{ tenant.name }}{% else %}Administrator{% endif %},
+
+Unfortunately, we were unable to complete your remittance transfer.
+
+IMPORTANT: Your funds were NOT deducted and remain in your wallet balance.
+
+FAILURE DETAILS:
+────────────────
+Remittance Reference: {{ remittance.reference }}
+Amount Attempted: ₦{{ amount|floatformat:2|intcomma }}
+Status: ❌ Failed
+Failure Reason: {{ reason|default:"Unknown error occurred during processing" }}
+Attempt Date: {{ remittance.updated_at|date:"F d, Y H:i" }}
+
+FUNDS STATUS:
+─────────────
+✅ Your funds are SAFE and have NOT been deducted.
+✅ The amount remains in your wallet balance.
+✅ You can retry the transfer at any time.
+
+COMMON FAILURE REASONS:
+───────────────────────
+1. Incorrect bank account details
+2. Temporary bank processing issues
+3. Network connectivity problems
+4. Bank account restrictions or limitations
+5. Daily transfer limits exceeded
+
+IMMEDIATE ACTIONS REQUIRED:
+───────────────────────────
+1. Verify your bank account details are correct
+2. Ensure your bank account is active and can receive transfers
+3. Check with your bank for any restrictions
+4. Retry the transfer when ready
+
+
+───────────
+Retry Transfer: {{ retry_url }}
+View Wallet: {{ wallet_url }}
+Please review the bank details and retry from the admin dashboard.
+
+
+URGENT ATTENTION:
+─────────────────
+If you believe this failure is incorrect or need immediate help, 
+please contact us right away.
+
+This is an automated notification. Please do not reply to this email.
+
+Best regards,
+{{ TeamManager }} Support Team
+{{ current_date|date:"F d, Y" }}

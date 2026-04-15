@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Category{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5>Delete Category</h5>
+                    <p>Are you sure you want to delete <strong>{{ category.name }}</strong>?</p>
+                    <p class="text-muted">Permission Requests using this category will have their category set to none.</p>
+                    <form method="POST">
+                        {% csrf_token %}
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-danger"><i class="fas fa-trash me-1"></i> Delete</button>
+                            <a href="{% url 'permissions:categories' %}" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

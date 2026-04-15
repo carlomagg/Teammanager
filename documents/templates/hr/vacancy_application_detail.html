@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+
+{% block title %}Application Detail - {{ vacancy_application.first_name }} {{ vacancy_application.last_name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="text-center mb-4" style="color: #2c7a7b;"><i class="fas fa-user me-2"></i>Application Detail</h1>
+    <div class="card shadow-lg" style="border: 2px solid #319795; background-color: #ffffff; border-radius: 12px;">
+        <div class="card-header text-center" style="background-color: #319795; color: white; border-radius: 12px 12px 0 0;">
+            <h4 class="mb-0"><i class="fas fa-briefcase me-2"></i>{{ vacancy_application.vacancy.title }} - {{ vacancy_application.first_name }} {{ vacancy_application.last_name }}</h4>
+        </div>
+        <div class="card-body">
+            <h5 class="mb-3" style="color: #2c7a7b;"><i class="fas fa-info-circle me-2"></i>Personal Information</h5>
+            <dl class="row">
+                <dt class="col-sm-3 text-muted">Full Name</dt>
+                <dd class="col-sm-9">{{ vacancy_application.first_name }}{% if vacancy_application.middle_name %} {{ vacancy_application.middle_name }}{% endif %} {{ vacancy_application.last_name }}</dd>
+                <dt class="col-sm-3 text-muted">Phone</dt>
+                <dd class="col-sm-9">{{ vacancy_application.phone }}</dd>
+                <dt class="col-sm-3 text-muted">Email</dt>
+                <dd class="col-sm-9"><a href="mailto:{{ vacancy_application.email }}" style="color: #319795;">{{ vacancy_application.email }}</a></dd>
+                <dt class="col-sm-3 text-muted">Location</dt>
+                <dd class="col-sm-9">
+                    {% if vacancy_application.city %}{{ vacancy_application.city }}{% if vacancy_application.country %}, {% endif %}{% endif %}
+                    {% if vacancy_application.country %}{{ vacancy_application.country.name }}{% endif %}
+                    {% if not vacancy_application.city and not vacancy_application.country %}N/A{% endif %}
+                </dd>
+            </dl>
+            <hr class="my-4">
+            <h5 class="mb-3" style="color: #2c7a7b;"><i class="fas fa-file-alt me-2"></i>Application Documents</h5>
+            <dl class="row">
+                <dt class="col-sm-3 text-muted">CV</dt>
+                <dd class="col-sm-9">
+                    {% if vacancy_application.cv %}
+                        <a href="{{ vacancy_application.cv.url }}" class="btn btn-sm" style="background-color: #2c7a7b; color: white;" download><i class="fas fa-download me-1"></i>Download CV</a>
+                        <a class="btn btn-sm" 
+                            style="background-color: #319795; color: white;" 
+                            data-media-url="{{ vacancy_application.cv.url }}" 
+                            data-media-type="pdf" 
+                            data-media-name="{{ vacancy_application.cv.name }}"
+                            href="{{ vacancy_application.cv.url }}">
+                            <i class="fas fa-eye me-1"></i>View CV
+                        </a>
+                    {% else %}
+                        No CV uploaded.
+                    {% endif %}
+                </dd>
+                <dt class="col-sm-3 text-muted">Cover Letter</dt>
+                <dd class="col-sm-9">
+                    {% if vacancy_application.cover_letter %}
+                        {{ vacancy_application.cover_letter|linebreaks }}
+                    {% else %}
+                        No cover letter provided.
+                    {% endif %}
+                </dd>
+            </dl>
+            <hr class="my-4">
+            <h5 class="mb-3" style="color: #2c7a7b;"><i class="fas fa-check-circle me-2"></i>Status</h5>
+            <p>
+                {% if vacancy_application.status %}
+                    <span class="badge {% if vacancy_application.status == 'accepted' %}bg-success{% elif vacancy_application.status == 'rejected' %}bg-danger{% endif %}" style="font-size: 1rem;">{{ vacancy_application.status|capfirst }}</span>
+                {% else %}
+                    <span class="badge bg-warning text-dark" style="font-size: 1rem;">Pending</span>
+                {% endif %}
+            </p>
+            {% if vacancy_application.status == None %}
+                <dl class="row">
+                    <dd>
+                        <a class="btn btn-primary" href="{% url 'accept_vac_app' vacancy_application.id %}">
+                            <i class="fas fa-check"></i> Accept
+                        </a>
+                    </dd>
+                    <dd>
+                        <a class="btn btn-danger" href="{% url 'reject_vac_app' vacancy_application.id %}">
+                            <i class="fas fa-times"></i> Reject
+                        </a>
+                    </dd>
+                </dl>
+            {% endif %}
+            <hr class="my-4">
+            <h5 class="mb-3" style="color: #2c7a7b;"><i class="fas fa-calendar-alt me-2"></i>Dates</h5>
+            <dl class="row">
+                <dt class="col-sm-3 text-muted">Created At</dt>
+                <dd class="col-sm-9">{{ vacancy_application.created_at|date:"F j, Y, g:i a" }}</dd>
+                <dt class="col-sm-3 text-muted">Updated At</dt>
+                <dd class="col-sm-9">{{ vacancy_application.updated_at|date:"F j, Y, g:i a" }}</dd>
+            </dl>
+        </div>
+        <div class="card-footer d-flex justify-content-end" style="background-color: #f8f9fa; border-top: 1px solid #319795; border-radius: 0 0 12px 12px;">
+            <a href="{% url 'applications_per_vacancy' vacancy_application.vacancy.id %}" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-1"></i>Back to Applications for this Vacancy</a>
+        </div>
+    </div>
+</div>
+<style>
+    .card {
+        transition: box-shadow 0.3s ease;
+    }
+    .card:hover {
+        box-shadow: 0 8px 20px rgba(49, 151, 149, 0.2);
+    }
+    dl.row dt {
+        font-weight: 500;
+    }
+    dl.row dd {
+        margin-bottom: 0.5rem;
+    }
+</style>
+<script>
+    function previewMedia(url, type, title) {
+        document.getElementById('mediaModalLabel').textContent = title;
+        document.getElementById('mediaDownloadLink').href = url;
+        const container = document.getElementById('mediaContainer');
+        container.innerHTML = '';
+        if (type === 'pdf') {
+            const embed = document.createElement('embed');
+            embed.src = url;
+            embed.type = 'application/pdf';
+            embed.style.width = '100%';
+            embed.style.height = '500px';
+            container.appendChild(embed);
+        }
+        document.getElementById('mediaFullscreenBtn').onclick = () => window.open(url, '_blank');
+    }
+</script>
+{% endblock %}

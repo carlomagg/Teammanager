@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ task.title }} - TeamManager{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="card p-4" style="border-radius: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);">
+        <h2 class="modal-title mb-4">{{ task.title }}</h2>
+
+        <div class="mb-3">
+            <p class="fw-bold mb-1">Description:</p>
+            <div class="p-3 bg-light rounded" style="border: 1px solid #e2e8f0;">{{ task.description|linebreaks }}</div>
+        </div>
+
+        <div class="row">
+            <div class="col-12 col-md-6 mb-3">
+                <p class="fw-bold mb-1">Status:</p>
+                <span class="badge bg-primary">{{ task.get_status_display }}</span>
+            </div>
+            <div class="col-12 col-md-6 mb-3">
+                <p class="fw-bold mb-1">Created By:</p>
+                <p>
+                    {% if task.created_by == user %}
+                        You
+                    {% else %}
+                        {{ task.created_by|default:"N/A" }}
+                    {% endif %}
+                </p>
+            </div>
+            <div class="col-12 col-md-6 mb-3">
+                <p class="fw-bold mb-1">Assigned To:</p>
+                {% for ass in task.assigned_to.all %}
+                    {% if ass == user %}
+                        You
+                    {% else %}
+                        {{ ass|default:"Unassigned" }}
+                    {% endif %}
+                    {% if not forloop.last %},{% endif %}
+                {% endfor %}
+            </div>
+            <div class="col-12 col-md-6 mb-3">
+                <p class="fw-bold mb-1">Due Date:</p>
+                <p>{{ task.due_date|date:"M d, Y" }}</p>
+            </div>
+            
+            {% if task.opportunity %}
+            <div class="col-12 col-md-6 mb-3">
+                <p class="fw-bold mb-1">Opportunity:</p>
+                <p><a href="{% url 'crm:opportunity_detail' task.opportunity.pk %}" target="_blank" rel="noopener noreferrer" class="text-decoration-none text-primary"><i class="fas fa-external-link-alt me-1 small"></i>{{ task.opportunity.title }}</a></p>
+            </div>
+            {% endif %}
+
+            {% if task.product %}
+            <div class="col-12 col-md-6 mb-3">
+                <p class="fw-bold mb-1">Product:</p>
+                <p><a href="{% url 'crm:product_detail' task.product.pk %}" target="_blank" rel="noopener noreferrer" class="text-decoration-none text-success"><i class="fas fa-external-link-alt me-1 small"></i>{{ task.product.name }}</a></p>
+            </div>
+            {% endif %}
+            {% comment %} <div class="col-12 col-md-6 mb-3">
+                <p class="fw-bold mb-1">Folder:</p>
+                <p>{{ task.folder|default:"None" }}</p>
+            </div> {% endcomment %}
+        </div>
+
+        {% if task.documents.exists %}
+            <p class="fw-bold mb-2">Attached Documents:</p>
+            <ul class="list-group mb-4">
+                {% for doc in task.documents.all %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center" style="border-radius: 8px;">
+                        <span>{{ doc.original_name }}</span>
+                        <a href="#" 
+                           data-media-url="{{ doc.file.url }}" 
+                           data-media-type="pdf" 
+                           data-media-name="{{ doc.original_name }} PDF" 
+                           class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-eye"></i> View PDF
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        <div class="d-flex gap-2">
+            <a href="{% url 'task_list' %}" class="btn btn-outline-secondary">Back to Tasks</a>
+            {% if user.is_authenticated %}
+                <a href="{% url 'task_edit' task.id %}" class="btn btn-primary">Edit Task</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

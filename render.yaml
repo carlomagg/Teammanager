@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: Raadaa
+    env: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    startCommand: |
+      python manage.py migrate &&
+      gunicorn raadaa.wsgi:application --bind 0.0.0.0:8000 --timeout 120 --workers 2
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: raadaa.settings
+      - key: DEBUG
+        value: "False"  # Keep True for debugging
+      - key: ALLOWED_HOSTS
+        value: raadaa.onrender.com,www.raadaa.onrender.com,localhost

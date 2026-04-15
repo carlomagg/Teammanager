@@ -1,0 +1,301 @@
+/* UI Enhancements: 3D cards, shadows, animations, subtle motion */
+:root {
+    --card-elevation-1: 0 6px 18px rgba(17, 24, 39, 0.06);
+    --card-elevation-2: 0 14px 40px rgba(17, 24, 39, 0.12);
+    --accent-glow: 0 8px 30px rgba(49,151,149,0.12);
+}
+
+/* Smooth appearance for sections */
+.reveal-up {
+    opacity: 0;
+    transform: translateY(12px);
+    animation: revealUp 560ms cubic-bezier(.2,.9,.2,1) forwards;
+}
+@keyframes revealUp {
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* 3D card style used across booking/availability cards */
+.card {
+    transform-style: preserve-3d;
+    transition: transform 320ms cubic-bezier(.2,.9,.2,1), box-shadow 320ms ease, filter 320ms ease;
+    box-shadow: var(--card-elevation-1);
+    will-change: transform, box-shadow;
+    backface-visibility: hidden;
+}
+.card:hover {
+    transform: translateY(-10px) rotateX(3deg);
+    box-shadow: var(--card-elevation-2);
+    filter: saturate(1.02);
+}
+.card:active { transform: translateY(-6px) rotateX(2deg) scale(0.996); }
+
+/* Accent glow for primary action areas */
+.card.highlighted { box-shadow: var(--accent-glow), var(--card-elevation-2); }
+
+/* Soft inner gradient for depth */
+.card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.01));
+    mix-blend-mode: soft-light;
+    opacity: 0.9;
+}
+
+/* Subtle micro-interactions for buttons */
+.btn {
+    transition: transform 140ms cubic-bezier(.2,.9,.2,1), box-shadow 140ms ease;
+}
+.btn:active { transform: translateY(1px) scale(0.998); }
+.btn-primary {
+    box-shadow: 0 6px 18px rgba(49,151,149,0.12);
+}
+.btn-outline-secondary { transition: box-shadow 180ms ease; }
+.btn-outline-secondary:hover { box-shadow: 0 8px 20px rgba(0,0,0,0.06); }
+
+/* Floating badges */
+.badge { transition: transform 220ms ease, box-shadow 220ms ease; }
+.badge:hover { transform: translateY(-3px); }
+
+/* Card list spacing + responsive */
+.card + .card { margin-top: 14px; }
+
+/* Card header icon treatment */
+.card .rounded-circle { box-shadow: 0 4px 12px rgba(0,0,0,0.06); transform: translateZ(6px); }
+
+/* Slight tilt effect for groups when pointer moves across container */
+.tilt-group { perspective: 900px; }
+.tilt-item { transform-origin: center; transition: transform 280ms cubic-bezier(.2,.9,.2,1); }
+.tilt-group:hover .tilt-item { transform: rotateX(2deg) translateY(-6px); }
+
+/* Focus-visible polish for accessibility */
+.card:focus-within, .btn:focus { outline: none; box-shadow: 0 0 0 4px rgba(49,151,149,0.12); }
+
+/* Utility: staggered reveals for lists */
+.reveal-list > * { opacity: 0; transform: translateY(10px); }
+.reveal-list.revealed > * { animation: revealUp 420ms cubic-bezier(.2,.9,.2,1) forwards; }
+.reveal-list.revealed > *:nth-child(1) { animation-delay: 0ms; }
+.reveal-list.revealed > *:nth-child(2) { animation-delay: 70ms; }
+.reveal-list.revealed > *:nth-child(3) { animation-delay: 120ms; }
+.reveal-list.revealed > *:nth-child(4) { animation-delay: 180ms; }
+.reveal-list.revealed > *:nth-child(5) { animation-delay: 240ms; }
+
+/* Reduce motion preference */
+@media (prefers-reduced-motion: reduce) {
+    .card, .btn, .reveal-up, .tilt-item { transition: none !important; animation: none !important; transform: none !important; }
+}
+
+/* Small helper for subtle separators */
+.soft-divider { height:1px; background: linear-gradient(90deg, rgba(0,0,0,0.03), rgba(0,0,0,0.02)); margin: 12px 0; }
+
+/* Ensure partials' card body stays relative for pseudo elements */
+.card > .card-body { position: relative; }
+
+/* Expandable Content Styles (See More/Less) */
+.expandable-content {
+    position: relative;
+    overflow: hidden;
+    transition: max-height 340ms cubic-bezier(.2,.9,.2,1), opacity 340ms ease;
+}
+
+.expandable-content.truncated {
+    max-height: 56px;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.expandable-content.truncated::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 40px;
+    background: linear-gradient(transparent, rgba(255, 255, 255, 0.98));
+    pointer-events: none;
+}
+
+.expandable-content.expanded {
+    max-height: none;
+    overflow: visible;
+}
+
+.expandable-content.expanded::after {
+    display: none;
+}
+
+.expand-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 5px 14px;
+    margin-top: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    color: #319795;
+    background: rgba(49, 151, 149, 0.08);
+    border: 1.5px solid rgba(49, 151, 149, 0.2);
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 280ms cubic-bezier(.2,.9,.2,1);
+    box-shadow: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.expand-toggle-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(49,151,149,0.06), transparent);
+    transform: translateX(-100%);
+    transition: transform 500ms ease;
+    border-radius: inherit;
+}
+
+.expand-toggle-btn:hover {
+    color: #fff;
+    background: linear-gradient(135deg, #319795 0%, #2c7a7b 100%);
+    border-color: transparent;
+    box-shadow: 0 4px 14px rgba(49, 151, 149, 0.3);
+    transform: translateY(-1px);
+}
+
+.expand-toggle-btn:hover::before {
+    transform: translateX(100%);
+}
+
+.expand-toggle-btn:active {
+    transform: translateY(0) scale(0.97);
+    box-shadow: 0 2px 6px rgba(49, 151, 149, 0.2);
+}
+
+.expand-toggle-btn i {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    font-size: 0.7rem;
+    transition: transform 300ms cubic-bezier(.2,.9,.2,1);
+}
+
+.expand-toggle-btn[aria-expanded="true"] i {
+    transform: rotate(180deg);
+}
+
+/* Word-break utility for notes and comments */
+.routing-note-content,
+.comment-content {
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+
+/* Premium Bank Selector Dropdown */
+.bank-selector-container {
+    position: relative;
+}
+
+.bank-selector-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 1100;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(49, 151, 149, 0.2);
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    margin-top: 8px;
+    max-height: 300px;
+    overflow-y: auto;
+    display: none;
+    animation: bankDropdownFadeIn 240ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    transform-origin: top;
+}
+
+@keyframes bankDropdownFadeIn {
+    from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.bank-item {
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: all 180ms ease;
+    border-bottom: 1px solid rgba(0,0,0,0.03);
+}
+
+.bank-item:last-child {
+    border-bottom: none;
+}
+
+.bank-item:hover, .bank-item.active {
+    background: rgba(49, 151, 149, 0.08);
+    padding-left: 20px;
+}
+
+.bank-item .nbi {
+    width: 28px !important;
+    height: 28px !important;
+    border-radius: 4px;
+    background-color: #fff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+    flex-shrink: 0;
+}
+
+.bank-item .bank-name {
+    font-weight: 500;
+    font-size: 0.92rem;
+    color: #2d3748;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Dark mode support */
+body.dark-mode .bank-selector-dropdown {
+    background: rgba(26, 32, 44, 0.96);
+    border-color: rgba(49, 151, 149, 0.3);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+}
+
+body.dark-mode .bank-item {
+    border-bottom-color: rgba(255,255,255,0.05);
+}
+
+body.dark-mode .bank-item .bank-name {
+    color: #e2e8f0;
+}
+
+body.dark-mode .bank-item:hover, body.dark-mode .bank-item.active {
+    background: rgba(49, 151, 149, 0.15);
+}
+
+/* Custom scrollbar for the dropdown */
+.bank-selector-dropdown::-webkit-scrollbar {
+    width: 6px;
+}
+.bank-selector-dropdown::-webkit-scrollbar-track {
+    background: transparent;
+}
+.bank-selector-dropdown::-webkit-scrollbar-thumb {
+    background: rgba(49, 151, 149, 0.2);
+    border-radius: 10px;
+}
+.bank-selector-dropdown::-webkit-scrollbar-thumb:hover {
+    background: rgba(49, 151, 149, 0.4);
+}

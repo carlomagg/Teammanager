@@ -1,0 +1,691 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Sign Up - TeamManager (New Unified Page){% endblock %}
+
+{% block content %}
+<style>
+    /* Hide navbar and main footer on signup page */
+    body {
+        padding-top: 0 !important;
+    }
+    .navbar,
+    .sidebar,
+    footer:not(.signup-footer) {
+        display: none !important;
+    }
+</style>
+
+<div class="unified-signup-page">
+    <div class="signup-container card shadow-lg">
+        <div class="card-body p-4">
+            <!-- Header -->
+            <div class="text-center mb-4">
+                <i class="fas fa-user-plus fa-3x mb-3 text-primary" aria-hidden="true"></i>
+                <h3 class="signup-title">Join Team Manager</h3>
+                <p class="text-muted">Choose your account type to get started</p>
+            </div>
+
+            <!-- Tab Navigation -->
+            <ul class="nav nav-pills nav-fill mb-4 custom-tabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="individual-tab" data-bs-toggle="pill" 
+                            data-bs-target="#individual-signup" type="button" role="tab" 
+                            aria-controls="individual-signup" aria-selected="true">
+                        <i class="fas fa-user me-2"></i>Individual Account
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="company-tab" data-bs-toggle="pill" 
+                            data-bs-target="#company-signup" type="button" role="tab" 
+                            aria-controls="company-signup" aria-selected="false">
+                        <i class="fas fa-building me-2"></i>Company Account
+                    </button>
+                </li>
+            </ul>
+
+            <!-- Tab Content -->
+            <div class="tab-content">
+                <!-- Individual Signup Form -->
+                <div class="tab-pane fade show active" id="individual-signup" role="tabpanel" 
+                     aria-labelledby="individual-tab">
+                    {% if user_form.errors %}
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <strong>Registration Failed:</strong> Please correct the errors below.
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endif %}
+                    
+                    <form method="POST" action="{% url 'unified_signup' %}" aria-label="Individual Registration Form">
+                        {% csrf_token %}
+                        <input type="hidden" name="form_type" value="individual">
+                        
+                        {% for field in user_form %}
+                            <div class="mb-3">
+                                <label for="{{ field.id_for_label }}" class="form-label">
+                                    {{ field.label }}
+                                    {% if field.field.required %}
+                                        <span class="text-danger">*</span>
+                                    {% endif %}
+                                    {% if field.help_text %}
+                                        <span class="tooltip-trigger" title="{{ field.help_text }}">
+                                            <i class="fa fa-info-circle text-muted"></i>
+                                        </span>
+                                    {% endif %}
+                                </label>
+                                
+                                {% if field.field.widget.input_type == "password" %}
+                                    <div class="input-group">
+                                        <input type="password"
+                                            name="{{ field.name }}"
+                                            id="{{ field.id_for_label }}"
+                                            class="form-control"
+                                            {% if field.field.required %}required{% endif %}
+                                            {% if field.errors %}aria-invalid="true"{% endif %}>
+                                        <button type="button"
+                                                class="btn btn-outline-secondary toggle-password"
+                                                data-target="{{ field.id_for_label }}">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                {% else %}
+                                    <input type="{{ field.field.widget.input_type }}"
+                                        name="{{ field.name }}"
+                                        id="{{ field.id_for_label }}"
+                                        class="form-control"
+                                        value="{{ field.value|default:'' }}"
+                                        {% if field.field.required %}required{% endif %}
+                                        {% if field.errors %}aria-invalid="true"{% endif %}>
+                                {% endif %}
+
+                                {% if field.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ field.errors|join:", " }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="individual-terms" required>
+                                <label class="form-check-label" for="individual-terms">
+                                    I have read and accept our 
+                                    <a href="#" data-bs-toggle="modal" data-bs-target="#policiesModal" 
+                                       data-policy-tab="terms-use">Terms of Service, Privacy Policy, and other policies</a>
+                                </label>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 mb-3 signup-btn" 
+                                id="individual-signup-btn" disabled>
+                            <i class="fas fa-user-plus me-2"></i>Create Individual Account
+                        </button>
+
+                        <p class="text-center text-muted mb-0">
+                            Already have an account? 
+                            <a href="{% url 'login' %}" class="text-primary fw-medium">Log In</a>
+                        </p>
+                    </form>
+                </div>
+
+                <!-- Company Signup Form -->
+                <div class="tab-pane fade" id="company-signup" role="tabpanel" 
+                     aria-labelledby="company-tab">
+                    {% if tenant_form.errors %}
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <strong>Application Failed:</strong> Please correct the errors below.
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endif %}
+                    
+                    <form method="POST" action="{% url 'unified_signup' %}" aria-label="Company Registration Form">
+                        {% csrf_token %}
+                        <input type="hidden" name="form_type" value="company">
+                        
+                        {% for field in tenant_form %}
+                            <div class="mb-3">
+                                {% if field.label == 'Slug' %}
+                                    <label for="{{ field.id_for_label }}" class="form-label">
+                                        Subdomain
+                                        {% if field.field.required %}
+                                            <span class="text-danger">*</span>
+                                        {% endif %}
+                                        <span class="tooltip-trigger" title="Short unique name used in URL. Lowercase, numbers and hyphens only">
+                                            <i class="fa fa-info-circle text-muted"></i>
+                                        </span>
+                                    </label>
+                                    <p class="text-muted small mb-2">Short unique name used in URL. Lowercase, numbers and hyphens only</p>
+                                {% else %}
+                                    <label for="{{ field.id_for_label }}" class="form-label">
+                                        {{ field.label }}
+                                        {% if field.field.required %}
+                                            <span class="text-danger">*</span>
+                                        {% endif %}
+                                        {% if field.help_text %}
+                                            <span class="tooltip-trigger" title="{{ field.help_text }}">
+                                                <i class="fa fa-info-circle text-muted"></i>
+                                            </span>
+                                        {% endif %}
+                                    </label>
+                                {% endif %}
+
+                                {% if field.field.widget.input_type == 'select' %}
+                                    <select name="{{ field.name }}" id="{{ field.id_for_label }}" 
+                                            class="form-select" 
+                                            {% if field.field.required %}required{% endif %} 
+                                            {% if field.errors %}aria-invalid="true"{% endif %}>
+                                        {% for value, label in field.field.choices %}
+                                            <option value="{{ value }}" {% if value == field.value %}selected{% endif %}>
+                                                {{ label }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                {% elif field.field.widget.input_type == "password" %}
+                                    <div class="input-group">
+                                        <input type="password"
+                                            name="{{ field.name }}"
+                                            id="{{ field.id_for_label }}"
+                                            class="form-control"
+                                            {% if field.field.required %}required{% endif %}
+                                            {% if field.errors %}aria-invalid="true"{% endif %}>
+                                        <button type="button"
+                                                class="btn btn-outline-secondary toggle-password"
+                                                data-target="{{ field.id_for_label }}">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                {% else %}
+                                    <input type="{{ field.field.widget.input_type }}"
+                                           name="{{ field.name }}"
+                                           id="{{ field.id_for_label }}"
+                                           class="form-control"
+                                           value="{{ field.value|default:'' }}"
+                                           {% if field.field.required %}required{% endif %}
+                                           {% if field.errors %}aria-invalid="true"{% endif %}>
+                                {% endif %}
+
+                                {% if field.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ field.errors|join:", " }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="company-terms" required>
+                                <label class="form-check-label" for="company-terms">
+                                    I have read and accept our 
+                                    <a href="#" data-bs-toggle="modal" data-bs-target="#policiesModal" 
+                                       data-policy-tab="terms-use">Terms of Service, Privacy Policy, and other policies</a>
+                                </label>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 mb-3 signup-btn" 
+                                id="company-signup-btn" disabled>
+                            <i class="fas fa-building me-2"></i>Create Company Account
+                        </button>
+
+                        <p class="text-center text-muted mb-3">
+                            Already applied? 
+                            <a href="{% url 'check_status' %}" class="text-primary fw-medium">Check Status</a>
+                        </p>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Back to Home -->
+            <div class="text-center mt-3">
+                <a href="{% url 'home' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Home
+                </a>
+            </div>
+            
+            <!-- Support Button -->
+            <div class="support-section text-center mt-3">
+                <a href="https://tm.teammanager.ng/tickets/submit/" target="_blank" class="btn btn-support">
+                    <i class="fas fa-ticket-alt me-2"></i>Need Help? Submit a Support Request
+                    <i class="fas fa-external-link-alt ms-2 small"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Footer -->
+<footer class="signup-footer">
+    <div class="container">
+        <p class="text-center text-muted mb-0">
+            &copy; {% now "Y" %} All rights reserved. Made with <i class="fas fa-heart text-danger"></i> by TeamManager
+        </p>
+    </div>
+</footer>
+
+<style>
+    body {
+        background: linear-gradient(135deg, #319795, 0%, #2c7a7b, 100%);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .unified-signup-page {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 40px 20px;
+    }
+
+    .signup-container {
+        width: 100%;
+        max-width: 600px;
+        background: #ffffff;
+        border: none;
+        border-radius: 16px;
+        animation: slideUp 0.5s ease-out;
+    }
+
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .signup-title {
+        font-weight: 700;
+        color: #2d3748;
+        margin-bottom: 8px;
+    }
+
+    .custom-tabs {
+        background: #f7fafc;
+        border-radius: 12px;
+        padding: 6px;
+    }
+
+    .custom-tabs .nav-link {
+        border-radius: 8px;
+        color: #4a5568;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        border: none;
+    }
+
+    .custom-tabs .nav-link:hover {
+        background: #e2e8f0;
+        color: #2d3748;
+    }
+
+    .custom-tabs .nav-link.active {
+        background: #319795;
+        color: #ffffff;
+        box-shadow: 0 2px 8px rgba(49, 151, 149, 0.3);
+    }
+
+    .tab-content {
+        animation: fadeIn 0.4s ease-in;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+
+    .form-label {
+        font-weight: 500;
+        color: #2d3748;
+        margin-bottom: 6px;
+    }
+
+    .form-control, .form-select {
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        padding: 10px 14px;
+        font-size: 0.95rem;
+        transition: all 0.2s ease;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #319795;
+        box-shadow: 0 0 0 0.2rem rgba(49, 151, 149, 0.15);
+    }
+
+    .form-control[aria-invalid="true"] {
+        border-color: #e53e3e;
+    }
+
+    .invalid-feedback {
+        font-size: 0.85rem;
+        color: #e53e3e;
+        margin-top: 4px;
+    }
+
+    .input-group .btn-outline-secondary {
+        border-color: #e2e8f0;
+        color: #4a5568;
+    }
+
+    .input-group .btn-outline-secondary:hover {
+        background-color: #f7fafc;
+        border-color: #cbd5e0;
+    }
+
+    .signup-btn {
+        background: linear-gradient(135deg, #319795 0%, #2c7a7b 100%);
+        border: none;
+        border-radius: 8px;
+        padding: 12px;
+        font-weight: 600;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(49, 151, 149, 0.3);
+    }
+
+    .signup-btn:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(49, 151, 149, 0.4);
+    }
+
+    .signup-btn:disabled {
+        background: #cbd5e0;
+        cursor: not-allowed;
+        box-shadow: none;
+    }
+
+    .btn-outline-secondary {
+        border-color: #e2e8f0;
+        color: #4a5568;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+    }
+
+    .btn-outline-secondary:hover {
+        background-color: #f7fafc;
+        border-color: #cbd5e0;
+        color: #2d3748;
+    }
+
+    .text-primary {
+        color: #319795 !important;
+        text-decoration: none;
+        transition: color 0.2s ease;
+    }
+
+    .text-primary:hover {
+        color: #2c7a7b !important;
+        text-decoration: underline;
+    }
+
+    .form-check-input:checked {
+        background-color: #319795;
+        border-color: #319795;
+    }
+
+    .form-check-input:focus {
+        border-color: #319795;
+        box-shadow: 0 0 0 0.2rem rgba(49, 151, 149, 0.15);
+    }
+
+    .signup-footer {
+        background: rgba(255, 255, 255, 0.95);
+        padding: 20px 0;
+        margin-top: auto;
+        backdrop-filter: blur(10px);
+    }
+
+    .signup-footer p {
+        font-size: 0.9rem;
+    }
+
+    /* Dark mode support */
+    body.dark-mode {
+        background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+    }
+
+    body.dark-mode .signup-container {
+        background: #2d3748;
+        color: #e2e8f0;
+    }
+
+    body.dark-mode .signup-title {
+        color: #e2e8f0;
+    }
+
+    body.dark-mode .custom-tabs {
+        background: #1a202c;
+    }
+
+    body.dark-mode .custom-tabs .nav-link {
+        color: #a0aec0;
+    }
+
+    body.dark-mode .custom-tabs .nav-link:hover {
+        background: #4a5568;
+        color: #e2e8f0;
+    }
+
+    body.dark-mode .form-label {
+        color: #e2e8f0;
+    }
+
+    body.dark-mode .form-control,
+    body.dark-mode .form-select {
+        background: #1a202c;
+        color: #e2e8f0;
+        border-color: #4a5568;
+    }
+
+    body.dark-mode .form-control:focus,
+    body.dark-mode .form-select:focus {
+        background: #1a202c;
+        border-color: #319795;
+    }
+
+    body.dark-mode .input-group .btn-outline-secondary {
+        background: #1a202c;
+        border-color: #4a5568;
+        color: #a0aec0;
+    }
+
+    body.dark-mode .input-group .btn-outline-secondary:hover {
+        background: #4a5568;
+        border-color: #4a5568;
+    }
+
+    body.dark-mode .btn-outline-secondary {
+        border-color: #4a5568;
+        color: #a0aec0;
+    }
+
+    body.dark-mode .btn-outline-secondary:hover {
+        background: #4a5568;
+        color: #e2e8f0;
+    }
+
+    body.dark-mode .signup-footer {
+        background: rgba(26, 32, 44, 0.95);
+    }
+
+    body.dark-mode .text-muted {
+        color: #a0aec0 !important;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .unified-signup-page {
+            padding: 20px 15px;
+        }
+
+        .signup-container {
+            max-width: 100%;
+        }
+
+        .signup-title {
+            font-size: 1.5rem;
+        }
+
+        .custom-tabs .nav-link {
+            font-size: 0.9rem;
+            padding: 10px 8px;
+        }
+
+        .custom-tabs .nav-link i {
+            display: none;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .signup-title {
+            font-size: 1.25rem;
+        }
+
+        .fa-user-plus {
+            font-size: 2rem !important;
+        }
+
+        .custom-tabs .nav-link {
+            font-size: 0.85rem;
+            padding: 8px 6px;
+        }
+    }
+
+    /* Support Button Styles */
+    .support-section {
+        border-top: 1px solid #e2e8f0;
+        padding-top: 1rem;
+        margin-top: 1rem;
+    }
+
+    body.dark-mode .support-section {
+        border-top-color: #4a5568;
+    }
+
+    .btn-support {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #319795, #2c7a7b);
+        color: white !important;
+        padding: 12px 24px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        border-radius: 8px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(49, 151, 149, 0.3);
+        border: none;
+        position: relative;
+        overflow: hidden;
+        z-index: 1;
+    }
+
+    .btn-support * {
+        color: white !important;
+        position: relative;
+        z-index: 2;
+    }
+
+    .btn-support::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s ease;
+        z-index: 1;
+    }
+
+    .btn-support:hover::before {
+        left: 100%;
+    }
+
+    .btn-support:hover {
+        background: linear-gradient(135deg, #2c7a7b, #234e52);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(49, 151, 149, 0.4);
+        color: white !important;
+        text-decoration: none;
+    }
+
+    .btn-support:active {
+        transform: translateY(0);
+        box-shadow: 0 4px 12px rgba(49, 151, 149, 0.3);
+    }
+
+    .btn-support i.fa-ticket-alt {
+        font-size: 1rem;
+        color: white !important;
+    }
+
+    .btn-support i.fa-external-link-alt {
+        opacity: 0.8;
+        font-size: 0.75rem;
+        color: white !important;
+    }
+</style>
+
+<script>
+    // Toggle password visibility
+    document.querySelectorAll('.toggle-password').forEach(button => {
+        button.addEventListener('click', function () {
+            const input = document.getElementById(this.dataset.target);
+            const icon = this.querySelector('i');
+
+            const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+            input.setAttribute('type', type);
+
+            icon.classList.toggle('fa-eye');
+            icon.classList.toggle('fa-eye-slash');
+        });
+    });
+
+    // Enable/disable submit button based on terms checkbox
+    const individualCheckbox = document.getElementById('individual-terms');
+    const individualBtn = document.getElementById('individual-signup-btn');
+    const companyCheckbox = document.getElementById('company-terms');
+    const companyBtn = document.getElementById('company-signup-btn');
+
+    if (individualCheckbox && individualBtn) {
+        individualCheckbox.addEventListener('change', function() {
+            individualBtn.disabled = !this.checked;
+        });
+    }
+
+    if (companyCheckbox && companyBtn) {
+        companyCheckbox.addEventListener('change', function() {
+            companyBtn.disabled = !this.checked;
+        });
+    }
+
+    // Smooth tab transitions
+    document.querySelectorAll('[data-bs-toggle="pill"]').forEach(tab => {
+        tab.addEventListener('shown.bs.tab', function (e) {
+            const targetPane = document.querySelector(e.target.dataset.bsTarget);
+            targetPane.style.animation = 'none';
+            setTimeout(() => {
+                targetPane.style.animation = 'fadeIn 0.4s ease-in';
+            }, 10);
+        });
+    });
+
+    // Initialize Bootstrap tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+</script>
+{% endblock %}

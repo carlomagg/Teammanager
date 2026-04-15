@@ -1,0 +1,763 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if form.instance.pk %}Edit{% else %}Create{% endif %} Opportunity - CRM{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-md-10 offset-md-1">
+            <div class="card">
+                <div class="card-header">
+                    <h4>
+                        <i class="fas fa-briefcase"></i>
+                        {% if form.instance.pk %}
+                            Edit Opportunity: {{ form.instance.title }}
+                        {% else %}
+                            Create New Opportunity
+                        {% endif %}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                <strong>Form Errors:</strong>
+                                {{ form.non_field_errors }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endif %}
+                        
+                        {% if form.errors %}
+                            <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                                <strong>Please correct the following errors:</strong>
+                                <ul class="mb-0">
+                                    {% for field, errors in form.errors.items %}
+                                        {% if field != '__all__' %}
+                                            <li><strong>{{ field }}:</strong> {{ errors|join:", " }}</li>
+                                        {% endif %}
+                                    {% endfor %}
+                                </ul>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="accordion" id="opportunityAccordion">
+                            <!-- Basic Information -->
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="headingBasic">
+                                    <button class="accordion-button" type="button" data-bs-toggle="collapse" 
+                                            data-bs-target="#collapseBasic" aria-expanded="true">
+                                        <i class="fas fa-info-circle me-2"></i> Basic Information
+                                    </button>
+                                </h2>
+                                <div id="collapseBasic" class="accordion-collapse collapse show" data-bs-parent="#opportunityAccordion">
+                                    <div class="accordion-body">
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="{{ form.title.id_for_label }}" class="form-label">{{ form.title.label }}</label>
+                                                {{ form.title }}
+                                                {% if form.title.errors %}
+                                                    <div class="invalid-feedback d-block">{{ form.title.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-md-3 mb-3">
+                                                <label for="{{ form.category.id_for_label }}" class="form-label">{{ form.category.label }}</label>
+                                                {{ form.category }}
+                                                {% if form.category.errors %}
+                                                    <div class="invalid-feedback d-block">{{ form.category.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-md-3 mb-3">
+                                                <label for="{{ form.deal_type.id_for_label }}" class="form-label">{{ form.deal_type.label }}</label>
+                                                {{ form.deal_type }}
+                                                {% if form.deal_type.errors %}
+                                                    <div class="invalid-feedback d-block">{{ form.deal_type.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="{{ form.description.id_for_label }}" class="form-label">{{ form.description.label }}</label>
+                                            {{ form.description }}
+                                            {% if form.description.errors %}
+                                                <div class="invalid-feedback d-block">{{ form.description.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Company Information -->
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="headingCompany">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                            data-bs-target="#collapseCompany">
+                                        <i class="fas fa-building me-2"></i> Company Information
+                                    </button>
+                                </h2>
+                                <div id="collapseCompany" class="accordion-collapse collapse" data-bs-parent="#opportunityAccordion">
+                                    <div class="accordion-body">
+                                        <div class="row">
+                                            <div class="col-md-4 mb-3">
+                                                <label for="{{ form.company_name.id_for_label }}" class="form-label">{{ form.company_name.label }}</label>
+                                                {{ form.company_name }}
+                                                {% if form.company_name.errors %}
+                                                    <div class="invalid-feedback d-block">{{ form.company_name.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-md-3 mb-3">
+                                                <label for="{{ form.company_type.id_for_label }}" class="form-label">{{ form.company_type.label }}</label>
+                                                {{ form.company_type }}
+                                                {% if form.company_type.errors %}
+                                                    <div class="invalid-feedback d-block">{{ form.company_type.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-md-2 mb-3">
+                                                <label for="{{ form.company_size.id_for_label }}" class="form-label">{{ form.company_size.label }}</label>
+                                                {{ form.company_size }}
+                                                {% if form.company_size.errors %}
+                                                    <div class="invalid-feedback d-block">{{ form.company_size.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-md-3 mb-3">
+                                                <label for="{{ form.industry.id_for_label }}" class="form-label">{{ form.industry.label }}</label>
+                                                {{ form.industry }}
+                                                {% if form.industry.errors %}
+                                                    <div class="invalid-feedback d-block">{{ form.industry.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="{{ form.company_website.id_for_label }}" class="form-label">{{ form.company_website.label }}</label>
+                                            {{ form.company_website }}
+                                            {% if form.company_website.errors %}
+                                                <div class="invalid-feedback d-block">{{ form.company_website.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-4 mb-3">
+                                                <label for="{{ form.country.id_for_label }}" class="form-label">{{ form.country.label }}</label>
+                                                {{ form.country }}
+                                                {% if form.country.errors %}
+                                                    <div class="invalid-feedback d-block">{{ form.country.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label for="{{ form.city.id_for_label }}" class="form-label">{{ form.city.label }}</label>
+                                                {{ form.city }}
+                                                {% if form.city.errors %}
+                                                    <div class="invalid-feedback d-block">{{ form.city.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label for="{{ form.address.id_for_label }}" class="form-label">{{ form.address.label }}</label>
+                                                {{ form.address }}
+                                                {% if form.address.errors %}
+                                                    <div class="invalid-feedback d-block">{{ form.address.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Contact Person -->
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="headingContact">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                            data-bs-target="#collapseContact">
+                                        <i class="fas fa-user me-2"></i> Contact Person
+                                    </button>
+                                </h2>
+                                <div id="collapseContact" class="accordion-collapse collapse" data-bs-parent="#opportunityAccordion">
+                                    <div class="accordion-body">
+                                        <div class="mb-3">
+                                            <label for="{{ form.contact.id_for_label }}" class="form-label">
+                                                {{ form.contact.label }}
+                                            </label>
+                                            <div class="mb-2">
+                                                {{ form.contact }}
+                                            </div>
+                                            <small class="form-text text-muted d-block">Select existing contact or fill in details below</small>
+                                            {% if form.contact.errors %}
+                                                <div class="invalid-feedback d-block">{{ form.contact.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                        <hr>
+                                        <p class="text-muted mb-3">Or enter contact details manually:</p>
+                                        <div class="row">
+                                            <div class="col-md-4 mb-3">
+                                                <label for="{{ form.contact_first_name.id_for_label }}" class="form-label">{{ form.contact_first_name.label }}</label>
+                                                {{ form.contact_first_name }}
+                                                {% if form.contact_first_name.errors %}
+                                                    <div class="invalid-feedback d-block">{{ form.contact_first_name.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label for="{{ form.contact_last_name.id_for_label }}" class="form-label">{{ form.contact_last_name.label }}</label>
+                                                {{ form.contact_last_name }}
+                                                {% if form.contact_last_name.errors %}
+                                                    <div class="invalid-feedback d-block">{{ form.contact_last_name.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label for="{{ form.contact_title.id_for_label }}" class="form-label">{{ form.contact_title.label }}</label>
+                                                {{ form.contact_title }}
+                                                {% if form.contact_title.errors %}
+                                                    <div class="invalid-feedback d-block">{{ form.contact_title.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="{{ form.contact_email.id_for_label }}" class="form-label">{{ form.contact_email.label }}</label>
+                                                {{ form.contact_email }}
+                                                {% if form.contact_email.errors %}
+                                                    <div class="invalid-feedback d-block">{{ form.contact_email.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="{{ form.contact_phone.id_for_label }}" class="form-label">{{ form.contact_phone.label }}</label>
+                                                {{ form.contact_phone }}
+                                                {% if form.contact_phone.errors %}
+                                                    <div class="invalid-feedback d-block">{{ form.contact_phone.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Products & Services -->
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="headingProducts">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                            data-bs-target="#collapseProducts">
+                                        <i class="fas fa-box me-2"></i> Products & Services
+                                    </button>
+                                </h2>
+                                <div id="collapseProducts" class="accordion-collapse collapse" data-bs-parent="#opportunityAccordion">
+                                    <div class="accordion-body">
+                                        <div class="mb-3">
+                                            <label for="{{ form.products.id_for_label }}" class="form-label">{{ form.products.label }}</label>
+                                            {{ form.products }}
+                                            {% if form.products.errors %}
+                                                <div class="invalid-feedback d-block">{{ form.products.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="{{ form.product_details.id_for_label }}" class="form-label">{{ form.product_details.label }}</label>
+                                            {{ form.product_details }}
+                                            {% if form.product_details.errors %}
+                                                <div class="invalid-feedback d-block">{{ form.product_details.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="{{ form.delivery_method.id_for_label }}" class="form-label">{{ form.delivery_method.label }}</label>
+                                            {{ form.delivery_method }}
+                                            {% if form.delivery_method.errors %}
+                                                <div class="invalid-feedback d-block">{{ form.delivery_method.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Partner Information (if applicable) -->
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="headingPartner">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                            data-bs-target="#collapsePartner">
+                                        <i class="fas fa-handshake me-2"></i> Partner Information
+                                    </button>
+                                </h2>
+                                <div id="collapsePartner" class="accordion-collapse collapse" data-bs-parent="#opportunityAccordion">
+                                    <div class="accordion-body">
+                                        <div class="mb-3">
+                                            <label for="{{ form.partner_contact.id_for_label }}" class="form-label">{{ form.partner_contact.label }}</label>
+                                            {{ form.partner_contact }}
+                                            <small class="form-text text-muted">Select existing partner or fill in details below</small>
+                                            {% if form.partner_contact.errors %}
+                                                <div class="invalid-feedback d-block">{{ form.partner_contact.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                        <hr>
+                                        <p class="text-muted">Or enter partner details manually:</p>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="{{ form.partner_org_name.id_for_label }}" class="form-label">{{ form.partner_org_name.label }}</label>
+                                                {{ form.partner_org_name }}
+                                                {% if form.partner_org_name.errors %}
+                                                    <div class="invalid-feedback d-block">{{ form.partner_org_name.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="{{ form.partner_contact_name.id_for_label }}" class="form-label">{{ form.partner_contact_name.label }}</label>
+                                                {{ form.partner_contact_name }}
+                                                {% if form.partner_contact_name.errors %}
+                                                    <div class="invalid-feedback d-block">{{ form.partner_contact_name.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-4 mb-3">
+                                                <label for="{{ form.partner_email.id_for_label }}" class="form-label">{{ form.partner_email.label }}</label>
+                                                {{ form.partner_email }}
+                                                {% if form.partner_email.errors %}
+                                                    <div class="invalid-feedback d-block">{{ form.partner_email.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label for="{{ form.partner_phone.id_for_label }}" class="form-label">{{ form.partner_phone.label }}</label>
+                                                {{ form.partner_phone }}
+                                                {% if form.partner_phone.errors %}
+                                                    <div class="invalid-feedback d-block">{{ form.partner_phone.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label for="{{ form.partner_address.id_for_label }}" class="form-label">{{ form.partner_address.label }}</label>
+                                                {{ form.partner_address }}
+                                                {% if form.partner_address.errors %}
+                                                    <div class="invalid-feedback d-block">{{ form.partner_address.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Contractor Information -->
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="headingContractor">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                            data-bs-target="#collapseContractor">
+                                        <i class="fas fa-hard-hat me-2"></i> Contractor Information
+                                    </button>
+                                </h2>
+                                <div id="collapseContractor" class="accordion-collapse collapse" data-bs-parent="#opportunityAccordion">
+                                    <div class="accordion-body">
+                                        <div class="mb-3">
+                                            <label for="{{ form.contractor_contact.id_for_label }}" class="form-label">{{ form.contractor_contact.label }}</label>
+                                            {{ form.contractor_contact }}
+                                            <small class="form-text text-muted">Select existing contractor or fill in details below</small>
+                                            {% if form.contractor_contact.errors %}
+                                                <div class="invalid-feedback d-block">{{ form.contractor_contact.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                        <hr>
+                                        <p class="text-muted">Or enter contractor details manually:</p>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="{{ form.contractor_org_name.id_for_label }}" class="form-label">{{ form.contractor_org_name.label }}</label>
+                                                {{ form.contractor_org_name }}
+                                                {% if form.contractor_org_name.errors %}
+                                                    <div class="invalid-feedback d-block">{{ form.contractor_org_name.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="{{ form.contractor_contact_name.id_for_label }}" class="form-label">{{ form.contractor_contact_name.label }}</label>
+                                                {{ form.contractor_contact_name }}
+                                                {% if form.contractor_contact_name.errors %}
+                                                    <div class="invalid-feedback d-block">{{ form.contractor_contact_name.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-4 mb-3">
+                                                <label for="{{ form.contractor_email.id_for_label }}" class="form-label">{{ form.contractor_email.label }}</label>
+                                                {{ form.contractor_email }}
+                                                {% if form.contractor_email.errors %}
+                                                    <div class="invalid-feedback d-block">{{ form.contractor_email.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label for="{{ form.contractor_phone.id_for_label }}" class="form-label">{{ form.contractor_phone.label }}</label>
+                                                {{ form.contractor_phone }}
+                                                {% if form.contractor_phone.errors %}
+                                                    <div class="invalid-feedback d-block">{{ form.contractor_phone.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label for="{{ form.contractor_address.id_for_label }}" class="form-label">{{ form.contractor_address.label }}</label>
+                                                {{ form.contractor_address }}
+                                                {% if form.contractor_address.errors %}
+                                                    <div class="invalid-feedback d-block">{{ form.contractor_address.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Deal Value & Timeline -->
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="headingValue">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                            data-bs-target="#collapseValue">
+                                        <i class="fas fa-dollar-sign me-2"></i> Deal Value & Timeline
+                                    </button>
+                                </h2>
+                                <div id="collapseValue" class="accordion-collapse collapse" data-bs-parent="#opportunityAccordion">
+                                    <div class="accordion-body">
+                                        <div class="row">
+                                            <div class="col-md-4 mb-3">
+                                                <label for="{{ form.estimated_amount.id_for_label }}" class="form-label">{{ form.estimated_amount.label }}</label>
+                                                {{ form.estimated_amount }}
+                                                <small class="form-text text-muted">Deal size auto-calculated</small>
+                                                {% if form.estimated_amount.errors %}
+                                                    <div class="invalid-feedback d-block">{{ form.estimated_amount.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label for="{{ form.actual_amount.id_for_label }}" class="form-label">{{ form.actual_amount.label }}</label>
+                                                {{ form.actual_amount }}
+                                                {% if form.actual_amount.errors %}
+                                                    <div class="invalid-feedback d-block">{{ form.actual_amount.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label for="{{ form.recurring_revenue.id_for_label }}" class="form-label">{{ form.recurring_revenue.label }}</label>
+                                                {{ form.recurring_revenue }}
+                                                {% if form.recurring_revenue.errors %}
+                                                    <div class="invalid-feedback d-block">{{ form.recurring_revenue.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="{{ form.expected_close_date.id_for_label }}" class="form-label">{{ form.expected_close_date.label }}</label>
+                                                {{ form.expected_close_date }}
+                                                {% if form.expected_close_date.errors %}
+                                                    <div class="invalid-feedback d-block">{{ form.expected_close_date.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="{{ form.contract_expiry_date.id_for_label }}" class="form-label">{{ form.contract_expiry_date.label }}</label>
+                                                {{ form.contract_expiry_date }}
+                                                <small class="form-text text-muted">For renewal tracking</small>
+                                                {% if form.contract_expiry_date.errors %}
+                                                    <div class="invalid-feedback d-block">{{ form.contract_expiry_date.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Source & Referral -->
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="headingSource">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                            data-bs-target="#collapseSource">
+                                        <i class="fas fa-chart-line me-2"></i> Source & Referral
+                                    </button>
+                                </h2>
+                                <div id="collapseSource" class="accordion-collapse collapse" data-bs-parent="#opportunityAccordion">
+                                    <div class="accordion-body">
+                                        <div class="mb-3">
+                                            <label for="{{ form.source.id_for_label }}" class="form-label">{{ form.source.label }}</label>
+                                            {{ form.source }}
+                                            {% if form.source.errors %}
+                                                <div class="invalid-feedback d-block">{{ form.source.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                        <hr>
+                                        <p class="text-muted">If source is Referral, provide referrer details:</p>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="{{ form.referrer_name.id_for_label }}" class="form-label">{{ form.referrer_name.label }}</label>
+                                                {{ form.referrer_name }}
+                                                {% if form.referrer_name.errors %}
+                                                    <div class="invalid-feedback d-block">{{ form.referrer_name.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="{{ form.referrer_email.id_for_label }}" class="form-label">{{ form.referrer_email.label }}</label>
+                                                {{ form.referrer_email }}
+                                                {% if form.referrer_email.errors %}
+                                                    <div class="invalid-feedback d-block">{{ form.referrer_email.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="{{ form.referrer_phone.id_for_label }}" class="form-label">{{ form.referrer_phone.label }}</label>
+                                                {{ form.referrer_phone }}
+                                                {% if form.referrer_phone.errors %}
+                                                    <div class="invalid-feedback d-block">{{ form.referrer_phone.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="{{ form.referrer_address.id_for_label }}" class="form-label">{{ form.referrer_address.label }}</label>
+                                                {{ form.referrer_address }}
+                                                {% if form.referrer_address.errors %}
+                                                    <div class="invalid-feedback d-block">{{ form.referrer_address.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Competition -->
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="headingCompetition">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                            data-bs-target="#collapseCompetition">
+                                        <i class="fas fa-trophy me-2"></i> Competition
+                                    </button>
+                                </h2>
+                                <div id="collapseCompetition" class="accordion-collapse collapse" data-bs-parent="#opportunityAccordion">
+                                    <div class="accordion-body">
+                                        <div class="mb-3 form-check">
+                                            {{ form.is_competitive }}
+                                            <label class="form-check-label" for="{{ form.is_competitive.id_for_label }}">
+                                                {{ form.is_competitive.label }}
+                                            </label>
+                                            {% if form.is_competitive.errors %}
+                                                <div class="invalid-feedback d-block">{{ form.is_competitive.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="{{ form.competitor_names.id_for_label }}" class="form-label">{{ form.competitor_names.label }}</label>
+                                            {{ form.competitor_names }}
+                                            {% if form.competitor_names.errors %}
+                                                <div class="invalid-feedback d-block">{{ form.competitor_names.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Assignment & Stage -->
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="headingAssignment">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                            data-bs-target="#collapseAssignment">
+                                        <i class="fas fa-user-tie me-2"></i> Assignment & Stage
+                                    </button>
+                                </h2>
+                                <div id="collapseAssignment" class="accordion-collapse collapse" data-bs-parent="#opportunityAccordion">
+                                    <div class="accordion-body">
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="{{ form.assigned_to.id_for_label }}" class="form-label">{{ form.assigned_to.label }}</label>
+                                                {{ form.assigned_to }}
+                                                {% if form.assigned_to.errors %}
+                                                    <div class="invalid-feedback d-block">{{ form.assigned_to.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="{{ form.stage.id_for_label }}" class="form-label">{{ form.stage.label }}</label>
+                                                {{ form.stage }}
+                                                {% if form.stage.errors %}
+                                                    <div class="invalid-feedback d-block">{{ form.stage.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% if form.instance.pk %}{% url 'crm:opportunity_detail' form.instance.pk %}{% else %}{% url 'crm:opportunity_list' %}{% endif %}" 
+                               class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> 
+                                {% if form.instance.pk %}Update{% else %}Create{% endif %} Opportunity
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Fix Select2 styling for cleaner display */
+    .select2-container--bootstrap-5 .select2-selection--single {
+        height: auto !important;
+        min-height: 38px;
+        padding: 0.375rem 2.25rem 0.375rem 0.75rem;
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        display: block;
+    }
+    
+    .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+        line-height: 1.5;
+        padding: 0;
+        color: #212529;
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .select2-container--bootstrap-5 .select2-selection--single .select2-selection__placeholder {
+        color: #6c757d;
+    }
+    
+    .select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow {
+        height: 36px;
+    }
+    
+    /* Dropdown styling */
+    .select2-container--bootstrap-5 .select2-dropdown {
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+    
+    .select2-container--bootstrap-5 .select2-results__option {
+        padding: 0.5rem 0.75rem;
+        font-size: 1rem;
+        line-height: 1.5;
+        color: #212529;
+    }
+    
+    .select2-container--bootstrap-5 .select2-results__option--highlighted {
+        background-color: #0d6efd;
+        color: white;
+    }
+    
+    .select2-container--bootstrap-5 .select2-results__option--selected {
+        background-color: #e9ecef;
+    }
+    
+    /* Multiple select styling */
+    .select2-container--bootstrap-5 .select2-selection--multiple {
+        min-height: 38px;
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+    }
+    
+    .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice {
+        background-color: #0d6efd;
+        border: none;
+        color: white;
+        padding: 0.25rem 0.5rem;
+        margin: 0.25rem;
+        border-radius: 0.25rem;
+    }
+    
+    .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice__remove {
+        color: white;
+        margin-right: 0.25rem;
+    }
+    
+    /* Z-index for dropdown */
+    .select2-container {
+        z-index: 1050;
+    }
+    
+    .select2-dropdown {
+        z-index: 1051;
+    }
+    
+    /* Search box in dropdown */
+    .select2-container--bootstrap-5 .select2-search--dropdown .select2-search__field {
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        padding: 0.375rem 0.75rem;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Initialize Select2 for all select fields with select2 class
+    
+
+    $('.select2').each(function() {
+        var $select = $(this);
+        $select.select2({
+            tags: true,
+            tokenSeparators: [',', ' '],
+            placeholder: function(){
+                return $(this).data('placeholder');
+            },
+            allowClear: true,
+            width: '100%',
+            multiple: true,
+        })
+    });
+    
+    // Debug form submission
+    $('form').on('submit', function(e) {
+        console.log('Form submitted');
+        // Let form submit normally
+    });
+    
+    // Dynamic Category-Stage filtering
+    const categoryField = $('#id_category');
+    const stageField = $('#id_stage');
+    const originalStageValue = stageField.val();
+    
+    function loadStages(category) {
+        if (!category) {
+            return;
+        }
+        
+        $.ajax({
+            url: '{% url "crm:get_stages_by_category" %}',
+            data: { 'category': category },
+            dataType: 'json',
+            success: function(data) {
+                stageField.empty();
+                stageField.append($('<option>').val('').text('---------'));
+                
+                if (data.stages && data.stages.length > 0) {
+                    $.each(data.stages, function(index, stage) {
+                        const option = $('<option>').val(stage.id).text(stage.name);
+                        if (stage.id == originalStageValue) {
+                            option.prop('selected', true);
+                        }
+                        stageField.append(option);
+                    });
+                } else {
+                    stageField.append($('<option>').val('').text('No stages available'));
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error loading stages:', error);
+                stageField.empty();
+                stageField.append($('<option>').val('').text('Error loading stages'));
+            }
+        });
+    }
+    
+    categoryField.on('change', function() {
+        const selectedCategory = $(this).val();
+        if (selectedCategory) {
+            loadStages(selectedCategory);
+        } else {
+            stageField.empty();
+            stageField.append($('<option>').val('').text('---------'));
+        }
+    });
+    
+    if (categoryField.val()) {
+        loadStages(categoryField.val());
+    }
+});
+</script>
+{% endblock %}

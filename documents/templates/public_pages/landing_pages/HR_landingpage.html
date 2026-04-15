@@ -1,0 +1,2072 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TeamManager - HR & Team Management Platform</title>
+    <meta name="description" content="TeamManager: One platform where your HR team recruits, onboards, manages, and tracks performance. No more switching tabs, chasing updates, or losing candidates in a spreadsheet.">
+    <meta name="keywords" content="HR management, team management, recruitment, onboarding, task management, calendar scheduling">
+    
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #319795;
+            --primary-dark: #1b5c59;
+            --primary-light: #4db8b6;
+            --secondary: #f59e0b;
+            --danger: #ef4444;
+            --success: #10b981;
+            --dark: #1f2937;
+            --light: #f9fafb;
+            --text-muted: #6b7280;
+            --border-light: #e5e7eb;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            color: var(--dark);
+            background: #ffffff;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* ===== NAVBAR ===== */
+        .navbar-landing {
+            display: none;
+        }
+
+        /* ===== HERO LOGO ===== */
+        .hero-logo-section {
+            background: white;
+            padding: 1.5rem 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            animation: slideDown 0.3s ease;
+        }
+
+        .hero-logo-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .hero-logo-brand {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+        }
+
+        .hero-logo-brand img {
+            height: 36px;
+        }
+
+        .hero-logo-brand span {
+            display: inline;
+        }
+
+        /* ===== HERO SECTION ===== */
+        .hero {
+            background: linear-gradient(135deg, #f9fafb 0%, #eff6f5 100%);
+            padding: 4rem 0 3rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: -200px;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(49, 151, 149, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .hero::after {
+            content: '';
+            position: absolute;
+            bottom: -100px;
+            left: -100px;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(245, 158, 11, 0.08) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: float-reverse 8s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-30px); }
+        }
+
+        @keyframes float-reverse {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(30px); }
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+        }
+
+        .hero-title {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 3.5rem;
+            font-weight: 800;
+            line-height: 1.2;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1.5rem;
+            animation: slideUp 0.8s ease;
+        }
+
+        .hero-title-span {
+            background: white;
+            -webkit-text-stroke: 1.5px var(--primary-dark);
+            text-stroke: 1px black;
+            background-clip: text;
+        }
+
+        .hero-subtitle {
+            font-size: 1.5rem;
+            color: var(--dark);
+            margin-bottom: 2rem;
+            line-height: 1.5;
+            animation: slideUp 0.8s ease 0.1s both;
+        }
+
+        @media (max-width: 768px) {
+            .hero-subtitle {
+                color: var(--dark);
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .highlights-cta {
+            display: flex;
+            justify-content: center;
+            margin-top: 1rem;
+        }
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+            animation: slideUp 0.8s ease 0.2s both;
+            justify-content: center;
+        }
+
+        .btn-primary-landing {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 0.75rem;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .btn-primary-landing:hover {
+            background: var(--primary-dark);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 24px rgba(49, 151, 149, 0.3);
+            color: white;
+            text-decoration: none;
+        }
+
+        .btn-secondary-landing {
+            background: white;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+            padding: 0.9rem 1.9rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 0.75rem;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .btn-secondary-landing:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 12px 24px rgba(49, 151, 149, 0.2);
+            text-decoration: none;
+        }
+
+        .hero-image {
+            position: relative;
+            z-index: 2;
+            animation: slideUp 0.8s ease 0.3s both;
+            margin-bottom: 0;
+        }
+
+        /* Video iframe responsive wrapper */
+        .video-container {
+            position: relative;
+            width: 100%;
+            padding-bottom: 56.25%;
+            height: 0;
+            overflow: hidden;
+            border-radius: 1.5rem;
+            box-shadow: 0 20px 50px rgba(49, 151, 149, 0.2);
+        }
+
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+            border-radius: 1.5rem;
+        }
+
+        .demo-placeholder {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            border-radius: 1.5rem;
+            padding: 3rem;
+            text-align: center;
+            color: white;
+            font-size: 5rem;
+            box-shadow: 0 20px 50px rgba(49, 151, 149, 0.2);
+            min-height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .demo-placeholder::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at top right, rgba(255,255,255,0.1), transparent);
+            pointer-events: none;
+        }
+
+        /* ===== FEATURES SECTION ===== */
+        .features {
+            padding: 0.5rem 0 0;
+            background: #ffffff;
+        }
+
+        .section-title {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 1rem;
+            color: var(--dark);
+        }
+
+        .section-subtitle {
+            font-size: 1.1rem;
+            text-align: center;
+            color: var(--text-muted);
+            margin-bottom: 3rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .feature-card {
+            background: #ffffff;
+            border: 1px solid var(--border-light);
+            border-radius: 1rem;
+            padding: 2rem;
+            height: 100%;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.3s ease;
+        }
+
+        .feature-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 16px 40px rgba(49, 151, 149, 0.1);
+            transform: translateY(-8px);
+        }
+
+        .feature-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+            transition: transform 0.3s ease;
+        }
+
+        .feature-card:hover .feature-icon {
+            transform: scale(1.1) rotate(-5deg);
+        }
+
+        .feature-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--dark);
+        }
+
+        .feature-description {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.7;
+        }
+
+        /* ===== PROBLEMS SECTION ===== */
+        .problems {
+            padding: 6rem 0;
+            background: linear-gradient(135deg, #f9fafb 0%, #eff6f5 100%);
+        }
+
+        .problem-flow {
+            max-width: 900px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .problem-step {
+            background: white;
+            border-radius: 1.25rem;
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+            border-left: 5px solid var(--primary);
+            position: relative;
+            animation: slideUp 0.8s ease forwards;
+            opacity: 0;
+        }
+
+        .problem-step:nth-child(1) { animation-delay: 0.2s; }
+        .problem-step:nth-child(2) { animation-delay: 0.4s; }
+        .problem-step:nth-child(3) { animation-delay: 0.6s; }
+        .problem-step:nth-child(4) { animation-delay: 0.8s; }
+        .problem-step:nth-child(5) { animation-delay: 1s; }
+
+        .problem-step:hover {
+            box-shadow: 0 16px 40px rgba(49, 151, 149, 0.15);
+            transform: translateX(8px);
+            transition: all 0.3s ease;
+        }
+
+        .problem-step-number {
+            position: absolute;
+            left: -40px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 60px;
+            height: 60px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.5rem;
+            box-shadow: 0 8px 16px rgba(49, 151, 149, 0.2);
+        }
+
+        .problem-arrow {
+            position: absolute;
+            left: -10px;
+            top: 100%;
+            width: 20px;
+            height: 40px;
+            opacity: 0;
+            animation: arrowFlow 1.5s ease-in-out infinite;
+        }
+
+        .problem-arrow i {
+            color: var(--primary);
+            font-size: 1.5rem;
+        }
+
+        .problem-step:last-child .problem-arrow {
+            display: none;
+        }
+
+        @keyframes arrowFlow {
+            0% {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+        }
+
+        .problem-step-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .problem-step-description {
+            color: var(--text-muted);
+            font-size: 1rem;
+            line-height: 1.8;
+            margin: 0;
+        }
+
+        .problem-highlight {
+            background: rgba(49, 151, 149, 0.08);
+            border-radius: 0.75rem;
+            padding: 2rem;
+            margin-top: 2rem;
+            border-left: 4px solid var(--danger);
+            text-align: center;
+        }
+
+        .problem-highlight p {
+            font-size: 1.1rem;
+            color: var(--dark);
+            margin: 0;
+        }
+
+        /* SOLUTION SECTION */
+        .solution-section {
+            padding: 4rem 0 1rem;
+            background: linear-gradient(135deg, rgba(49, 151, 149, 0.02) 0%, rgba(245, 158, 11, 0.02) 100%);
+        }
+
+        .solution-title {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 800;
+            text-align: center;
+            color: var(--primary);
+            /* margin-bottom: 1.5rem; */
+        }
+
+        .solution-description {
+            font-size: 1.5rem;
+            color: var(--text-muted);
+            text-align: center;
+            max-width: 700px;
+            margin: 0 auto;
+            line-height: 1.8;
+        }
+
+        .highlight-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .highlight-item {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .highlight-number {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .highlight-text {
+            font-size: 1.1rem;
+            color: var(--dark);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .highlight-subtext {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        /* ===== SUITE FEATURES ===== */
+        .suite-section {
+            padding: 6rem 0;
+            background: linear-gradient(135deg, #f9fafb 0%, #eff6f5 100%);
+        }
+
+        .suite-title {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .suite-title i {
+            font-size: 2.5rem;
+        }
+
+        .feature-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .feature-list li {
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border-light);
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .feature-list li:hover {
+            padding-left: 1rem;
+        }
+
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+
+        .feature-list i {
+            color: var(--success);
+            font-size: 1.2rem;
+            flex-shrink: 0;
+            margin-top: 0.2rem;
+        }
+
+        .feature-list-text {
+            flex: 1;
+        }
+
+        .feature-list-title {
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 0.3rem;
+        }
+
+        .feature-list-desc {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        /* ===== FAQ SECTION ===== */
+        .objections {
+            padding: 6rem 0;
+            background: #ffffff;
+        }
+
+        .objection-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .objection-intro {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2rem;
+            background: rgba(49, 151, 149, 0.05);
+            border-radius: 1.25rem;
+            border: 2px solid var(--primary);
+        }
+
+        .objection-intro-text {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 0;
+        }
+
+        .objection-item {
+            margin-bottom: 2.5rem;
+            padding: 2rem;
+            background: #ffffff;
+            border-radius: 1rem;
+            border: 2px solid var(--border-light);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .objection-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 4px;
+            background: linear-gradient(180deg, var(--primary) 0%, var(--primary-light) 100%);
+            transform: scaleY(0);
+            transform-origin: top;
+            transition: transform 0.3s ease;
+        }
+
+        .objection-item:hover {
+            border-color: var(--primary);
+            box-shadow: 0 12px 32px rgba(49, 151, 149, 0.12);
+            transform: translateY(-4px);
+        }
+
+        .objection-item:hover::before {
+            transform: scaleY(1);
+        }
+
+        .objection-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .objection-title i {
+            font-size: 1.5rem;
+        }
+
+        .objection-answer {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.8;
+            margin: 0;
+        }
+
+        .objection-answer strong {
+            color: var(--dark);
+            font-weight: 600;
+        }
+
+        /* ===== CTA SECTION ===== */
+        .cta-section {
+            padding: 6rem 0;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .cta-section::after {
+            content: '';
+            position: absolute;
+            bottom: -30%;
+            left: -5%;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .cta-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .cta-title {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+        }
+
+        .cta-subtitle {
+            font-size: 1.2rem;
+            margin-bottom: 2.5rem;
+            opacity: 0.95;
+        }
+
+        .cta-button {
+            background: white;
+            color: var(--primary);
+            border: none;
+            padding: 1rem 2.5rem;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-radius: 0.75rem;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        /* ===== FOOTER ===== */
+        .footer {
+            background: var(--dark);
+            color: white;
+            padding: 4rem 0 2rem;
+        }
+
+        .footer-section-title {
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            font-size: 1rem;
+        }
+
+        .footer-link {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.3s ease;
+            display: block;
+            margin-bottom: 0.75rem;
+        }
+
+        .footer-link:hover {
+            color: white;
+        }
+
+        .footer-bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 2rem;
+            margin-top: 3rem;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9rem;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 1024px) {
+            .container-custom {
+                padding: 0 2rem;
+            }
+
+            .hero-title {
+                font-size: 2.8rem;
+            }
+
+            .hero-subtitle {
+                font-size: 1.3rem;
+            }
+
+            .section-title {
+                font-size: 2.2rem;
+            }
+
+            .cta-title {
+                font-size: 2.2rem;
+            }
+
+            .problem-step-number {
+                position: static;
+                width: auto;
+                height: auto;
+                display: inline-flex;
+                margin-right: 1rem;
+                margin-bottom: 1rem;
+                font-size: 1.25rem;
+            }
+
+            .problem-step-title {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .navbar-landing {
+                padding: 1rem 0;
+            }
+
+            .hero-logo-section {
+                padding: 1rem 0;
+            }
+
+            .hero-logo-brand {
+                font-size: 1.2rem;
+            }
+
+            .hero-logo-brand img {
+                height: 28px;
+            }
+
+            .nav-link {
+                font-size: 0.9rem;
+                margin: 0 0.3rem;
+            }
+
+            .btn-nav {
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
+            }
+
+            .hero {
+                padding: 2rem 0;
+            }
+
+            .hero-content {
+                text-align: center;
+            }
+
+            .hero-title {
+                font-size: 2rem;
+                margin-bottom: 1rem;
+            }
+
+            .hero-subtitle {
+                font-size: 1.1rem;
+                color: var(--dark);
+                margin-bottom: 1rem;
+            }
+
+            .hero-content p {
+                font-size: 1rem;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
+                gap: 0.75rem;
+                margin-bottom: 1rem;
+            }
+
+            .btn-primary-landing,
+            .btn-secondary-landing {
+                width: 100%;
+                justify-content: center;
+                padding: 0.9rem 1.5rem;
+                font-size: 1rem;
+            }
+
+            .hero-image {
+                margin-top: 1rem;
+            }
+
+            .demo-placeholder {
+                min-height: 300px;
+                padding: 2rem;
+                font-size: 3rem;
+            }
+
+            .video-container {
+                margin-top: 2rem;
+            }
+
+            .problems {
+                padding: 2rem 0;
+            }
+
+            .problem-flow {
+                max-width: 100%;
+            }
+
+            .problem-step {
+                padding: 1.5rem;
+                margin-bottom: 1.5rem;
+                border-left: 4px solid var(--primary);
+            }
+
+            .problem-step-number {
+                position: absolute;
+                left: -35px;
+                top: 30px;
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
+            }
+
+            .problem-step-title {
+                font-size: 1.1rem;
+                margin-bottom: 0.75rem;
+            }
+
+            .problem-step-description {
+                font-size: 0.9rem;
+                line-height: 1.6;
+            }
+
+            .problem-arrow {
+                height: 30px;
+            }
+
+            .section-title {
+                font-size: 1.8rem;
+                margin-bottom: 2rem;
+            }
+
+            .section-subtitle {
+                font-size: 1rem;
+            }
+
+            .problem-item {
+                padding-left: 1.5rem;
+                margin-bottom: 2rem;
+            }
+
+            .problem-title {
+                font-size: 1.1rem;
+            }
+
+            .problem-description {
+                font-size: 0.9rem;
+            }
+
+            .features,
+            .highlights,
+            .suite-section,
+            .faq,
+            .objections,
+            .cta-section {
+                padding: 2rem 0;
+            }
+
+            .suite-title {
+                font-size: 1.5rem;
+                gap: 0.75rem;
+            }
+
+            .suite-title i {
+                font-size: 2rem;
+            }
+
+            .feature-list li {
+                padding: 0.75rem 0;
+            }
+
+            .feature-list-title {
+                font-size: 0.95rem;
+            }
+
+            .feature-list-desc {
+                font-size: 0.85rem;
+            }
+
+            .highlight-grid {
+                gap: 2rem;
+            }
+
+            .highlight-number {
+                font-size: 2.5rem;
+            }
+
+            .highlight-text {
+                font-size: 1rem;
+            }
+
+            .highlight-subtext {
+                font-size: 0.85rem;
+            }
+
+            .feature-card {
+                padding: 1.5rem;
+            }
+
+            .feature-icon {
+                font-size: 2rem;
+            }
+
+            .feature-title {
+                font-size: 1.1rem;
+            }
+
+            .feature-description {
+                font-size: 0.9rem;
+            }
+
+            .objection-item {
+                padding: 1.5rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .objection-title {
+                font-size: 1.05rem;
+            }
+
+            .objection-answer {
+                font-size: 0.9rem;
+            }
+
+            .cta-title {
+                font-size: 1.8rem;
+                margin-bottom: 1rem;
+            }
+
+            .cta-subtitle {
+                font-size: 1.1rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .cta-section p {
+                font-size: 1.1rem;
+            }
+
+            .cta-button {
+                padding: 0.9rem 2rem;
+                font-size: 1rem;
+            }
+
+            .footer {
+                padding: 2.5rem 0 1.5rem;
+            }
+
+            .footer-section-title {
+                font-size: 0.95rem;
+                margin-bottom: 1rem;
+            }
+
+            .footer-link {
+                font-size: 0.85rem;
+                margin-bottom: 0.5rem;
+            }
+
+            .footer-bottom {
+                padding-top: 1.5rem;
+                margin-top: 2rem;
+                font-size: 0.85rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .container-custom {
+                padding: 0 1rem;
+            }
+
+            .navbar-landing {
+                padding: 0.75rem 0;
+            }
+
+            .navbar-brand {
+                font-size: 1.1rem;
+            }
+
+            .navbar-brand img {
+                height: 24px;
+            }
+
+            .nav-link {
+                font-size: 0.85rem;
+                margin: 0 0.25rem;
+                padding: 0 0.25rem;
+            }
+
+            .btn-nav {
+                padding: 0.4rem 0.8rem;
+                font-size: 0.8rem;
+            }
+
+            .hero {
+                padding: 2rem 0;
+            }
+
+            .hero > .container-custom > div {
+                display: grid !important;
+                grid-template-columns: 1fr !important;
+                gap: 1rem !important;
+            }
+
+            .hero-title {
+                font-size: 1.6rem;
+                margin-bottom: 0.75rem;
+                line-height: 1.2;
+            }
+
+            .hero-title-span {
+                -webkit-text-stroke: 0.7px black;
+            }
+
+            .hero-subtitle {
+                font-size: 0.95rem;
+                color: var(--dark);
+                margin-bottom: 1rem;
+            }
+
+            .hero-content {
+                order: 2;
+                text-align: center;
+            }
+
+            .hero-image {
+                order: 1;
+                margin-top: 0;
+                margin-bottom: 1rem;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
+                gap: 0.5rem;
+                margin-bottom: 0;
+            }
+
+            .btn-primary-landing,
+            .btn-secondary-landing {
+                width: 100%;
+                justify-content: center;
+                padding: 0.8rem 1rem;
+                font-size: 0.9rem;
+                gap: 0.3rem;
+            }
+
+            .demo-placeholder {
+                min-height: 250px;
+                padding: 1.5rem;
+                font-size: 2.5rem;
+                border-radius: 1rem;
+            }
+
+            .video-container {
+                border-radius: 1rem;
+                margin-top: 1.5rem;
+            }
+
+            .video-container iframe {
+                border-radius: 1rem;
+            }
+
+            .problems {
+                padding: 2rem 0;
+            }
+
+            .section-title {
+                font-size: 1.5rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .section-subtitle {
+                font-size: 0.9rem;
+            }
+
+            .problem-item {
+                padding-left: 1.5rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .problem-item::before {
+                font-size: 1.2rem;
+            }
+
+            .problem-title {
+                font-size: 1rem;
+            }
+
+            .problem-description {
+                font-size: 0.85rem;
+                line-height: 1.5;
+            }
+
+            .features,
+            .highlights,
+            .suite-section,
+            .faq,
+            .cta-section {
+                padding: 2rem 0;
+            }
+
+            .suite-title {
+                font-size: 1.3rem;
+                gap: 0.5rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .suite-title i {
+                font-size: 1.5rem;
+            }
+
+            .feature-list li {
+                padding: 0.6rem 0;
+                gap: 0.75rem;
+            }
+
+            .feature-list-title {
+                font-size: 0.9rem;
+            }
+
+            .feature-list-desc {
+                font-size: 0.8rem;
+                line-height: 1.4;
+            }
+
+            .feature-list i {
+                font-size: 1rem;
+                margin-top: 0.15rem;
+            }
+
+            .highlight-grid {
+                gap: 1.5rem;
+                margin-top: 2rem;
+            }
+
+            .highlight-item {
+                padding: 1.5rem 1rem;
+            }
+
+            .highlight-number {
+                font-size: 2rem;
+                margin-bottom: 0.3rem;
+            }
+
+            .highlight-text {
+                font-size: 0.95rem;
+            }
+
+            .highlight-subtext {
+                font-size: 0.8rem;
+            }
+
+            .feature-card {
+                padding: 1.25rem;
+                margin-bottom: 1rem;
+            }
+
+            .feature-icon {
+                font-size: 1.75rem;
+            }
+
+            .feature-title {
+                font-size: 1rem;
+            }
+
+            .feature-description {
+                font-size: 0.85rem;
+            }
+
+            .faq-item {
+                margin-bottom: 1rem;
+                border-radius: 0.5rem;
+            }
+
+            .faq-question {
+                padding: 1rem;
+                font-size: 0.9rem;
+            }
+
+            .faq-icon {
+                font-size: 1rem;
+            }
+
+            .faq-answer {
+                padding: 0 1rem 1rem;
+                font-size: 0.85rem;
+            }
+
+            .faq-item.active .faq-answer {
+                padding: 1rem;
+            }
+
+            .cta-section {
+                padding: 2.5rem 0;
+            }
+
+            .cta-title {
+                font-size: 1.5rem;
+                margin-bottom: 0.75rem;
+            }
+
+            .cta-subtitle {
+                font-size: 1rem;
+                margin-bottom: 1.25rem;
+            }
+
+            .cta-section p {
+                font-size: 0.95rem;
+            }
+
+            .cta-button {
+                padding: 0.8rem 1.5rem;
+                font-size: 0.95rem;
+                gap: 0.4rem;
+            }
+
+            .cta-button i {
+                font-size: 0.95rem;
+            }
+
+            .footer {
+                padding: 2rem 0 1rem;
+            }
+
+            .footer > .container-custom > div {
+                grid-template-columns: 1fr !important;
+                gap: 2rem !important;
+                margin-bottom: 2rem;
+            }
+
+            .footer-section-title {
+                font-size: 0.9rem;
+                margin-bottom: 0.75rem;
+            }
+
+            .footer-link {
+                font-size: 0.8rem;
+                margin-bottom: 0.4rem;
+            }
+
+            .footer-bottom {
+                padding-top: 1rem;
+                margin-top: 1.5rem;
+                font-size: 0.8rem;
+            }
+
+            .badge-primary {
+                font-size: 0.8rem;
+                padding: 0.4rem 0.8rem;
+            }
+        }
+
+        @media (max-width: 380px) {
+            .container-custom {
+                padding: 0 0.75rem;
+            }
+
+            .navbar-brand {
+                font-size: 1rem;
+            }
+
+            .nav-link {
+                display: none;
+            }
+
+            .btn-nav {
+                display: none;
+            }
+
+            .hero-title {
+                font-size: 1.4rem;
+            }
+
+            .hero-subtitle {
+                font-size: 0.9rem;
+            }
+
+            .btn-primary-landing,
+            .btn-secondary-landing {
+                padding: 0.7rem 0.8rem;
+                font-size: 0.85rem;
+            }
+
+            .demo-placeholder {
+                min-height: 200px;
+                padding: 1rem;
+                font-size: 2rem;
+            }
+
+            .section-title {
+                font-size: 1.3rem;
+            }
+
+            .suite-title {
+                font-size: 1.1rem;
+            }
+
+            .cta-title {
+                font-size: 1.3rem;
+            }
+
+            .footer-section-title {
+                font-size: 0.85rem;
+            }
+        }
+
+        /* Tablet landscape adjustments */
+        @media (max-width: 1024px) and (orientation: landscape) {
+            .hero {
+                padding: 2rem 0;
+            }
+
+            .hero-title {
+                font-size: 2rem;
+            }
+
+            .hero-subtitle {
+                font-size: 1.1rem;
+            }
+
+            .demo-placeholder {
+                min-height: 300px;
+            }
+
+            .cta-title {
+                font-size: 1.8rem;
+            }
+        }
+
+        /* Improved touch targets for mobile */
+        @media (max-width: 768px) {
+            button, a {
+                min-height: 44px;
+                min-width: 44px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .btn-primary-landing,
+            .btn-secondary-landing,
+            .btn-nav,
+            .cta-button {
+                min-height: 48px;
+                padding: 0.75rem 1.5rem;
+            }
+        }
+
+        /* ===== UTILITY CLASSES ===== */
+        .container-custom {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }
+
+        .text-primary {
+            color: var(--primary) !important;
+        }
+
+        .badge-primary {
+            background: rgba(49, 151, 149, 0.1);
+            color: var(--primary);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 1rem;
+        }
+
+        .mt-5 { margin-top: 5rem; }
+        .mb-5 { margin-bottom: 5rem; }
+    </style>
+    <!-- Meta Pixel Code -->
+<script>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '894433836960049');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=894433836960049&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+</head>
+<body>
+    <!-- STICKY LOGO SECTION -->
+    <div class="hero-logo-section">
+        <div class="hero-logo-container">
+            <a class="hero-logo-brand" href="#home">
+                <img src="{% static 'teammanager_logo.png' %}" alt="TeamManager">
+                <span>TeamManager</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- HERO SECTION -->
+    <section class="hero" id="home">
+        <div class="container-custom">
+            <!-- <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: center;"> -->
+                <div class="hero-content">
+                    <h1 class="hero-title">The Team Management & HR System That Replaces Multiple Tools, <span class="hero-title-span">Cuts Admin Work in Half, and Keeps Every Hire and Task on Track In One Dashboard</span></h1>
+                    <p class="hero-subtitle">Finally: one platform where your HR team recruits, onboards, manages, and tracks performance. No more switching tabs, chasing updates, or losing candidates in a spreadsheet.</p>
+                </div>
+                <div class="hero-image">
+                    <div class="video-container">
+                        <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&mute=1&rel=0" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                    </div>
+                </div>
+                <div class="cta-buttons">
+                    <a href="{% url 'unified_signup' %}">
+                        <button class="btn-secondary-landing">
+                            <i class="fas fa-arrow-right"></i>
+                            SIGN UP NOW FOR FREE
+                        </button>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- PROBLEMS SECTION -->
+    <section class="problems">
+        <div class="container-custom">
+            <h2 class="section-title">It's high time you ended this time-consuming cycle...</h2>
+            
+            <div class="problem-flow">
+                <div class="problem-step">
+                    <div class="problem-step-number">1</div>
+                    <div class="problem-step-title">
+                        <i class="fas fa-briefcase"></i>
+                        You post a job. Applications land everywhere.
+                    </div>
+                    <p class="problem-step-description">
+                        Applications land in your inbox, your WhatsApp, maybe even a DM.
+                    </p>
+                    <div class="problem-arrow">
+                        <i class="fas fa-arrow-down"></i>
+                    </div>
+                </div>
+
+                <div class="problem-step">
+                    <div class="problem-step-number">2</div>
+                    <div class="problem-step-title">
+                        <i class="fas fa-clipboard"></i>
+                        You compile, schedule, and manage manually.
+                    </div>
+                    <p class="problem-step-description">
+                        You compile a spreadsheet. Schedule interviews manually. Send reminders. Miss one. Lose a great candidate. And start all over again. That can be tiring!
+                    </p>
+                    <div class="problem-arrow">
+                        <i class="fas fa-arrow-down"></i>
+                    </div>
+                </div>
+
+                <div class="problem-step">
+                    <div class="problem-step-number">3</div>
+                    <div class="problem-step-title">
+                        <i class="fas fa-users"></i>
+                        Team sync becomes a nightmare.
+                    </div>
+                    <p class="problem-step-description">
+                        You finally hired more people because of extra roles, yet keeping everyone in sync still takes more effort than it should. Tasks get assigned in meetings and forgotten by Wednesday. You're not sure who's working on what. Accountability becomes a conversation, instead of a system.
+                    </p>
+                    <div class="problem-arrow">
+                        <i class="fas fa-arrow-down"></i>
+                    </div>
+                </div>
+
+                <div class="problem-step">
+                    <div class="problem-step-number">4</div>
+                    <div class="problem-step-title">
+                        <i class="fas fa-tools"></i>
+                        You try to fix it with more tools.
+                    </div>
+                    <p class="problem-step-description">
+                        The worst part? You've tried fixing it. You've tested tools. Added a spreadsheet here. A project management app there. A calendar. An email thread.
+                    </p>
+                    <div class="problem-arrow">
+                        <i class="fas fa-arrow-down"></i>
+                    </div>
+                </div>
+
+                <div class="problem-step">
+                    <div class="problem-step-number">5</div>
+                    <div class="problem-step-title">
+                        <i class="fas fa-hourglass-end"></i>
+                        Now you have more tools to manage than actual work.
+                    </div>
+                    <p class="problem-step-description">
+                        And now you have more tools to manage, which is now competing with your actual work time.
+                    </p>
+                </div>
+
+                <div class="problem-highlight">
+                    <p><strong>📊 The Reality:</strong> According to Deloitte, HR teams spend up to <strong>73% of their time on administrative tasks</strong>, time that should be spent on people, not paperwork.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SOLUTION -->
+    <section class="solution-section">
+        <div class="container-custom">
+            <h2 class="solution-title">TeamManager was built to end this</h2>
+            <p class="solution-description">
+                Not just another tool. A single command centre where every hire, task, and team member is accounted for, without the back-and-forth.
+            </p>
+        </div>
+    </section>
+
+    <!-- FEATURES SECTION -->
+    <section class="features" id="features">
+        <div class="container-custom">
+            <h2 class="section-title">Everything your HR team needs. Built into one clean, intuitive platform.</h2>
+            
+            <!-- HR & Talent Suite -->
+            <div class="suite-section" style="padding: 1rem 0 0; background: transparent;">
+                <div class="suite-title">
+                    <i class="fas fa-briefcase"></i>
+                    HR & Talent Suite: Hire Faster. Hire Smarter.
+                </div>
+                <ul class="feature-list">
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        <div class="feature-list-text">
+                            <div class="feature-list-title">Centralized Application Management</div>
+                            <div class="feature-list-desc">Every applicant is captured and organized automatically; no more digging through emails to find who applied and when. Every submission lands in your dashboard, structured and ready for review.</div>
+                        </div>
+                    </li>
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        <div class="feature-list-text">
+                            <div class="feature-list-title">One-Click Decision Making</div>
+                            <div class="feature-list-desc">Accept or reject candidates in a single click; your team reviews documents, flags qualified applicants, and moves them through the pipeline without a single email thread.</div>
+                        </div>
+                    </li>
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        <div class="feature-list-text">
+                            <div class="feature-list-title">Automated Interview Scheduling</div>
+                            <div class="feature-list-desc">Schedule interviews without the back-and-forth; choose the date, pick the panel, decide physical or virtual, and the system handles confirmations and reminders. Automatically.</div>
+                        </div>
+                    </li>
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        <div class="feature-list-text">
+                            <div class="feature-list-title">Structured Interview Feedback</div>
+                            <div class="feature-list-desc">Interview feedback, stored and searchable; no more relying on memory or scribbled notes. Every evaluation lives in the system, so your panel makes consistent, fair decisions.</div>
+                        </div>
+                    </li>
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        <div class="feature-list-text">
+                            <div class="feature-list-title">Seamless Onboarding Workflow</div>
+                            <div class="feature-list-desc">From hired to fully onboarded in one workflow: contracts, documentation, IT setup, department assignment. The moment a candidate accepts, onboarding begins; Zero manual handoffs.</div>
+                        </div>
+                    </li>
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        <div class="feature-list-text">
+                            <div class="feature-list-title">Auto-Created Employee Profiles</div>
+                            <div class="feature-list-desc">Employee profiles, auto-created at onboarding: name, role, department, manager, performance tracking. Everything your HR records need, in one place, from Day 1.</div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Task Management Suite -->
+            <div class="suite-section" style="padding: 0.5rem 0 0; background: transparent; margin-top: 3rem;">
+                <div class="suite-title">
+                    <i class="fas fa-tasks"></i>
+                    Task Management: Know Who's Doing What. Always.
+                </div>
+                <ul class="feature-list">
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        <div class="feature-list-text">
+                            <div class="feature-list-title">Quick Task Assignment</div>
+                            <div class="feature-list-desc">Assign tasks in seconds, track progress without asking; create a task, assign it, and watch it move. No check-in meetings just to find out if something is done.</div>
+                        </div>
+                    </li>
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        <div class="feature-list-text">
+                            <div class="feature-list-title">Sub-Task Breakdown</div>
+                            <div class="feature-list-desc">Break big projects into sub-tasks so nothing falls through the cracks. Every piece of a project is tracked, from the first step to the final submission.</div>
+                        </div>
+                    </li>
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        <div class="feature-list-text">
+                            <div class="feature-list-title">Work Approval System</div>
+                            <div class="feature-list-desc">Accept or reject completed work from your dashboard. When a team member marks a task done, you review and approve or send it back with comments. Accountability is built in.</div>
+                        </div>
+                    </li>
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        <div class="feature-list-text">
+                            <div class="feature-list-title">Activity Visibility</div>
+                            <div class="feature-list-desc">See every team member's activity at a glance; who's overloaded, who has capacity, who's working on what. No duplication of effort. No guessing.</div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Smart Calendar Suite -->
+            <div class="suite-section" style="padding: 0.5rem 0 0; background: transparent; margin-top: 3rem;">
+                <div class="suite-title">
+                    <i class="fas fa-calendar-alt"></i>
+                    Smart Calendar: Scheduling That Runs Itself.
+                </div>
+                <ul class="feature-list">
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        <div class="feature-list-text">
+                            <div class="feature-list-title">Candidate Self-Booking</div>
+                            <div class="feature-list-desc">Let candidates pick their own interview time; share your booking link. They see your available slots (not your private calendar), choose a time, and the meeting is confirmed. No emails.</div>
+                        </div>
+                    </li>
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        <div class="feature-list-text">
+                            <div class="feature-list-title">Team Check-in Scheduling</div>
+                            <div class="feature-list-desc">Team check-ins, booked without the group chat, share your availability with your team, and let them pick. Reminders go out automatically. Cancellations follow your policy.</div>
+                        </div>
+                    </li>
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        <div class="feature-list-text">
+                            <div class="feature-list-title">Privacy-First Calendar Control</div>
+                            <div class="feature-list-desc">Your personal events stay private. Clients and candidates only see what you choose to show. Full control over your calendar, zero exposure to anything else.</div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Flow Monitor Suite -->
+            <div class="suite-section" style="padding: 0.5rem 0 0; background: transparent; margin-top: 3rem;">
+                <div class="suite-title">
+                    <i class="fas fa-clock"></i>
+                    Flow Monitor: Know Exactly Who’s In. In Real Time.
+                </div>
+                <ul class="feature-list">
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        <div class="feature-list-text">
+                            <div class="feature-list-title">Automatic Attendance Tracking</div>
+                            <div class="feature-list-desc">No more guessing who resumed, who's late, or who called in absent; the system tracks exact clock-in and clock-out times automatically, so your attendance records are precise, not approximate.</div>
+                        </div>
+                    </li>
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        <div class="feature-list-text">
+                            <div class="feature-list-title">Verified Check-In Methods</div>
+                            <div class="feature-list-desc">Clock in and out using fingerprint, Face ID, or a unique QR code; no proxy attendance, no buddy punching, no disputes. Every record is tied to the individual, verified automatically.</div>
+                        </div>
+                    </li>
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        <div class="feature-list-text">
+                            <div class="feature-list-title">Actionable Attendance Insights</div>
+                            <div class="feature-list-desc">Turn attendance data into a management tool; see who's consistently late, who's present, and who needs a conversation, all without chasing anyone or cross-referencing a register.</div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Mail & Memo Suite -->
+            <div class="suite-section" style="padding: 0.5rem 0 0; background: transparent; margin-top: 3rem;">
+                <div class="suite-title">
+                    <i class="fas fa-envelope"></i>
+                    Mail & Memo: Communication That Stays Where Work Happens.
+                </div>
+                <ul class="feature-list">
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        <div class="feature-list-text">
+                            <div class="feature-list-title">Structured Internal Communication</div>
+                            <div class="feature-list-desc">Replace the WhatsApp threads and email chains with a structured internal communication system; send messages, share files, and keep every conversation in one central location, built into the same platform where work gets done.</div>
+                        </div>
+                    </li>
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        <div class="feature-list-text">
+                            <div class="feature-list-title">Tracked & Searchable Records</div>
+                            <div class="feature-list-desc">Every message is tracked, every directive is on record; no more 'I didn't see the message' or 'it got lost in the chat.' When communication is structured and searchable, accountability follows naturally.</div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Payroll Suite -->
+            <div class="suite-section" style="padding: 0.5rem 0 0; background: transparent; margin-top: 3rem;">
+                <div class="suite-title">
+                    <i class="fas fa-money-bill-alt"></i>
+                    Payroll: Run Payroll in Minutes, Not Hours.
+                </div>
+                <ul class="feature-list">
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        <div class="feature-list-text">
+                            <div class="feature-list-title">Automated Salary Calculations</div>
+                            <div class="feature-list-desc">Calculate salaries, deductions, and loan repayments without touching a spreadsheet; the system handles the numbers, so your team gets paid accurately and on time, every time.</div>
+                        </div>
+                    </li>
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        <div class="feature-list-text">
+                            <div class="feature-list-title">Full Review & Approval Control</div>
+                            <div class="feature-list-desc">Review and approve payroll before a single payment goes out; full visibility, full control, and zero last-minute errors that damage trust with your team.</div>
+                        </div>
+                    </li>
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        <div class="feature-list-text">
+                            <div class="feature-list-title">Seamless Backend Reconciliation</div>
+                            <div class="feature-list-desc">Everything runs in the background; what used to take hours of reconciliation now takes minutes. So your finance and HR teams spend less time on salary administration and more time on decisions that actually grow the business.</div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- CALL TO ACTION SECTION -->
+    <section class="cta-section" style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); padding: 4rem 0;">
+        <div class="container-custom">
+            <div style="text-align: center;">
+                <a href="{% url 'unified_signup' %}">
+                    <button class="btn-primary-landing" style="background: white; color: var(--primary); font-weight: 700;">
+                        <i class="fas fa-rocket"></i>
+                        SIGN UP NOW FOR FREE
+                    </button>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- OBJECTIONS SECTION -->
+    <section class="objections">
+        <div class="container-custom">
+            <div class="objection-container">
+                <div class="objection-intro">
+                    <p class="objection-intro-text">You might be thinking...</p>
+                </div>
+
+                <!-- Objection 1 -->
+                <div class="objection-item">
+                    <div class="objection-title">
+                        <i class="fas fa-question-circle"></i>
+                        We already use different tools for this...
+                    </div>
+                    <p class="objection-answer">
+                        Most teams use 3–6 different platforms for what TeamManager does in one. That's 3–6 logins, 3–6 subscriptions, and 3–6 chances for things to fall out of sync. <strong>With TeamManager, your recruitment, task management, and scheduling live together, so your data does too. One platform means nothing gets lost between tools.</strong>
+                    </p>
+                </div>
+
+                <!-- Objection 2 -->
+                <div class="objection-item">
+                    <div class="objection-title">
+                        <i class="fas fa-clock"></i>
+                        How long does it take to set up?
+                    </div>
+                    <p class="objection-answer">
+                        <strong>You can start using TeamManager within minutes.</strong> No IT department required. No lengthy onboarding. Create your account, invite your team, and you're live. The intuitive interface makes it easy for your entire team to adopt immediately.
+                    </p>
+                </div>
+
+                <!-- Objection 3 -->
+                <div class="objection-item">
+                    <div class="objection-title">
+                        <i class="fas fa-expand"></i>
+                        Is this right for a team our size?
+                    </div>
+                    <p class="objection-answer">
+                        <strong>TeamManager scales with you, whether you're managing a team of 5 or 500.</strong> Start with what you need today. Add more as your team grows. You're not locked into a rigid structure. Features and capabilities grow with your organization.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CLOSING CTA -->
+    <section class="cta-section">
+        <div class="container-custom">
+            <div class="cta-content">
+                <h2 class="cta-title">Your team deserves a smarter system. Here it is.</h2>
+                <p class="cta-subtitle">
+                    Every day your team operates without a properly aligned structure, you're losing time, missing candidates, and leaving productivity on the table. TeamManager closes that gap.
+                </p>
+                <p style="font-size: 1.3rem; font-weight: 700; margin-bottom: 2rem;">
+                    No more Disorder. No more scattered tools. No more wondering who's working on what.
+                </p>
+                <a href="{% url 'unified_signup' %}">
+                <button class="cta-button">
+                    <i class="fas fa-rocket"></i>
+                    SIGN UP NOW FOR FREE
+                </button>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="container-custom">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 3rem; margin-bottom: 3rem;">
+                <div>
+                    <div class="footer-section-title">
+                        <i class="fas fa-tasks" style="color: var(--primary); margin-right: 0.5rem;"></i>
+                        TeamManager
+                    </div>
+                    <p style="color: rgba(255, 255, 255, 0.7); font-size: 0.9rem; line-height: 1.6;">
+                        The all-in-one HR and team management platform that simplifies recruitment, onboarding, task management, and scheduling.
+                    </p>
+                </div>
+                <!-- <div>
+                    <div class="footer-section-title">Product</div>
+                    <a href="#features" class="footer-link">Features</a>
+                    <a href="#pricing" class="footer-link">Pricing</a>
+                    <a href="#" class="footer-link">How It Works</a>
+                    <a href="#" class="footer-link">Security</a>
+                </div>
+                <div>
+                    <div class="footer-section-title">Company</div>
+                    <a href="#" class="footer-link">About Us</a>
+                    <a href="#" class="footer-link">Blog</a>
+                    <a href="#" class="footer-link">Careers</a>
+                    <a href="#" class="footer-link">Contact</a>
+                </div>
+                <div>
+                    <div class="footer-section-title">Legal</div>
+                    <a href="/policies/terms/" class="footer-link">Terms of Service</a>
+                    <a href="/policies/privacy/" class="footer-link">Privacy Policy</a>
+                    <a href="/policies/cookies/" class="footer-link">Cookie Policy</a>
+                </div>
+            </div> -->
+            <div class="footer-bottom">
+                <p>&copy; 2026 TeamManager. All rights reserved. Built with <i class="fas fa-heart" style="color: var(--danger);"></i> for modern HR teams.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Video Modal -->
+    <div class="modal fade" id="videoModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content" style="background: transparent; border: none;">
+                <div class="modal-header" style="border: none; background: rgba(0,0,0,0.8); border-radius: 1.5rem 1.5rem 0 0;">
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div style="padding: 0; background: #000; border-radius: 0 0 1.5rem 1.5rem; overflow: hidden;">
+                    <div class="video-container" style="margin: 0;">
+                        <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ?rel=0" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Meta Pixel Manual Event Tracking -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            // Find all signup buttons/links
+            const signupElements = document.querySelectorAll(`
+                a[href*="unified_signup"],
+                .btn-secondary-landing,
+                .btn-primary-landing,
+                .cta-button,
+                .cta-buttons button,
+                .cta-section button
+            `);
+
+            console.log(`Meta Pixel: Found ${signupElements.length} signup elements`);
+
+            signupElements.forEach(function(element) {
+                element.addEventListener('click', function() {
+                    if (typeof fbq === 'function') {
+                        fbq('track', 'Lead', {
+                            content_name: 'TeamManager Free Signup',
+                            content_category: 'HR Software',
+                            content_type: 'button_click'
+                        });
+                        console.log('✅ Meta Pixel Lead event fired');
+                    }
+                });
+            });
+        });
+    </script>
+    <!-- SCRIPTS -->
+    <script>
+        // Smooth scroll for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                const href = this.getAttribute('href');
+                if (href !== '#' && document.querySelector(href)) {
+                    e.preventDefault();
+                    document.querySelector(href).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+
+        // Button interactions
+        document.querySelectorAll('[class*="btn"]').forEach(btn => {
+            btn.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-3px)';
+            });
+            btn.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+            });
+        });
+    </script>
+</body>
+</html>

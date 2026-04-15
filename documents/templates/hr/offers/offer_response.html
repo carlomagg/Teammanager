@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}Respond to Job Offer{% endblock %}
+
+{% block content %}
+<style>
+    .card-header { background: linear-gradient(135deg, #63abaaff 0%, #158583ff 100%); color: white; padding: 40px 30px; text-align: center; }
+</style>
+<div class="container py-5" style="max-width:720px;">
+  <div class="card shadow-lg border-0">
+    <div class="card-header">
+      <h2 class="mb-1">Job Offer – {{ offer.application.vacancy.title }}</h2>
+      <p class="mb-0">From {{ offer.application.vacancy.tenant.name }}</p>
+    </div>
+
+    <div class="card-body p-5">
+      {% if messages %}
+        {% for message in messages %}
+          {% if 'memo' not in message.tags %}
+          <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+
+      {% if offer.status == "sent" %}
+        <h4 class="mb-4 text-center">Please let us know your decision</h4>
+
+        <div class="d-grid gap-3 col-10 mx-auto">
+          <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <button type="submit" name="decision" value="accept"
+                    class="btn btn-primary btn-lg py-3 mb-3">
+              <i class="bi bi-check-circle-fill me-2"></i> Accept Offer
+            </button>
+
+            <button type="submit" name="decision" value="decline"
+                    class="btn btn-outline-danger btn-lg py-3">
+              <i class="bi bi-x-circle-fill me-2"></i> Decline Offer
+            </button>
+          </form>
+
+          <!-- Accept + upload signed copy (shown via JS or always visible) -->
+          <div id="upload-section" style="display:none; margin-top:2rem;">
+            <hr>
+            <p class="text-muted mb-3">
+              Great! Please upload your signed copy of the offer letter (PDF recommended).
+            </p>
+            <form method="post" enctype="multipart/form-data">
+              {% csrf_token %}
+              <input type="hidden" name="decision" value="accept_with_document">
+              <div class="mb-3">
+                <input type="file" name="signed_document" class="form-control" accept=".pdf,.doc,.docx" required>
+              </div>
+              <button type="submit" class="btn btn-primary">
+                Submit Signed Document & Accept
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <script>
+          document.querySelectorAll('button[name="decision"][value="accept"]').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+              e.preventDefault();
+              document.getElementById('upload-section').style.display = 'block';
+              window.scrollTo(0, document.body.scrollHeight);
+            });
+          });
+        </script>
+
+      {% elif offer.status == "accepted" %}
+        <div class="alert alert-success text-center py-4">
+          <h4 class="mb-3"><i class="bi bi-check-circle-fill me-2"></i> Thank you!</h4>
+          <p class="mb-0">Your acceptance has been received. We'll be in touch shortly.</p>
+        </div>
+      {% elif offer.status == "declined" %}
+        <div class="alert alert-secondary text-center py-4">
+          <h4 class="mb-3"><i class="bi bi-info-circle me-2"></i> Thank you for your response</h4>
+          <p class="mb-0">We respect your decision and wish you all the best in your future endeavors.</p>
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="card-footer bg-light text-center py-4 text-muted">
+      <small>Offer sent on {{ offer.sent_at|date:"F j, Y" }} • Token: {{ offer.offer_token|slice:":8" }}...</small>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% block title %}New Ticket{% endblock %}
+
+{% block content %}
+<div class="container py-4" style="max-width:760px;">
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h4 class="mb-0"><i class="fas fa-ticket-alt me-2 text-primary"></i>New Ticket</h4>
+      <small class="text-muted">Create a ticket for a walk-in or phone customer</small>
+    </div>
+    <a href="{% url 'ticket_list' %}" class="btn btn-outline-secondary btn-sm">
+      <i class="fas fa-arrow-left me-1"></i>Back
+    </a>
+  </div>
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-header bg-transparent border-bottom fw-semibold py-2">
+        <i class="fas fa-user me-1 text-secondary"></i>Customer Details
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-12 col-md-6">
+            <label class="form-label small fw-semibold">Registered User <span class="text-muted fw-normal">(if exists)</span></label>
+            {{ form.created_by }}
+          </div>
+          <div class="col-12"><div class="text-center text-muted small">— or enter guest details —</div></div>
+          <div class="col-12 col-md-6">
+            <label class="form-label small fw-semibold">Guest Name</label>
+            {{ form.guest_name }}
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label small fw-semibold">Guest Email</label>
+            {{ form.guest_email }}
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label small fw-semibold">Guest Phone</label>
+            {{ form.guest_phone }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-header bg-transparent border-bottom fw-semibold py-2">
+        <i class="fas fa-file-alt me-1 text-primary"></i>Ticket Details
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-12 col-md-6">
+            <label class="form-label small fw-semibold">Category</label>
+            {{ form.category }}
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label small fw-semibold">Priority</label>
+            {{ form.priority }}
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label small fw-semibold">Source</label>
+            {{ form.source }}
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label small fw-semibold">Assign To</label>
+            {{ form.assigned_to }}
+          </div>
+          <div class="col-12">
+            <label class="form-label small fw-semibold">Title <span class="text-danger">*</span></label>
+            {{ form.title }}
+            {% if form.title.errors %}
+              <div class="invalid-feedback d-block">{{ form.title.errors|join:", " }}</div>
+            {% endif %}
+          </div>
+          <div class="col-12">
+            <label class="form-label small fw-semibold">Description</label>
+            {{ form.description }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex gap-2 justify-content-end">
+      <a href="{% url 'ticket_list' %}" class="btn btn-outline-secondary px-4">Cancel</a>
+      <button type="submit" class="btn btn-primary px-5">
+        <i class="fas fa-save me-2"></i>Create Ticket
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

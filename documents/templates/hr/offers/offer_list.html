@@ -1,0 +1,199 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load static %}
+
+{% block page_title %}Job Offers{% endblock page_title %}
+
+{% block extra_css %}
+<style>
+  .offer-card { transition: all 0.18s ease; border-left: 4px solid #e2e8f0; }
+  .offer-card:hover { transform: translateY(-2px); box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
+  .status-badge { font-size: 0.875rem; font-weight: 600; padding: 0.35em 0.75em; border-radius: 9999px; }
+  .status-sent     { background-color: #fef3c7; color: #92400e; }
+  .status-accepted { background-color: #d1fae5; color: #065f46; }
+  .status-declined { background-color: #fee2e2; color: #991b1b; }
+  .status-expired  { background-color: #f3f4f6; color: #4b5563; }
+  .offer-meta { font-size: 0.875rem; color: #6b7280; }
+  .action-btn { min-width: 110px; }
+</style>
+{% endblock extra_css %}
+
+{% block content %}
+
+<div class="container-xl py-4">
+
+  <!-- Header + Search + Create button -->
+
+  {% if job_offers %}
+  <div class="card shadow mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+        <div>
+          <h1 class="h3 mb-1">Job Offers</h1>
+          <div class="text-muted">
+            {% if request.effective_tenant %}
+              Managing offers for <strong>{{ request.effective_tenant.name }}</strong>
+            {% else %}
+              Your created offers
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="d-flex gap-2 flex-wrap">
+          <form class="d-flex" method="get">
+            <input type="search"
+                  name="q"
+                  class="form-control me-2"
+                  placeholder="Search candidate or position..."
+                  value="{{ search_query }}"
+                  aria-label="Search offers">
+            <button class="btn btn-outline-secondary" type="submit">Search</button>
+          </form>
+
+          {% comment %} <a href="{% url 'hr:offer_create' %}" class="btn btn-primary d-inline-flex align-items-center gap-2">
+            <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+            </svg>
+            New Offer
+          </a> {% endcomment %}
+        </div>
+      </div>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="bg-light">
+            <tr>
+              <th>Candidate</th>
+              <th>Position</th>
+              <th>Department</th>
+              <th>Start Date</th>
+              <th>Status</th>
+              <th>Sent</th>
+              <th>Responded</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for offer in job_offers %}
+            <tr class="offer-card">
+              <td>
+                <div class="fw-bold">{{ offer.application.get_full_name|default:"—" }}</div>
+              </td>
+              <td>
+                <div class="text-muted small">{{ offer.application.vacancy.title|default:"(position removed)" }}</div>
+              </td>
+              <td>{{ offer.department.name|default:"—" }}</td>
+              <td>
+                {% if offer.proposed_start_date %}
+                  {{ offer.proposed_start_date|date:"d M Y" }}
+                {% else %}—{% endif %}
+              </td>
+              <td>
+                <span class="status-badge status-{{ offer.status }}">
+                  {{ offer.get_status_display }}
+                </span>
+              </td>
+              <td>
+                <div>{{ offer.sent_at|naturaltime }}</div>
+                <div class="offer-meta">{{ offer.sent_at|date:"d M Y • H:i" }}</div>
+              </td>
+              <td>
+                {% if offer.responded_at %}
+                  <div>{{ offer.responded_at|naturaltime }}</div>
+                  <div class="offer-meta">{{ offer.responded_at|date:"d M Y • H:i" }}</div>
+                {% else %}—{% endif %}
+              </td>
+              <td class="text-end">
+                <div class="d-flex gap-2 justify-content-end flex-wrap">
+                  {% comment %} <a href="{% url 'hr:offer_detail' offer.offer_token %}"
+                     class="btn btn-sm btn-outline-secondary action-btn">View</a>
+
+                  {% if offer.status == "sent" %}
+                    <a href="{% url 'hr:offer_resend' offer.offer_token %}"
+                       class="btn btn-sm btn-outline-primary action-btn">Resend</a>
+                  {% endif %} {% endcomment %}
+
+                  {% if offer.signed_document %}
+                    <a href="{{ offer.signed_document.url }}" target="_blank"
+                       class="btn btn-sm btn-outline-success action-btn">Signed PDF</a>
+                  {% elif offer.offer_letter %}
+                    <a href="{{ offer.offer_letter.url }}" target="_blank"
+                       class="btn btn-sm btn-outline-info action-btn">Offer PDF</a>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="7" class="text-center py-4 text-muted">
+                No offers found matching "{{ search_query }}"
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  {% if is_paginated %}
+  <nav aria-label="Offers pagination" class="mt-4">
+    <ul class="pagination justify-content-center">
+      {% if page_obj.has_previous %}
+        <li class="page-item">
+          <a class="page-link" href="?page=1{% if search_query %}&q={{ search_query }}{% endif %}">« First</a>
+        </li>
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}">Previous</a>
+        </li>
+      {% else %}
+        <li class="page-item disabled"><span class="page-link">« First</span></li>
+        <li class="page-item disabled"><span class="page-link">Previous</span></li>
+      {% endif %}
+
+      {% for num in page_obj.paginator.page_range %}
+        {% if page_obj.number == num %}
+          <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+        {% elif num > page_obj.number|add:"-3" and num < page_obj.number|add:"3" %}
+          <li class="page-item">
+            <a class="page-link" href="?page={{ num }}{% if search_query %}&q={{ search_query }}{% endif %}">{{ num }}</a>
+          </li>
+        {% endif %}
+      {% endfor %}
+
+      {% if page_obj.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}">Next</a>
+        </li>
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&q={{ search_query }}{% endif %}">Last »</a>
+        </li>
+      {% else %}
+        <li class="page-item disabled"><span class="page-link">Next</span></li>
+        <li class="page-item disabled"><span class="page-link">Last »</span></li>
+      {% endif %}
+    </ul>
+  </nav>
+  {% endif %}
+
+  {% else %}
+  <!-- No offers at all -->
+  <div class="text-center py-5 my-5">
+    <div class="display-6 text-muted mb-3">📭</div>
+    <h4 class="text-muted">No job offers yet</h4>
+    <p class="text-muted mb-4">
+      {% if search_query %}
+        No offers match your search for "{{ search_query }}"
+      {% else %}
+        You haven't sent any offers{% if request.effective_tenant %} for this tenant{% endif %}.
+      {% endif %}
+    </p>
+    {% comment %} <a href="{% url 'hr:offer_create' %}" class="btn btn-lg btn-primary">Create First Offer</a> {% endcomment %}
+  </div>
+  {% endif %}
+
+</div>
+
+{% endblock content %}

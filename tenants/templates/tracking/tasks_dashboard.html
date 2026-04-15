@@ -1,0 +1,168 @@
+<div class="container my-4">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card border-0 shadow-sm mb-4" style="background-color: #fff;">
+                <div class="card-header bg-white border-bottom-0">
+                    <h3 class="mb-0"><i class="fas fa-tasks me-2" style="color: #319795;"></i>Task Dashboard</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="card text-center border-0 shadow" style="background-color: #f8fafc;">
+                                <div class="card-body">
+                                    <h5 class="card-title text-muted">Total Tasks</h5>
+                                    <h2 class="card-text" style="color: #2c7a7b;">{{ total_tasks }}</h2>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Add more summary cards if needed -->
+                    </div>
+
+                    <div class="row">
+                        <!-- Bar Chart: Tasks Per Tenant (Top 20) -->
+                        <div class="col-md-6 mb-4">
+                            <div class="card border-0 shadow" style="background-color: #fff;">
+                                <div class="card-header bg-white">
+                                    <h5 class="mb-0">Top 20 Tenants by Task Count</h5>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="tasksPerTenantChart" height="200"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pie Chart: General Status Counts -->
+                        <div class="col-md-6 mb-4">
+                            <div class="card border-0 shadow" style="background-color: #fff;">
+                                <div class="card-header bg-white">
+                                    <h5 class="mb-0">General Task Status Distribution</h5>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="generalStatusChart" height="200"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- Stacked Bar Chart: Status Per Tenant (Top 20 Tenants) -->
+                        <div class="col-md-12 mb-4">
+                            <div class="card border-0 shadow" style="background-color: #fff;">
+                                <div class="card-header bg-white">
+                                    <h5 class="mb-0">Task Statuses Per Top 20 Tenants</h5>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="statusPerTenantChart" height="150"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Include Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Data for charts -->
+{{ tasks_per_tenant|json_script:"tasks-per-tenant-data" }}
+{{ task_general_status_counts|json_script:"general-status-data" }}
+{{ task_status_per_tenant|json_script:"status-per-tenant-data" }}
+
+<script>
+    // Color palette based on main colors
+    const colors = {
+        pending: '#319795',      // Teal
+        in_progress: '#2c7a7b',  // Darker teal
+        completed: '#81e6d9',    // Lighter shade
+        on_hold: '#e6fffa',      // Very light
+        overdue: '#4fd1c5',      // Medium teal
+        cancelled: '#234e52'     // Dark shade
+    };
+
+    // Tasks Per Tenant Bar Chart
+    const tasksPerTenantData = JSON.parse(document.getElementById('tasks-per-tenant-data').textContent);
+    const tenantLabels = tasksPerTenantData.map(item => item.tenant__name || `Tenant ${item.tenant__id}`);
+    const taskCounts = tasksPerTenantData.map(item => item.task_count);
+
+    new Chart(document.getElementById('tasksPerTenantChart'), {
+        type: 'bar',
+        data: {
+            labels: tenantLabels,
+            datasets: [{
+                label: 'Task Count',
+                data: taskCounts,
+                backgroundColor: '#319795',
+                borderColor: '#2c7a7b',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                y: { beginAtZero: true }
+            },
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+
+    // General Status Pie Chart
+    const generalStatusData = JSON.parse(document.getElementById('general-status-data').textContent);
+    const statusLabels = generalStatusData.map(item => item.status.charAt(0).toUpperCase() + item.status.slice(1));
+    const statusCounts = generalStatusData.map(item => item.count);
+    const statusColors = generalStatusData.map(item => colors[item.status] || '#319795');
+
+    new Chart(document.getElementById('generalStatusChart'), {
+        type: 'pie',
+        data: {
+            labels: statusLabels,
+            datasets: [{
+                data: statusCounts,
+                backgroundColor: statusColors
+            }]
+        },
+        options: {
+            plugins: {
+                legend: { position: 'right' }
+            }
+        }
+    });
+
+    // Status Per Tenant Stacked Bar Chart
+    const statusPerTenantData = JSON.parse(document.getElementById('status-per-tenant-data').textContent);
+    
+    // Group data by tenant
+    const tenants = [...new Set(statusPerTenantData.map(item => item.tenant__name || `Tenant ${item.tenant__id}`))];
+    const statuses = [...new Set(statusPerTenantData.map(item => item.status))];
+    
+    const datasets = statuses.map(status => {
+        return {
+            label: status.charAt(0).toUpperCase() + status.slice(1),
+            data: tenants.map(tenant => {
+                const match = statusPerTenantData.find(item => (item.tenant__name || `Tenant ${item.tenant__id}`) === tenant && item.status === status);
+                return match ? match.count : 0;
+            }),
+            backgroundColor: colors[status] || '#319795'
+        };
+    });
+
+    new Chart(document.getElementById('statusPerTenantChart'), {
+        type: 'bar',
+        data: {
+            labels: tenants,
+            datasets: datasets
+        },
+        options: {
+            scales: {
+                x: { stacked: true },
+                y: { stacked: true, beginAtZero: true }
+            },
+            plugins: {
+                legend: { position: 'top' }
+            }
+        }
+    });
+</script>

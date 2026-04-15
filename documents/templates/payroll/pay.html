@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Pay Payroll{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2>Execute Payroll Payment</h2>
+            <p class="text-muted">{{ payroll.period_start|date:"F Y" }}</p>
+        </div>
+    </div>
+
+    <div class="alert alert-warning">
+        <i class="fas fa-exclamation-triangle"></i>
+        <strong>Warning:</strong> This action will create payment records for all employees. This cannot be undone.
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>Payment Summary</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <strong>Employees:</strong><br>
+                    {{ summary.employee_count }}
+                </div>
+                <div class="col-md-3">
+                    <strong>Total Gross:</strong><br>
+                    ₦{{ summary.total_gross|floatformat:2 }}
+                </div>
+                <div class="col-md-3">
+                    <strong>Total Deductions:</strong><br>
+                    ₦{{ summary.total_gross|subtract:summary.total_net|floatformat:2 }}
+                </div>
+                <div class="col-md-3">
+                    <strong>Total Net to Pay:</strong><br>
+                    <span class="text-success"><strong>₦{{ summary.total_net|floatformat:2 }}</strong></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h5>Password Verification</h5>
+        </div>
+        <div class="card-body">
+            <p>Enter the payroll password to authorize this payment.</p>
+            
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label for="{{ form.password.id_for_label }}">{{ form.password.label }}</label>
+                    {{ form.password }}
+                    <small class="form-text text-muted">{{ form.password.help_text }}</small>
+                    {% if form.password.errors %}
+                    <div class="text-danger">{{ form.password.errors }}</div>
+                    {% endif %}
+                </div>
+
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+                {% endif %}
+
+                <div class="form-group">
+                    <button type="submit" class="btn btn-success btn-lg">
+                        <i class="fas fa-money-bill"></i> Execute Payment
+                    </button>
+                    <a href="{% url 'payroll_detail' payroll.pk %}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5>What happens next?</h5>
+        </div>
+        <div class="card-body">
+            <ol>
+                <li>Payment records will be created for each employee</li>
+                <li>Payroll status will be updated to "Paid"</li>
+                <li>Payment records can be processed through your payment provider</li>
+                <li>Staff will receive payment confirmations</li>
+            </ol>
+        </div>
+    </div>
+</div>
+{% endblock %}

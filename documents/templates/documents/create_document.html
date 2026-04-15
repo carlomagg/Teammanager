@@ -1,0 +1,546 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Create Document - TeamManager{% endblock %}
+{% block content %}
+<div class="create-document-page">
+    <div class="card shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h4 class="card-title mb-0">
+                <i class="fas fa-file-alt me-2 text-primary" aria-hidden="true"></i>
+                Generate Documents
+            </h4>
+            <a href="{% url 'document_list' %}" class="btn btn-outline-secondary btn-sm">Back to Documents</a>
+        </div>
+        <div class="card-body">
+            {% if formset.errors or formset.non_form_errors %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <strong>Error:</strong> Please correct the errors below.
+                    <ul>
+                        {% for form in formset %}
+                            {% for field, errors in form.errors.items %}
+                                {% for error in errors %}
+                                    <li>{{ field|title }}: {{ error }}</li>
+                                {% endfor %}
+                            {% endfor %}
+                        {% endfor %}
+                        {% for error in formset.non_form_errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endif %}
+            <form method="POST" id="document-formset" enctype="multipart/form-data" aria-label="Document Creation Form">
+                {% csrf_token %}
+                {{ formset.management_form }}
+                <div id="form-container">
+                    {% for form in formset %}
+                        <div class="form-instance mb-4 p-3 border rounded">
+                            {% comment %} {% if form.id %}
+                                {{ form.id }}
+                            {% endif %} {% endcomment %}
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label for="{{ form.creation_method.id_for_label }}" class="form-label">Creation Method <span class="text-danger">*</span></label>
+                                    {{ form.creation_method }}
+                                    {% if form.creation_method.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.creation_method.errors|join:", " }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-4 template-field">
+                                    <label for="{{ form.document_type.id_for_label }}" class="form-label">Document Type <span class="text-danger">*</span></label>
+                                    {{ form.document_type }}
+                                    {% if form.document_type.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.document_type.errors|join:", " }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-4 upload-field">
+                                    <label for="{{ form.uploaded_file.id_for_label }}" class="form-label">Upload File</label>
+                                    <div class="input-group">
+                                        {{ form.uploaded_file }}
+                                        <button type="button" class="btn btn-outline-primary preview-file-btn" style="display: none;">
+                                            <i class="fas fa-eye"></i> Preview
+                                        </button>
+                                    </div>
+                                    {% if form.uploaded_file.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.uploaded_file.errors|join:", " }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="row g-3 mt-2">
+                                <div class="col-md-4">
+                                    <label for="{{ form.company_name.id_for_label }}" class="form-label">Company Name <span class="text-danger">*</span></label>
+                                    {{ form.company_name }}
+                                    {% if form.company_name.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.company_name.errors|join:", " }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="{{ form.contact_person_name.id_for_label }}" class="form-label">Contact Person Name <span class="text-danger">*</span></label>
+                                    {{ form.contact_person_name }}
+                                    {% if form.contact_person_name.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.contact_person_name.errors|join:", " }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="{{ form.contact_person_email.id_for_label }}" class="form-label">Contact Person Email <span class="text-danger">*</span></label>
+                                    {{ form.contact_person_email }}
+                                    {% if form.contact_person_email.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.contact_person_email.errors|join:", " }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="row g-3 mt-2">
+                                <div class="col-md-4">
+                                    <label for="{{ form.contact_person_designation.id_for_label }}" class="form-label">Contact Person Designation</label>
+                                    {{ form.contact_person_designation }}
+                                    {% if form.contact_person_designation.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.contact_person_designation.errors|join:", " }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="{{ form.sales_rep.id_for_label }}" class="form-label">Sales Rep</label>
+                                    {{ form.sales_rep }}
+                                    {% if form.sales_rep.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.sales_rep.errors|join:", " }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="row g-3 mt-2">
+                                <div class="col-md-12">
+                                    <label for="{{ form.company_address.id_for_label }}" class="form-label">Company Address <span class="text-danger">*</span></label>
+                                    {{ form.company_address }}
+                                    {% if form.company_address.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.company_address.errors|join:", " }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-danger btn-sm remove-form mt-3">Remove</button>
+                        </div>
+                    {% endfor %}
+                </div>
+                <div class="d-flex justify-content-between mt-4">
+                    <button type="button" id="add-form" class="btn btn-primary">Add More</button>
+                    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#confirmSubmitModal">Generate All</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Submit Confirmation Modal -->
+<div class="modal fade" id="confirmSubmitModal" tabindex="-1" aria-labelledby="confirmSubmitModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmSubmitModalLabel">Confirm Submission</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to generate all documents?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" id="confirmSubmitBtn">
+                    Generate
+                    <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style scoped>
+    .create-document-page {
+        padding: 20px;
+    }
+
+    .create-document-page .card {
+        border: none;
+        border-radius: 12px;
+        background: #ffffff;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    body.dark-mode .card {
+        background: #2d3748;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .create-document-page .card-header {
+        background: #f8fafc;
+        border-bottom: 1px solid #e2e8f0;
+        border-radius: 12px 12px 0 0;
+        padding: 15px 20px;
+    }
+
+    body.dark-mode .card-header {
+        background: #3b4a6b !important;
+    }
+
+
+    .create-document-page .card-title {
+        font-weight: 600;
+        color: #2d3748;
+    }
+
+    .create-document-page .form-instance {
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        background: #f8fafc;
+    }
+
+    .create-document-page .form-label {
+        font-weight: 500;
+        color: #2d3748;
+    }
+
+    .create-document-page .form-control, .create-document-page .form-select {
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        font-size: 0.95rem;
+        padding: 10px;
+    }
+
+    body.dark-mode .form-control,
+    body.dark-mode .form-select {
+        background: #2d3748;
+        border-color: #4a5568;
+        color: #e2e8f0;
+    }
+
+
+    .create-document-page .form-control:focus, .create-document-page .form-select:focus {
+        border-color: #319795;
+        box-shadow: 0 0 0 0.2rem rgba(49, 151, 149, 0.25);
+    }
+
+    .create-document-page .form-control[aria-invalid="true"], .create-document-page .form-select[aria-invalid="true"] {
+        border-color: #dc3545;
+    }
+
+    .create-document-page .invalid-feedback {
+        font-size: 0.85rem;
+        color: #dc3545;
+    }
+
+    .create-document-page .btn-primary {
+        background-color: #319795;
+        border-color: #319795;
+        border-radius: 8px;
+        padding: 10px 20px;
+        font-weight: 500;
+    }
+
+    .create-document-page .btn-primary:hover {
+        background-color: #2c7a7b;
+        border-color: #2c7a7b;
+    }
+
+    .create-document-page .btn-success {
+        background-color: #28a745;
+        border-color: #28a745;
+        border-radius: 8px;
+        padding: 10px 20px;
+        font-weight: 500;
+    }
+
+    .create-document-page .btn-success:hover {
+        background-color: #218838;
+        border-color: #218838;
+    }
+
+    .create-document-page .btn-danger {
+        background-color: #dc3545;
+        border-color: #dc3545;
+        border-radius: 8px;
+        padding: 6px 12px;
+    }
+
+    .create-document-page .btn-danger:hover {
+        background-color: #c82333;
+        border-color: #c82333;
+    }
+
+    .create-document-page .btn-outline-secondary {
+        border-color: #e2e8f0;
+        color: #2d3748;
+        border-radius: 8px;
+        padding: 10px 20px;
+    }
+
+    .create-document-page .btn-outline-secondary:hover {
+        background-color: #e2e8f0;
+        color: #2d3748;
+    }
+
+    .create-document-page .btn-outline-primary {
+        border-color: #319795;
+        color: #319795;
+        border-radius: 8px;
+        padding: 10px;
+    }
+
+    .create-document-page .btn-outline-primary:hover {
+        background-color: #319795;
+        color: #ffffff;
+    }
+
+    .create-document-page .modal-content {
+        border-radius: 12px;
+        border: none;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .create-document-page .modal-header, .create-document-page .modal-footer {
+        border-color: #e2e8f0;
+    }
+
+    .create-document-page .modal-title {
+        font-weight: 600;
+        color: #2d3748;
+    }
+
+    .create-document-page a:focus, .create-document-page button:focus, .create-document-page input:focus, .create-document-page select:focus, .create-document-page textarea:focus {
+        outline: 2px solid #319795;
+        outline-offset: 2px;
+        border-radius: 4px;
+    }
+
+    @media (max-width: 768px) {
+        .create-document-page {
+            padding: 15px;
+        }
+
+        .create-document-page .form-instance {
+            padding: 15px;
+        }
+
+        .create-document-page .form-control, .create-document-page .form-select, .create-document-page textarea {
+            font-size: 0.9rem;
+        }
+
+        .create-document-page .btn {
+            font-size: 0.9rem;
+            padding: 8px 16px;
+        }
+    }
+</style>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+
+<script>
+$(document).ready(function() {
+    // Apply Bootstrap classes to form fields
+    $('select[name$="creation_method"], select[name$="document_type"]').addClass('form-select');
+    $('input[name$="company_name"], input[name$="contact_person_name"], input[name$="contact_person_email"], input[name$="contact_person_designation"], input[name$="sales_rep"]').addClass('form-control');
+    $('textarea[name$="company_address"]').addClass('form-control');
+    $('input[name$="uploaded_file"]').addClass('form-control').attr('accept', 'image/*,application/pdf,.docx');
+
+    // Toggle fields based on creation method
+    function toggleFields() {
+        $('.form-instance').each(function() {
+            const creationMethod = $(this).find('select[name$="creation_method"]').val();
+            const $templateField = $(this).find('.template-field');
+            const $uploadField = $(this).find('.upload-field');
+            const $previewBtn = $(this).find('.preview-file-btn');
+            
+            if (creationMethod === 'upload') {
+                $templateField.hide();
+                $uploadField.show();
+                $templateField.find('select[name$="document_type"]').val('');
+            } else {
+                $templateField.show();
+                $uploadField.hide();
+                $uploadField.find('input[name$="uploaded_file"]').val('');
+                $previewBtn.hide();
+            }
+        });
+    }
+
+    // Update preview button visibility
+    function updatePreviewButton() {
+        $('.form-instance').each(function() {
+            const $fileInput = $(this).find('input[name$="uploaded_file"]');
+            const $previewBtn = $(this).find('.preview-file-btn');
+            const file = $fileInput[0].files[0];
+            if (file && (file.type.startsWith('image/') || file.type === 'application/pdf')) {
+                $previewBtn.show();
+            } else {
+                $previewBtn.hide();
+            }
+        });
+    }
+
+    // Run on page load
+    toggleFields();
+    updatePreviewButton();
+
+    // Run when creation_method or file input changes
+    $(document).on('change', 'select[name$="creation_method"]', toggleFields);
+    $(document).on('change', 'input[name$="uploaded_file"]', updatePreviewButton);
+
+    // Client-side validation
+    $('#document-formset').on('submit', function(e) {
+        let valid = true;
+        $('.form-instance').each(function() {
+            const $this = $(this);
+            $this.find(':required').each(function() {
+                if (!this.value) {
+                    $(this).addClass('is-invalid');
+                    $(this).next('.invalid-feedback').text('This field is required.');
+                    valid = false;
+                } else {
+                    $(this).removeClass('is-invalid');
+                    $(this).next('.invalid-feedback').text('');
+                }
+            });
+            const email = $this.find('input[name$="contact_person_email"]').val();
+            if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                $this.find('input[name$="contact_person_email"]').addClass('is-invalid');
+                $this.find('input[name$="contact_person_email"]').next('.invalid-feedback').text('Invalid email format.');
+                valid = false;
+            } else {
+                $this.find('input[name$="contact_person_email"]').removeClass('is-invalid');
+                $this.find('input[name$="contact_person_email"]').next('.invalid-feedback').text('');
+            }
+        });
+        if (!valid) {
+            e.preventDefault();
+            console.log('Form validation failed:', $(this).serializeArray());
+        } else {
+            console.log('Form data:', $(this).serializeArray());
+        }
+    });
+
+    // Autocomplete for sales_rep fields
+    function setupAutocomplete($element) {
+        $element.autocomplete({
+            source: function(request, response) {
+                $.ajax({
+                    url: "{% url 'autocomplete_sales_rep' %}",
+                    dataType: "json",
+                    data: { term: request.term },
+                    success: function(data) {
+                        response(data);
+                    },
+                    error: function(xhr, status, error) {
+                        console.error("Autocomplete error:", error);
+                    }
+                });
+            },
+            minLength: 2,
+            classes: {
+                "ui-autocomplete": "border rounded shadow-sm"
+            },
+            open: function() {
+                $(this).autocomplete('widget').css('z-index', 1056);
+            }
+        }).attr('aria-autocomplete', 'list');
+    }
+
+    // Initial autocomplete setup
+    $('.sales-rep-field').each(function() {
+        setupAutocomplete($(this));
+    });
+
+    // Add new form
+    $('#add-form').click(function() {
+        const formCount = parseInt($('#id_form-TOTAL_FORMS').val());
+        const emptyForm = $('.form-instance:first').clone();
+
+        emptyForm.find(':input').each(function() {
+            const $this = $(this);
+            let nameAttr = $this.attr('name');
+            let idAttr = $this.attr('id');
+
+            if (nameAttr) {
+                $this.attr('name', nameAttr.replace(/-\d+-/, '-' + formCount + '-'));
+            }
+            if (idAttr) {
+                $this.attr('id', idAttr.replace(/-\d+-/, '-' + formCount + '-'));
+            }
+            if ($this.is(':file')) {
+                $this.val('');
+            } else if (!$this.is(':checkbox') && !$this.is(':radio')) {
+                $this.val('');
+            }
+        });
+
+        emptyForm.find('.invalid-feedback').text('');
+        emptyForm.find('.preview-file-btn').hide();
+        emptyForm.find('.ui-autocomplete-input').removeClass('ui-autocomplete-input').removeAttr('aria-autocomplete');
+
+        $('#form-container').append(emptyForm);
+        $('#id_form-TOTAL_FORMS').val(formCount + 1);
+
+        // Reapply Bootstrap classes
+        emptyForm.find('select[name$="creation_method"], select[name$="document_type"]').addClass('form-select');
+        emptyForm.find('input[name$="company_name"], input[name$="contact_person_name"], input[name$="contact_person_email"], input[name$="contact_person_designation"], input[name$="sales_rep"]').addClass('form-control');
+        emptyForm.find('textarea[name$="company_address"]').addClass('form-control');
+        emptyForm.find('input[name$="uploaded_file"]').addClass('form-control').attr('accept', 'image/*,application/pdf');
+
+        toggleFields();
+        emptyForm.find('.sales-rep-field').each(function() {
+            setupAutocomplete($(this));
+        });
+    });
+
+    // Remove form
+    $(document).on('click', '.remove-form', function() {
+        if ($('.form-instance').length > 1) {
+            $(this).closest('.form-instance').remove();
+            $('#id_form-TOTAL_FORMS').val(parseInt($('#id_form-TOTAL_FORMS').val()) - 1);
+        } else {
+            alert('You must have at least one form.');
+        }
+    });
+
+    // Preview file
+    $(document).on('click', '.preview-file-btn', function() {
+        const $fileInput = $(this).closest('.upload-field').find('input[name$="uploaded_file"]');
+        const file = $fileInput[0].files[0];
+        if (!file) return;
+
+        const mediaType = file.type === 'application/pdf' ? 'pdf' : 'image';
+        const mediaName = file.name;
+        const mediaUrl = URL.createObjectURL(file);
+        const mediaContainer = $('#mediaContainer');
+        const modalTitle = $('#mediaModalLabel');
+        const downloadLink = $('#mediaDownloadLink');
+
+        modalTitle.text(mediaName);
+        downloadLink.attr('href', mediaUrl);
+        downloadLink.attr('download', mediaName);
+        mediaContainer.html(mediaType === 'image' ? 
+            `<img src="${mediaUrl}" alt="${mediaName}" class="img-fluid" style="max-width: 100%;">` : 
+            `<iframe src="${mediaUrl}" style="width: 100%; height: 60vh;" title="${mediaName}"></iframe>`);
+
+        const mediaModal = new bootstrap.Modal(document.getElementById('mediaModal'));
+        mediaModal.show();
+
+        $('#mediaModal').one('hidden.bs.modal', function() {
+            URL.revokeObjectURL(mediaUrl);
+        });
+    });
+
+    // Handle form submission via confirmation modal
+    $('#confirmSubmitBtn').click(function() {
+        const $btn = $(this);
+        $btn.find('.spinner-border').removeClass('d-none');
+        $btn.prop('disabled', true);
+        $('#document-formset').submit();
+    });
+
+    // Reset button state when modal closes
+    $('#confirmSubmitModal').on('hidden.bs.modal', function() {
+        const $btn = $('#confirmSubmitBtn');
+        $btn.find('.spinner-border').addClass('d-none');
+        $btn.prop('disabled', false);
+    });
+});
+</script>
+{% endblock %}

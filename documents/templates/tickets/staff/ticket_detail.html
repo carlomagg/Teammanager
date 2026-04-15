@@ -1,0 +1,250 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}{{ ticket.ticket_number }} — {{ ticket.title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+
+  {# ── Header ── #}
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+      <h5 class="mb-0">
+        <i class="fas fa-ticket-alt me-2 text-primary"></i>
+        {{ ticket.ticket_number }}
+        <span class="text-muted fw-normal fs-6 ms-2">{{ ticket.title }}</span>
+      </h5>
+      <small class="text-muted">
+        {{ ticket.get_source_display }} &nbsp;·&nbsp;
+        Opened {{ ticket.created_at|date:"d M Y, H:i" }} by {{ ticket.submitter_display }}
+      </small>
+    </div>
+    <a href="{% url 'ticket_list' %}" class="btn btn-outline-secondary btn-sm">
+      <i class="fas fa-arrow-left me-1"></i>All Tickets
+    </a>
+  </div>
+
+  <div class="row g-3">
+
+    {# ── LEFT: main content ── #}
+    <div class="col-12 col-xl-8">
+
+      {# Description card #}
+      <div class="card border-0 shadow-sm mb-3">
+        <div class="card-header bg-transparent border-bottom fw-semibold py-2">
+          <i class="fas fa-align-left me-1 text-secondary"></i>Description
+        </div>
+        <div class="card-body">
+          <p class="mb-0" style="white-space:pre-wrap;">{{ ticket.description }}</p>
+        </div>
+      </div>
+
+      {# Comments thread #}
+      <div class="card border-0 shadow-sm mb-3">
+        <div class="card-header bg-transparent border-bottom fw-semibold py-2">
+          <i class="fas fa-comments me-1 text-info"></i>
+          Comments <span class="badge bg-secondary ms-1">{{ comments.count }}</span>
+        </div>
+        <div class="card-body">
+          {% for comment in comments %}
+          <div class="d-flex gap-3 mb-4 {% if comment.is_internal %}p-2 rounded bg-warning bg-opacity-10 border border-warning border-opacity-25{% endif %}">
+            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0
+                        {% if comment.is_internal %}bg-warning bg-opacity-25{% else %}bg-primary bg-opacity-10{% endif %}"
+                 style="width:36px;height:36px;">
+              <i class="fas fa-user {% if comment.is_internal %}text-warning{% else %}text-primary{% endif %}"
+                 style="font-size:.8rem;"></i>
+            </div>
+            <div class="flex-grow-1">
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="small fw-semibold">{{ comment.author_display }}</span>
+                <span class="text-muted" style="font-size:.75rem;">{{ comment.created_at|date:"d M Y, H:i" }}</span>
+                {% if comment.is_internal %}
+                <span class="badge bg-warning text-dark" style="font-size:.65rem;">Internal</span>
+                {% endif %}
+              </div>
+              <div class="small" style="white-space:pre-wrap;">{{ comment.content }}</div>
+            </div>
+          </div>
+          {% empty %}
+          <p class="text-muted small text-center py-2">No comments yet.</p>
+          {% endfor %}
+        </div>
+
+        {# Add comment form #}
+        <div class="card-footer bg-transparent border-top">
+          <form method="post" novalidate>
+            {% csrf_token %}
+            <input type="hidden" name="action" value="comment">
+            <div class="mb-2">
+              <label class="form-label small fw-semibold">Add Comment</label>
+              {{ comment_form.content }}
+            </div>
+            {% if is_staff_user and comment_form.is_internal %}
+            <div class="form-check mb-2">
+              {{ comment_form.is_internal }}
+              <label class="form-check-label small" for="{{ comment_form.is_internal.id_for_label }}">
+                {{ comment_form.is_internal.label }}
+              </label>
+            </div>
+            {% endif %}
+            <button type="submit" class="btn btn-primary btn-sm">
+              <i class="fas fa-paper-plane me-1"></i>Post Comment
+            </button>
+          </form>
+        </div>
+      </div>
+
+      {# Queue entries linked to this ticket #}
+      {% if queue_entries %}
+      <div class="card border-0 shadow-sm mb-3">
+        <div class="card-header bg-transparent border-bottom fw-semibold py-2">
+          <i class="fas fa-list-ol me-1 text-secondary"></i>Queue History
+        </div>
+        <div class="card-body p-0">
+          <table class="table table-sm mb-0">
+            <thead class="table-light">
+              <tr><th>Queue #</th><th>Date</th><th>Status</th><th>Served By</th></tr>
+            </thead>
+            <tbody>
+              {% for qe in queue_entries %}
+              <tr>
+                <td class="fw-semibold">{{ qe.queue_number }}</td>
+                <td class="small">{{ qe.issued_at|date:"d M Y" }}</td>
+                <td><span class="badge bg-secondary">{{ qe.get_status_display }}</span></td>
+                <td class="small">{{ qe.served_by.get_full_name|default:"—" }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
+
+    {# ── RIGHT: sidebar ── #}
+    <div class="col-12 col-xl-4">
+
+      {# Status & Priority #}
+      {% if is_staff_user %}
+      <div class="card border-0 shadow-sm mb-3">
+        <div class="card-header bg-transparent border-bottom fw-semibold py-2">
+          <i class="fas fa-sliders-h me-1 text-secondary"></i>Status
+        </div>
+        <div class="card-body">
+          <form method="post" novalidate>
+            {% csrf_token %}
+            <input type="hidden" name="action" value="status">
+            <div class="mb-2">
+              <label class="form-label small fw-semibold">Change Status</label>
+              {{ status_form.status }}
+            </div>
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">Reason <span class="text-muted fw-normal">(optional)</span></label>
+              {{ status_form.note }}
+            </div>
+            <button type="submit" class="btn btn-outline-primary btn-sm w-100">
+              <i class="fas fa-save me-1"></i>Update Status
+            </button>
+          </form>
+        </div>
+      </div>
+
+      {# Assignment #}
+      <div class="card border-0 shadow-sm mb-3">
+        <div class="card-header bg-transparent border-bottom fw-semibold py-2">
+          <i class="fas fa-user-check me-1 text-secondary"></i>Assignment
+        </div>
+        <div class="card-body">
+          <form method="post" novalidate>
+            {% csrf_token %}
+            <input type="hidden" name="action" value="assign">
+            <div class="mb-2">
+              <label class="form-label small fw-semibold">Assign To</label>
+              {{ assign_form.assigned_to }}
+            </div>
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">Priority</label>
+              {{ assign_form.priority }}
+            </div>
+            <button type="submit" class="btn btn-outline-secondary btn-sm w-100">
+              <i class="fas fa-save me-1"></i>Save Assignment
+            </button>
+          </form>
+        </div>
+      </div>
+      {% endif %}
+
+      {# Details panel #}
+      <div class="card border-0 shadow-sm mb-3">
+        <div class="card-header bg-transparent border-bottom fw-semibold py-2">
+          <i class="fas fa-info-circle me-1 text-secondary"></i>Details
+        </div>
+        <div class="card-body">
+          <dl class="row small mb-0">
+            <dt class="col-5 text-muted">Status</dt>
+            <dd class="col-7">
+              {% if ticket.status == 'escalated' %}
+                <span class="badge bg-danger">{{ ticket.get_status_display }}</span>
+              {% elif ticket.status == 'in_progress' %}
+                <span class="badge bg-primary">{{ ticket.get_status_display }}</span>
+              {% elif ticket.status == 'new' %}
+                <span class="badge bg-info">{{ ticket.get_status_display }}</span>
+              {% elif ticket.status == 'resolved' or ticket.status == 'closed' %}
+                <span class="badge bg-secondary">{{ ticket.get_status_display }}</span>
+              {% else %}
+                <span class="badge bg-warning text-dark">{{ ticket.get_status_display }}</span>
+              {% endif %}
+            </dd>
+            <dt class="col-5 text-muted">Priority</dt>
+            <dd class="col-7">
+              {% if ticket.priority %}
+                <span class="badge {{ ticket.priority.badge_class }}">{{ ticket.priority.name }}</span>
+              {% else %}—{% endif %}
+            </dd>
+            <dt class="col-5 text-muted">Category</dt>
+            <dd class="col-7">{{ ticket.category.name|default:"—" }}</dd>
+            <dt class="col-5 text-muted">Source</dt>
+            <dd class="col-7">{{ ticket.get_source_display }}</dd>
+            <dt class="col-5 text-muted">Assigned To</dt>
+            <dd class="col-7">{{ ticket.assigned_to.get_full_name|default:"—" }}</dd>
+            <dt class="col-5 text-muted">Created</dt>
+            <dd class="col-7">{{ ticket.created_at|date:"d M Y" }}</dd>
+            {% if ticket.resolved_at %}
+            <dt class="col-5 text-muted">Resolved</dt>
+            <dd class="col-7">{{ ticket.resolved_at|date:"d M Y" }}</dd>
+            {% endif %}
+          </dl>
+        </div>
+      </div>
+
+      {# Status history #}
+      {% if history %}
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-transparent border-bottom fw-semibold py-2">
+          <i class="fas fa-history me-1 text-secondary"></i>Audit Trail
+        </div>
+        <div class="card-body p-0">
+          <ul class="list-group list-group-flush">
+            {% for h in history %}
+            <li class="list-group-item px-3 py-2 small">
+              <span class="text-muted">{{ h.changed_at|date:"d M, H:i" }}</span>
+              &nbsp;
+              <span class="badge bg-light text-dark border">{{ h.from_status|default:"—" }}</span>
+              <i class="fas fa-arrow-right mx-1 text-muted" style="font-size:.6rem;"></i>
+              <span class="badge bg-primary">{{ h.to_status }}</span>
+              {% if h.changed_by %}
+              <span class="text-muted ms-1">by {{ h.changed_by.get_full_name|default:h.changed_by.username }}</span>
+              {% endif %}
+              {% if h.note %}<div class="text-muted fst-italic mt-1">{{ h.note }}</div>{% endif %}
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+</div>
+{% endblock %}

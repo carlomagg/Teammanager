@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+{% load static humanize %}
+
+{% block title %}Upload Files - {{ conference.title }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2><i class="fas fa-upload me-2 text-teal"></i>Upload Files</h2>
+                    <p class="text-muted mb-0">{{ conference.title }}</p>
+                </div>
+                <a href="{% url 'conference_detail' conference.id %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>Back to Conference
+                </a>
+            </div>
+
+            <!-- Upload Card -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-teal text-white">
+                    <h5 class="mb-0"><i class="fas fa-cloud-upload-alt me-2"></i>Upload Your Files</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Welcome, {{ participant.name }}!</strong><br>
+                        <small>Upload your slides, posters, abstracts, videos, or any conference-related files here.</small>
+                    </div>
+
+                    <!-- Upload Form -->
+                    <form id="uploadForm" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <input type="hidden" name="folder" value="{{ upload_folder.id }}">
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Select File</label>
+                            {{ file_form.file }}
+                            <small class="form-text text-muted d-block mt-1">
+                                Maximum file size: 50MB
+                            </small>
+                        </div>
+
+                        <button type="submit" class="btn btn-teal text-white">
+                            <i class="fas fa-upload me-2"></i>Upload File
+                        </button>
+                    </form>
+
+                    <!-- Upload Progress -->
+                    <div id="uploadProgress" class="mt-3" style="display: none;">
+                        <div class="progress">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated bg-teal" 
+                                 role="progressbar" 
+                                 style="width: 0%"></div>
+                        </div>
+                        <small class="text-muted">Uploading...</small>
+                    </div>
+
+                    <!-- Upload Messages -->
+                    <div id="uploadMessages" class="mt-3"></div>
+                </div>
+            </div>
+
+            <!-- My Uploads -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-file me-2"></i>My Uploads</h5>
+                </div>
+                <div class="card-body">
+                    {% if participant_files %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>File Name</th>
+                                        <th>Uploaded</th>
+                                        <th>Size</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for file in participant_files %}
+                                    <tr>
+                                        <td>
+                                            <i class="fas fa-file-{{ file.get_file_type_icon }} me-2 text-muted"></i>
+                                            {{ file.original_name }}
+                                        </td>
+                                        <td>{{ file.uploaded_at|naturaltime }}</td>
+                                        <td>{{ file.file.size|filesizeformat }}</td>
+                                        <td>
+                                            <a href="{{ file.file.url }}" 
+                                               class="btn btn-sm btn-outline-primary" 
+                                               download>
+                                                <i class="fas fa-download"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-file-upload fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">You haven't uploaded any files yet.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- All Uploads (Optional - show if you want participants to see each other's files) -->
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-users me-2"></i>All Participant Uploads</h5>
+                </div>
+                <div class="card-body">
+                    {% if all_files %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>File Name</th>
+                                        <th>Uploaded By</th>
+                                        <th>Uploaded</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for file in all_files %}
+                                    <tr>
+                                        <td>
+                                            <i class="fas fa-file me-2 text-muted"></i>
+                                            {{ file.original_name }}
+                                        </td>
+                                        <td>
+                                            {% if file.uploaded_by %}
+                                                {{ file.uploaded_by.get_full_name|default:file.uploaded_by.username }}
+                                            {% elif file.anon_name %}
+                                                {{ file.anon_name }}
+                                            {% else %}
+                                                Anonymous
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ file.uploaded_at|naturaltime }}</td>
+                                        <td>
+                                            <a href="{{ file.file.url }}" 
+                                               class="btn btn-sm btn-outline-primary" 
+                                               download>
+                                                <i class="fas fa-download"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No files uploaded yet.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('uploadForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const form = this;
+    const formData = new FormData(form);
+    const progressDiv = document.getElementById('uploadProgress');
+    const messagesDiv = document.getElementById('uploadMessages');
+    const progressBar = progressDiv.querySelector('.progress-bar');
+    
+    // Show progress
+    progressDiv.style.display = 'block';
+    messagesDiv.innerHTML = '';
+    
+    fetch('{% url "conference_participant_uploads" conference.id %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        progressDiv.style.display = 'none';
+        
+        if (data.success) {
+            messagesDiv.innerHTML = `
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle me-2"></i>
+                    ${data.message || 'File uploaded successfully!'}
+                </div>
+            `;
+            form.reset();
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            messagesDiv.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Upload failed. Please try again.
+                </div>
+            `;
+        }
+    })
+    .catch(error => {
+        progressDiv.style.display = 'none';
+        messagesDiv.innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                An error occurred. Please try again.
+            </div>
+        `;
+    });
+});
+</script>
+
+<style>
+.bg-teal { background-color: #319795; }
+.btn-teal { background-color: #319795; border-color: #319795; }
+.btn-teal:hover { background-color: #2c7a7b; border-color: #2c7a7b; }
+.text-teal { color: #319795; }
+</style>
+{% endblock %}

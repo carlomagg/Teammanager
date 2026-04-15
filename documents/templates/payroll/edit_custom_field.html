@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edit Custom Field{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>Edit Custom Field</h2>
+            <p class="text-muted">Update the custom payroll field details</p>
+        </div>
+        <div class="col-md-4 text-right">
+            <a href="{% url 'manage_custom_fields' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Custom Fields
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Edit Field: {{ field.label }}</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="form-group">
+                            <label for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+                            {{ form.name }}
+                            <small class="form-text text-muted">{{ form.name.help_text }}</small>
+                            {% if form.name.errors %}
+                            <div class="text-danger">{{ form.name.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.label.id_for_label }}">{{ form.label.label }}</label>
+                            {{ form.label }}
+                            <small class="form-text text-muted">{{ form.label.help_text }}</small>
+                            {% if form.label.errors %}
+                            <div class="text-danger">{{ form.label.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.operation.id_for_label }}">{{ form.operation.label }}</label>
+                            {{ form.operation }}
+                            <small class="form-text text-muted">{{ form.operation.help_text }}</small>
+                            {% if form.operation.errors %}
+                            <div class="text-danger">{{ form.operation.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.order.id_for_label }}">{{ form.order.label }}</label>
+                            {{ form.order }}
+                            <small class="form-text text-muted">{{ form.order.help_text }}</small>
+                            {% if form.order.errors %}
+                            <div class="text-danger">{{ form.order.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group form-check">
+                            {{ form.is_active }}
+                            <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                Active
+                            </label>
+                            <small class="form-text text-muted">Uncheck to deactivate this field without deleting it</small>
+                        </div>
+
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Update Field
+                            </button>
+                            <a href="{% url 'manage_custom_fields' %}" class="btn btn-secondary">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6><i class="fas fa-info-circle"></i> Tips</h6>
+                </div>
+                <div class="card-body">
+                    <small>
+                        <p><strong>Name:</strong> Internal identifier (lowercase, no spaces)</p>
+                        <p><strong>Label:</strong> Display name shown in forms</p>
+                        <p><strong>Operation:</strong> How this field affects net amount</p>
+                        <p><strong>Order:</strong> Lower numbers appear first</p>
+                        <p><strong>Active Status:</strong> Toggle to enable/disable without deleting</p>
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Subscription Adjustments{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="display-6 fw-bold" style="color: var(--primary-dark);">
+                <i class="fas fa-chart-line me-2"></i>Subscription Adjustments
+            </h1>
+            <p class="text-muted">Monitor all prorated charges and credits from user changes</p>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-icon" style="background: linear-gradient(135deg, #4299e1 0%, #2b6cb0 100%);">
+                    <i class="fas fa-exchange-alt"></i>
+                </div>
+                <div class="stats-value">{{ adjustments|length }}</div>
+                <div class="stats-label">Total Adjustments</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-icon" style="background: linear-gradient(135deg, #48bb78 0%, #2f855a 100%);">
+                    <i class="fas fa-arrow-up"></i>
+                </div>
+                {% with total_charges=adjustments|dictsortreversed:"amount"|length %}
+                <div class="stats-value">${{ total_charges|floatformat:0 }}</div>
+                {% endwith %}
+                <div class="stats-label">Total Charges</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-icon" style="background: linear-gradient(135deg, #f56565 0%, #c53030 100%);">
+                    <i class="fas fa-arrow-down"></i>
+                </div>
+                <div class="stats-value">$0</div>
+                <div class="stats-label">Total Credits</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-icon" style="background: linear-gradient(135deg, #ecc94b 0%, #b7791f 100%);">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stats-value">{{ adjustments|length }}</div>
+                <div class="stats-label">Users Adjusted</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-header light-header">
+            <i class="fas fa-filter me-2"></i>Filter Adjustments
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label for="tenant" class="form-label">Tenant</label>
+                    <select name="tenant" id="tenant" class="form-select">
+                        <option value="">All Tenants</option>
+                        {% for tenant in tenants %}
+                        <option value="{{ tenant.id }}" {% if request.GET.tenant == tenant.id|stringformat:"i" %}selected{% endif %}>
+                            {{ tenant.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="date_from" class="form-label">Date From</label>
+                    <input type="date" class="form-control" id="date_from" name="date_from" value="{{ request.GET.date_from }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="date_to" class="form-label">Date To</label>
+                    <input type="date" class="form-control" id="date_to" name="date_to" value="{{ request.GET.date_to }}">
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search me-2"></i>Filter
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Adjustments Table -->
+    <div class="card">
+        <div class="card-header">
+            <i class="fas fa-history me-2"></i>Adjustment History
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Date & Time</th>
+                            <th>Tenant</th>
+                            <th>Subscription</th>
+                            <th>Type</th>
+                            <th>User Change</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for adjustment in adjustments %}
+                        <tr>
+                            <td>
+                                <i class="fas fa-calendar-alt text-muted me-1"></i>
+                                {{ adjustment.created_at|date:"M d, Y" }}
+                                <br>
+                                <small class="text-muted">{{ adjustment.created_at|time:"g:i A" }}</small>
+                            </td>
+                            <td>
+                                <strong>{{ adjustment.content_object.tenant.name|default:"N/A" }}</strong>
+                                <br>
+                                <small class="text-muted">ID: {{ adjustment.content_object.tenant.id|default:"N/A" }}</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-info">#{{ adjustment.object_id }}</span>
+                                <br>
+                                <small>{{ adjustment.content_object.plan.name|default:"Unknown" }}</small>
+                            </td>
+                            <td>
+                                {% if "charge" in adjustment.description|lower %}
+                                <span class="badge bg-success">Charge</span>
+                                {% else %}
+                                <span class="badge bg-warning">Credit</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% with users=adjustment.metadata %}
+                                {% if users.old_user_count and users.new_user_count %}
+                                <span class="text-muted">{{ users.old_user_count }}</span>
+                                <i class="fas fa-arrow-right mx-1"></i>
+                                <span class="fw-bold">{{ users.new_user_count }}</span>
+                                <br>
+                                <small class="text-{% if users.new_user_count > users.old_user_count %}success{% else %}danger{% endif %}">
+                                    {% if users.new_user_count > users.old_user_count %}+{% else %}-{% endif %}
+                                    {{ users.new_user_count|add:"-"|add:users.old_user_count }}
+                                </small>
+                                {% endif %}
+                                {% endwith %}
+                            </td>
+                            <td>
+                                <strong class="{% if adjustment.direction == 'incoming' %}text-success{% else %}text-danger{% endif %}">
+                                    {% if adjustment.direction == 'incoming' %}+{% else %}-{% endif %}
+                                    ${{ adjustment.amount|floatformat:2 }}
+                                </strong>
+                            </td>
+                            <td>
+                                {% if adjustment.status == 'success' %}
+                                <span class="badge bg-success">Completed</span>
+                                {% elif adjustment.status == 'pending' %}
+                                <span class="badge bg-warning">Pending</span>
+                                {% else %}
+                                <span class="badge bg-danger">Failed</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'subscription_payment_detail' adjustment.id %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-5">
+                                <i class="fas fa-chart-line fa-3x mb-3" style="color: var(--primary-light);"></i>
+                                <h5>No Adjustments Found</h5>
+                                <p class="text-muted">Adjustments will appear here when users are added or removed from subscriptions</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

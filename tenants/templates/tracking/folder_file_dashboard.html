@@ -1,0 +1,295 @@
+<div class="container my-4">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card border-0 shadow-sm mb-4" style="background-color: #fff;">
+                <div class="card-header bg-white border-bottom-0">
+                    <h3 class="mb-0"><i class="fas fa-folder me-2" style="color: #319795;"></i>Folder & File Dashboard</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card text-center border-0 shadow" style="background-color: #f8fafc;">
+                                <div class="card-body">
+                                    <h5 class="card-title text-muted">Total Folders</h5>
+                                    <h2 class="card-text" style="color: #2c7a7b;">{{ total_folders }}</h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-center border-0 shadow" style="background-color: #f8fafc;">
+                                <div class="card-body">
+                                    <h5 class="card-title text-muted">Total Shared Folders</h5>
+                                    <h2 class="card-text" style="color: #2c7a7b;">{{ total_shared_folders }}</h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-center border-0 shadow" style="background-color: #f8fafc;">
+                                <div class="card-body">
+                                    <h5 class="card-title text-muted">Total Files</h5>
+                                    <h2 class="card-text" style="color: #2c7a7b;">{{ total_files }}</h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-center border-0 shadow" style="background-color: #f8fafc;">
+                                <div class="card-body">
+                                    <h5 class="card-title text-muted">Total Shared Files</h5>
+                                    <h2 class="card-text" style="color: #2c7a7b;">{{ total_shared_files }}</h2>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- Bar Chart: Folders Per Tenant (Top 20) -->
+                        <div class="col-md-6 mb-4">
+                            <div class="card border-0 shadow" style="background-color: #fff;">
+                                <div class="card-header bg-white">
+                                    <h5 class="mb-0">Top 20 Tenants by Folder Count</h5>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="folder-foldersPerTenantChart" height="200"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pie Chart: General Folder Shared Distribution -->
+                        <div class="col-md-6 mb-4">
+                            <div class="card border-0 shadow" style="background-color: #fff;">
+                                <div class="card-header bg-white">
+                                    <h5 class="mb-0">General Folder Shared Distribution</h5>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="folder-generalFolderSharedChart" height="200"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- Bar Chart: Shared Folders Per Tenant (Top 20) -->
+                        <div class="col-md-6 mb-4">
+                            <div class="card border-0 shadow" style="background-color: #fff;">
+                                <div class="card-header bg-white">
+                                    <h5 class="mb-0">Top 20 Tenants by Shared Folder Count</h5>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="folder-sharedFoldersPerTenantChart" height="200"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bar Chart: Files Per Tenant (Top 20) -->
+                        <div class="col-md-6 mb-4">
+                            <div class="card border-0 shadow" style="background-color: #fff;">
+                                <div class="card-header bg-white">
+                                    <h5 class="mb-0">Top 20 Tenants by File Count</h5>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="folder-filesPerTenantChart" height="200"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- Pie Chart: General File Shared Distribution -->
+                        <div class="col-md-6 mb-4">
+                            <div class="card border-0 shadow" style="background-color: #fff;">
+                                <div class="card-header bg-white">
+                                    <h5 class="mb-0">General File Shared Distribution</h5>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="folder-generalFileSharedChart" height="200"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bar Chart: Shared Files Per Tenant (Top 20) -->
+                        <div class="col-md-6 mb-4">
+                            <div class="card border-0 shadow" style="background-color: #fff;">
+                                <div class="card-header bg-white">
+                                    <h5 class="mb-0">Top 20 Tenants by Shared File Count</h5>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="folder-sharedFilesPerTenantChart" height="200"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Include Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Data for charts -->
+{{ folders_per_tenant|json_script:"folder-folders-per-tenant-data" }}
+{{ shared_folders_per_tenant|json_script:"folder-shared-folders-per-tenant-data" }}
+{{ files_per_tenant|json_script:"folder-files-per-tenant-data" }}
+{{ shared_files_per_tenant|json_script:"folder-shared-files-per-tenant-data" }}
+{{ general_folder_shared|json_script:"folder-general-folder-shared-data" }}
+{{ general_file_shared|json_script:"folder-general-file-shared-data" }}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const colors = {
+        Shared: '#319795',
+        'Non-Shared': '#2c7a7b'
+    };
+
+    let folderChartsInitialized = false;
+
+    // Helper to safely create chart
+    const createChart = (canvasId, config) => {
+        const canvas = document.getElementById(canvasId);
+        if (canvas && canvas.getContext) {
+            return new Chart(canvas, config);
+        }
+    };
+
+    // Run chart creation only once
+    const initializeCharts = () => {
+        if (folderChartsInitialized) return;
+        folderChartsInitialized = true;
+
+        // ===== Folders per Tenant =====
+        const foldersPerTenantData = JSON.parse(document.getElementById('folder-folders-per-tenant-data').textContent);
+        const folderTenantLabels = foldersPerTenantData.map(item => item.tenant__name || `Tenant ${item.tenant__id}`);
+        const folderCounts = foldersPerTenantData.map(item => item.folder_count);
+
+        createChart('folder-foldersPerTenantChart', {
+            type: 'bar',
+            data: {
+                labels: folderTenantLabels,
+                datasets: [{
+                    label: 'Folder Count',
+                    data: folderCounts,
+                    backgroundColor: '#319795',
+                    borderColor: '#2c7a7b',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: { y: { beginAtZero: true } },
+                plugins: { legend: { display: false } }
+            }
+        });
+
+        // ===== General Folder Shared =====
+        const generalFolderSharedData = JSON.parse(document.getElementById('folder-general-folder-shared-data').textContent);
+        const folderSharedLabels = generalFolderSharedData.map(item => item.shared);
+        const folderSharedCounts = generalFolderSharedData.map(item => item.count);
+        const folderSharedColors = generalFolderSharedData.map(item => colors[item.shared] || '#319795');
+
+        createChart('folder-generalFolderSharedChart', {
+            type: 'pie',
+            data: {
+                labels: folderSharedLabels,
+                datasets: [{
+                    data: folderSharedCounts,
+                    backgroundColor: folderSharedColors
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'right' } } }
+        });
+
+        // ===== Shared Folders Per Tenant =====
+        const sharedFoldersPerTenantData = JSON.parse(document.getElementById('folder-shared-folders-per-tenant-data').textContent);
+        const sharedFolderTenantLabels = sharedFoldersPerTenantData.map(item => item.tenant__name || `Tenant ${item.tenant__id}`);
+        const sharedFolderCounts = sharedFoldersPerTenantData.map(item => item.shared_folder_count);
+
+        createChart('folder-sharedFoldersPerTenantChart', {
+            type: 'bar',
+            data: {
+                labels: sharedFolderTenantLabels,
+                datasets: [{
+                    label: 'Shared Folder Count',
+                    data: sharedFolderCounts,
+                    backgroundColor: '#319795',
+                    borderColor: '#2c7a7b',
+                    borderWidth: 1
+                }]
+            },
+            options: { responsive: true, scales: { y: { beginAtZero: true } }, plugins: { legend: { display: false } } }
+        });
+
+        // ===== Files Per Tenant =====
+        const filesPerTenantData = JSON.parse(document.getElementById('folder-files-per-tenant-data').textContent);
+        const fileTenantLabels = filesPerTenantData.map(item => item.tenant__name || `Tenant ${item.tenant__id}`);
+        const fileCounts = filesPerTenantData.map(item => item.file_count);
+
+        createChart('folder-filesPerTenantChart', {
+            type: 'bar',
+            data: {
+                labels: fileTenantLabels,
+                datasets: [{
+                    label: 'File Count',
+                    data: fileCounts,
+                    backgroundColor: '#319795',
+                    borderColor: '#2c7a7b',
+                    borderWidth: 1
+                }]
+            },
+            options: { responsive: true, scales: { y: { beginAtZero: true } }, plugins: { legend: { display: false } } }
+        });
+
+        // ===== General File Shared =====
+        const generalFileSharedData = JSON.parse(document.getElementById('folder-general-file-shared-data').textContent);
+        const fileSharedLabels = generalFileSharedData.map(item => item.shared);
+        const fileSharedCounts = generalFileSharedData.map(item => item.count);
+        const fileSharedColors = generalFileSharedData.map(item => colors[item.shared] || '#319795');
+
+        createChart('folder-generalFileSharedChart', {
+            type: 'pie',
+            data: {
+                labels: fileSharedLabels,
+                datasets: [{
+                    data: fileSharedCounts,
+                    backgroundColor: fileSharedColors
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'right' } } }
+        });
+
+        // ===== Shared Files Per Tenant =====
+        const sharedFilesPerTenantData = JSON.parse(document.getElementById('folder-shared-files-per-tenant-data').textContent);
+        const sharedFileTenantLabels = sharedFilesPerTenantData.map(item => item.tenant__name || `Tenant ${item.tenant__id}`);
+        const sharedFileCounts = sharedFilesPerTenantData.map(item => item.shared_file_count);
+
+        createChart('folder-sharedFilesPerTenantChart', {
+            type: 'bar',
+            data: {
+                labels: sharedFileTenantLabels,
+                datasets: [{
+                    label: 'Shared File Count',
+                    data: sharedFileCounts,
+                    backgroundColor: '#319795',
+                    borderColor: '#2c7a7b',
+                    borderWidth: 1
+                }]
+            },
+            options: { responsive: true, scales: { y: { beginAtZero: true } }, plugins: { legend: { display: false } } }
+        });
+    };
+
+    // 🟢 Trigger when Folders & Files tab becomes visible
+    const folderTab = document.getElementById('folders-files-tab');
+    if (folderTab) {
+        folderTab.addEventListener('shown.bs.tab', () => {
+            initializeCharts();
+            // Ensure Chart.js resizes after tab becomes visible
+            setTimeout(() => {
+                Object.values(Chart.instances).forEach(c => c.resize());
+            }, 100);
+        });
+    }
+
+    // Optional fallback: if no tabs (standalone page)
+    if (!folderTab) initializeCharts();
+});
+</script>

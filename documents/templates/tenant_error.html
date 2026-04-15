@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+    {% if error_code %}
+        {{ error_code }} Error - TeamManager
+    {% else %}
+        Error - TeamManager
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <div class="card shadow-sm border-0 mt-4" style="border-radius: 12px;">
+                <div class="card-header bg-transparent">
+                    <h1 class="mb-0"><i class="fas fa-exclamation-circle me-2 text-primary"></i> 
+                        {% if error_code %}
+                            {{ error_code }} Error
+                        {% else %}
+                            Error
+                        {% endif %}
+                    </h1>
+                </div>
+                <div class="card-body text-center">
+                    <p class="text-gray-700">
+                        {% if error_code == '401' %}
+                            {{ message|default:"You are not authorized to access this page." }}
+                            <a href={{ tenant_url }} class="btn btn-primary">Access your company's data</a>
+                        {% elif error_code == '403' %}
+                            {{ message|default:"You are not forbidden to access this page." }}
+                        {% elif error_code == '404' %}
+                            {{ message|default:"The page you are looking for could not be found." }}
+                        {% elif error_code == '500' %}
+                            {{ message|default:"An unexpected server error occurred. Please try again later." }}
+                        {% else %}
+                            {{ message|default:"An error occurred. Please try again." }}
+                        {% endif %}
+                    </p>
+                    {% if not user.is_authenticated or user.is_superuser %}
+                        <a href="{% url 'tenant_home' %}" class="btn btn-primary btn-sm mt-3" data-bs-toggle="tooltip" title="Return to Home">
+                            <i class="fas fa-arrow-left me-1"></i> Back to Home
+                        </a>
+                    {% else %}
+                        <a href="{% url 'home' %}" class="btn btn-primary btn-sm mt-3" data-bs-toggle="tooltip" title="Return to Home">
+                            <i class="fas fa-arrow-left me-1"></i> Back to Home
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        border-radius: 12px;
+    }
+    body.dark-mode .card {
+        background: #2d3748;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    body.dark-mode .card-body p {
+        color: #e2e8f0;
+    }
+    .text-primary {
+        color: #319795 !important;
+    }
+    .btn-primary {
+        background-color: #319795;
+        border-color: #319795;
+    }
+    .btn-primary:hover {
+        background-color: #2c7a7b;
+        border-color: #2c7a7b;
+    }
+    body.dark-mode .btn-primary {
+        background-color: #319795;
+        border-color: #319795;
+    }
+    body.dark-mode .btn-primary:hover {
+        background-color: #2c7a7b;
+        border-color: #2c7a7b;
+    }
+    .text-gray-700 {
+        color: #2d3748;
+    }
+    body.dark-mode .text-gray-700 {
+        color: #e2e8f0;
+    }
+    @media (max-width: 768px) {
+        .card-header h1 {
+            font-size: 1.5rem;
+        }
+        .card-body p {
+            font-size: 0.9rem;
+        }
+        .btn-sm {
+            font-size: 0.85rem;
+        }
+    }
+</style>
+
+<script>
+$(document).ready(function() {
+    // Initialize Bootstrap tooltips
+    $('[data-bs-toggle="tooltip"]').tooltip();
+});
+</script>
+{% endblock %}

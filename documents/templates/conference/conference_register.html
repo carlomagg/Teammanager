@@ -1,0 +1,555 @@
+{% extends "base.html" %}
+{% block title %}Register — {{ conference.title }}{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card shadow-sm my-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <div>
+            <h5 class="mb-0"><i class="fas fa-user-plus me-2"></i> Register for {{ conference.title }}</h5>
+            <small class="text-muted">{{ conference.start_date|date:"SHORT_DATETIME_FORMAT" }} — {{ conference.end_date|date:"SHORT_DATETIME_FORMAT" }}</small>
+          </div>
+          <a href="{% url 'conference_post' conference_id=conference.id %}" class="btn btn-sm btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Back
+          </a>
+        </div>
+
+        <form method="post" class="card-body" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+
+        {% if messages %}
+          {% for message in messages %}
+            {% if 'memo' not in message.tags %}
+              <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+              </div>
+            {% endif %}
+          {% endfor %}
+        {% endif %}
+
+        {% if form.non_field_errors %}
+          <div class="alert alert-danger">
+            {{ form.non_field_errors }}
+          </div>
+        {% endif %}
+
+        <div class="row g-3">
+
+          <!-- Title, Gender & Age -->
+          <div class="col-md-6">
+            {{ form.title.label_tag }}
+            {{ form.title }}
+            {{ form.title.errors }}
+          </div>
+
+          <div class="col-md-6">
+            {{ form.age.label_tag }}
+            {{ form.age }}
+            {{ form.age.errors }}
+          </div>
+
+          <div class="col-md-6">
+            {{ form.gender.label_tag }}
+            {{ form.gender }}
+            {{ form.gender.errors }}
+          </div>
+
+          <!-- Name -->
+          <div class="col-md-6">
+            {{ form.first_name.label_tag }}
+            {{ form.first_name }}
+            {{ form.first_name.errors }}
+          </div>
+
+          <div class="col-md-6">
+            {{ form.last_name.label_tag }}
+            {{ form.last_name }}
+            {{ form.last_name.errors }}
+          </div>
+
+          <!-- Contact -->
+          <div class="col-md-6">
+            {{ form.email.label_tag }}
+            {{ form.email }}
+            {{ form.email.errors }}
+          </div>
+
+          <div class="col-md-6">
+            {{ form.phone_number.label_tag }}
+            {{ form.phone_number }}
+            {{ form.phone_number.errors }}
+          </div>
+
+          <!-- Location -->
+          <div class="col-md-6">
+            {{ form.country.label_tag }}
+            {{ form.country }}
+            {{ form.country.errors }}
+          </div>
+
+          <div class="col-md-6">
+            <p>State/Region?</p>
+            {% comment %} {{ form.city.label_tag }} {% endcomment %}
+            {{ form.city }}
+            {{ form.city.errors }}
+          </div>
+
+          {% if conference.conference_type == "hybrid" %}
+            <div class="col-md-6">
+              {{ form.attendance_mode.label_tag }}
+              {{ form.attendance_mode }}
+              {{ form.attendance_mode.errors }}
+            </div>
+          {% endif %}
+
+          <!-- Organization -->
+          <div class="col-md-6">
+            {{ form.organization.label_tag }}
+            {{ form.organization }}
+            {{ form.organization.errors }}
+          </div>
+
+          <div class="col-md-6">
+            {{ form.designation.label_tag }}
+            {{ form.designation }}
+            {{ form.designation.errors }}
+          </div>
+
+          {% if has_tiers %}
+            <div class="col-12 mt-4">
+              <hr class="my-3">
+              <h6 class="text-uppercase text-muted mb-3">
+                <i class="fas fa-tags me-2"></i>Select Your Registration Tier
+              </h6>
+
+              {% if form.price_tier.errors %}
+                <div class="alert alert-danger">{{ form.price_tier.errors }}</div>
+              {% endif %}
+
+              <div class="row g-3" id="tier-cards">
+                {% for tier in price_tiers %}
+                  {% with remaining=tier.slots_remaining %}
+                  <div class="col-md-6 col-lg-4">
+                    <label class="tier-card w-100 h-100 {% if not tier.is_available %}opacity-50{% endif %}"
+                          for="id_price_tier_{{ forloop.counter0 }}"
+                          style="cursor:{% if tier.is_available %}pointer{% else %}not-allowed{% endif %};">
+                      <input
+                        type="radio"
+                        name="price_tier"
+                        id="id_price_tier_{{ forloop.counter0 }}"
+                        value="{{ tier.pk }}"
+                        class="tier-radio d-none"
+                        {% if not tier.is_available %}disabled{% endif %}
+                        {% if forloop.first and tier.is_available %}checked{% endif %}
+                      >
+                      <div class="card h-100 border-2 tier-card-inner">
+                        <div class="card-body d-flex flex-column">
+                          <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="card-title mb-0 fw-bold">{{ tier.name }}</h6>
+                            <span class="badge bg-primary fs-6">
+                              {{ conference.currency|default:"NGN" }} {{ tier.price|floatformat:2 }}
+                            </span>
+                          </div>
+
+                          {% if tier.description %}
+                            <p class="card-text text-muted small flex-grow-1">{{ tier.description }}</p>
+                          {% endif %}
+
+                          <div class="mt-2">
+                            {% if not tier.is_active %}
+                              <span class="badge bg-secondary">Inactive</span>
+                            {% elif remaining == 0 %}
+                              <span class="badge bg-danger">Sold Out</span>
+                            {% elif remaining is not None and remaining <= 5 %}
+                              <span class="badge bg-warning text-dark">{{ remaining }} left</span>
+                            {% else %}
+                              <span class="badge bg-success">Available</span>
+                            {% endif %}
+                          </div>
+                        </div>
+                      </div>
+                    </label>
+                  </div>
+                  {% endwith %}
+                {% endfor %}
+              </div>
+
+              {# Hidden fallback in case JS strips the radio — keeps form submittable #}
+              <input type="hidden" id="selected_tier_hidden" name="_tier_confirm" value="">
+            </div>
+
+            <style>
+              .tier-card-inner   { transition: border-color .2s, box-shadow .2s; border-color: #dee2e6; }
+              .tier-radio:checked + .tier-card-inner,
+              .tier-card.selected .tier-card-inner {
+                border-color: #0d6efd !important;
+                box-shadow: 0 0 0 .2rem rgba(13,110,253,.25);
+              }
+            </style>
+
+            <script>
+              document.addEventListener('DOMContentLoaded', function () {
+                document.querySelectorAll('.tier-radio').forEach(function (radio) {
+                  radio.addEventListener('change', function () {
+                    document.querySelectorAll('.tier-card').forEach(function (c) { c.classList.remove('selected'); });
+                    if (this.checked) this.closest('.tier-card').classList.add('selected');
+                  });
+                  // Init checked state
+                  if (radio.checked) radio.closest('.tier-card').classList.add('selected');
+                });
+              });
+            </script>
+          {% endif %}
+
+          <!-- Discovery -->
+          <div class="col-12">
+            <p>How did you hear about our conference?</p>
+            {{ form.discovery_channel }}
+            {{ form.discovery_channel.errors }}
+          </div>
+
+          <!-- ════════════════════════════════════════════════════════════ -->
+          <!--           CUSTOM QUESTIONS – placed after Discovery         -->
+          <!-- ════════════════════════════════════════════════════════════ -->
+          {% if custom_questions %}
+            <div class="col-12 mt-4">
+              <h6 class="text-uppercase text-muted mb-3">
+                <i class="fas fa-question-circle me-2"></i>Additional Questions
+              </h6>
+
+              {% for question in custom_questions %}
+                <div class="mb-4">
+                  <label for="custom_answer_{{ question.id }}" class="form-label fw-bold">
+                    {{ question.question }}
+                    {% if question.required %}
+                      <span class="text-danger">*</span>
+                    {% endif %}
+                  </label>
+
+                  <input type="text"
+                         name="custom_answer_{{ question.id }}"
+                         id="custom_answer_{{ question.id }}"
+                         class="form-control"
+                         placeholder="Your answer here..."
+                         {% if question.required %}required{% endif %}>
+
+                  <!-- Optional: show small help text or error placeholder -->
+                  <small class="form-text text-muted d-block mt-1">
+                    {% if question.help_text %}{{ question.help_text }}{% endif %}
+                  </small>
+                </div>
+              {% empty %}
+                <p class="text-muted fst-italic">No additional questions for this conference.</p>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          <!-- ════════════════════════════════════════════════════════════ -->
+          <!--           FILE UPLOAD SECTION (FOR PARTICIPANTS)            -->
+          <!-- ════════════════════════════════════════════════════════════ -->
+          {% if conference.upload_folder %}
+            <div class="col-12 mt-4">
+              <hr class="my-4">
+              
+              <h6 class="text-uppercase text-muted mb-3">
+                <i class="fas fa-cloud-upload-alt me-2"></i>Upload Your Files
+              </h6>
+
+              <div class="card border-primary mb-3">
+                <div class="card-body">
+                  <div class="d-flex align-items-start mb-3">
+                    <div class="flex-shrink-0">
+                      <i class="fas fa-folder-open fa-3x text-primary"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                      <h6 class="card-title mb-1">
+                        <strong>{{ conference.upload_folder.name }}</strong>
+                      </h6>
+                      {% if conference.upload_folder.description %}
+                        <p class="card-text text-muted small mb-2">
+                          {{ conference.upload_folder.description }}
+                        </p>
+                      {% endif %}
+                      
+                      <!-- Display Custom Upload Instructions if they exist -->
+                      {% if conference.upload_instructions %}
+                        <div class="alert alert-info mt-3 mb-2">
+                          <div class="d-flex">
+                            <i class="fas fa-info-circle me-2 mt-1"></i>
+                            <div>
+                              <strong>Upload Instructions:</strong>
+                              <div class="mt-2" style="white-space: pre-wrap;">{{ conference.upload_instructions }}</div>
+                            </div>
+                          </div>
+                        </div>
+                      {% else %}
+                        <p class="card-text small mb-0">
+                          <i class="fas fa-info-circle text-info me-1"></i>
+                          Upload your presentation slides, posters, abstracts, videos, or other conference materials
+                        </p>
+                      {% endif %}
+                    </div>
+                  </div>
+
+                  <!-- File Input -->
+                  <div class="mb-3">
+                    <label for="participant_files" class="form-label fw-bold">
+                      <i class="fas fa-paperclip me-1"></i>Select Files (Optional)
+                    </label>
+                    <input type="file" 
+                           class="form-control" 
+                           id="participant_files" 
+                           name="participant_files"
+                           multiple
+                           accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.zip,.rar">
+                    
+                    <div class="form-text mt-2">
+                      <div class="d-flex align-items-center mb-1">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        <span><strong>Allowed types:</strong> PDF, Word, PowerPoint, Excel, Images (JPG, PNG, GIF), Archives (ZIP, RAR)</span>
+                      </div>
+                      <div class="d-flex align-items-center mb-1">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        <span><strong>Maximum size:</strong> 10MB per file</span>
+                      </div>
+                      <div class="d-flex align-items-center">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        <span><strong>Multiple files:</strong> You can select multiple files at once</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Selected Files Preview -->
+                  <div id="selectedFilesPreview" class="mt-3" style="display: none;">
+                    <div class="alert alert-info">
+                      <div class="d-flex align-items-center mb-2">
+                        <i class="fas fa-files-o me-2"></i>
+                        <strong>Selected Files:</strong>
+                      </div>
+                      <ul id="filesList" class="mb-0 ps-3"></ul>
+                    </div>
+                  </div>
+
+                  <!-- Upload Note -->
+                  <div class="alert alert-light border-start border-primary border-4 mt-3 mb-0">
+                    <div class="d-flex align-items-start">
+                      <i class="fas fa-lightbulb text-warning fa-lg me-2 mt-1"></i>
+                      <div>
+                        <strong>Note:</strong> You can upload files now or later. 
+                        {% if conference.ticket_price > 0 %}
+                          After completing payment, you'll receive a link to upload files if you skip this step.
+                        {% else %}
+                          After registration, you'll receive a link to upload files if you skip this step.
+                        {% endif %}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% endif %}
+
+        </div>
+
+        <hr class="my-4">
+
+        <div class="d-flex justify-content-between align-items-center">
+          <small class="text-muted">
+            <i class="fas fa-lock me-1"></i>
+            We will only use your email for conference communication.
+          </small>
+
+          <button type="submit" class="btn btn-lg btn-primary px-4">
+            <i class="fas fa-arrow-right me-1"></i>
+            {% if has_tiers or conference.ticket_price > 0 %}
+              Proceed to Payment
+            {% else %}
+              Complete Registration
+            {% endif %}
+          </button>
+        </div>
+      </form>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Ensure selects get select2 class and initialize
+  document.querySelectorAll('select').forEach(function(s){ s.classList.add('select2'); });
+  document.addEventListener('DOMContentLoaded', function() {
+      if (typeof $ !== 'undefined' && typeof $.fn.select2 !== 'undefined') {
+          $('.select2').select2({ theme: 'bootstrap-5', width: '100%' });
+      }
+  });
+
+  // ════════════════════════════════════════════════════════════════════════
+  // FILE UPLOAD PREVIEW FUNCTIONALITY
+  // ════════════════════════════════════════════════════════════════════════
+  document.addEventListener('DOMContentLoaded', function() {
+      const fileInput = document.getElementById('participant_files');
+      const previewContainer = document.getElementById('selectedFilesPreview');
+      const filesList = document.getElementById('filesList');
+
+      if (fileInput) {
+          fileInput.addEventListener('change', function() {
+              const files = Array.from(this.files);
+              
+              if (files.length === 0) {
+                  previewContainer.style.display = 'none';
+                  return;
+              }
+
+              // Show preview
+              previewContainer.style.display = 'block';
+              filesList.innerHTML = '';
+
+              files.forEach((file, index) => {
+                  const li = document.createElement('li');
+                  const fileSize = (file.size / 1024 / 1024).toFixed(2); // MB
+                  const icon = getFileIcon(file.name);
+                  
+                  li.innerHTML = `
+                      <i class="${icon} me-2"></i>
+                      <strong>${file.name}</strong> 
+                      <span class="text-muted">(${fileSize} MB)</span>
+                  `;
+                  
+                  // Warn if file is too large
+                  if (file.size > 10 * 1024 * 1024) {
+                      li.innerHTML += ' <span class="badge bg-warning">Too large!</span>';
+                  }
+                  
+                  filesList.appendChild(li);
+              });
+          });
+      }
+
+      function getFileIcon(filename) {
+          const ext = filename.split('.').pop().toLowerCase();
+          const iconMap = {
+              'pdf': 'fas fa-file-pdf text-danger',
+              'doc': 'fas fa-file-word text-primary',
+              'docx': 'fas fa-file-word text-primary',
+              'ppt': 'fas fa-file-powerpoint text-warning',
+              'pptx': 'fas fa-file-powerpoint text-warning',
+              'xls': 'fas fa-file-excel text-success',
+              'xlsx': 'fas fa-file-excel text-success',
+              'jpg': 'fas fa-file-image text-info',
+              'jpeg': 'fas fa-file-image text-info',
+              'png': 'fas fa-file-image text-info',
+              'gif': 'fas fa-file-image text-info',
+              'zip': 'fas fa-file-archive text-secondary',
+              'rar': 'fas fa-file-archive text-secondary'
+          };
+          return iconMap[ext] || 'fas fa-file text-muted';
+      }
+  });
+</script>
+
+<style>
+  .card {
+    border-radius: 12px;
+  }
+
+  .card-header {
+    background: linear-gradient(135deg, #63abaaff, #158583ff);
+    color: #fff;
+  }
+
+  .card-header small {
+    color: rgba(255,255,255,.8);
+  }
+
+  .form-label {
+    font-weight: 500;
+  }
+
+  .select2-container--bootstrap-5 .select2-selection {
+    min-height: 38px;
+  }
+  .select2-container {
+      border-radius: 8px;
+      border: 1px solid #cecacaff;
+      color: #000000;
+  }
+  .select2-container .select2-selection--multiple {
+      border-radius: 8px;
+      border: 1px solid #cecacaff;
+      color: #000000;
+  }
+  body.dark-mode .select2-container .select2-selection--multiple {
+      border-color: #4a5568;
+      background: #3b4a6b;
+      color: #000000;
+  }
+  .select2-container--default .select2-selection--multiple .select2-selection__choice {
+      background-color: #319795;
+      color: #000000;
+  }
+  body.dark-mode .select2-results__options {
+    color: #000000;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+
+  /* Custom questions styling */
+  .custom-question-label {
+    font-weight: 600;
+  }
+
+  .custom-question-input {
+    border-radius: 8px;
+  }
+
+  /* File upload section styling */
+  .border-primary {
+      border-width: 2px !important;
+  }
+
+  .border-start.border-primary {
+      border-width: 4px !important;
+  }
+
+  #selectedFilesPreview {
+      animation: fadeIn 0.3s ease-in;
+  }
+
+  @keyframes fadeIn {
+      from {
+          opacity: 0;
+          transform: translateY(-10px);
+      }
+      to {
+          opacity: 1;
+          transform: translateY(0);
+      }
+  }
+
+  #filesList li {
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #e9ecef;
+  }
+
+  #filesList li:last-child {
+      border-bottom: none;
+  }
+
+  /* Upload folder card hover effect */
+  .card.border-primary:hover {
+      box-shadow: 0 4px 12px rgba(13, 110, 253, 0.15);
+      transition: box-shadow 0.3s ease;
+  }
+
+  /* Upload instructions styling */
+  .alert-info {
+      background-color: #e7f3ff;
+      border-color: #b3d9ff;
+  }
+</style>
+
+{% endblock %}

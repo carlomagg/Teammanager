@@ -1,0 +1,298 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Loan Review & Approval Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2><i class="fas fa-gavel"></i> Loan Review & Approval Dashboard</h2>
+            <p class="text-muted">Review and manage conference loan applications</p>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-clock"></i> Pending Review</h5>
+                    <h2>{{ stats.pending }}</h2>
+                    <small>Awaiting your review</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-eye"></i> Under Review</h5>
+                    <h2>{{ stats.under_review }}</h2>
+                    <small>Currently being reviewed</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-check-circle"></i> Approved</h5>
+                    <h2>{{ stats.approved }}</h2>
+                    <small>This month</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-times-circle"></i> Rejected</h5>
+                    <h2>{{ stats.rejected }}</h2>
+                    <small>This month</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-bolt"></i> Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <a href="{% url 'conference_loan:loan_list' %}?status=pending" class="btn btn-warning btn-lg mr-2">
+                        <i class="fas fa-list"></i> View All Pending Loans
+                    </a>
+                    <a href="{% url 'conference_loan:loan_list' %}" class="btn btn-secondary btn-lg mr-2">
+                        <i class="fas fa-list-alt"></i> View All Loans
+                    </a>
+                    <a href="{% url 'conference_loan:dashboard' %}" class="btn btn-info btn-lg">
+                        <i class="fas fa-chart-line"></i> Loan Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Loans Table -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-warning text-white">
+                    <h5 class="mb-0"><i class="fas fa-clock"></i> Loans Pending Review ({{ pending_loans.count }})</h5>
+                </div>
+                <div class="card-body">
+                    {% if pending_loans %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Reference</th>
+                                    <th>Applicant</th>
+                                    <th>Conference</th>
+                                    <th>Amount</th>
+                                    <th>Submitted</th>
+                                    <th>KYC Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for loan in pending_loans %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ loan.reference_number }}</strong>
+                                        <br>
+                                        <small class="text-muted">{{ loan.created_at|date:"M d, Y" }}</small>
+                                    </td>
+                                    <td>
+                                        {{ loan.applicant.get_full_name|default:loan.applicant.username }}
+                                        <br>
+                                        <small class="text-muted">{{ loan.applicant.email }}</small>
+                                    </td>
+                                    <td>
+                                        {{ loan.conference.title|truncatewords:5 }}
+                                        <br>
+                                        <small class="text-muted">{{ loan.conference.start_date|date:"M d, Y" }}</small>
+                                    </td>
+                                    <td>
+                                        <strong>{{ loan.currency }} {{ loan.amount|floatformat:2 }}</strong>
+                                        <br>
+                                        <small class="text-muted">Expected: {{ loan.expected_date|date:"M d, Y" }}</small>
+                                    </td>
+                                    <td>
+                                        {{ loan.submitted_at|date:"M d, Y" }}
+                                        <br>
+                                        <small class="text-muted">{{ loan.submitted_at|timesince }} ago</small>
+                                    </td>
+                                    <td>
+                                        {% if loan.kyc_verified %}
+                                            <span class="badge badge-success">
+                                                <i class="fas fa-check-circle"></i> Verified
+                                            </span>
+                                        {% else %}
+                                            <span class="badge badge-danger">
+                                                <i class="fas fa-times-circle"></i> Not Verified
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'conference_loan:loan_detail' loan.pk %}" class="btn btn-sm btn-info" title="View Details">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                        <a href="{% url 'conference_loan:loan_review' loan.pk %}" class="btn btn-sm btn-primary" title="Review & Approve/Reject">
+                                            <i class="fas fa-gavel"></i> Review
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                        <h4>No Pending Loans</h4>
+                        <p class="text-muted">All loan applications have been reviewed.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recently Reviewed Loans -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-history"></i> Recently Reviewed Loans</h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_reviewed %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Reference</th>
+                                    <th>Applicant</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                    <th>Reviewed By</th>
+                                    <th>Reviewed Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for loan in recent_reviewed %}
+                                <tr>
+                                    <td><strong>{{ loan.reference_number }}</strong></td>
+                                    <td>{{ loan.applicant.get_full_name|default:loan.applicant.username }}</td>
+                                    <td>{{ loan.currency }} {{ loan.amount|floatformat:2 }}</td>
+                                    <td>
+                                        {% if loan.status == 'approved' %}
+                                            <span class="badge badge-success">
+                                                <i class="fas fa-check"></i> Approved
+                                            </span>
+                                        {% elif loan.status == 'rejected' %}
+                                            <span class="badge badge-danger">
+                                                <i class="fas fa-times"></i> Rejected
+                                            </span>
+                                        {% else %}
+                                            <span class="badge badge-secondary">{{ loan.get_status_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ loan.reviewed_by.get_full_name|default:loan.reviewed_by.username }}</td>
+                                    <td>{{ loan.reviewed_at|date:"M d, Y H:i" }}</td>
+                                    <td>
+                                        <a href="{% url 'conference_loan:loan_detail' loan.pk %}" class="btn btn-sm btn-info">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center py-3">No recently reviewed loans.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loans by Status -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-pie"></i> Loans by Status</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <tbody>
+                            <tr>
+                                <td><i class="fas fa-circle text-secondary"></i> Draft</td>
+                                <td class="text-right"><strong>{{ stats.draft }}</strong></td>
+                            </tr>
+                            <tr>
+                                <td><i class="fas fa-circle text-warning"></i> Pending</td>
+                                <td class="text-right"><strong>{{ stats.pending }}</strong></td>
+                            </tr>
+                            <tr>
+                                <td><i class="fas fa-circle text-info"></i> Under Review</td>
+                                <td class="text-right"><strong>{{ stats.under_review }}</strong></td>
+                            </tr>
+                            <tr>
+                                <td><i class="fas fa-circle text-success"></i> Approved</td>
+                                <td class="text-right"><strong>{{ stats.approved }}</strong></td>
+                            </tr>
+                            <tr>
+                                <td><i class="fas fa-circle text-danger"></i> Rejected</td>
+                                <td class="text-right"><strong>{{ stats.rejected }}</strong></td>
+                            </tr>
+                            <tr>
+                                <td><i class="fas fa-circle text-primary"></i> Disbursed</td>
+                                <td class="text-right"><strong>{{ stats.disbursed }}</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-money-bill-wave"></i> Financial Summary</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <tbody>
+                            <tr>
+                                <td>Total Requested</td>
+                                <td class="text-right"><strong>NGN {{ stats.total_requested|floatformat:2 }}</strong></td>
+                            </tr>
+                            <tr>
+                                <td>Total Approved</td>
+                                <td class="text-right"><strong class="text-success">NGN {{ stats.total_approved|floatformat:2 }}</strong></td>
+                            </tr>
+                            <tr>
+                                <td>Total Disbursed</td>
+                                <td class="text-right"><strong class="text-info">NGN {{ stats.total_disbursed|floatformat:2 }}</strong></td>
+                            </tr>
+                            <tr>
+                                <td>Total Repaid</td>
+                                <td class="text-right"><strong class="text-primary">NGN {{ stats.total_repaid|floatformat:2 }}</strong></td>
+                            </tr>
+                            <tr>
+                                <td>Outstanding Balance</td>
+                                <td class="text-right"><strong class="text-warning">NGN {{ stats.outstanding|floatformat:2 }}</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

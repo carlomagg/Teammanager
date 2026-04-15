@@ -1,0 +1,386 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load field_approval_tags %}
+
+{% block title %}Review Company KYB{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/field_approval.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0"><i class="fas fa-building"></i> Review Company KYB</h4>
+                </div>
+                <div class="card-body">
+                    <h5>Company Information</h5>
+                    <table class="table table-bordered">
+                        <tr>
+                            <th width="30%">Company Name</th>
+                            <td>{{ company_profile.company_name }}</td>
+                        </tr>
+                        <tr>
+                            <th>Tenant</th>
+                            <td>{{ company_profile.tenant.name }}</td>
+                        </tr>
+                        <tr>
+                            <th>Email</th>
+                            <td>{{ company_profile.email|default:"N/A" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Registration Number</th>
+                            <td>{{ company_profile.reg_number|default:"N/A" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Date Founded</th>
+                            <td>{{ company_profile.date_founded|date:"F d, Y"|default:"N/A" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Address</th>
+                            <td>{{ company_profile.address|default:"N/A" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Website</th>
+                            <td>
+                                {% if company_profile.website %}
+                                    <a href="{{ company_profile.website }}" target="_blank">{{ company_profile.website }}</a>
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                    
+                    <h5 class="mt-4">KYB Information</h5>
+                    
+                    {% get_content_type_id kyb as content_type_id %}
+                    
+                    <!-- RC Number -->
+                    {% render_field_approval instance=kyb field_name='rc_number' field_label='RC Number' field_value=kyb.rc_number can_review=can_review %}
+                    
+                    <!-- TIN -->
+                    {% render_field_approval instance=kyb field_name='tin' field_label='Tax Identification Number (TIN)' field_value=kyb.tin can_review=can_review %}
+                    
+                    <div class="mt-3">
+                        <strong>Status:</strong>
+                        {% if kyb.kyb_status == 'submitted' %}
+                            <span class="badge bg-warning">Submitted</span>
+                        {% elif kyb.kyb_status == 'verified' %}
+                            <span class="badge bg-success">Verified</span>
+                        {% elif kyb.kyb_status == 'rejected' %}
+                            <span class="badge bg-danger">Rejected</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Pending</span>
+                        {% endif %}
+                    </div>
+                    <div class="mt-2">
+                        <strong>Submitted At:</strong> {{ kyb.created_at|date:"F d, Y H:i" }}
+                    </div>
+                    
+                    <h5 class="mt-4">Uploaded Documents</h5>
+                    
+                    <!-- CAC Certificate -->
+                    {% render_field_approval instance=kyb field_name='cac_certificate_file' field_label='CAC Certificate' field_value=kyb.cac_certificate_file field_type='file' can_review=can_review %}
+                    
+                    <!-- MEMART -->
+                    {% render_field_approval instance=kyb field_name='memart_file' field_label='MEMART Document' field_value=kyb.memart_file field_type='file' can_review=can_review %}
+                    
+                    <!-- Status Report -->
+                    {% render_field_approval instance=kyb field_name='status_report_file' field_label='CAC Status Report' field_value=kyb.status_report_file field_type='file' can_review=can_review %}
+                    
+                    <!-- SCUML Certificate -->
+                    {% render_field_approval instance=kyb field_name='scuml_certificate_file' field_label='SCUML Certificate' field_value=kyb.scuml_certificate_file field_type='file' can_review=can_review %}
+                    
+                    <!-- Utility Bill -->
+                    {% render_field_approval instance=kyb field_name='utility_bill_file' field_label='Utility Bill / Proof of Address' field_value=kyb.utility_bill_file field_type='file' can_review=can_review %}
+                    
+                    <h5 class="mt-4">Company Directors ({{ directors.count }})</h5>
+                    {% if directors %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Designation</th>
+                                    <th>Email</th>
+                                    <th>Phone</th>
+                                    <th>NIN/BVN</th>
+                                    <th>Ownership %</th>
+                                    <th>Next of Kin</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for director in directors %}
+                                <tr>
+                                    <td>{{ director.first_name }} {{ director.last_name }}</td>
+                                    <td>{{ director.designation|default:"Director" }}</td>
+                                    <td>{{ director.email|default:"N/A" }}</td>
+                                    <td>{{ director.phone|default:"N/A" }}</td>
+                                    <td>
+                                        {% if director.nin %}<span class="badge bg-secondary">NIN</span>{% endif %}
+                                        {% if director.bvn %}<span class="badge bg-secondary">BVN</span>{% endif %}
+                                    </td>
+                                    <td>{{ director.percentage_ownership|default:"N/A" }}%</td>
+                                    <td>{{ director.next_of_kin_name|default:"N/A" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No directors added.</p>
+                    {% endif %}
+                    
+                    {% if kyb.kyb_status == 'submitted' %}
+                    <div class="mt-4">
+                        <h5>Review Actions</h5>
+                        
+                        <!-- Approve All Button -->
+                        <div class="alert alert-success d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <i class="bi bi-check-double"></i>
+                                <strong>Quick Action:</strong> Approve all fields at once if everything looks good.
+                            </div>
+                            <button type="button" 
+                                    class="btn btn-success"
+                                    onclick="approveAllFields({{ content_type_id }}, {{ kyb.id }})">
+                                <i class="bi bi-check-circle-fill"></i> Approve All Fields
+                            </button>
+                        </div>
+                        
+                        <!-- Auto-Verify with YouVerify API -->
+                        {% if kyb.tin or company_profile.reg_number %}
+                        <div class="alert alert-info mb-3">
+                            <i class="fas fa-robot"></i> <strong>Auto-Verify Available:</strong> 
+                            This KYB can be automatically verified using YouVerify API.
+                            <button type="button" class="btn btn-sm btn-info ms-2" data-bs-toggle="modal" data-bs-target="#autoVerifyModal">
+                                <i class="fas fa-magic"></i> Auto-Verify Now
+                            </button>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'admin_kyc_dashboard' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Back
+                            </a>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="mt-4">
+                        <a href="{% url 'admin_kyc_dashboard' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Dashboard
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-clipboard-check"></i> Approval Summary</h5>
+                </div>
+                <div class="card-body">
+                    {% with summary=kyb.get_field_approval_summary %}
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Total Fields:</span>
+                            <strong>{{ summary.total }}</strong>
+                        </div>
+                        <div class="progress" style="height: 25px;">
+                            <div class="progress-bar bg-success" 
+                                 style="width: {% if summary.total > 0 %}{% widthratio summary.approved summary.total 100 %}{% else %}0{% endif %}%">
+                                {{ summary.approved }} Approved
+                            </div>
+                            <div class="progress-bar bg-danger" 
+                                 style="width: {% if summary.total > 0 %}{% widthratio summary.rejected summary.total 100 %}{% else %}0{% endif %}%">
+                                {{ summary.rejected }} Rejected
+                            </div>
+                            <div class="progress-bar bg-warning" 
+                                 style="width: {% if summary.total > 0 %}{% widthratio summary.pending summary.total 100 %}{% else %}0{% endif %}%">
+                                {{ summary.pending }} Pending
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-check-circle text-success"></i> Approved</span>
+                            <span class="badge bg-success rounded-pill">{{ summary.approved }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-times-circle text-danger"></i> Rejected</span>
+                            <span class="badge bg-danger rounded-pill">{{ summary.rejected }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-clock text-warning"></i> Pending</span>
+                            <span class="badge bg-warning text-dark rounded-pill">{{ summary.pending }}</span>
+                        </li>
+                    </ul>
+                    {% endwith %}
+                </div>
+            </div>
+            
+            <div class="card mt-3">
+                <div class="card-header bg-secondary text-white">
+                    <h6 class="mb-0"><i class="fas fa-info-circle"></i> Review Guidelines</h6>
+                </div>
+                <div class="card-body small">
+                    <ul class="mb-0 ps-3">
+                        <li>Review each field carefully</li>
+                        <li>Approve valid fields immediately</li>
+                        <li>Provide clear rejection reasons</li>
+                        <li>Use "Approve All" only when all fields are valid</li>
+                        <li>Rejected fields can be resubmitted</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="card mt-3">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-clipboard-check"></i> Verification Checklist</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            {% if kyb.rc_number %}
+                                <i class="fas fa-check-circle text-success"></i>
+                            {% else %}
+                                <i class="fas fa-exclamation-circle text-warning"></i>
+                            {% endif %}
+                            RC Number Provided
+                        </li>
+                        <li class="mb-2">
+                            {% if kyb.tin %}
+                                <i class="fas fa-check-circle text-success"></i>
+                            {% else %}
+                                <i class="fas fa-times-circle text-danger"></i>
+                            {% endif %}
+                            TIN Provided
+                        </li>
+                        <li class="mb-2">
+                            {% if kyb.cac_certificate_file %}
+                                <i class="fas fa-check-circle text-success"></i>
+                            {% else %}
+                                <i class="fas fa-times-circle text-danger"></i>
+                            {% endif %}
+                            CAC Certificate Uploaded
+                        </li>
+                        <li class="mb-2">
+                            {% if kyb.memart_file %}
+                                <i class="fas fa-check-circle text-success"></i>
+                            {% else %}
+                                <i class="fas fa-exclamation-circle text-warning"></i>
+                            {% endif %}
+                            MEMART Uploaded (Recommended)
+                        </li>
+                        <li class="mb-2">
+                            {% if kyb.status_report_file %}
+                                <i class="fas fa-check-circle text-success"></i>
+                            {% else %}
+                                <i class="fas fa-exclamation-circle text-warning"></i>
+                            {% endif %}
+                            Status Report Uploaded (Recommended)
+                        </li>
+                        <li class="mb-2">
+                            {% if directors %}
+                                <i class="fas fa-check-circle text-success"></i>
+                            {% else %}
+                                <i class="fas fa-times-circle text-danger"></i>
+                            {% endif %}
+                            Directors Added ({{ directors.count }})
+                        </li>
+                        <li class="mb-2">
+                            {% if kyb.utility_bill_file %}
+                                <i class="fas fa-check-circle text-success"></i>
+                            {% else %}
+                                <i class="fas fa-exclamation-circle text-warning"></i>
+                            {% endif %}
+                            Utility Bill Uploaded (Optional)
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            {% if kyb.kyb_verified_at %}
+            <div class="card mt-3">
+                <div class="card-header bg-success text-white">
+                    <h6 class="mb-0">Verification Details</h6>
+                </div>
+                <div class="card-body">
+                    <p><strong>Verified At:</strong><br>{{ kyb.kyb_verified_at|date:"F d, Y H:i" }}</p>
+                    {% if kyb.verified_by %}
+                    <p><strong>Verified By:</strong><br>
+                        {{ kyb.verified_by.get_full_name|default:kyb.verified_by.username }}
+                        <span class="text-muted">({{ kyb.verified_by.email }})</span>
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if kyb.kyb_rejection_reason %}
+            <div class="card mt-3 border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h6 class="mb-0">Rejection Reason</h6>
+                </div>
+                <div class="card-body">
+                    <p>{{ kyb.kyb_rejection_reason }}</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/field_approval.js' %}"></script>
+<script src="{% static 'js/approve_all_helper.js' %}"></script>
+<script>
+function showRejectionReason() {
+    const div = document.getElementById('rejectionReasonDiv');
+    const textarea = document.getElementById('rejection_reason');
+    div.style.display = 'block';
+    textarea.required = true;
+    return true;
+}
+</script>
+
+<!-- Auto-Verify Confirmation Modal -->
+<div class="modal fade" id="autoVerifyModal" tabindex="-1" aria-labelledby="autoVerifyModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="autoVerifyModalLabel">
+                    <i class="fas fa-magic"></i> Auto-Verify with YouVerify API
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3">This will automatically verify the following information using YouVerify API:</p>
+                <ul class="mb-3">
+                    {% if kyb.tin %}<li><strong>TIN:</strong> {{ kyb.tin }}</li>{% endif %}
+                    {% if company_profile.reg_number %}<li><strong>CAC/RC Number:</strong> {{ company_profile.reg_number }}</li>{% endif %}
+                </ul>
+                <p class="text-muted small mb-0">
+                    <i class="fas fa-info-circle"></i> The system will check if the TIN and CAC registration match the company name and details.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <a href="{% url 'auto_verify_company_kyb' kyb.id %}" class="btn btn-info">
+                    <i class="fas fa-magic"></i> Verify Now
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

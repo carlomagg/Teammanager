@@ -1,0 +1,293 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit {{ task.title }} - TeamManager{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-transparent border-0 pt-4 px-4">
+                    <h2 class="mb-0 fw-bold text-dark"><i class="fas fa-edit me-2 text-primary"></i>Edit Task</h2>
+                    <p class="text-muted small mb-0">Update the details for task: <strong>{{ task.title }}</strong></p>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST" enctype="multipart/form-data" novalidate id="taskEditForm">
+                        {% csrf_token %}
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger" role="alert">
+                                {% for error in form.non_field_errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+
+                        <div class="mb-3">
+                            <label for="{{ form.title.id_for_label }}" class="form-label fw-bold small text-uppercase tracking-wider text-muted">Title <span class="text-danger">*</span></label>
+                            {{ form.title }}
+                            {% if form.title.errors %}
+                                <div class="text-danger small">{{ form.title.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.description.id_for_label }}" class="form-label fw-bold small text-uppercase tracking-wider text-muted">Description</label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                                <div class="text-danger small">{{ form.description.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.assigned_to.id_for_label }}" class="form-label fw-bold small text-uppercase tracking-wider text-muted">Assigned To</label>
+                            {{ form.assigned_to }}
+                            {% if form.assigned_to.errors %}
+                                <div class="text-danger small">{{ form.assigned_to.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.due_date.id_for_label }}" class="form-label fw-bold small text-uppercase tracking-wider text-muted">Due Date</label>
+                                {{ form.due_date }}
+                                {% if form.due_date.errors %}
+                                    <div class="text-danger small">{{ form.due_date.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.status.id_for_label }}" class="form-label fw-bold small text-uppercase tracking-wider text-muted">Status</label>
+                                {{ form.status }}
+                                {% if form.status.errors %}
+                                    <div class="text-danger small">{{ form.status.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.opportunity.id_for_label }}" class="form-label fw-bold small text-uppercase tracking-wider text-muted">{{ form.opportunity.label }}</label>
+                                {{ form.opportunity }}
+                                {% if form.opportunity.errors %}
+                                    <div class="text-danger small">{{ form.opportunity.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.product.id_for_label }}" class="form-label fw-bold small text-uppercase tracking-wider text-muted">{{ form.product.label }}</label>
+                                {{ form.product }}
+                                {% if form.product.errors %}
+                                    <div class="text-danger small">{{ form.product.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Current Attachments -->
+                        {% if task.documents.exists %}
+                        <div class="mt-4 pt-4 border-top">
+                            <h5 class="mb-3 fw-bold fs-6"><i class="fas fa-file-invoice me-2 text-info"></i>Current Attachments</h5>
+                            <div class="list-group list-group-flush rounded-3 border shadow-sm mb-3">
+                                {% for doc in task.documents.all %}
+                                    <div class="list-group-item d-flex justify-content-between align-items-center py-2 px-3">
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-file-pdf text-danger me-3"></i>
+                                            <span class="small fw-medium">{{ doc.company_name }}</span>
+                                        </div>
+                                        <div class="d-flex gap-2">
+                                            <a href="{{ doc.pdf_file.url }}" target="_blank" class="btn btn-link btn-sm p-0 text-primary">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <!-- Deletion could be handled separately or just not selected in the multiple choice -->
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Add More Attachments Section -->
+                        <div class="mt-4 pt-4 border-top">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="mb-0 fw-bold fs-6"><i class="fas fa-paperclip me-2 text-primary"></i>Add More Attachments</h5>
+                                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#attachmentModal">
+                                    <i class="fas fa-plus me-1"></i> Add
+                                </button>
+                            </div>
+                            
+                            <!-- Search Folders (Select2) -->
+                            <div id="selected-documents-container" class="mb-3 bg-light p-3 rounded-3 border">
+                                <label class="form-label small fw-medium text-muted mb-2">Search in Folders</label>
+                                {{ form.documents }}
+                                <div class="tiny text-muted mt-1">Files already attached are highlighted above.</div>
+                                {% if form.documents.errors %}
+                                    <div class="text-danger small">{{ form.documents.errors }}</div>
+                                {% endif %}
+                            </div>
+
+                            <!-- New Uploads Preview -->
+                            <div id="new-uploads-container" class="bg-light p-3 rounded-3 border">
+                                <label class="form-label small fw-medium text-muted mb-2">Upload From Device</label>
+                                {{ form.uploaded_files }}
+                                <div class="form-text small mt-1">You can select multiple files directly from your local machine.</div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-3 pt-4 mt-4 border-top">
+                            <button type="submit" class="btn btn-primary px-5 py-2 fw-bold rounded-pill shadow-sm">
+                                <i class="fas fa-check me-2"></i> Save Changes
+                            </button>
+                            <a href="{% url 'task_detail' task.id %}" class="btn btn-light px-5 py-2 fw-bold rounded-pill border">
+                                <i class="fas fa-times me-2"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Attachment Modal -->
+<div class="modal fade" id="attachmentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header text-white border-0 py-3" style="background-color: #319795;">
+                <h5 class="modal-title fw-bold">Attach Files</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="d-grid gap-3">
+                    <button type="button" class="btn btn-outline-primary py-3 d-flex flex-column align-items-center gap-2 rounded-3 transition-hover" id="btn-select-existing">
+                        <i class="fas fa-folder-open fa-2x"></i>
+                        <span class="fw-bold small">From Folders</span>
+                    </button>
+                    <button type="button" class="btn btn-outline-success py-3 d-flex flex-column align-items-center gap-2 rounded-3 transition-hover" id="btn-upload-new">
+                        <i class="fas fa-desktop fa-2x"></i>
+                        <span class="fw-bold small">From Device</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .transition-hover { transition: all 0.2s ease; }
+    .transition-hover:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .form-control:focus, .form-select:focus { border-color: #319795; box-shadow: 0 0 0 0.25rem rgba(49, 151, 149, 0.1); }
+    .tiny { font-size: 0.75rem; }
+    body.dark-mode .bg-light { background-color: #3d495d !important; border-color: #4a5568 !important; }
+    body.dark-mode .card { background-color: #2d3748; }
+    body.dark-mode .text-dark { color: #f8fafc !important; }
+    .select2-container-custom .select2-container {
+        width: 100% !important;
+    }
+    .select2-container-custom .select2-selection--multiple {
+        min-height: 38px;
+        border: 1px solid #ced4da;
+        border-radius: 0.25rem;
+        padding: 0.25rem 0.5rem;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+    /* Fix select2 multiple choice pills */
+    .select2-container--bootstrap-5 .select2-selection--multiple {
+        min-height: 42px; /* consistent height */
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px;
+        padding: 6px;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        background-color: #fff;
+    }
+
+    .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice {
+        display: inline-flex;
+        align-items: center;
+        background-color: #e9f5ff;
+        border: 1px solid #b3d7ff;
+        border-radius: 20px;
+        padding: 2px 8px;
+        margin: 2px 0;
+        font-size: 0.85rem;
+        color: #1a202c;
+        white-space: nowrap;
+    }
+
+    .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice__remove {
+        color: #555;
+        margin-right: 6px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    .select2-container-custom .select2-selection--multiple .select2-selection__choice__remove:hover {
+        color: #dc3545;
+    }
+    .select2-container--open .select2-dropdown {
+        z-index: 1060;
+        border: 1px solid #ced4da;
+        border-radius: 0.25rem;
+        background: #fff;
+        width: auto !important;
+        min-width: 100%;
+    }
+    body.dark-mode .select2-container--open .select2-dropdown {
+        background: #2d3748;
+        border-color: #4a5568;
+        color: #e2e8f0;
+    }
+    .select2-container--bootstrap-5 .select2-selection__choice__display {
+        color: #000000;
+    }
+    body.dark-mode .select2-container--bootstrap-5 .select2-selection__choice__display {
+        color: #e2e8f0;
+    }
+</style>
+{% comment %} {% endblock %}
+
+{% block scripts %} {% endcomment %}
+<script>
+    $(document).ready(function() {
+        // Initialize Select2
+        $('#id_assigned_to').select2({
+            placeholder: "Select a user",
+            allowClear: true,
+            width: '100%',
+        });
+        $('#id_documents').select2({
+            placeholder: "Select a folder",
+            allowClear: true,
+            width: '100%',
+        });
+        $('#id_opportunity').select2({
+            placeholder: "Select an opportunity",
+            allowClear: true,
+            width: '100%',
+        });
+        $('#id_product').select2({
+            placeholder: "Select a product",
+            allowClear: true,
+            width: '100%',
+        });
+
+
+        const btnSelectExisting = document.getElementById('btn-select-existing');
+        const attachmentModal = new bootstrap.Modal(document.getElementById('attachmentModal'));
+
+        btnSelectExisting.addEventListener('click', function() {
+            attachmentModal.hide();
+            setTimeout(() => {
+                $('#id_documents').select2('open');
+            }, 300);
+        });
+        
+        // Form submission handling
+        document.getElementById('taskEditForm').addEventListener('submit', function() {
+            const btn = this.querySelector('button[type="submit"]');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Saving...';
+        });
+    });
+</script>
+{% endblock %}

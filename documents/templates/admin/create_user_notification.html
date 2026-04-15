@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+{% block title %}Create User Notification - TeamManager{% endblock %}
+{% block content %}
+<div class="create-user-notification-page">
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <h4 class="card-title mb-0">
+                <i class="fas fa-user-bell me-2 text-primary" aria-hidden="true"></i>
+                Create User Notification
+            </h4>
+        </div>
+        <div class="card-body">
+            <form method="POST" id="createUserNotificationForm">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="{{ form.user.id_for_label }}" class="form-label">User</label>
+                    {{ form.user }}
+                    {% if form.user.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.user.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="mb-3">
+                    <label for="{{ form.notification.id_for_label }}" class="form-label">Notification</label>
+                    {{ form.notification }}
+                    {% if form.notification.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.notification.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="mb-3 form-check">
+                    {{ form.dismissed }}
+                    <label for="{{ form.dismissed.id_for_label }}" class="form-check-label">Dismissed</label>
+                    {% if form.dismissed.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.dismissed.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    Create User Notification
+                    <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                </button>
+                <a href="{% url 'user_notification_list' %}" class="btn btn-secondary ms-2">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style scoped>
+    .create-user-notification-page {
+        padding: 20px;
+    }
+    .create-user-notification-page .card {
+        border: none;
+        border-radius: 12px;
+        background: #ffffff;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+    .create-user-notification-page .card-header {
+        background: #f8fafc;
+        border-bottom: 1px solid #e2e8f0;
+        border-radius: 12px 12px 0 0;
+        padding: 15px 20px;
+    }
+    .create-user-notification-page .card-title {
+        font-weight: 600;
+        color: #2d3748;
+    }
+    .create-user-notification-page .form-label {
+        font-weight: 500;
+        color: #2d3748;
+    }
+    .create-user-notification-page .form-control,
+    .create-user-notification-page .form-select {
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        font-size: 0.9rem;
+        padding: 8px;
+    }
+    .create-user-notification-page .form-control:focus,
+    .create-user-notification-page .form-select:focus {
+        border-color: #319795;
+        box-shadow: 0 0 0 0.2rem rgba(49, 151, 149, 0.25);
+    }
+    .create-user-notification-page .form-check-input {
+        border-radius: 4px;
+        border: 1px solid #e2e8f0;
+    }
+    .create-user-notification-page .form-check-input:focus {
+        border-color: #319795;
+        box-shadow: 0 0 0 0.2rem rgba(49, 151, 149, 0.25);
+    }
+    .create-user-notification-page .btn-primary {
+        background-color: #319795;
+        border-color: #319795;
+        border-radius: 8px;
+        padding: 8px 16px;
+        font-size: 0.9rem;
+        transition: background-color 0.2s ease;
+    }
+    .create-user-notification-page .btn-primary:hover {
+        background-color: #2c7a7b;
+        border-color: #2c7a7b;
+    }
+    .create-user-notification-page .btn-secondary {
+        background-color: #6b7280;
+        border-color: #6b7280;
+        border-radius: 8px;
+        padding: 8px 16px;
+        font-size: 0.9rem;
+        transition: background-color 0.2s ease;
+    }
+    .create-user-notification-page .btn-secondary:hover {
+        background-color: #5a6268;
+        border-color: #5a6268;
+    }
+    .create-user-notification-page a:focus,
+    .create-user-notification-page button:focus,
+    .create-user-notification-page input:focus,
+    .create-user-notification-page select:focus {
+        outline: 2px solid #319795;
+        outline-offset: 2px;
+        border-radius: 4px;
+    }
+    .create-user-notification-page .invalid-feedback {
+        font-size: 0.85rem;
+        color: #dc3545;
+    }
+    @media (max-width: 768px) {
+        .create-user-notification-page {
+            padding: 15px;
+        }
+        .create-user-notification-page .card-header {
+            padding: 10px 15px;
+        }
+        .create-user-notification-page .form-control,
+        .create-user-notification-page .form-select {
+            font-size: 0.85rem;
+        }
+        .create-user-notification-page .btn {
+            padding: 6px 12px;
+            font-size: 0.85rem;
+        }
+    }
+</style>
+
+<script>
+    // Form submission spinner
+    document.getElementById('createUserNotificationForm').addEventListener('submit', function() {
+        const btn = this.querySelector('button[type="submit"]');
+        btn.querySelector('.spinner-border').classList.remove('d-none');
+        btn.disabled = true;
+    });
+</script>
+{% endblock %}

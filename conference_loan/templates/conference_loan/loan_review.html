@@ -1,0 +1,313 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load field_approval_tags %}
+
+{% block title %}Review Loan {{ loan.reference_number }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/field_approval.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-10 offset-md-1">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Review Loan Application</h4>
+                    <p class="text-muted mb-0">{{ loan.reference_number }} - {{ loan.conference.title }}</p>
+                </div>
+                <div class="card-body">
+                    <!-- Loan Summary -->
+                    <div class="alert alert-info">
+                        <h5>Loan Summary</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Applicant:</strong> {{ loan.applicant.get_full_name|default:loan.applicant.username }}</p>
+                                <p><strong>Conference:</strong> {{ loan.conference.title }}</p>
+                                <p><strong>Submitted:</strong> {{ loan.submitted_at|date:"M d, Y H:i" }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Expected Date:</strong> {{ loan.expected_date|date:"M d, Y" }}</p>
+                                <p><strong>KYC Status:</strong> 
+                                    {% if loan.kyc_verified %}
+                                        <span class="text-success">✓ Verified</span>
+                                    {% else %}
+                                        <span class="text-danger">✗ Not Verified</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Field-Level Review -->
+                    <h5 class="mt-4">Loan Details - Field-Level Review</h5>
+                    <p class="text-muted">Review each field individually. Approve valid fields or reject with specific reasons.</p>
+                    
+                    {% get_content_type_id loan as content_type_id %}
+                    
+                    <!-- Loan Amount -->
+                    {% render_field_approval instance=loan field_name='amount' field_label='Loan Amount' field_value=loan.amount can_review=True %}
+                    
+                    <!-- Loan Reason -->
+                    {% render_field_approval instance=loan field_name='reason' field_label='Loan Reason' field_value=loan.reason can_review=True %}
+                    
+                    <!-- Expected Date -->
+                    {% render_field_approval instance=loan field_name='expected_date' field_label='Expected Date' field_value=loan.expected_date can_review=True %}
+                    
+                    <!-- Conference Description -->
+                    {% render_field_approval instance=loan field_name='conference_description' field_label='Conference Description' field_value=loan.conference_description can_review=True %}
+                    
+                    <!-- Expected Revenue -->
+                    {% render_field_approval instance=loan field_name='expected_revenue' field_label='Expected Revenue' field_value=loan.expected_revenue can_review=True %}
+                    
+                    <!-- Expected Expenses -->
+                    {% render_field_approval instance=loan field_name='expected_expenses' field_label='Expected Expenses' field_value=loan.expected_expenses can_review=True %}
+                    
+                    <h5 class="mt-4">Guarantor Information</h5>
+                    
+                    <!-- Guarantor Name -->
+                    {% render_field_approval instance=loan field_name='guarantor_name' field_label='Guarantor Name' field_value=loan.guarantor_name can_review=True %}
+                    
+                    <!-- Guarantor Phone -->
+                    {% render_field_approval instance=loan field_name='guarantor_phone' field_label='Guarantor Phone' field_value=loan.guarantor_phone can_review=True %}
+                    
+                    <!-- Guarantor Email -->
+                    {% render_field_approval instance=loan field_name='guarantor_email' field_label='Guarantor Email' field_value=loan.guarantor_email can_review=True %}
+                    
+                    <!-- Guarantor Address -->
+                    {% render_field_approval instance=loan field_name='guarantor_address' field_label='Guarantor Address' field_value=loan.guarantor_address can_review=True %}
+                    
+                    <!-- Guarantor Relationship -->
+                    {% render_field_approval instance=loan field_name='guarantor_relationship' field_label='Guarantor Relationship' field_value=loan.guarantor_relationship can_review=True %}
+                    
+                    <!-- Guarantor Occupation -->
+                    {% render_field_approval instance=loan field_name='guarantor_occupation' field_label='Guarantor Occupation' field_value=loan.guarantor_occupation can_review=True %}
+                    
+                    <h5 class="mt-4">Guarantor Documents</h5>
+                    
+                    <!-- Guarantor ID -->
+                    {% render_field_approval instance=loan field_name='guarantor_id' field_label='Guarantor ID Document' field_value=loan.guarantor_id field_type='file' can_review=True %}
+                    
+                    <!-- Guarantor Signature -->
+                    {% render_field_approval instance=loan field_name='guarantor_signature' field_label='Guarantor Signature' field_value=loan.guarantor_signature field_type='file' can_review=True %}
+
+                    <!-- Overall Review Form -->
+                    <h5 class="mt-4">Overall Loan Decision</h5>
+                    <div class="alert alert-warning">
+                        <i class="bi bi-info-circle"></i> <strong>Note:</strong> You can approve/reject individual fields above, or make an overall decision below.
+                    </div>
+                    
+                    <!-- Quick Approve All Button -->
+                    <div class="alert alert-success d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <i class="bi bi-check-double"></i>
+                            <strong>Quick Action:</strong> Approve all fields at once if everything looks good.
+                        </div>
+                        <button type="button" 
+                                class="btn btn-success"
+                                onclick="approveAllFields({{ content_type_id }}, {{ loan.id }})">
+                            <i class="bi bi-check-circle-fill"></i> Approve All Fields
+                        </button>
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="form-group">
+                            <label>Overall Decision *</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="action" id="approve" value="approve" required>
+                                <label class="form-check-label" for="approve">
+                                    Approve
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="action" id="reject" value="reject" required>
+                                <label class="form-check-label" for="reject">
+                                    Reject
+                                </label>
+                            </div>
+                            {% if form.action.errors %}
+                                <div class="text-danger">{{ form.action.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Approval Fields -->
+                        <div id="approvalFields" style="display: none;">
+                            <div class="card mb-3 border-success">
+                                <div class="card-header bg-success text-white">
+                                    <h5>Approval Details</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-group">
+                                        <label for="{{ form.approved_amount.id_for_label }}">Approved Amount *</label>
+                                        {{ form.approved_amount }}
+                                        {% if form.approved_amount.errors %}
+                                            <div class="text-danger">{{ form.approved_amount.errors }}</div>
+                                        {% endif %}
+                                        <small class="form-text text-muted">Can be different from requested amount</small>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="{{ form.interest_rate.id_for_label }}">Interest Rate (%) *</label>
+                                                {{ form.interest_rate }}
+                                                {% if form.interest_rate.errors %}
+                                                    <div class="text-danger">{{ form.interest_rate.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="{{ form.repayment_period_months.id_for_label }}">Repayment Period (Months) *</label>
+                                                {{ form.repayment_period_months }}
+                                                {% if form.repayment_period_months.errors %}
+                                                    <div class="text-danger">{{ form.repayment_period_months.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Rejection Fields -->
+                        <div id="rejectionFields" style="display: none;">
+                            <div class="card mb-3 border-danger">
+                                <div class="card-header bg-danger text-white">
+                                    <h5>Rejection Details</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-group">
+                                        <label for="{{ form.rejection_reason.id_for_label }}">Rejection Reason *</label>
+                                        {{ form.rejection_reason }}
+                                        {% if form.rejection_reason.errors %}
+                                            <div class="text-danger">{{ form.rejection_reason.errors }}</div>
+                                        {% endif %}
+                                        <small class="form-text text-muted">Explain why the loan is being rejected</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Internal Notes -->
+                        <div class="form-group">
+                            <label for="{{ form.internal_notes.id_for_label }}">Internal Notes (Optional)</label>
+                            {{ form.internal_notes }}
+                            {% if form.internal_notes.errors %}
+                                <div class="text-danger">{{ form.internal_notes.errors }}</div>
+                            {% endif %}
+                            <small class="form-text text-muted">These notes are not visible to the applicant</small>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-check"></i> Submit Review
+                            </button>
+                            <a href="{% url 'conference_loan:loan_detail' loan.pk %}" class="btn btn-secondary btn-lg">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/field_approval.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const approveRadio = document.getElementById('approve');
+    const rejectRadio = document.getElementById('reject');
+    const approvalFields = document.getElementById('approvalFields');
+    const rejectionFields = document.getElementById('rejectionFields');
+
+    function toggleFields() {
+        if (approveRadio.checked) {
+            approvalFields.style.display = 'block';
+            rejectionFields.style.display = 'none';
+        } else if (rejectRadio.checked) {
+            approvalFields.style.display = 'none';
+            rejectionFields.style.display = 'block';
+        }
+    }
+
+    approveRadio.addEventListener('change', toggleFields);
+    rejectRadio.addEventListener('change', toggleFields);
+});
+
+function approveAllFields(contentTypeId, objectId) {
+    // Use the shared showConfirmModal function from field_approval.js
+    if (typeof showConfirmModal === 'function') {
+        showConfirmModal(
+            'Approve All Fields',
+            'Are you sure you want to approve ALL loan fields? This will mark all fields as approved.',
+            () => executeApproveAll(objectId)
+        );
+    } else {
+        // Fallback if field_approval.js is not loaded
+        if (confirm('Are you sure you want to approve ALL loan fields? This will mark all fields as approved.')) {
+            executeApproveAll(objectId);
+        }
+    }
+}
+
+function executeApproveAll(objectId) {
+    // Use loan-specific URL
+    fetch(`/conference-loan/field-approval/${objectId}/approve-all/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            if (typeof showToast === 'function') {
+                showToast('success', data.message || 'All fields approved successfully', 3000);
+                setTimeout(() => location.reload(), 2000);
+            } else {
+                alert(data.message || 'All fields approved successfully');
+                location.reload();
+            }
+        } else {
+            if (typeof showToast === 'function') {
+                showToast('danger', 'Error: ' + (data.error || 'Failed to approve all fields'));
+            } else {
+                alert('Error: ' + (data.error || 'Failed to approve all fields'));
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        if (typeof showToast === 'function') {
+            showToast('danger', 'An error occurred while approving fields');
+        } else {
+            alert('An error occurred while approving fields');
+        }
+    });
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}

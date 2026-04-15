@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-7">
+
+      <!-- Success Card -->
+      <div class="card border-0 shadow-lg">
+        <div class="card-body p-5">
+
+          <!-- Icon + heading -->
+          <div class="text-center mb-4">
+            <i class="fas fa-check-circle text-success" style="font-size:4.5rem;"></i>
+            <h2 class="fw-bold text-success mt-3 mb-1">Registration Successful!</h2>
+            <p class="text-muted mb-0">
+              {% if has_tiers and participant.price_tier %}
+                You've registered for <strong>{{ conference.title }}</strong>
+                on the <strong>{{ participant.price_tier.name }}</strong> tier.
+              {% else %}
+                You've successfully registered for <strong>{{ conference.title }}</strong>.
+              {% endif %}
+            </p>
+          </div>
+
+          <hr>
+
+          <!-- Pricing summary -->
+          <div class="mb-4">
+            <h6 class="text-uppercase text-muted mb-3 small">
+              <i class="fas fa-receipt me-1"></i>Registration Summary
+            </h6>
+
+            <table class="table table-borderless table-sm mb-0">
+              {% if participant.price_tier %}
+                <tr>
+                  <td class="text-muted">Tier</td>
+                  <td class="fw-semibold">
+                    <span class="badge" style="background:#ebf8ff;color:#2b6cb0;border:1px solid #bee3f8;font-size:0.9rem;">
+                      {{ participant.price_tier.name }}
+                    </span>
+                    {% if participant.price_tier.description %}
+                      <span class="text-muted small ms-2">— {{ participant.price_tier.description }}</span>
+                    {% endif %}
+                  </td>
+                </tr>
+                <tr>
+                  <td class="text-muted">Tier Price</td>
+                  <td class="fw-semibold">{{ conference.currency|default:"NGN" }} {{ participant.price_tier.price|floatformat:2 }}</td>
+                </tr>
+              {% endif %}
+
+              {% if payable_amount > 0 %}
+                <tr>
+                  <td class="text-muted">Amount Due</td>
+                  <td class="fw-bold text-primary fs-5">
+                    {{ conference.currency|default:"NGN" }} {{ payable_amount|floatformat:2 }}
+                  </td>
+                </tr>
+              {% else %}
+                <tr>
+                  <td class="text-muted">Amount Due</td>
+                  <td>
+                    <span class="badge bg-success fs-6">Free</span>
+                    {% if conference.free_first_n_participants %}
+                      <span class="text-muted small ms-2">— you're among the first {{ conference.free_first_n_participants }} participants</span>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endif %}
+
+              {% if participant.attendance_mode %}
+                <tr>
+                  <td class="text-muted">Attendance</td>
+                  <td>{{ participant.get_attendance_mode_display }}</td>
+                </tr>
+              {% endif %}
+            </table>
+          </div>
+
+          <!-- File upload confirmation (if any) -->
+          {% if uploaded_files_count > 0 %}
+            <div class="alert alert-success d-flex align-items-center py-2 mb-4">
+              <i class="fas fa-paperclip me-2"></i>
+              <span>{{ uploaded_files_count }} file{{ uploaded_files_count|pluralize }} uploaded successfully.</span>
+            </div>
+          {% endif %}
+
+          <!-- Next-step message -->
+          <div class="text-center">
+            {% if payable_amount > 0 %}
+              <p class="text-muted mb-3">
+                <i class="fas fa-credit-card me-1"></i>
+                You'll be redirected to complete payment in a moment&hellip;
+              </p>
+              <div class="spinner-border text-primary mb-3" role="status">
+                <span class="visually-hidden">Redirecting…</span>
+              </div>
+            {% else %}
+              <p class="text-muted mb-3">
+                <i class="fas fa-envelope me-1"></i>
+                A confirmation email is on its way. Check your inbox.
+              </p>
+              <p class="text-muted small">
+                Returning to the conference page in <span id="countdown" class="fw-bold">5</span> seconds&hellip;
+              </p>
+              <a href="{% url 'conference_post' conference_id=conference.id %}"
+                 class="btn btn-primary mt-2">
+                <i class="fas fa-arrow-left me-2"></i>Back to Conference
+              </a>
+            {% endif %}
+          </div>
+
+          <!-- Upload-later nudge -->
+          {% if can_upload_later and uploaded_files_count == 0 %}
+            <div class="alert alert-info mt-4 mb-0 d-flex align-items-center">
+              <i class="fas fa-cloud-upload-alt fa-lg me-3 text-info"></i>
+              <div>
+                <strong>Don't forget your files!</strong>
+                You can still upload your slides, posters, or abstracts after registration.
+                {% if upload_url %}
+                  <a href="{{ upload_url }}" class="ms-1">Upload now &rarr;</a>
+                {% endif %}
+              </div>
+            </div>
+          {% endif %}
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Countdown + redirect for free / tier-free events -->
+{% if payable_amount == 0 or payable_amount <= 0 %}
+<script>
+  let seconds = 5;
+  const el = document.getElementById('countdown');
+  const redirectUrl = "{% url 'conference_post' conference_id=conference.id %}";
+  if (el) {
+    const timer = setInterval(() => {
+      seconds--;
+      el.textContent = seconds;
+      if (seconds <= 0) { clearInterval(timer); window.location.href = redirectUrl; }
+    }, 1000);
+  }
+</script>
+{% endif %}
+
+<!-- Auto-redirect to payment for paid registrations -->
+{% if payable_amount > 0 %}
+<script>
+  setTimeout(() => {
+    window.location.href = "{% url 'conference_payment_breakdown' conference_id=conference.id participant_id=participant.id %}";
+  }, 3000);
+</script>
+{% endif %}
+{% endblock %}
+
+{% block tracking %}
+<script>
+  fbq('track', 'CompleteConferenceRegistration');
+</script>
+{% endblock %}

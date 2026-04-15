@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New User Registration – Action Required</title>
+    <style type="text/css">
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+        .header {
+            background-color: #2c7a7b;
+            color: #ffffff;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .content {
+            padding: 30px;
+            color: #333333;
+            line-height: 1.6;
+        }
+        .content p {
+            margin: 0 0 16px 0;
+        }
+        .user-details {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+        .user-details ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .highlight {
+            background-color: #fff3cd;
+            border-left: 4px solid #2c7a7b;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .button {
+            display: inline-block;
+            background-color: #319795;
+            color: #ffffff;
+            font-weight: bold;
+            padding: 14px 28px;
+            text-decoration: none;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+        .button:hover {
+            background-color: #53bebcff;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            font-size: 14px;
+            color: #666666;
+        }
+        a {
+            color: #319795;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>Action Required: New User Registration</h1>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content">
+            <p>Dear {% if admin_user.get_full_name %}{{ admin_user.get_full_name }}{% else %}{{ admin_user.username }}{% endif %},</p>
+
+            <p>A new user has registered on <strong>TeamManager</strong> and their account is currently pending your approval.</p>
+
+            <div class="user-details">
+                <p><strong>New User Details:</strong></p>
+                <ul>
+                    <li><strong>Full Name:</strong> {% if user.get_full_name %}{{ user.get_full_name }}{% else %}<em>Not provided</em>{% endif %}</li>
+                    <li><strong>Username:</strong> {{ user.username }}</li>
+                    <li><strong>Email:</strong> {{ user.email }}</li>
+                </ul>
+            </div>
+
+            <div class="highlight">
+                <p><strong>Action Required:</strong> Please review the registration and either approve or delete the account.</p>
+            </div>
+
+            <p style="text-align: center;">
+                <a href="{{ approval_url }}" class="button">Review & Approve/Delete Account</a>
+            </p>
+
+            <p>If the button above doesn't work, you can use this direct link:<br>
+               <a href="{{ approval_url }}">{{ approval_url }}</a>
+            </p>
+
+            <p>Thank you for helping manage user access.</p>
+
+            <p>Best regards,<br>The TeamManager Team</p>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>&copy; TeamManager. All rights reserved.</p>
+            <p>This is an automated notification. Please do not reply directly to this email.</p>
+        </div>
+    </div>
+</body>
+</html>

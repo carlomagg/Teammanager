@@ -1,0 +1,304 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Complete Company KYB{% endblock %}
+
+{# Hide notification bar on KYC pages #}
+<style>
+    .notification-bar {
+        display: none !important;
+    }
+</style>
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0"><i class="fas fa-building"></i> Complete Company KYB Verification</h4>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            {# Skip memo-specific flash messages; those are handled via the memo notification system #}
+                            {% if 'memo' not in message.tags %}
+                                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <p class="text-muted">
+                        <strong>Company:</strong> {{ company_profile.company_name }}<br>
+                        Please provide your business verification documents. All fields marked with * are required.
+                    </p>
+                    
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        {% if missing_profile_fields %}
+                        <div class="alert alert-warning">
+                            <h6><i class="fas fa-exclamation-triangle"></i> Complete Company Profile</h6>
+                            <p class="mb-2">Some company profile fields are missing. Please complete them below:</p>
+                            <small>Missing: {{ missing_profile_fields|join:", " }}</small>
+                        </div>
+                        
+                        <div class="mb-4 border rounded p-3 bg-light">
+                            <h5 class="border-bottom pb-2 text-success">
+                                <i class="fas fa-building"></i> Company Profile Update Section
+                            </h5>
+                            <p class="small text-muted">Complete your missing company information here without leaving this form.</p>
+                            
+                            <div class="row">
+                                {% if form.profile_company_name.field.widget.input_type != 'hidden' %}
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.profile_company_name.id_for_label }}" class="form-label">
+                                        Company Name
+                                    </label>
+                                    {{ form.profile_company_name }}
+                                    {% if form.profile_company_name.errors %}
+                                        <div class="text-danger small">{{ form.profile_company_name.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                                
+                                {% if form.profile_email.field.widget.input_type != 'hidden' %}
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.profile_email.id_for_label }}" class="form-label">
+                                        Company Email
+                                    </label>
+                                    {{ form.profile_email }}
+                                    {% if form.profile_email.errors %}
+                                        <div class="text-danger small">{{ form.profile_email.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="row">
+                                {% if form.profile_address.field.widget.input_type != 'hidden' %}
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.profile_address.id_for_label }}" class="form-label">
+                                        Company Address
+                                    </label>
+                                    {{ form.profile_address }}
+                                    {% if form.profile_address.errors %}
+                                        <div class="text-danger small">{{ form.profile_address.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                                
+                                {% if form.profile_contact_details.field.widget.input_type != 'hidden' %}
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.profile_contact_details.id_for_label }}" class="form-label">
+                                        Contact Details
+                                    </label>
+                                    {{ form.profile_contact_details }}
+                                    {% if form.profile_contact_details.errors %}
+                                        <div class="text-danger small">{{ form.profile_contact_details.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="mb-4">
+                            <h5 class="border-bottom pb-2">Tax & Registration</h5>
+                            
+                            <div class="mb-3">
+                                <label for="{{ form.rc_number.id_for_label }}" class="form-label">
+                                    Business Registration Number (RC Number)
+                                </label>
+                                {{ form.rc_number }}
+                                {% if form.rc_number.errors %}
+                                    <div class="text-danger small">{{ form.rc_number.errors }}</div>
+                                {% endif %}
+                                <small class="form-text text-muted">{{ form.rc_number.help_text }}</small>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="{{ form.tin.id_for_label }}" class="form-label">
+                                    Tax Identification Number (TIN) *
+                                </label>
+                                {{ form.tin }}
+                                {% if form.tin.errors %}
+                                    <div class="text-danger small">{{ form.tin.errors }}</div>
+                                {% endif %}
+                                <small class="form-text text-muted">{{ form.tin.help_text }}</small>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h5 class="border-bottom pb-2">Legal Documents</h5>
+                            
+                            <div class="mb-3">
+                                <label for="{{ form.cac_certificate_file.id_for_label }}" class="form-label">
+                                    CAC Certificate of Incorporation *
+                                </label>
+                                {{ form.cac_certificate_file }}
+                                {% if form.cac_certificate_file.errors %}
+                                    <div class="text-danger small">{{ form.cac_certificate_file.errors }}</div>
+                                {% endif %}
+                                <small class="form-text text-muted">{{ form.cac_certificate_file.help_text }}</small>
+                                {% if kyb.cac_certificate_file %}
+                                    <div class="mt-2">
+                                        <a href="{{ kyb.cac_certificate_file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i> View Current
+                                        </a>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="{{ form.memart_file.id_for_label }}" class="form-label">
+                                    Memorandum & Articles of Association (MEMART)
+                                </label>
+                                {{ form.memart_file }}
+                                {% if form.memart_file.errors %}
+                                    <div class="text-danger small">{{ form.memart_file.errors }}</div>
+                                {% endif %}
+                                <small class="form-text text-muted">{{ form.memart_file.help_text }}</small>
+                                {% if kyb.memart_file %}
+                                    <div class="mt-2">
+                                        <a href="{{ kyb.memart_file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i> View Current
+                                        </a>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="{{ form.status_report_file.id_for_label }}" class="form-label">
+                                    CAC Status Report / Form CAC 1.1
+                                </label>
+                                {{ form.status_report_file }}
+                                {% if form.status_report_file.errors %}
+                                    <div class="text-danger small">{{ form.status_report_file.errors }}</div>
+                                {% endif %}
+                                <small class="form-text text-muted">{{ form.status_report_file.help_text }}</small>
+                                {% if kyb.status_report_file %}
+                                    <div class="mt-2">
+                                        <a href="{{ kyb.status_report_file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i> View Current
+                                        </a>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="{{ form.scuml_certificate_file.id_for_label }}" class="form-label">
+                                    SCUML Certificate (if applicable)
+                                </label>
+                                {{ form.scuml_certificate_file }}
+                                {% if form.scuml_certificate_file.errors %}
+                                    <div class="text-danger small">{{ form.scuml_certificate_file.errors }}</div>
+                                {% endif %}
+                                <small class="form-text text-muted">{{ form.scuml_certificate_file.help_text }}</small>
+                                {% if kyb.scuml_certificate_file %}
+                                    <div class="mt-2">
+                                        <a href="{{ kyb.scuml_certificate_file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i> View Current
+                                        </a>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h5 class="border-bottom pb-2">Proof of Address</h5>
+                            
+                            <div class="mb-3">
+                                <label for="{{ form.utility_bill_file.id_for_label }}" class="form-label">
+                                    Utility Bill or Bank Statement
+                                </label>
+                                {{ form.utility_bill_file }}
+                                {% if form.utility_bill_file.errors %}
+                                    <div class="text-danger small">{{ form.utility_bill_file.errors }}</div>
+                                {% endif %}
+                                <small class="form-text text-muted">{{ form.utility_bill_file.help_text }}</small>
+                                {% if kyb.utility_bill_file %}
+                                    <div class="mt-2">
+                                        <a href="{{ kyb.utility_bill_file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i> View Current
+                                        </a>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {{ form.non_field_errors }}
+                            </div>
+                        {% endif %}
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'kyc_status' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Back
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-check"></i> Submit KYB
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <!-- Directors Section -->
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-users"></i> Company Directors</h5>
+                </div>
+                <div class="card-body">
+                    {% if directors %}
+                        <ul class="list-group list-group-flush">
+                            {% for director in directors %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>{{ director.first_name }} {{ director.last_name }}</strong><br>
+                                        <small class="text-muted">{{ director.designation|default:"Director" }}</small>
+                                    </div>
+                                    <div>
+                                        <a href="{% url 'edit_company_director' director.id %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'delete_company_director' director.id %}" class="btn btn-sm btn-outline-danger">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted">No directors added yet.</p>
+                    {% endif %}
+                    
+                    <div class="mt-3">
+                        <a href="{% url 'add_company_director' %}" class="btn btn-primary btn-sm w-100">
+                            <i class="fas fa-plus"></i> Add Director
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mt-3 border-info">
+                <div class="card-body">
+                    <h6><i class="fas fa-info-circle"></i> Required Documents</h6>
+                    <ul class="small mb-0">
+                        <li>TIN (Tax ID Number)</li>
+                        <li>CAC Certificate</li>
+                        <li>At least one director</li>
+                        <li>Utility bill or bank statement (recommended)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

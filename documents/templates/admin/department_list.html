@@ -1,0 +1,268 @@
+{% extends 'base.html' %}
+{% block title %}Departments - TeamManager{% endblock %}
+{% load custom_filters %}
+{% block content %}
+<div class="departments-page">
+    <div class="card shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h4 class="card-title mb-0">
+                <i class="fas fa-building me-2 text-primary" aria-hidden="true"></i>
+                Departments ({{ departments|page_obj_count }})
+            </h4>
+            <div class="mb-3">
+                <a href="{% url 'create_department' %}" class="btn btn-success">Add Department</a>
+            </div>
+            <div class="input-group w-50 w-md-25">
+                <span class="input-group-text bg-transparent border-end-0">
+                    <i class="fas fa-search text-muted"></i>
+                </span>
+                <form method="get" class="input-group w-50 w-md-25">
+                    <input
+                        type="text"
+                        name="search"
+                        class="form-control"
+                        placeholder="Search departments..."
+                        value="{{ request.GET.search }}"
+                    >
+                </form>
+            </div>
+            <a href="{% url 'admin_dashboard' %}" class="btn btn-outline-secondary btn-sm" title="Back to Admin Dashboard">
+                <i class="fas fa-arrow-left me-1"></i> Back
+            </a>
+        </div>
+
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover table-bordered align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col">No.</th>
+                            <th scope="col">Name</th>
+                            <th scope="col">HOD</th>
+                            <th scope="col">Members</th>
+                            <th scope="col">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="departmentTableBody">
+                        {% for department in departments %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td><a href="{% url 'edit_department' department_id=department.id %}">{{ department.name }}</a></td>
+                            <td>{{ department.hod|default:'—' }}</td>
+                            <td><a href="{% url 'department_members' department.id %}">{{ department.members.count }}</a></td>
+                            <td>
+                                <a href="{% url 'edit_department' department_id=department.id %}?next={{ request.get_full_path }}" class="btn btn-outline-primary btn-sm me-1" title="Edit Department">
+                                    <i class="fas fa-edit me-1"></i> Edit
+                                </a>
+                                <form action="{% url 'delete_department' department_id=department.id %}?next={{ request.get_full_path }}" method="POST" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger btn-sm" title="Delete Department" onclick="return confirm('Are you sure you want to delete {{ department.name }}?');">
+                                        <i class="fas fa-trash-alt me-1"></i> Delete
+                                    </button>
+                                </form>
+                                <a href="{% url 'assign_users_to_department' department.id %}" class="btn btn-primary">Add Users to this Department</a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr class="no-results">
+                            <td colspan="4" class="text-center text-muted">No departments found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% if departments.has_other_pages %}
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center mt-3">
+                            {% if departments.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ departments.previous_page_number }}&search={{ request.GET.search }}" aria-label="Previous">
+                                        <span aria-hidden="true">«</span>
+                                    </a>
+                                </li>
+                            {% endif %}
+                            <!--First page-->
+                            <li class="page-item {% if departments.number == 1 %}active{% endif %}">
+                                <a class="page-link" href="?page=1&search={{ request.GET.search }}">1</a>
+                            </li>
+                            {% if departments.number != 1 and departments.number != 2 %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">...</span>
+                                </li>
+                            {% endif %}
+                            {% if departments.number != 1 %}
+                                <li class="page-item {% if departments.number %}active{% endif %}">
+                                    <a class="page-link" href="?page={{ departments.number }}&search={{ request.GET.search }}">{{ departments.number }}</a>
+                                </li>
+                            {% endif %}
+                            {% if departments.number != departments.paginator.num_pages and departments.number != departments.paginator.num_pages|add:-1 %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">...</span>
+                                </li>
+                            {% endif %}
+                            <!-- Last page (only if not already shown) -->
+                            {% if departments.number != departments.paginator.num_pages %}
+                                <li class="page-item {% if departments.number == departments.paginator.num_pages %}active{% endif %}">
+                                    <a class="page-link" href="?page={{ departments.paginator.num_pages }}&search={{ request.GET.search }}">{{ departments.paginator.num_pages }}</a>
+                                </li>
+                            {% endif %}
+                            {% if departments.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ departments.next_page_number }}&search={{ request.GET.search }}" aria-label="Next">
+                                        <span aria-hidden="true">»</span>
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style scoped>
+    .pagination .page-link {
+        color: #319795;
+        border-radius: 8px;
+        margin: 0 2px;
+    }
+    .pagination .page-item.active .page-link {
+        background-color: #319795;
+        border-color: #319795;
+        color: #ffffff;
+    }
+    .pagination .page-link:hover {
+        background-color: #f1f5f9;
+        color: #2c7a7b;
+    }
+    .departments-page {
+        padding: 20px;
+    }
+    .departments-page .card {
+        border: none;
+        border-radius: 12px;
+        background: #ffffff;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+    .departments-page .card-header {
+        background: #f8fafc;
+        border-bottom: 1px solid #e2e8f0;
+        border-radius: 12px 12px 0 0;
+        padding: 15px 20px;
+    }
+    .departments-page .card-title {
+        font-weight: 600;
+        color: #2d3748;
+    }
+    .departments-page .table {
+        margin-bottom: 0;
+        font-size: 0.95rem;
+    }
+    .departments-page .table th {
+        font-weight: 500;
+        color: #2d3748;
+        background: #f8fafc;
+        border-bottom: 2px solid #e2e8f0;
+    }
+    .departments-page .table td {
+        vertical-align: middle;
+        border-color: #e2e8f0;
+    }
+    .departments-page .table-hover tbody tr:hover {
+        background-color: #f1f5f9;
+    }
+    .departments-page .btn-primary, .departments-page .btn-outline-primary {
+        background-color: #319795;
+        border-color: #319795;
+        border-radius: 8px;
+        padding: 6px 12px;
+        font-size: 0.9rem;
+        transition: background-color 0.2s ease;
+    }
+    .departments-page .btn-primary:hover, .departments-page .btn-outline-primary:hover {
+        background-color: #2c7a7b;
+        border-color: #2c7a7b;
+    }
+    .departments-page .btn-danger {
+        background-color: #dc3545;
+        border-color: #dc3545;
+        border-radius: 8px;
+        padding: 6px 12px;
+        font-size: 0.9rem;
+        transition: background-color 0.2s ease;
+    }
+    .departments-page .btn-danger:hover {
+        background-color: #c82333;
+        border-color: #c82333;
+    }
+    .departments-page .form-control {
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        font-size: 0.9rem;
+        padding: 8px;
+    }
+    .departments-page .form-control:focus {
+        border-color: #319795;
+        box-shadow: 0 0 0 0.2rem rgba(49, 151, 149, 0.25);
+    }
+    .departments-page .input-group-text {
+        border-radius: 8px 0 0 8px;
+        border: 1px solid #e2e8f0;
+    }
+    .departments-page a:focus, .departments-page button:focus, .departments-page input:focus {
+        outline: 2px solid #319795;
+        outline-offset: 2px;
+        border-radius: 4px;
+    }
+    @media (max-width: 768px) {
+        .departments-page {
+            padding: 15px;
+        }
+        .departments-page .card-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .departments-page .input-group {
+            width: 100% !important;
+        }
+        .departments-page .table {
+            font-size: 0.85rem;
+        }
+        .departments-page .btn-sm {
+            padding: 4px 8px;
+            font-size: 0.85rem;
+        }
+    }
+</style>
+
+<script>
+    // Search functionality
+    document.getElementById('searchDepartments').addEventListener('input', function(e) {
+        const searchTerm = e.target.value.toLowerCase();
+        const rows = document.querySelectorAll('#departmentTableBody tr:not(.no-results)');
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(searchTerm) ? '' : 'none';
+        });
+        const noResultsRow = document.querySelector('#departmentTableBody tr.no-results');
+        if (noResultsRow) {
+            noResultsRow.style.display = Array.from(rows).every(row => row.style.display === 'none') ? '' : 'none';
+        }
+    });
+
+    // Form submission spinner
+    document.querySelectorAll('form').forEach(form => {
+        form.addEventListener('submit', function() {
+            const btn = form.querySelector('button[type="submit"]');
+            if (btn) {
+                btn.disabled = true;
+                const spinner = btn.querySelector('.spinner-border');
+                if (spinner) {
+                    spinner.classList.remove('d-none');
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

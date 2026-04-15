@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Get PIN Number - {{ tenant.name|default:"TeamManager" }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <!-- Header -->
+            <div class="text-center mb-4">
+                {% if tenant and tenant.company_profile and tenant.company_profile.photo %}
+                    <img src="{{ tenant.company_profile.photo.url }}" alt="{{ tenant.name }}" class="mb-3" style="height: 60px; width: auto;">
+                {% endif %}
+                <h2 class="fw-bold" style="color: #319795;">
+                    <i class="fas fa-key me-2"></i>Get PIN Number
+                </h2>
+                <p class="text-muted">Request or retrieve your PIN for check-in access</p>
+            </div>
+
+            {% if request_sent %}
+                <!-- Success Message -->
+                <div class="card shadow-sm border-0" style="border-radius: 12px;">
+                    <div class="card-body text-center p-5">
+                        <div class="mb-4">
+                            <i class="fas fa-check-circle" style="font-size: 4rem; color: #48bb78;"></i>
+                        </div>
+                        <h4 class="fw-bold mb-3">Request Submitted!</h4>
+                        <p class="text-muted mb-4">
+                            Your PIN assistance request has been submitted. An administrator will contact you shortly to help you with your PIN.
+                        </p>
+                        <div class="alert alert-info" role="alert">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <small>You should receive a response within 24 hours.</small>
+                        </div>
+                        <a href="{% url 'quick_services' %}" class="btn btn-primary mt-3">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Quick Services
+                        </a>
+                    </div>
+                </div>
+            {% else %}
+                <!-- PIN Request Form -->
+                <div class="card shadow-sm border-0" style="border-radius: 12px;">
+                    <div class="card-body p-4">
+                        {% if error_message %}
+                            <div class="alert alert-danger" role="alert">
+                                <i class="fas fa-exclamation-circle me-2"></i>
+                                {{ error_message }}
+                            </div>
+                        {% endif %}
+
+                        <form method="post">
+                            {% csrf_token %}
+                            
+                            <!-- Name -->
+                            <div class="mb-3">
+                                <label for="name" class="form-label fw-medium">
+                                    Your Name <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="name" name="name" 
+                                       placeholder="Enter your full name" required>
+                            </div>
+
+                            <!-- Email or Phone -->
+                            <div class="mb-3">
+                                <label for="identifier" class="form-label fw-medium">
+                                    Email or Phone Number <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="identifier" name="identifier" 
+                                       placeholder="Enter your email or phone number" required>
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    We'll use this to contact you
+                                </div>
+                            </div>
+
+                            <!-- Message (Optional) -->
+                            <div class="mb-4">
+                                <label for="message" class="form-label fw-medium">
+                                    Additional Information (Optional)
+                                </label>
+                                <textarea class="form-control" id="message" name="message" rows="3" 
+                                          placeholder="e.g., I forgot my PIN, I need a new PIN, etc."></textarea>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary btn-lg" style="background-color: #319795; border-color: #319795;">
+                                    <i class="fas fa-paper-plane me-2"></i>Request PIN Help
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Info Box -->
+                <div class="alert alert-light mt-4 border" role="alert" style="border-radius: 12px;">
+                    <div class="d-flex align-items-start">
+                        <i class="fas fa-shield-alt me-3 mt-1" style="color: #319795; font-size: 1.5rem;"></i>
+                        <div>
+                            <h6 class="fw-bold mb-2">How PIN Assistance Works</h6>
+                            <ul class="small mb-0">
+                                <li>Submit your request with your name and contact info</li>
+                                <li>An administrator will review your request</li>
+                                <li>They'll help you set up or retrieve your PIN</li>
+                                <li>You'll be contacted within 24 hours</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Help Section -->
+                <div class="card shadow-sm border-0 mt-4" style="border-radius: 12px; background-color: #f7fafc;">
+                    <div class="card-body p-4">
+                        <h6 class="fw-bold mb-3">
+                            <i class="fas fa-question-circle me-2" style="color: #319795;"></i>Need Help?
+                        </h6>
+                        <p class="small mb-2">If you're having trouble accessing your PIN:</p>
+                        <ul class="small mb-3">
+                            <li>Make sure you're using the correct email or phone number</li>
+                            <li>Check if you have an active account with the organization</li>
+                            <li>Contact your administrator or HR department</li>
+                        </ul>
+                        <a href="{% url 'ticket_submit_public' %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-life-ring me-1"></i>Submit Support Ticket
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Back Button -->
+            <div class="text-center mt-4">
+                <a href="{% url 'quick_services' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Quick Services
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    body.dark-mode .card {
+        background-color: #2d3748;
+        border-color: #4a5568 !important;
+    }
+    
+    body.dark-mode .alert-light {
+        background-color: #2d3748;
+        border-color: #4a5568 !important;
+        color: #e2e8f0;
+    }
+    
+    body.dark-mode .form-label {
+        color: #e2e8f0;
+    }
+    
+    body.dark-mode .form-control {
+        background-color: #1a202c;
+        border-color: #4a5568;
+        color: #e2e8f0;
+    }
+    
+    body.dark-mode .form-check-label {
+        color: #e2e8f0;
+    }
+    
+    body.dark-mode .card[style*="background-color: #f7fafc"] {
+        background-color: #1a202c !important;
+    }
+</style>
+{% endblock %}

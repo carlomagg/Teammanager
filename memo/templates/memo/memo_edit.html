@@ -1,0 +1,431 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edit Draft Memo{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4 memo-create-page">
+    <div class="row mb-4">
+        <div class="col-12 d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <h2 class="fw-semibold mb-1">
+                    <i class="fas fa-edit me-2 text-primary"></i>Edit Draft Memo
+                </h2>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-0 small text-muted">
+                        <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'memo:dashboard' %}">Mail & Memo</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'memo:memo_detail' memo.pk %}">{{ memo.reference_number }}</a></li>
+                        <li class="breadcrumb-item active">Edit</li>
+                    </ol>
+                </nav>
+            </div>
+            <a href="{% url 'memo:memo_list' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-list me-1"></i> View All
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
+
+                        <div class="mb-3">
+                            <label for="id_title" class="form-label">
+                                <span class="text-primary">
+                                    <i class="fas fa-file-signature me-1"></i> Title
+                                </span>
+                            </label>
+                            {{ form.title }}
+                            {% if form.title.errors %}<div class="text-danger">{{ form.title.errors }}</div>{% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_description" class="form-label">
+                                <span class="text-info">
+                                    <i class="fas fa-align-left me-1"></i> Description
+                                </span>
+                            </label>
+                            {{ form.description }}
+                            {% if form.description.errors %}<div class="text-danger">{{ form.description.errors }}</div>{% endif %}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="id_category" class="form-label">
+                                    <span class="text-secondary">
+                                        <i class="fas fa-tags me-1"></i> Category
+                                    </span>
+                                </label>
+                                {{ form.category }}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="id_priority" class="form-label">
+                                    <span class="text-warning">
+                                        <i class="fas fa-exclamation-circle me-1"></i> Priority
+                                    </span>
+                                </label>
+                                {{ form.priority }}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="id_document_type" class="form-label">
+                                    <span class="text-success">
+                                        <i class="fas fa-file-alt me-1"></i> Document Type
+                                    </span>
+                                </label>
+                                {{ form.document_type }}
+                            </div>
+                        </div>
+
+                        <!-- Scanned document upload (shown when document_type = scanned) -->
+                        <div class="mb-3" id="scannedFileSection" style="display: none;">
+                            <label for="id_scanned_file" class="form-label">
+                                <i class="fas fa-camera me-1"></i> Scan / Upload Hard Copy
+                            </label>
+                            {{ form.scanned_file }}
+                            <small class="text-muted">Upload a scanned document, photo, or PDF of the hard copy. On mobile you can take a photo directly.</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_forward_to" class="form-label">
+                                <span class="text-primary">
+                                    <i class="fas fa-user-check me-1"></i> Send To
+                                </span>
+                            </label>
+                            {{ form.forward_to }}
+                            <small class="text-muted">{{ form.forward_to.help_text }}</small>
+                        </div>
+
+                        <!-- CC/BCC Toggle -->
+                        <div class="mb-3">
+                            <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill" id="ccBccToggle">
+                                <i class="fas fa-plus me-1"></i> CC / BCC
+                            </button>
+                        </div>
+
+                        <!-- CC/BCC Fields (Collapsible) -->
+                        <div id="ccBccSection" class="cc-bcc-container" style="display: none;">
+                            <div class="recipients-card">
+                                <div class="recipient-field">
+                                    <label for="id_cc_users" class="recipient-label cc-label">
+                                        <i class="fas fa-users me-1"></i> CC
+                                    </label>
+                                    {{ form.cc_users }}
+                                    <small class="field-hint">Carbon copy - visible to all recipients</small>
+                                </div>
+                                <div class="recipient-field mb-0">
+                                    <label for="id_bcc_users" class="recipient-label bcc-label">
+                                        <i class="fas fa-eye-slash me-1"></i> BCC
+                                    </label>
+                                    {{ form.bcc_users }}
+                                    <small class="field-hint">Blind carbon copy - hidden from other recipients</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_note" class="form-label">
+                                <span class="text-muted">
+                                    <i class="fas fa-sticky-note me-1"></i> Note for Recipient
+                                </span>
+                            </label>
+                            {{ form.note }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_attachments" class="form-label">
+                                <span class="text-secondary">
+                                    <i class="fas fa-paperclip me-1"></i> Attachments
+                                </span>
+                            </label>
+                            <input type="file" class="form-control" id="id_attachments" name="attachments" multiple style="display: none;">
+                            <button type="button" class="btn btn-outline-secondary" id="selectFilesBtn">
+                                <i class="fas fa-paperclip me-1"></i> Select Files
+                            </button>
+                            <div id="fileList" class="mt-2"></div>
+                            <small class="text-muted d-block mt-1">You can attach multiple files</small>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" name="action" value="send" class="btn btn-primary"><i class="fas fa-paper-plane me-1"></i> Send Memo</button>
+                            <button type="submit" name="action" value="draft" class="btn btn-outline-primary"><i class="fas fa-save me-1"></i> Update Draft</button>
+                            <a href="{% url 'memo:memo_detail' memo.pk %}" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-0">
+                    <h6 class="mb-0 text-muted text-uppercase small">Tips</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2"><i class="fas fa-info-circle text-info me-1"></i> Choose a clear, descriptive title</li>
+                        <li class="mb-2"><i class="fas fa-info-circle text-info me-1"></i> Select a recipient or leave blank to assign to Receptionist</li>
+                        <li class="mb-2"><i class="fas fa-info-circle text-info me-1"></i> You can attach files with each memo</li>
+                        <li class="mb-2"><i class="fas fa-camera text-info me-1"></i> Select <strong>"Scanned"</strong> as document type to upload a photo or scan of a hard copy</li>
+                        <li><i class="fas fa-info-circle text-info me-1"></i> Priority helps the recipient prioritize</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Show/hide scan upload based on document type
+    const docTypeSelect = document.getElementById('id_document_type');
+    const scanSection = document.getElementById('scannedFileSection');
+
+    function toggleScanSection() {
+        if (docTypeSelect && scanSection) {
+            scanSection.style.display = docTypeSelect.value === 'scanned' ? 'block' : 'none';
+        }
+    }
+
+    if (docTypeSelect) {
+        docTypeSelect.addEventListener('change', toggleScanSection);
+        toggleScanSection(); // Run on page load
+    }
+
+    // Colorful priority background based on selected value
+    const prioritySelect = document.getElementById('id_priority');
+
+    function applyPriorityColor() {
+        if (!prioritySelect) return;
+        prioritySelect.classList.remove('priority-low', 'priority-medium', 'priority-high', 'priority-urgent');
+        const val = prioritySelect.value;
+        if (val === 'low') {
+            prioritySelect.classList.add('priority-low');
+        } else if (val === 'medium') {
+            prioritySelect.classList.add('priority-medium');
+        } else if (val === 'high') {
+            prioritySelect.classList.add('priority-high');
+        } else if (val === 'urgent') {
+            prioritySelect.classList.add('priority-urgent');
+        }
+    }
+
+    if (prioritySelect) {
+        prioritySelect.addEventListener('change', applyPriorityColor);
+        applyPriorityColor(); // Run on page load
+    }
+
+    // CC/BCC Toggle functionality
+    const ccBccToggle = document.getElementById('ccBccToggle');
+    const ccBccSection = document.getElementById('ccBccSection');
+    if (ccBccToggle && ccBccSection) {
+        ccBccToggle.addEventListener('click', function() {
+            const isVisible = ccBccSection.style.display === 'block';
+            ccBccSection.style.display = isVisible ? 'none' : 'block';
+            ccBccToggle.innerHTML = isVisible 
+                ? '<i class="fas fa-plus me-1"></i> CC / BCC'
+                : '<i class="fas fa-minus me-1"></i> CC / BCC';
+            ccBccToggle.classList.toggle('btn-outline-secondary', isVisible);
+            ccBccToggle.classList.toggle('btn-secondary', !isVisible);
+        });
+    }
+
+    // Initialize Select2 for CC/BCC with tag-style selection
+    $(document).ready(function() {
+        $('.select2-multiple').select2({
+            placeholder: function() {
+                return $(this).data('placeholder');
+            },
+            allowClear: true,
+            closeOnSelect: false,
+            tags: false,
+            tokenSeparators: [','],
+            templateSelection: function(data, container) {
+                // Add close button to each selected tag
+                var $selection = $('<span class="select2-selection__tag">' + data.text + '</span>');
+                return $selection;
+            }
+        });
+    });
+</script>
+
+<script>
+    // File attachment handler with visual preview and delete
+    (function() {
+        const fileInput = document.getElementById('id_attachments');
+        const selectFilesBtn = document.getElementById('selectFilesBtn');
+        const fileList = document.getElementById('fileList');
+        let selectedFiles = [];
+
+        // Open file picker when button is clicked
+        selectFilesBtn.addEventListener('click', function() {
+            fileInput.click();
+        });
+
+        // Handle file selection
+        fileInput.addEventListener('change', function(e) {
+            const newFiles = Array.from(e.target.files);
+            
+            // Add new files to the list (avoid duplicates by name)
+            newFiles.forEach(file => {
+                if (!selectedFiles.find(f => f.name === file.name && f.size === file.size)) {
+                    selectedFiles.push(file);
+                }
+            });
+            
+            updateFileList();
+        });
+
+        function updateFileList() {
+            if (selectedFiles.length === 0) {
+                fileList.innerHTML = '';
+                return;
+            }
+
+            fileList.innerHTML = '<div class="selected-files-container">' +
+                selectedFiles.map((file, index) => `
+                    <div class="file-tag" data-index="${index}">
+                        <i class="fas fa-file me-1"></i>
+                        <span class="file-name">${escapeHtml(file.name)}</span>
+                        <span class="file-size">(${formatFileSize(file.size)})</span>
+                        <button type="button" class="remove-file" data-index="${index}">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                `).join('') +
+            '</div>';
+
+            // Add event listeners to remove buttons
+            fileList.querySelectorAll('.remove-file').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const index = parseInt(this.getAttribute('data-index'));
+                    selectedFiles.splice(index, 1);
+                    updateFileList();
+                    updateFileInput();
+                });
+            });
+
+            updateFileInput();
+        }
+
+        function updateFileInput() {
+            // Create a new DataTransfer object to update the file input
+            const dataTransfer = new DataTransfer();
+            selectedFiles.forEach(file => {
+                dataTransfer.items.add(file);
+            });
+            fileInput.files = dataTransfer.files;
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    })();
+</script>
+
+<style>
+    .selected-files-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 8px;
+    }
+
+    .file-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: linear-gradient(135deg, #319795 0%, #2c7a7b 100%);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    .file-tag .file-name {
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .file-tag .file-size {
+        opacity: 0.8;
+        font-size: 0.75rem;
+    }
+
+    .file-tag .remove-file {
+        background: none;
+        border: none;
+        color: rgba(255, 255, 255, 0.8);
+        cursor: pointer;
+        padding: 0;
+        margin-left: 4px;
+        font-size: 1rem;
+        line-height: 1;
+        transition: color 0.2s;
+    }
+
+    .file-tag .remove-file:hover {
+        color: white;
+    }
+
+    #selectFilesBtn {
+        transition: all 0.2s;
+    }
+
+    #selectFilesBtn:hover {
+        background-color: #319795;
+        color: white;
+        border-color: #319795;
+    }
+</style>
+
+<script>
+    window.CKEDITOR_BASEPATH = '/static/ckeditor/ckeditor/';
+</script>
+    /* Colorful priority dropdown background */
+    #id_priority.priority-low { background-color: #e5f9e7; color: #166534; border-color: #bbf7d0; }
+    #id_priority.priority-medium { background-color: #e0f2fe; color: #0f172a; border-color: #bfdbfe; }
+    #id_priority.priority-high { background-color: #fef9c3; color: #92400e; border-color: #facc15; }
+    #id_priority.priority-urgent { background-color: #fee2e2; color: #b91c1c; border-color: #fecaca; }
+
+    /* Elegant CC/BCC Section Styling */
+    .cc-bcc-container { animation: slideDown 0.2s ease-out; }
+    @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+    .recipients-card { background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; }
+    .recipient-field { margin-bottom: 1rem; }
+    .recipient-label { display: flex; align-items: center; font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem; padding: 0.375rem 0.75rem; border-radius: 6px; width: fit-content; }
+    .cc-label { background: #dbeafe; color: #1e40af; }
+    .bcc-label { background: #fef3c7; color: #92400e; }
+    .field-hint { display: block; margin-top: 0.375rem; font-size: 0.75rem; color: #64748b; }
+    .select2-container--default .select2-selection--multiple { border: 1px solid #cbd5e1; border-radius: 8px; min-height: 44px; padding: 4px; }
+    .select2-container--default .select2-selection--multiple:focus { border-color: #319795; box-shadow: 0 0 0 3px rgba(49, 151, 149, 0.1); }
+    .select2-container--default .select2-selection__choice { background: linear-gradient(135deg, #319795 0%, #2c7a7b 100%); color: white; border: none; border-radius: 20px; padding: 4px 12px; font-size: 0.875rem; font-weight: 500; margin: 2px; display: inline-flex; align-items: center; gap: 6px; }
+    .select2-container--default .select2-selection__choice__remove { color: rgba(255, 255, 255, 0.8); font-size: 1rem; font-weight: 400; margin-right: 0; order: 2; }
+    .select2-container--default .select2-selection__choice__remove:hover { color: white; background: none; }
+    .select2-container--default .select2-search--inline .select2-search__field { margin-top: 4px; font-size: 0.875rem; }
+    .select2-dropdown { border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); }
+    .select2-results__option { padding: 8px 12px; font-size: 0.875rem; }
+    .select2-results__option--highlighted { background: #319795 !important; }
+</style>
+
+<script>
+    window.CKEDITOR_BASEPATH = '/static/ckeditor/ckeditor/';
+</script>
+<script src="{% static 'ckeditor/ckeditor/ckeditor.js' %}"></script>
+<script src="{% static 'ckeditor/ckeditor-init.js' %}"></script>
+{% endblock %}

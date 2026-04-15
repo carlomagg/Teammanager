@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Unregistered{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+  <div class="alert alert-success">
+    You have successfully cancelled your registration for <strong>{{ conference.title }}</strong>.
+  </div>
+  <p><a href="{% url 'conference_list' %}" class="btn btn-outline-primary">Back to Conferences</a></p>
+</div>
+{% endblock %}

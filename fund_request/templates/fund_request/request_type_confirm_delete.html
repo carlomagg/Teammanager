@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Request Type{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5>Delete Request Type</h5>
+                    <p>Are you sure you want to delete <strong>{{ request_type.name }}</strong>?</p>
+                    <p class="text-muted">Fund Requests using this request type will have their type set to none.</p>
+                    <form method="POST">
+                        {% csrf_token %}
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-danger"><i class="fas fa-trash me-1"></i> Delete</button>
+                            <a href="{% url 'fund_request:request_types' %}" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

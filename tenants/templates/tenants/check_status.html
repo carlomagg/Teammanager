@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Check Application Status - Team Manager{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-8 col-lg-6">
+            <div class="card shadow-sm border-0" style="border-radius: 12px; background: #ffffff;">
+                <div class="card-body p-4 text-center">
+                    <i class="fas fa-search fa-3x mb-3" style="color: #319795;" aria-hidden="true"></i>
+                    <h4 class="card-title mb-4" style="font-weight: 600; color: #2d3748;">Check Your Application Status</h4>
+                    {% if messages %}
+                        {% for message in messages %}
+                            {% if 'memo' not in message.tags %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert" style="border-radius: 8px;">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                    <form method="POST" aria-label="Application Status Check Form">
+                        {% csrf_token %}
+                        <div class="mb-3 text-start">
+                            <label for="email" class="form-label" style="color: #2d3748; font-weight: 500;">
+                                Email Address
+                                <span class="text-danger" aria-hidden="true">*</span>
+                            </label>
+                            <input type="email" name="email" id="email" class="form-control" required aria-describedby="emailHelp">
+                            <div id="emailHelp" class="form-text" style="font-size: 0.85rem; color: #6b7280;">
+                                Enter the email used for your company application.
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 mb-3" style="border-radius: 8px; padding: 10px; font-weight: 500;">
+                            <i class="fas fa-search me-2"></i>Check Status
+                        </button>
+                        <div>
+                            <a href="{% url 'apply_for_tenant' %}" class="btn btn-outline-secondary" style="border-radius: 8px; padding: 8px 16px;">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Application
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    body.dark-mode .card {
+        background: #2d3748 !important;
+        color: #e2e8f0;
+    }
+    body.dark-mode .form-label {
+        color: #e2e8f0;
+    }
+    body.dark-mode .form-control {
+        background: #3b4a6b;
+        color: #e2e8f0;
+        border-color: #4a5568;
+    }
+    body.dark-mode .form-control:focus {
+        background: #3b4a6b;
+        color: #e2e8f0;
+        border-color: #319795;
+        box-shadow: 0 0 0 0.2rem rgba(49, 151, 149, 0.25);
+    }
+    body.dark-mode .form-text {
+        color: #a0aec0;
+    }
+    body.dark-mode .text-muted {
+        color: #a0aec0 !important;
+    }
+    body.dark-mode .text-primary {
+        color: #81e6d9 !important;
+    }
+    .form-control {
+        border-radius: 8px;
+        font-size: 0.95rem;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .form-control:focus {
+        border-color: #319795;
+        box-shadow: 0 0 0 0.2rem rgba(49, 151, 149, 0.25);
+    }
+    .btn-primary {
+        background-color: #319795;
+        border-color: #319795;
+        transition: background-color 0.2s ease;
+    }
+    .btn-primary:hover {
+        background-color: #2c7a7b;
+        border-color: #2c7a7b;
+    }
+    .btn-outline-primary {
+        border-color: #319795;
+        color: #319795;
+        transition: background-color 0.2s ease, color 0.2s ease;
+    }
+    .btn-outline-primary:hover {
+        background-color: #319795;
+        color: #ffffff;
+    }
+    .btn-outline-secondary {
+        border-color: #e2e8f0;
+        color: #2d3748;
+        transition: background-color 0.2s ease, color 0.2s ease;
+    }
+    body.dark-mode .btn-outline-secondary {
+        border-color: #4a5568;
+        color: #e2e8f0;
+    }
+    .btn-outline-secondary:hover {
+        background-color: #e2e8f0;
+        color: #2d3748;
+    }
+    body.dark-mode .btn-outline-secondary:hover {
+        background-color: #4a5568;
+        color: #e2e8f0;
+    }
+    .alert {
+        font-size: 0.9rem;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const inputs = document.querySelectorAll('.form-control, .btn-primary, .btn-outline-secondary');
+        inputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                this.style.outline = '2px solid #319795';
+                this.style.outlineOffset = '2px';
+            });
+            input.addEventListener('blur', function() {
+                this.style.outline = 'none';
+            });
+        });
+    });
+</script>
+{% endblock %}

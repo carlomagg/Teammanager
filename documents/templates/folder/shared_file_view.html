@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+{% block title %}View Shared File - {{ file.original_name }}{% endblock %}
+{% block content %}
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 col-md-10">
+                <div class="card shadow-sm border-0 mt-4" style="border-radius: 12px;">
+                    <div class="card-header bg-transparent">
+                        <h4>{{ file.original_name }}</h4>
+                    </div>
+                <div class="card-body text-center">
+                    {% if file.shared_by %}
+                        <p class="text-muted">
+                            {% if file.shared_by.get_full_name %}
+                                {{ file.shared_by.get_full_name }}
+                            {% else %}
+                                {{ file.shared_by.username }}
+                            {% endif %}
+                            shared this file with you
+                        </p>
+                    {% else %}
+                        <p class="text-muted">This file was shared with you</p>
+                    {% endif %}
+                    <p><strong>File:</strong> <a href="{{ file_url }}" download>Download File</a></p>
+                    {% if file_url|get_file_extension|lower in "jpg,png,gif,mp4,webm,mp3,wav,pdf" %}
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#mediaModal" onclick="loadMedia('{{ file_url }}', '{{ public_file.original_name }}', '{{ file_url|lower|slice:'-3:' }}')">
+                            Preview File
+                        </button>
+                    {% else %}
+                        <p>Preview not available for this file type.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="mediaModal" tabindex="-1" aria-labelledby="mediaModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="mediaModalLabel">Media Preview</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <div id="mediaContainer" style="max-height: 60vh; overflow: auto;">
+                        <!-- Content will be dynamically loaded by JavaScript -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a href="#" id="mediaDownloadLink" class="btn btn-outline-primary" download>Download</a>
+                    <button type="button" class="btn btn-primary" id="mediaFullscreenBtn">
+                        <i class="fas fa-expand"></i> Fullscreen
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS and Popper.js -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function loadMedia(fileUrl, fileName, fileExtension) {
+            const mediaContainer = document.getElementById('mediaContainer');
+            const downloadLink = document.getElementById('mediaDownloadLink');
+            const modalLabel = document.getElementById('mediaModalLabel');
+
+            // Set modal title and download link
+            modalLabel.textContent = `Preview: ${fileName}`;
+            downloadLink.href = fileUrl;
+
+            // Clear previous content
+            mediaContainer.innerHTML = '';
+
+            // Load content based on file extension
+            if (['jpg', 'png', 'gif'].includes(fileExtension)) {
+                mediaContainer.innerHTML = `<img src="${fileUrl}" alt="${fileName}" style="max-width: 100%; max-height: 60vh;">`;
+            } else if (['mp4', 'webm'].includes(fileExtension)) {
+                mediaContainer.innerHTML = `
+                    <video controls style="max-width: 100%; max-height: 60vh;">
+                        <source src="${fileUrl}" type="video/${fileExtension}">
+                        Your browser does not support the video tag.
+                    </video>`;
+            } else if (['mp3', 'wav'].includes(fileExtension)) {
+                mediaContainer.innerHTML = `
+                    <audio controls style="width: 100%;">
+                        <source src="${fileUrl}" type="audio/${fileExtension}">
+                        Your browser does not support the audio tag.
+                    </audio>`;
+            } else if (fileExtension === 'pdf') {
+                mediaContainer.innerHTML = `<embed src="${fileUrl}" type="application/pdf" style="width: 100%; height: 60vh;">`;
+            } else {
+                mediaContainer.innerHTML = `<p>Preview not available for this file type.</p>`;
+            }
+        }
+
+        // Fullscreen functionality
+        document.getElementById('mediaFullscreenBtn').addEventListener('click', function() {
+            const mediaContainer = document.getElementById('mediaContainer');
+            const mediaElement = mediaContainer.querySelector('img, video, embed');
+            if (mediaElement) {
+                if (mediaElement.requestFullscreen) {
+                    mediaElement.requestFullscreen();
+                } else if (mediaElement.webkitRequestFullscreen) { /* Safari */
+                    mediaElement.webkitRequestFullscreen();
+                } else if (mediaElement.msRequestFullscreen) { /* IE11 */
+                    mediaElement.msRequestFullscreen();
+                }
+            }
+        });
+    </script>
+{% endblock %}

@@ -1,0 +1,211 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Quick Services - {{ tenant.name|default:"TeamManager" }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Header -->
+            <div class="text-center mb-5">
+                {% if tenant and tenant.company_profile and tenant.company_profile.photo %}
+                    <img src="{{ tenant.company_profile.photo.url }}" alt="{{ tenant.name }}" class="mb-3" style="height: 80px; width: auto;">
+                {% endif %}
+                <h1 class="display-5 fw-bold" style="color: #319795;">
+                    <i class="fas fa-external-link-alt me-2"></i>Quick Services
+                </h1>
+                {% if tenant %}
+                    <p class="lead text-muted">{{ tenant.company_profile.company_name|default:tenant.name }}</p>
+                    <p class="text-muted">Access external services provided by this organization</p>
+                {% else %}
+                    <p class="text-muted">External services for organizations</p>
+                {% endif %}
+            </div>
+
+            {% if no_tenant %}
+                <!-- No Tenant Message -->
+                <div class="alert alert-info text-center" role="alert">
+                    <i class="fas fa-info-circle fa-2x mb-3"></i>
+                    <h4>No Organization Selected</h4>
+                    <p class="mb-0">Please visit an organization's subdomain to view their quick services.</p>
+                    <p class="small text-muted mt-2">Example: https://yourcompany.teammanager.ng/tenants/quick-services/</p>
+                </div>
+            {% elif not services and not built_in_services %}
+                <!-- No Services Available -->
+                <div class="alert alert-warning text-center" role="alert">
+                    <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+                    <h4>No Services Available</h4>
+                    <p class="mb-0">This organization hasn't configured any external services yet.</p>
+                </div>
+            {% else %}
+                <!-- Custom Services Section -->
+                {% if services %}
+                <div class="mb-5">
+                    <h3 class="mb-4" style="color: #319795;">
+                        <i class="fas fa-star me-2"></i>Custom Services
+                    </h3>
+                    <div class="row g-4">
+                        {% for service in services %}
+                            <div class="col-md-6 col-lg-4">
+                                <div class="card h-100 shadow-sm hover-card" style="border-radius: 12px; border: 1px solid #e2e8f0; transition: all 0.3s ease;">
+                                    <div class="card-body d-flex flex-column">
+                                        <!-- Icon -->
+                                        <div class="text-center mb-3">
+                                            <div class="service-icon-wrapper" style="width: 70px; height: 70px; margin: 0 auto; border-radius: 50%; display: flex; align-items: center; justify-content: center; background-color: {{ service.icon_color }}15;">
+                                                <i class="{{ service.get_icon_class }} fa-2x" style="color: {{ service.icon_color }};"></i>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Service Name -->
+                                        <h5 class="card-title text-center fw-bold mb-2" style="color: #2d3748;">
+                                            {{ service.name }}
+                                        </h5>
+                                        
+                                        <!-- Description -->
+                                        {% if service.description %}
+                                            <p class="card-text text-muted text-center small mb-3 flex-grow-1">
+                                                {{ service.description }}
+                                            </p>
+                                        {% endif %}
+                                        
+                                        <!-- Access Button -->
+                                        <a href="{{ service.external_url }}" 
+                                           class="btn btn-primary w-100 mt-auto"
+                                           {% if service.open_in_new_tab %}target="_blank" rel="noopener noreferrer"{% endif %}
+                                           style="background-color: {{ service.icon_color }}; border-color: {{ service.icon_color }};">
+                                            <i class="fas fa-arrow-right me-2"></i>Access Service
+                                            {% if service.open_in_new_tab %}
+                                                <i class="fas fa-external-link-alt ms-2 small"></i>
+                                            {% endif %}
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Built-in Services Section -->
+                {% if built_in_services %}
+                <div>
+                    <h3 class="mb-4" style="color: #319795;">
+                        <i class="fas fa-cogs me-2"></i>Available Services
+                    </h3>
+                    <div class="row g-4">
+                        {% for service in built_in_services %}
+                            <div class="col-md-6 col-lg-4">
+                                <div class="card h-100 shadow-sm hover-card" style="border-radius: 12px; border: 1px solid #e2e8f0; transition: all 0.3s ease;">
+                                    <div class="card-body d-flex flex-column">
+                                        <!-- Icon -->
+                                        <div class="text-center mb-3">
+                                            <div class="service-icon-wrapper" style="width: 70px; height: 70px; margin: 0 auto; border-radius: 50%; display: flex; align-items: center; justify-content: center; background-color: {{ service.icon_color }}15;">
+                                                <i class="fas {{ service.icon }} fa-2x" style="color: {{ service.icon_color }};"></i>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Service Name -->
+                                        <h5 class="card-title text-center fw-bold mb-2" style="color: #2d3748;">
+                                            {{ service.name }}
+                                        </h5>
+                                        
+                                        <!-- Description -->
+                                        <p class="card-text text-muted text-center small mb-3 flex-grow-1">
+                                            {{ service.description }}
+                                        </p>
+                                        
+                                        <!-- Access Button -->
+                                        <a href="{{ service.url }}" 
+                                           class="btn btn-primary w-100 mt-auto"
+                                           {% if service.open_in_new_tab %}target="_blank" rel="noopener noreferrer"{% endif %}
+                                           style="background-color: {{ service.icon_color }}; border-color: {{ service.icon_color }};">
+                                            <i class="fas fa-arrow-right me-2"></i>Access Service
+                                            {% if service.open_in_new_tab %}
+                                                <i class="fas fa-external-link-alt ms-2 small"></i>
+                                            {% endif %}
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Info Box -->
+                <div class="alert alert-light mt-5 border" role="alert" style="border-radius: 12px;">
+                    <div class="d-flex align-items-start">
+                        <i class="fas fa-info-circle me-3 mt-1" style="color: #319795; font-size: 1.5rem;"></i>
+                        <div>
+                            <h6 class="fw-bold mb-2">About Quick Services</h6>
+                            <p class="mb-0 small text-muted">
+                                These are external services provided by {{ tenant.company_profile.company_name|default:tenant.name }}. 
+                                You can access them without logging in. Each service opens in its own window for your convenience.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Back Button -->
+            <div class="text-center mt-4">
+                <a href="{% url 'tenant_home' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Home
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .hover-card {
+        transition: all 0.3s ease;
+    }
+    
+    .hover-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1) !important;
+        border-color: #319795 !important;
+    }
+    
+    .service-icon-wrapper {
+        transition: all 0.3s ease;
+    }
+    
+    .hover-card:hover .service-icon-wrapper {
+        transform: scale(1.1);
+    }
+    
+    body.dark-mode .card {
+        background-color: #2d3748;
+        border-color: #4a5568 !important;
+    }
+    
+    body.dark-mode .card-title {
+        color: #e2e8f0 !important;
+    }
+    
+    body.dark-mode .card-text {
+        color: #a0aec0 !important;
+    }
+    
+    body.dark-mode .alert-light {
+        background-color: #2d3748;
+        border-color: #4a5568 !important;
+        color: #e2e8f0;
+    }
+    
+    body.dark-mode .alert-info {
+        background-color: #2c5282;
+        border-color: #2b6cb0;
+        color: #e2e8f0;
+    }
+    
+    body.dark-mode .alert-warning {
+        background-color: #744210;
+        border-color: #975a16;
+        color: #e2e8f0;
+    }
+</style>
+{% endblock %}

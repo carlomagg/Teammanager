@@ -1,0 +1,450 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edit User Profile - {{ form.instance.user.get_full_name|default:form.instance.user.username }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Main Content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">Edit User Profile</h1>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-8">
+                                {% for field in form %}
+                                    {% if field.name != 'documents' %}
+                                    <div class="mb-3 {% if field.name == 'bank_name' %}bank-selector-container{% endif %}">
+                                        <label class="form-label">{{ field.label }}</label>
+                                        {{ field }}
+                                        {% if field.name == 'bank_name' %}
+                                            <div id="bank-dropdown" class="bank-selector-dropdown"></div>
+                                        {% endif %}
+                                        {% if field.errors %}
+                                            <div class="text-danger">
+                                                {{ field.errors }}
+                                            </div>
+                                        {% endif %}
+                                        {% if field.help_text %}
+                                            <small class="form-text text-muted">{{ field.help_text }}</small>
+                                        {% endif %}
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {%comment%}<!-- Bank Details Card -->
+                                <div class="card mb-4 border-primary">
+                                    <div class="card-header bg-primary text-white">
+                                        <h5 class="mb-0"><i class="fas fa-university me-2"></i> Bank Details</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="text-muted mb-3">
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            Your bank details are required to receive payments and remittances. 
+                                            Please ensure all information is accurate.
+                                        </p>
+                                        
+                                        <!-- Bank Fields (Group them together) -->
+                                        {% if form.bank_name %}
+                                        <div class="mb-3">
+                                            <label class="form-label">{{ form.bank_name.label }}</label>
+                                            {{ form.bank_name }}
+                                            {% if form.bank_name.errors %}
+                                                <div class="text-danger">
+                                                    {{ form.bank_name.errors }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        {% endif %}
+                                        
+                                        {% if form.bank_account_number %}
+                                        <div class="mb-3">
+                                            <label class="form-label">{{ form.bank_account_number.label }}</label>
+                                            {{ form.bank_account_number }}
+                                            {% if form.bank_account_number.errors %}
+                                                <div class="text-danger">
+                                                    {{ form.bank_account_number.errors }}
+                                                </div>
+                                            {% endif %}
+                                            <small class="form-text text-muted">
+                                                Enter your 10-digit bank account number
+                                            </small>
+                                        </div>
+                                        {% endif %}
+                                        
+                                        {% if form.bank_account_name %}
+                                        <div class="mb-3">
+                                            <label class="form-label">{{ form.bank_account_name.label }}</label>
+                                            {{ form.bank_account_name }}
+                                            {% if form.bank_account_name.errors %}
+                                                <div class="text-danger">
+                                                    {{ form.bank_account_name.errors }}
+                                                </div>
+                                            {% endif %}
+                                            <small class="form-text text-muted">
+                                                Must match the name on your bank account
+                                            </small>
+                                        </div>
+                                        {% endif %}
+                                        
+                                        {% if form.bank_code %}
+                                        <div class="mb-3">
+                                            <label class="form-label">{{ form.bank_code.label }}</label>
+                                            {{ form.bank_code }}
+                                            {% if form.bank_code.errors %}
+                                                <div class="text-danger">
+                                                    {{ form.bank_code.errors }}
+                                                </div>
+                                            {% endif %}
+                                            <small class="form-text text-muted">
+                                                Bank code (e.g., 058 for GTBank, 011 for First Bank)
+                                            </small>
+                                        </div>
+                                        {% endif %}
+                                        
+                                        {% if form.bank_verification_note %}
+                                        <div class="mb-3">
+                                            <label class="form-label">{{ form.bank_verification_note.label }}</label>
+                                            {{ form.bank_verification_note }}
+                                            {% if form.bank_verification_note.errors %}
+                                                <div class="text-danger">
+                                                    {{ form.bank_verification_note.errors }}
+                                                </div>
+                                            {% endif %}
+                                            <small class="form-text text-muted">
+                                                Optional: Add any notes about your bank details for verification
+                                            </small>
+                                        </div>
+                                        {% endif %}
+                                        
+                                        <!-- Bank Verification Status -->
+                                        {% if profile.bank_verified %}
+                                        <div class="alert alert-success">
+                                            <i class="fas fa-check-circle me-2"></i>
+                                            Your bank details have been verified on {{ profile.bank_verification_date|date:"F d, Y" }}
+                                        </div>
+                                        {% elif profile.bank_account_number %}
+                                        <div class="alert alert-warning">
+                                            <i class="fas fa-clock me-2"></i>
+                                            Your bank details are pending verification. You will be notified once verified.
+                                        </div>
+                                        {% endif %}
+                                        
+                                        {% if profile.bank_rejection_reason %}
+                                        <div class="alert alert-danger">
+                                            <i class="fas fa-times-circle me-2"></i>
+                                            <strong>Bank verification rejected:</strong>
+                                            {{ profile.bank_rejection_reason }}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>{%endcomment%}
+                                
+                                <div class="mt-4">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-1"></i> Save Changes
+                                    </button>
+                                    <a href="{% url 'view_user_profile' %}?tenant_id={{profile.user.id}}" class="btn btn-secondary">
+                                        <i class="fas fa-times me-1"></i> Cancel
+                                    </a>
+                                </div>
+                            </div>
+                            
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    // Initialize date picker for date of birth if field exists
+    if ($('#id_date_of_birth').length) {
+        $('#id_date_of_birth').datepicker({
+            format: 'yyyy-mm-dd',
+            autoclose: true,
+            endDate: '0d'
+        });
+    }
+    
+    // Initialize any other specialized inputs
+    $('select').addClass('form-select');
+    $('input[type="text"], input[type="email"], input[type="tel"], input[type="url"]').addClass('form-control');
+    $('textarea').addClass('form-control').css('min-height', '100px');
+    
+    // Add character counter for bio field
+    if ($('#id_bio').length) {
+        const bioField = $('#id_bio');
+        const maxLength = bioField.attr('maxlength') || 500;
+        
+        // Create counter element
+        const counter = $('<div class="form-text text-end small"></div>');
+        bioField.after(counter);
+        
+        function updateCounter() {
+            const length = bioField.val().length;
+            counter.text(`${length}/${maxLength} characters`);
+            
+            if (length > maxLength * 0.9) {
+                counter.removeClass('text-muted').addClass('text-warning');
+            } else {
+                counter.removeClass('text-warning').addClass('text-muted');
+            }
+        }
+        
+        bioField.on('input', updateCounter);
+        updateCounter(); // Initial update
+    }
+    
+    // Form validation
+    $('form').on('submit', function(e) {
+        // Check if bank details are provided but incomplete
+        const bankFields = ['bank_name', 'bank_account_number', 'bank_account_name'];
+        let hasSomeBankFields = false;
+        let allBankFieldsComplete = true;
+        
+        bankFields.forEach(field => {
+            const fieldElem = $(`#id_${field}`);
+            if (fieldElem.length) {
+                if (fieldElem.val().trim()) {
+                    hasSomeBankFields = true;
+                }
+                if (!fieldElem.val().trim() && hasSomeBankFields) {
+                    allBankFieldsComplete = false;
+                    fieldElem.addClass('is-invalid');
+                } else {
+                    fieldElem.removeClass('is-invalid');
+                }
+            }
+        });
+        
+        if (hasSomeBankFields && !allBankFieldsComplete) {
+            e.preventDefault();
+            alert('Please complete all bank details fields or leave them all empty.');
+            return false;
+        }
+        
+        // Check phone number format if provided
+        const phoneField = $('#id_phone');
+        if (phoneField.length && phoneField.val().trim()) {
+            const phoneRegex = /^[\d\s\-\+\(\)]+$/;
+            if (!phoneRegex.test(phoneField.val())) {
+                phoneField.addClass('is-invalid');
+                e.preventDefault();
+                alert('Please enter a valid phone number.');
+                return false;
+            }
+        }
+        
+        return true;
+    });
+    
+    // Auto-format bank account number
+    $('#id_bank_account_number').on('input', function() {
+        let value = $(this).val().replace(/\D/g, '');
+        if (value.length > 10) {
+            value = value.substring(0, 10);
+        }
+        $(this).val(value);
+    });
+    
+    // Photo preview
+    $('#id_photo').change(function() {
+        const file = this.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                // Remove existing preview
+                $('.photo-preview').remove();
+                
+                // Add new preview
+                const preview = `
+                    <div class="photo-preview mt-3">
+                        <p class="mb-2"><strong>New Photo Preview:</strong></p>
+                        <img src="${e.target.result}" 
+                             alt="New Profile Photo Preview" 
+                             class="img-fluid rounded-circle" 
+                             style="max-width: 150px;">
+                    </div>
+                `;
+                $('#id_photo').after(preview);
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // ──────────────────────────────────────────────────
+    // BANK SELECTION
+    // ──────────────────────────────────────────────────
+    const $bankNameInput = $('#id_bank_name');
+    const $bankCodeInput = $('#id_bank_code');
+    const $dropdown = $('#bank-dropdown');
+    
+    if ($bankNameInput.length && $bankCodeInput.length && $dropdown.length) {
+        $bankCodeInput.prop('readonly', true);
+        let banks = [];
+        let activeIndex = -1;
+        
+        $.getJSON('/api/banks/', function(data) {
+            if (data.status && data.data) {
+                banks = data.data;
+                $bankNameInput.attr('autocomplete', 'off');
+                
+                $bankNameInput.on('input', function() {
+                    const query = $(this).val().toLowerCase().trim();
+                    if (!query) {
+                        hideDropdown();
+                        return;
+                    }
+                    
+                    const matches = banks
+                        .filter(b => b.name.toLowerCase().includes(query))
+                        .slice(0, 10);
+                    
+                    if (matches.length > 0) {
+                        renderDropdown(matches);
+                        showDropdown();
+                    } else {
+                        hideDropdown();
+                    }
+                });
+                
+                $bankNameInput.on('keydown', function(e) {
+                    const $items = $dropdown.find('.bank-item');
+                    if (!$items.length) return;
+                    
+                    if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        activeIndex = (activeIndex + 1) % $items.length;
+                        updateActiveItem($items);
+                    } else if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        activeIndex = (activeIndex - 1 + $items.length) % $items.length;
+                        updateActiveItem($items);
+                    } else if (e.key === 'Enter') {
+                        if (activeIndex >= 0) {
+                            e.preventDefault();
+                            $items.eq(activeIndex).click();
+                        }
+                    } else if (e.key === 'Escape') {
+                        hideDropdown();
+                    }
+                });
+                
+                $(document).on('click', function(e) {
+                    if (!$bankNameInput.is(e.target) && !$dropdown.is(e.target) && $dropdown.has(e.target).length === 0) {
+                        hideDropdown();
+                    }
+                });
+            }
+        });
+        
+        function renderDropdown(matches) {
+            $dropdown.empty();
+            activeIndex = -1;
+            matches.forEach((bank, index) => {
+                const $item = $('<div class="bank-item"></div>')
+                    .html(`
+                        <span class="nbi nbi-${bank.code}"></span>
+                        <span class="bank-name">${bank.name}</span>
+                    `)
+                    .on('click', function() {
+                        $bankNameInput.val(bank.name);
+                        $bankCodeInput.val(bank.code);
+                        hideDropdown();
+                    });
+                $dropdown.append($item);
+            });
+        }
+        
+        function updateActiveItem($items) {
+            $items.removeClass('active').eq(activeIndex).addClass('active');
+            if (activeIndex >= 0) {
+                const item = $items[activeIndex];
+                item.scrollIntoView({ block: 'nearest' });
+            }
+        }
+        
+        function showDropdown() { $dropdown.show(); }
+        function hideDropdown() { $dropdown.hide(); activeIndex = -1; }
+    }
+});
+</script>
+
+<style>
+.card {
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+.card-header {
+    border-radius: 8px 8px 0 0 !important;
+    font-weight: 600;
+}
+
+.form-label {
+    font-weight: 500;
+    margin-bottom: 5px;
+}
+
+.form-control, .form-select {
+    border-radius: 6px;
+    padding: 8px 12px;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #2c7a7b;
+    box-shadow: 0 0 0 0.2rem rgba(44, 122, 123, 0.25);
+}
+
+.btn-primary {
+    background-color: #2c7a7b;
+    border-color: #2c7a7b;
+    padding: 8px 20px;
+}
+
+.btn-primary:hover {
+    background-color: #234e52;
+    border-color: #234e52;
+}
+
+.btn-secondary {
+    padding: 8px 20px;
+}
+
+.alert {
+    border-radius: 6px;
+    margin-bottom: 15px;
+}
+
+.is-invalid {
+    border-color: #dc3545 !important;
+}
+
+.photo-preview img {
+    border: 3px solid #2c7a7b;
+    padding: 5px;
+    background-color: #f8f9fa;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .row {
+        flex-direction: column;
+    }
+    
+    .col-md-4 {
+        margin-top: 20px;
+    }
+}
+</style>
+{% endblock %}

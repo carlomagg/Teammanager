@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #2c3e50, #3498db); color: white; padding: 20px; text-align: center; }
+        .content { padding: 20px; background: #f9f9f9; }
+        .warning { background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; }
+        .urgent { background: #f8d7da; border-left: 4px solid #dc3545; padding: 15px; margin: 20px 0; }
+        .footer { text-align: center; padding: 20px; font-size: 12px; color: #777; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>⚠️ Your Subscription is Expiring Soon</h2>
+        </div>
+        <div class="content">
+            {% if days_remaining <= 0 %}
+            <div class="urgent">
+                <h3>🚨 Your Subscription Has Expired!</h3>
+                <p>Your subscription expired on {{ end_date|date:"F j, Y" }}. You have lost access to premium features.</p>
+            </div>
+            {% elif days_remaining == 1 %}
+            <div class="urgent">
+                <h3>⚠️ Your Subscription Expires TOMORROW!</h3>
+                <p>Your subscription will expire tomorrow, {{ end_date|date:"F j, Y" }}. Please take action immediately!</p>
+            </div>
+            {% else %}
+            <div class="warning">
+                <h3>⚠️ Your Subscription Expires Soon</h3>
+                <p>Your subscription will expire in <strong>{{ days_remaining }} days</strong> on {{ end_date|date:"F j, Y" }}.</p>
+            </div>
+            {% endif %}
+
+            <h3>Subscription Details:</h3>
+            <table>
+                <tr>
+                    <th>Plan</th>
+                    <td>{{ plan_name }}</td>
+                </tr>
+                <tr>
+                    <th>Start Date</th>
+                    <td>{{ subscription.start_date|date:"F j, Y" }}</td>
+                </tr>
+                <tr>
+                    <th>End Date</th>
+                    <td>{{ subscription.end_date|date:"F j, Y" }}</td>
+                </tr>
+                <tr>
+                    <th>Days Remaining</th>
+                    <td><strong>{{ days_remaining }} days</strong></td>
+                </tr>
+            </table>
+
+            {% if is_tenant_user %}
+            <div class="warning">
+                <strong>What to do:</strong> Please contact your organization administrator to renew the subscription.
+                {% if admin_email %}
+                <p>Admin Email: <a href="mailto:{{ admin_email }}">{{ admin_email }}</a></p>
+                {% endif %}
+                <p style="margin-top: 10px;">Your access will be limited once the subscription expires.</p>
+            </div>
+            {% else %}
+            <div class="warning">
+                <strong>What to do:</strong> Please renew your subscription to continue enjoying premium features.
+                <div style="text-align: center; margin: 20px 0;">
+                    <a href="{% url 'create_subscription' %}" class="button">Renew Now</a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        <div class="footer">
+            <p>This is an automated notification. Please take action to ensure uninterrupted service.</p>
+            <p>&copy; {% now "Y" %} TeamManager. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

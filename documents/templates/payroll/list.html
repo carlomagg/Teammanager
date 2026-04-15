@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Payroll List{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>Payroll List</h2>
+        </div>
+        <div class="col-md-4 text-right">
+            <a href="{% url 'create_payroll' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> New Payroll
+            </a>
+            <a href="{% url 'payroll_dashboard' %}" class="btn btn-secondary">
+                <i class="fas fa-dashboard"></i> Dashboard
+            </a>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="form-inline">
+                <select name="status" class="form-control mr-2">
+                    <option value="">All Statuses</option>
+                    {% for value, label in status_choices %}
+                    <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+                
+                <select name="year" class="form-control mr-2">
+                    <option value="">All Years</option>
+                    {% for year in years %}
+                    <option value="{{ year.year }}" {% if year_filter == year.year|stringformat:"s" %}selected{% endif %}>{{ year.year }}</option>
+                    {% endfor %}
+                </select>
+                
+                <input type="text" name="search" class="form-control mr-2" placeholder="Search..." value="{{ search }}">
+                
+                <button type="submit" class="btn btn-primary">Filter</button>
+                <a href="{% url 'payroll_list' %}" class="btn btn-secondary ml-2">Clear</a>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Period</th>
+                        <th>Status</th>
+                        <th>Employees</th>
+                        <th>Total Amount</th>
+                        <th>Approved</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for payroll in page_obj %}
+                    <tr>
+                        <td>
+                            <strong>{{ payroll.period_start|date:"M Y" }}</strong><br>
+                            <small class="text-muted">{{ payroll.period_start|date:"d M" }} - {{ payroll.period_end|date:"d M Y" }}</small>
+                        </td>
+                        <td>
+                            <span class="badge badge-{{ payroll.status }}">{{ payroll.get_status_display }}</span>
+                            {% if payroll.is_fully_approved %}
+                            <br><small class="text-success"><i class="fas fa-check"></i> Approved</small>
+                            {% endif %}
+                        </td>
+                        <td>{{ payroll.items.count }}</td>
+                        <td>₦{{ payroll.total_amount|floatformat:2 }}</td>
+                        <td>
+                            {% if payroll.approved_by %}
+                            {{ payroll.approved_by.get_full_name|default:payroll.approved_by.username }}<br>
+                            <small class="text-muted">{{ payroll.approved_at|date:"d M Y" }}</small>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {{ payroll.created_by.get_full_name|default:payroll.created_by.username }}<br>
+                            <small class="text-muted">{{ payroll.created_at|date:"d M Y" }}</small>
+                        </td>
+                        <td>
+                            <a href="{% url 'payroll_detail' payroll.pk %}" class="btn btn-sm btn-info">
+                                <i class="fas fa-eye"></i> View
+                            </a>
+                            {% if payroll.status == 'draft' %}
+                            <a href="{% url 'payroll_edit' payroll.pk %}" class="btn btn-sm btn-warning">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center">No payrolls found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            {% if page_obj.has_other_pages %}
+            <nav>
+                <ul class="pagination">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if year_filter %}&year={{ year_filter }}{% endif %}{% if search %}&search={{ search }}{% endif %}">Previous</a>
+                    </li>
+                    {% endif %}
+                    
+                    <li class="page-item active">
+                        <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                    </li>
+                    
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if year_filter %}&year={{ year_filter }}{% endif %}{% if search %}&search={{ search }}{% endif %}">Next</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.badge-draft { background-color: #6c757d; }
+.badge-approved { background-color: #28a745; }
+.badge-paid { background-color: #007bff; }
+.badge-cancelled { background-color: #dc3545; }
+</style>
+{% endblock %}

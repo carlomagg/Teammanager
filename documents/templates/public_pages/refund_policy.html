@@ -1,0 +1,461 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Refund Policy - TeamManager{% endblock %}
+
+{% block meta_description %}Learn about TeamManager's refund policy, cancellation terms, and how we handle subscription refunds.{% endblock %}
+
+{% block content %}
+<div class="refund-policy-page">
+    <div class="container">
+        <div class="policy-header text-center mb-5">
+            <div class="policy-icon mb-3">
+                <i class="fas fa-undo-alt"></i>
+            </div>
+            <h1 class="display-4 fw-bold mb-3">Refund Policy</h1>
+            <p class="lead text-muted">Last Updated: April 2, 2026</p>
+        </div>
+
+        <div class="policy-content">
+            <div class="policy-section">
+                <h2><i class="fas fa-info-circle me-2"></i>Overview</h2>
+                <p>At TeamManager, we strive to provide the best service possible. This Refund Policy outlines the terms and conditions under which refunds may be issued for our subscription services.</p>
+            </div>
+
+            <div class="policy-section">
+                <h2><i class="fas fa-calendar-check me-2"></i>Free Trial Period</h2>
+                <p>We offer a 14-day free trial for all new subscriptions. During this period:</p>
+                <ul>
+                    <li>You can cancel at any time without any charges</li>
+                    <li>No credit card is required to start the trial</li>
+                    <li>Full access to all features of your selected plan</li>
+                    <li>No refund is necessary as no payment has been made</li>
+                </ul>
+            </div>
+
+            <div class="policy-section">
+                <h2><i class="fas fa-money-bill-wave me-2"></i>Subscription Refunds</h2>
+                
+                <h3>Monthly Subscriptions</h3>
+                <p>For monthly subscription plans:</p>
+                <ul>
+                    <li><strong>Within 7 days of payment:</strong> Full refund available if you're not satisfied with the service</li>
+                    <li><strong>After 7 days:</strong> No refund will be issued, but you can cancel to prevent future charges</li>
+                    <li>Cancellation takes effect at the end of the current billing cycle</li>
+                    <li>You retain access to the service until the end of the paid period</li>
+                </ul>
+
+                <h3>Annual Subscriptions</h3>
+                <p>For annual subscription plans:</p>
+                <ul>
+                    <li><strong>Within 30 days of payment:</strong> Full refund available minus any usage fees</li>
+                    <li><strong>After 30 days:</strong> Pro-rated refund may be considered on a case-by-case basis</li>
+                    <li>Refunds are calculated based on unused months remaining</li>
+                    <li>A processing fee of 10% may apply to annual refunds after 30 days</li>
+                </ul>
+            </div>
+
+            <div class="policy-section">
+                <h2><i class="fas fa-ban me-2"></i>Non-Refundable Items</h2>
+                <p>The following are not eligible for refunds:</p>
+                <ul>
+                    <li>Add-on services or features purchased separately</li>
+                    <li>Custom development or integration work</li>
+                    <li>Training sessions or consulting services already delivered</li>
+                    <li>Third-party services or integrations</li>
+                    <li>Subscriptions cancelled after the refund eligibility period</li>
+                    <li>Accounts terminated due to violation of Terms of Service</li>
+                </ul>
+            </div>
+
+            <div class="policy-section">
+                <h2><i class="fas fa-times-circle me-2"></i>Cancellation Process</h2>
+                <p>To cancel your subscription:</p>
+                <ol>
+                    <li>Log in to your TeamManager account</li>
+                    <li>Navigate to Settings → Subscription</li>
+                    <li>Click "Cancel Subscription"</li>
+                    <li>Follow the prompts to confirm cancellation</li>
+                    <li>You'll receive a confirmation email</li>
+                </ol>
+                <p class="mt-3">Alternatively, you can contact our support team at <a href="mailto:contact@teammanager.ng">contact@teammanager.ng</a> for assistance with cancellation.</p>
+            </div>
+
+            <div class="policy-section">
+                <h2><i class="fas fa-exchange-alt me-2"></i>Refund Request Process</h2>
+                <p>To request a refund:</p>
+                <ol>
+                    <li>Contact our support team at <a href="mailto:contact@teammanager.ng">contact@teammanager.ng</a></li>
+                    <li>Include your account email and subscription details</li>
+                    <li>Provide a brief reason for the refund request</li>
+                    <li>Our team will review your request within 3-5 business days</li>
+                    <li>If approved, refunds are processed within 7-10 business days</li>
+                </ol>
+                <p class="mt-3"><strong>Note:</strong> Refunds are issued to the original payment method used for the purchase.</p>
+            </div>
+
+            <div class="policy-section">
+                <h2><i class="fas fa-shield-alt me-2"></i>Special Circumstances</h2>
+                <p>We understand that exceptional situations may arise. In cases of:</p>
+                <ul>
+                    <li>Technical issues preventing service access for extended periods</li>
+                    <li>Billing errors or duplicate charges</li>
+                    <li>Service outages affecting your business operations</li>
+                    <li>Other extenuating circumstances</li>
+                </ul>
+                <p>Please contact our support team. We'll review your case individually and work to find a fair resolution.</p>
+            </div>
+
+            <div class="policy-section">
+                <h2><i class="fas fa-arrow-up me-2"></i>Upgrades and Downgrades</h2>
+                <p><strong>Upgrades:</strong></p>
+                <ul>
+                    <li>When upgrading, you'll be charged the prorated difference immediately</li>
+                    <li>New features are available immediately upon upgrade</li>
+                    <li>Your billing cycle remains the same</li>
+                </ul>
+                <p><strong>Downgrades:</strong></p>
+                <ul>
+                    <li>Downgrades take effect at the end of the current billing cycle</li>
+                    <li>No refund is issued for the difference in plan cost</li>
+                    <li>You retain access to higher-tier features until the cycle ends</li>
+                </ul>
+            </div>
+
+            <div class="policy-section">
+                <h2><i class="fas fa-credit-card me-2"></i>Payment Disputes</h2>
+                <p>If you dispute a charge with your bank or credit card company:</p>
+                <ul>
+                    <li>Please contact us first to resolve the issue</li>
+                    <li>Chargebacks may result in immediate account suspension</li>
+                    <li>We'll work with you to resolve billing concerns directly</li>
+                    <li>Disputed charges may incur additional processing fees</li>
+                </ul>
+            </div>
+
+            <div class="policy-section">
+                <h2><i class="fas fa-sync-alt me-2"></i>Changes to This Policy</h2>
+                <p>We reserve the right to modify this Refund Policy at any time. Changes will be:</p>
+                <ul>
+                    <li>Posted on this page with an updated "Last Updated" date</li>
+                    <li>Communicated via email to active subscribers</li>
+                    <li>Effective immediately upon posting unless otherwise stated</li>
+                    <li>Applied to new subscriptions and renewals</li>
+                </ul>
+            </div>
+
+            <div class="policy-section contact-section">
+                <h2><i class="fas fa-envelope me-2"></i>Contact Us</h2>
+                <p>If you have questions about our Refund Policy or need assistance with a refund request, please contact us:</p>
+                <div class="contact-info">
+                    <p><i class="fas fa-envelope me-2"></i><strong>Email:</strong> <a href="mailto:contact@teammanager.ng">contact@teammanager.ng</a></p>
+                    <p><i class="fas fa-headset me-2"></i><strong>Support:</strong> <a href="{% url 'contact_support' %}">Contact Support Form</a></p>
+                    <p><i class="fas fa-clock me-2"></i><strong>Response Time:</strong> Within 24-48 hours</p>
+                </div>
+                
+                <div class="support-button-container mt-4">
+                    <a href="https://tm.teammanager.ng/tickets/submit/" target="_blank" class="btn btn-support">
+                        <i class="fas fa-ticket-alt me-2"></i>Submit a Support Request
+                        <i class="fas fa-external-link-alt ms-2 small"></i>
+                    </a>
+                </div>
+            </div>
+
+            <div class="policy-footer text-center mt-5 pt-4">
+                <p class="text-muted">Thank you for choosing TeamManager. We're committed to your satisfaction.</p>
+                <a href="{% url 'home' %}" class="btn btn-primary mt-3">
+                    <i class="fas fa-home me-2"></i>Back to Home
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .refund-policy-page {
+        padding: 60px 20px;
+        background: linear-gradient(135deg, #f5f7fa 0%, #e2e7ec 100%);
+        min-height: calc(100vh - 70px);
+    }
+
+    body.dark-mode .refund-policy-page {
+        background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+    }
+
+    .policy-header {
+        margin-bottom: 3rem;
+    }
+
+    .policy-icon {
+        width: 100px;
+        height: 100px;
+        margin: 0 auto;
+        background: linear-gradient(135deg, #319795, #2c7a7b);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        color: white;
+        box-shadow: 0 10px 30px rgba(49, 151, 149, 0.3);
+    }
+
+    .policy-header h1 {
+        color: #2d3748;
+        margin-bottom: 1rem;
+    }
+
+    body.dark-mode .policy-header h1 {
+        color: #e2e8f0;
+    }
+
+    .policy-content {
+        max-width: 900px;
+        margin: 0 auto;
+        background: #ffffff;
+        border-radius: 20px;
+        padding: 50px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+    }
+
+    body.dark-mode .policy-content {
+        background: #2d3748;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .policy-section {
+        margin-bottom: 3rem;
+        padding-bottom: 2rem;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    body.dark-mode .policy-section {
+        border-bottom-color: #4a5568;
+    }
+
+    .policy-section:last-of-type {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+    }
+
+    .policy-section h2 {
+        color: #2d3748;
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+    }
+
+    body.dark-mode .policy-section h2 {
+        color: #e2e8f0;
+    }
+
+    .policy-section h2 i {
+        color: #319795;
+        margin-right: 0.5rem;
+    }
+
+    .policy-section h3 {
+        color: #319795;
+        font-size: 1.3rem;
+        font-weight: 600;
+        margin-top: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .policy-section p {
+        color: #4a5568;
+        font-size: 1rem;
+        line-height: 1.8;
+        margin-bottom: 1rem;
+    }
+
+    body.dark-mode .policy-section p {
+        color: #cbd5e0;
+    }
+
+    .policy-section ul,
+    .policy-section ol {
+        color: #4a5568;
+        font-size: 1rem;
+        line-height: 1.8;
+        margin-left: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    body.dark-mode .policy-section ul,
+    body.dark-mode .policy-section ol {
+        color: #cbd5e0;
+    }
+
+    .policy-section li {
+        margin-bottom: 0.5rem;
+    }
+
+    .policy-section a {
+        color: #319795;
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 0.2s ease;
+    }
+
+    .policy-section a:hover {
+        color: #2c7a7b;
+        text-decoration: underline;
+    }
+
+    .contact-section {
+        background: #f7fafc;
+        padding: 2rem;
+        border-radius: 12px;
+        border: 2px solid #319795;
+    }
+
+    body.dark-mode .contact-section {
+        background: #1a202c;
+    }
+
+    .contact-info p {
+        margin-bottom: 1rem;
+        font-size: 1.05rem;
+    }
+
+    .contact-info i {
+        color: #319795;
+        width: 24px;
+    }
+
+    .support-button-container {
+        text-align: center;
+        padding-top: 1.5rem;
+        border-top: 1px solid #e2e8f0;
+    }
+
+    body.dark-mode .support-button-container {
+        border-top-color: #4a5568;
+    }
+
+    .btn-support {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #319795, #2c7a7b);
+        color: white !important;
+        padding: 16px 32px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        border-radius: 12px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(49, 151, 149, 0.3);
+        border: none;
+        position: relative;
+        overflow: hidden;
+        z-index: 1;
+    }
+
+    .btn-support * {
+        color: white !important;
+        position: relative;
+        z-index: 2;
+    }
+
+    .btn-support::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s ease;
+        z-index: 1;
+    }
+
+    .btn-support:hover::before {
+        left: 100%;
+    }
+
+    .btn-support:hover {
+        background: linear-gradient(135deg, #2c7a7b, #234e52);
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(49, 151, 149, 0.4);
+        color: white !important;
+        text-decoration: none;
+    }
+
+    .btn-support:active {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 15px rgba(49, 151, 149, 0.3);
+    }
+
+    .btn-support i.fa-ticket-alt {
+        font-size: 1.2rem;
+        color: white !important;
+    }
+
+    .btn-support i.fa-external-link-alt {
+        opacity: 0.8;
+        font-size: 0.85rem;
+        color: white !important;
+    }
+
+    .policy-footer {
+        border-top: 1px solid #e2e8f0;
+    }
+
+    body.dark-mode .policy-footer {
+        border-top-color: #4a5568;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #319795, #2c7a7b);
+        border: none;
+        padding: 12px 30px;
+        font-weight: 600;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #2c7a7b, #234e52);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(49, 151, 149, 0.3);
+    }
+
+    @media (max-width: 767px) {
+        .refund-policy-page {
+            padding: 40px 15px;
+        }
+
+        .policy-content {
+            padding: 30px 20px;
+        }
+
+        .policy-header h1 {
+            font-size: 2rem;
+        }
+
+        .policy-icon {
+            width: 80px;
+            height: 80px;
+            font-size: 2.5rem;
+        }
+
+        .policy-section h2 {
+            font-size: 1.5rem;
+        }
+
+        .policy-section h3 {
+            font-size: 1.2rem;
+        }
+
+        .policy-section ul,
+        .policy-section ol {
+            margin-left: 1rem;
+        }
+    }
+</style>
+{% endblock %}

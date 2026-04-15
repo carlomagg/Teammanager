@@ -1,0 +1,287 @@
+{% extends "base.html" %}
+{% block title %}Login - TeamManager{% endblock %}
+{% block content %}
+<div class="login-page">
+    <div class="login card shadow-sm">
+        <div class="card-body text-center">
+            <i class="fas fa-lock fa-3x mb-3 text-primary" aria-hidden="true"></i>
+            <h4 class="card-title">Log In to Team Manager</h4>
+            {% include 'partials/help_icon.html' with faq_key='login' %}
+            {% comment %} {% if form.errors %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <strong>Login Failed:</strong> Please check your username and password.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endif %} {% endcomment %}
+            <form method="POST" aria-label="Login Form">
+                {% csrf_token %}
+                {% if form.non_field_errors %}
+                    {% for error in form.non_field_errors %}
+                        {% if "pending approval" in error|lower %}
+                            <div class="alert alert-info alert-dismissible fade show" role="alert">
+                                <strong>Account Pending Approval</strong><br>{{ error }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                {{ error }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+                <div class="mb-3 text-start">
+                    <label for="{{ form.username.id_for_label }}" class="form-label">Email or Username</label>
+                    <input type="text" name="{{ form.username.name }}" id="{{ form.username.id_for_label }}"
+                           class="form-control" value="{{ form.username.value|default:'' }}"
+                           required {% if form.username.errors %}aria-invalid="true"{% endif %}>
+                    {% if form.username.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.username.errors|join:", " }}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="mb-3 text-start">
+                    <label for="{{ form.password.id_for_label }}" class="form-label">Password</label>
+
+                    <div class="input-group">
+                        <input type="password"
+                            name="{{ form.password.name }}"
+                            id="{{ form.password.id_for_label }}"
+                            class="form-control"
+                            required
+                            {% if form.password.errors %}aria-invalid="true"{% endif %}>
+
+                        <button type="button"
+                                class="btn btn-outline-secondary"
+                                id="togglePassword">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+
+                    {% if form.password.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.password.errors|join:", " }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <input type="hidden" name="next" value="{{ next|default:'/' }}">
+                <button type="submit" class="btn btn-primary w-100 mb-3">Log In</button>
+                
+                <!-- Support Button -->
+                <div class="support-section mb-3">
+                    <a href="https://tm.teammanager.ng/tickets/submit/" target="_blank" class="btn btn-support w-100">
+                        <i class="fas fa-ticket-alt me-2"></i>Need Help? Submit a Support Request
+                        <i class="fas fa-external-link-alt ms-2 small"></i>
+                    </a>
+                </div>
+                
+                <p class="card-text text-muted">
+                    Don’t have an account? <a href="{% url 'unified_signup' %}" class="text-primary fw-medium">Register</a>
+                </p>
+                <p class="card-text">
+                    {% comment %} <a href="{% url 'password_reset' %}" class="text-primary fw-medium">Forgot Password?</a> {% endcomment %}
+                    <a href="{% url 'forgot_password' %}" class="text-primary fw-medium">Forgot Password?</a>
+                </p>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .login-page {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: calc(100vh - 100px); /* Match base.html's main-content height */
+        padding: 20px;
+        background: transparent; /* Inherit base.html's gradient */
+    }
+
+    .login {
+        width: 100%;
+        max-width: 450px; /* Smaller for login form */
+        background: #ffffff;
+        border: none;
+        border-radius: 12px; /* Match base.html's rounded corners */
+        padding: 30px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .login:hover {
+        transform: translateY(-5px); /* Subtle lift effect */
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1); /* Enhanced shadow on hover */
+    }
+
+    .login .card-title {
+        font-weight: 600;
+        color: #2d3748; /* Match base.html's text color */
+        margin-bottom: 15px;
+    }
+
+    .login .card-text {
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+
+    .login .text-primary {
+        color: #319795 !important; /* Match base.html's primary color */
+        transition: color 0.2s ease;
+    }
+
+    .login .text-primary:hover {
+        color: #2c7a7b !important; /* Match base.html's btn-primary hover */
+    }
+
+    .login .btn-primary {
+        background-color: #319795;
+        border-color: #319795;
+        border-radius: 8px; /* Match base.html's button style */
+        padding: 10px;
+        font-weight: 500;
+        transition: background-color 0.2s ease;
+    }
+
+    .login .btn-primary:hover {
+        background-color: #2c7a7b;
+        border-color: #2c7a7b;
+    }
+
+    .login .form-control {
+        border-radius: 8px;
+        border: 1px solid #e2e8f0; /* Match base.html's border color */
+        padding: 10px;
+        font-size: 0.95rem;
+    }
+
+    .login .form-control:focus {
+        border-color: #319795;
+        box-shadow: 0 0 0 0.2rem rgba(49, 151, 149, 0.25);
+    }
+
+    .login .form-control[aria-invalid="true"] {
+        border-color: #dc3545;
+    }
+
+    .login .invalid-feedback {
+        font-size: 0.85rem;
+        color: #dc3545;
+    }
+
+    /* Focus styles for accessibility */
+    .login a:focus, .login button:focus, .login input:focus {
+        outline: 2px solid #319795;
+        outline-offset: 2px;
+        border-radius: 4px;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 576px) {
+        .login {
+            padding: 20px;
+            max-width: 90%;
+        }
+
+        .login .card-title {
+            font-size: 1.25rem; /* Smaller heading on mobile */
+        }
+
+        .login .fa-lock {
+            font-size: 2rem; /* Smaller icon on mobile */
+        }
+    }
+
+    /* Support Button Styles */
+    .support-section {
+        border-top: 1px solid #e2e8f0;
+        padding-top: 1rem;
+        margin-top: 1rem;
+    }
+
+    body.dark-mode .support-section {
+        border-top-color: #4a5568;
+    }
+
+    .btn-support {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #319795, #2c7a7b);
+        color: white !important;
+        padding: 12px 20px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        border-radius: 8px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(49, 151, 149, 0.3);
+        border: none;
+        position: relative;
+        overflow: hidden;
+        z-index: 1;
+    }
+
+    .btn-support * {
+        color: white !important;
+        position: relative;
+        z-index: 2;
+    }
+
+    .btn-support::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s ease;
+        z-index: 1;
+    }
+
+    .btn-support:hover::before {
+        left: 100%;
+    }
+
+    .btn-support:hover {
+        background: linear-gradient(135deg, #2c7a7b, #234e52);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(49, 151, 149, 0.4);
+        color: white !important;
+        text-decoration: none;
+    }
+
+    .btn-support:active {
+        transform: translateY(0);
+        box-shadow: 0 4px 12px rgba(49, 151, 149, 0.3);
+    }
+
+    .btn-support i.fa-ticket-alt {
+        font-size: 1rem;
+        color: white !important;
+    }
+
+    .btn-support i.fa-external-link-alt {
+        opacity: 0.8;
+        font-size: 0.75rem;
+        color: white !important;
+    }
+</style>
+
+<script>
+    const togglePassword = document.getElementById('togglePassword');
+    const passwordInput = document.getElementById('{{ form.password.id_for_label }}');
+    const icon = togglePassword.querySelector('i');
+
+    togglePassword.addEventListener('click', function () {
+        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        passwordInput.setAttribute('type', type);
+
+        // Toggle icon
+        icon.classList.toggle('fa-eye');
+        icon.classList.toggle('fa-eye-slash');
+    });
+</script>
+
+{% endblock %}

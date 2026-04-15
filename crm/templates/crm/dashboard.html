@@ -1,0 +1,637 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}CRM Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2>CRM Dashboard</h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+                    <li class="breadcrumb-item active">CRM</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-filter"></i> Filters</h5>
+                </div>
+                <div class="card-body">
+                    <form method="get" action="{% url 'crm:dashboard' %}">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label>Date From</label>
+                                <input type="date" name="date_from" class="form-control" value="{{ date_from }}">
+                            </div>
+                            <div class="col-md-3">
+                                <label>Date To</label>
+                                <input type="date" name="date_to" class="form-control" value="{{ date_to }}">
+                            </div>
+                            <div class="col-md-2">
+                                <label>Category</label>
+                                <select name="category" class="form-control">
+                                    <option value="">All</option>
+                                    <option value="Lead" {% if category_filter == 'Lead' %}selected{% endif %}>Lead</option>
+                                    <option value="Deal" {% if category_filter == 'Deal' %}selected{% endif %}>Deal</option>
+                                    <option value="Customer" {% if category_filter == 'Customer' %}selected{% endif %}>Customer</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label>Stage</label>
+                                <select name="stage" class="form-control">
+                                    <option value="">All</option>
+                                    {% for stage in stages %}
+                                        <option value="{{ stage.id }}" {% if stage_filter == stage.id|stringformat:'s' %}selected{% endif %}>
+                                            {{ stage.name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label>Industry</label>
+                                <select name="industry" class="form-control">
+                                    <option value="">All</option>
+                                    {% for value, label in industries %}
+                                        <option value="{{ value }}" {% if industry_filter == value %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-3">
+                                <label>Source</label>
+                                <select name="source" class="form-control">
+                                    <option value="">All</option>
+                                    {% for value, label in sources %}
+                                        <option value="{{ value }}" {% if source_filter == value %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label>Deal Size</label>
+                                <select name="deal_size" class="form-control">
+                                    <option value="">All</option>
+                                    {% for value, label in deal_sizes %}
+                                        <option value="{{ value }}" {% if deal_size_filter == value %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6 d-flex align-items-end">
+                                <button type="submit" class="btn btn-primary me-2">
+                                    <i class="fas fa-search"></i> Apply Filters
+                                </button>
+                                <a href="{% url 'crm:dashboard' %}" class="btn btn-secondary">
+                                    <i class="fas fa-times"></i> Clear
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-user-plus"></i> Leads</h5>
+                    <h2>{{ total_leads }}</h2>
+                    <small>Prospecting stage</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-handshake"></i> Deals</h5>
+                    <h2>{{ total_deals }}</h2>
+                    <small>₦{{ total_estimated_value|floatformat:2|intcomma }}</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-users"></i> Customers</h5>
+                    <h2>{{ total_customers }}</h2>
+                    <small>Active relationships</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-briefcase"></i> Total Opportunities</h5>
+                    <h2>{{ total_opportunities }}</h2>
+                    <small>All categories</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Value Metrics -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card border-primary">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-chart-line"></i> Expected Value</h5>
+                    <h3 class="text-primary">₦{{ total_estimated_value|floatformat:2|intcomma }}</h3>
+                    <small class="text-muted">Total estimated deal value</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card border-success">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-money-bill-wave"></i> Actual Value</h5>
+                    <h3 class="text-success">₦{{ total_actual_value|floatformat:2|intcomma }}</h3>
+                    <small class="text-muted">Total actual deal value</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NEW: Partners, Referrals, Contractors, Contacts -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-info">
+                <div class="card-body text-center">
+                    <i class="fas fa-handshake fa-2x text-info mb-2"></i>
+                    <h5 class="card-title">Partners</h5>
+                    <h3 class="text-info">{{ total_partners }}</h3>
+                    <small class="text-muted">Active partners</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-warning">
+                <div class="card-body text-center">
+                    <i class="fas fa-user-friends fa-2x text-warning mb-2"></i>
+                    <h5 class="card-title">Referrals</h5>
+                    <h3 class="text-warning">{{ total_referrals }}</h3>
+                    <small class="text-muted">Referral opportunities</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-primary">
+                <div class="card-body text-center">
+                    <i class="fas fa-hard-hat fa-2x text-primary mb-2"></i>
+                    <h5 class="card-title">Contractors</h5>
+                    <h3 class="text-primary">{{ total_contractors }}</h3>
+                    <small class="text-muted">Active contractors</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-success">
+                <div class="card-body text-center">
+                    <i class="fas fa-address-book fa-2x text-success mb-2"></i>
+                    <h5 class="card-title">Contacts</h5>
+                    <h3 class="text-success">{{ total_contacts }}</h3>
+                    <small class="text-muted">Total contacts</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NEW: Customer Categories -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-users"></i> Customer Insights</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="text-center p-3 border rounded">
+                                <i class="fas fa-star fa-2x text-warning mb-2"></i>
+                                <h4>{{ new_customers }}</h4>
+                                <small class="text-muted">New Customers<br>(First win &lt;3 months)</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center p-3 border rounded">
+                                <i class="fas fa-chart-line fa-2x text-success mb-2"></i>
+                                <h4>{{ expanding_customers|length }}</h4>
+                                <small class="text-muted">Expanding<br>(Increasing spend YoY)</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center p-3 border rounded">
+                                <i class="fas fa-sync-alt fa-2x text-info mb-2"></i>
+                                <h4>{{ renewing_customers|length }}</h4>
+                                <small class="text-muted">Renewing<br>(Expiring in 90 days)</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center p-3 border rounded">
+                                <i class="fas fa-trophy fa-2x text-primary mb-2"></i>
+                                <h4>{{ top_customers_by_value|length }}</h4>
+                                <small class="text-muted">Top 10<br>(By lifetime value)</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NEW: Deal/Lead Lifecycle -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card border-success">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-seedling"></i> New Deals/Leads</h5>
+                </div>
+                <div class="card-body">
+                    <h3 class="text-success">{{ new_deals_count }}</h3>
+                    <p class="text-muted mb-0">First 50% of sales cycle</p>
+                    {% if new_deals %}
+                        <hr>
+                        <small class="text-muted">Recent:</small>
+                        <ul class="list-unstyled mt-2">
+                            {% for deal in new_deals|slice:":5" %}
+                                <li class="mb-1">
+                                    <a href="{% url 'crm:opportunity_detail' deal.id %}">{{ deal.title }}</a>
+                                    <small class="text-muted">- {{ deal.company_name }}</small>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="fas fa-hourglass-end"></i> Expiring Deals/Leads</h5>
+                </div>
+                <div class="card-body">
+                    <h3 class="text-danger">{{ expiring_deals_count }}</h3>
+                    <p class="text-muted mb-0">Second 50% of sales cycle - needs attention!</p>
+                    {% if expiring_deals %}
+                        <hr>
+                        <small class="text-muted">Urgent:</small>
+                        <ul class="list-unstyled mt-2">
+                            {% for deal in expiring_deals|slice:":5" %}
+                                <li class="mb-1">
+                                    <a href="{% url 'crm:opportunity_detail' deal.id %}">{{ deal.title }}</a>
+                                    <small class="text-muted">- {{ deal.company_name }}</small>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NEW: Companies by Size -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-building"></i> Companies by Size</h5>
+                </div>
+                <div class="card-body">
+                    {% if companies_by_size %}
+                        <div class="row">
+                            {% for item in companies_by_size %}
+                                <div class="col-md-2">
+                                    <div class="text-center p-3 border rounded mb-2">
+                                        <h5>{{ item.company_size }}</h5>
+                                        <h4 class="text-primary">{{ item.count }}</h4>
+                                        <small class="text-muted">₦{{ item.total_value|floatformat:0|intcomma }}</small>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No company size data available</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if is_superuser %}
+    <!-- Superuser-Only: Top 10 Rankings -->
+    <div class="row mb-4">
+        <!-- Top 10 by Opportunities Count -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-trophy"></i> Top 10 by Opportunities</h5>
+                </div>
+                <div class="card-body">
+                    {% if top_by_count %}
+                        <div class="list-group list-group-flush">
+                            {% for entity in top_by_count %}
+                                <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                    <div>
+                                        {% if entity.type == 'tenant' %}
+                                            <i class="fas fa-building text-primary"></i>
+                                            <strong>{{ entity.name }}</strong>
+                                        {% else %}
+                                            <i class="fas fa-user text-info"></i>
+                                            <strong>{{ entity.name }}</strong>
+                                        {% endif %}
+                                    </div>
+                                    <span class="badge bg-secondary rounded-pill">{{ entity.count }}</span>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No data available</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Top 10 by Expected Value -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-chart-line"></i> Top 10 by Expected Value</h5>
+                </div>
+                <div class="card-body">
+                    {% if top_by_expected %}
+                        <div class="list-group list-group-flush">
+                            {% for entity in top_by_expected %}
+                                <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                    <div>
+                                        {% if entity.type == 'tenant' %}
+                                            <i class="fas fa-building text-primary"></i>
+                                            <strong>{{ entity.name }}</strong>
+                                        {% else %}
+                                            <i class="fas fa-user text-info"></i>
+                                            <strong>{{ entity.name }}</strong>
+                                        {% endif %}
+                                    </div>
+                                    <span class="badge bg-success rounded-pill">₦{{ entity.total_value|floatformat:0|intcomma }}</span>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No data available</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Top 10 by Actual Amount -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-warning text-white">
+                    <h5 class="mb-0"><i class="fas fa-money-bill-wave"></i> Top 10 by Actual Amount</h5>
+                </div>
+                <div class="card-body">
+                    {% if top_by_actual %}
+                        <div class="list-group list-group-flush">
+                            {% for entity in top_by_actual %}
+                                <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                    <div>
+                                        {% if entity.type == 'tenant' %}
+                                            <i class="fas fa-building text-primary"></i>
+                                            <strong>{{ entity.name }}</strong>
+                                        {% else %}
+                                            <i class="fas fa-user text-info"></i>
+                                            <strong>{{ entity.name }}</strong>
+                                        {% endif %}
+                                    </div>
+                                    <span class="badge bg-warning rounded-pill">₦{{ entity.total_value|floatformat:0|intcomma }}</span>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No data available</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="btn-group" role="group">
+                <a href="{% url 'crm:opportunity_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> New Opportunity
+                </a>
+                <a href="{% url 'crm:product_create' %}" class="btn btn-success">
+                    <i class="fas fa-box"></i> New Product
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Opportunities by Stage and Deal Size -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-chart-bar"></i> Opportunities by Stage</h5>
+                </div>
+                <div class="card-body">
+                    {% if opportunities_by_stage %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Category</th>
+                                        <th>Stage</th>
+                                        <th>Count</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in opportunities_by_stage %}
+                                        <tr>
+                                            <td>
+                                                {% if item.stage__category == 'Lead' %}
+                                                    <span class="badge bg-info">{{ item.stage__category }}</span>
+                                                {% elif item.stage__category == 'Deal' %}
+                                                    <span class="badge bg-warning">{{ item.stage__category }}</span>
+                                                {% else %}
+                                                    <span class="badge bg-success">{{ item.stage__category }}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ item.stage__name|default:"No Stage" }}</td>
+                                            <td><strong>{{ item.count }}</strong></td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No opportunities yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-chart-pie"></i> By Deal Size</h5>
+                </div>
+                <div class="card-body">
+                    {% if opportunities_by_size %}
+                        {% for item in opportunities_by_size %}
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between">
+                                    <span>
+                                        {% if item.deal_size == 'Small' %}
+                                            <span class="badge bg-info">{{ item.deal_size }}</span>
+                                        {% elif item.deal_size == 'Medium' %}
+                                            <span class="badge bg-warning">{{ item.deal_size }}</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">{{ item.deal_size }}</span>
+                                        {% endif %}
+                                    </span>
+                                    <span><strong>{{ item.count }}</strong> opportunities</span>
+                                </div>
+                                <small class="text-muted">₦{{ item.total_value|floatformat:0|intcomma }}</small>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted">No data available</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Recent Opportunities -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-briefcase"></i> Recent Opportunities</h5>
+                    <a href="{% url 'crm:opportunity_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if recent_opportunities %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Title</th>
+                                        <th>Company</th>
+                                        <th>Category</th>
+                                        <th>Stage</th>
+                                        <th>Value</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for opportunity in recent_opportunities %}
+                                        <tr>
+                                            <td>
+                                                <a href="{% url 'crm:opportunity_detail' opportunity.pk %}">
+                                                    {{ opportunity.title }}
+                                                </a>
+                                            </td>
+                                            <td>
+                                                {{ opportunity.company_name|default:"-" }}
+                                                {% if is_superuser and opportunity.tenant %}
+                                                    <br><small class="text-muted"><i class="fas fa-building"></i> {{ opportunity.tenant.name }}</small>
+                                                {% elif is_superuser and not opportunity.tenant %}
+                                                    <br><small class="text-muted"><i class="fas fa-user"></i> Personal</small>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if opportunity.category == 'Lead' %}
+                                                    <span class="badge bg-info">{{ opportunity.category }}</span>
+                                                {% elif opportunity.category == 'Deal' %}
+                                                    <span class="badge bg-warning">{{ opportunity.category }}</span>
+                                                {% else %}
+                                                    <span class="badge bg-success">{{ opportunity.category }}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if opportunity.stage %}
+                                                    <span class="badge bg-secondary">{{ opportunity.stage.name }}</span>
+                                                {% else %}
+                                                    -
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if opportunity.estimated_amount %}
+                                                    ₦{{ opportunity.estimated_amount|floatformat:2|intcomma }}
+                                                {% else %}
+                                                    -
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No opportunities yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Upcoming Activities -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-tasks"></i> Upcoming Activities</h5>
+                </div>
+                <div class="card-body">
+                    {% if upcoming_activities %}
+                        <ul class="list-group list-group-flush">
+                            {% for activity in upcoming_activities %}
+                            <li class="list-group-item px-0">
+                                <strong>{{ activity.subject }}</strong>
+                                <br>
+                                <small class="text-muted">
+                                    {{ activity.get_activity_type_display }} - {{ activity.due_date|date:"M d, Y" }}
+                                </small>
+                                {% if not activity.completed %}
+                                    <span class="badge bg-warning">Pending</span>
+                                {% endif %}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted">No upcoming activities.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Links -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5>Quick Links</h5>
+                    <div class="list-group list-group-horizontal-md">
+                        <a href="{% url 'crm:opportunity_list' %}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-briefcase"></i> Opportunities
+                        </a>
+                        <a href="{% url 'crm:product_list' %}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-box"></i> Products
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

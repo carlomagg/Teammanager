@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% block title %}Check Ticket Status{% endblock %}
+
+{% block content %}
+<div class="container py-5" style="max-width:600px;">
+
+  <div class="text-center mb-4">
+    <i class="fas fa-search fa-2x text-primary mb-3 d-block"></i>
+    <h3 class="fw-bold">Track Your Ticket</h3>
+    <p class="text-muted">Enter your ticket number and the email or phone you used when submitting.</p>
+  </div>
+
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-4">
+      <form method="get" novalidate>
+        <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label small fw-semibold">Ticket Number</label>
+            {{ form.ticket_number }}
+          </div>
+          <div class="col-12">
+            <label class="form-label small fw-semibold">Email or Phone</label>
+            {{ form.email_or_phone }}
+          </div>
+          <div class="col-12">
+            <button type="submit" class="btn btn-primary w-100">
+              <i class="fas fa-search me-2"></i>Find My Ticket
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  {# ── Result ── #}
+  {% if ticket %}
+  <div class="card border-0 shadow-sm">
+    <div class="card-header bg-transparent border-bottom fw-semibold py-2 d-flex justify-content-between align-items-center">
+      <span><i class="fas fa-ticket-alt me-1 text-primary"></i>{{ ticket.ticket_number }}</span>
+      {% if ticket.status == 'closed' or ticket.status == 'resolved' %}
+        <span class="badge bg-secondary">{{ ticket.get_status_display }}</span>
+      {% elif ticket.status == 'in_progress' %}
+        <span class="badge bg-primary">{{ ticket.get_status_display }}</span>
+      {% elif ticket.status == 'new' %}
+        <span class="badge bg-info">{{ ticket.get_status_display }}</span>
+      {% else %}
+        <span class="badge bg-warning text-dark">{{ ticket.get_status_display }}</span>
+      {% endif %}
+    </div>
+    <div class="card-body">
+      <h5 class="fw-semibold mb-1">{{ ticket.title }}</h5>
+      <p class="text-muted small mb-3">{{ ticket.description }}</p>
+
+      <dl class="row small mb-0">
+        <dt class="col-5 text-muted">Category</dt>
+        <dd class="col-7">{{ ticket.category.name|default:"—" }}</dd>
+        <dt class="col-5 text-muted">Priority</dt>
+        <dd class="col-7">{{ ticket.priority.name|default:"—" }}</dd>
+        <dt class="col-5 text-muted">Submitted</dt>
+        <dd class="col-7">{{ ticket.created_at|date:"d M Y" }}</dd>
+        {% if ticket.resolved_at %}
+        <dt class="col-5 text-muted">Resolved</dt>
+        <dd class="col-7">{{ ticket.resolved_at|date:"d M Y" }}</dd>
+        {% endif %}
+      </dl>
+    </div>
+
+    {# Public comments #}
+    {% if comments %}
+    <div class="card-footer bg-transparent border-top pt-3">
+      <div class="small fw-semibold text-muted mb-2">Updates</div>
+      {% for comment in comments %}
+      <div class="d-flex gap-2 mb-3">
+        <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0"
+             style="width:32px;height:32px;">
+          <i class="fas fa-user text-primary" style="font-size:.75rem;"></i>
+        </div>
+        <div>
+          <div class="small fw-semibold">{{ comment.author_display }}
+            <span class="text-muted fw-normal ms-1">{{ comment.created_at|date:"d M, H:i" }}</span>
+          </div>
+          <div class="small">{{ comment.content }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

@@ -1,0 +1,219 @@
+{% extends 'base.html' %}
+{% block title %}Register - TeamManager{% endblock %}
+{% block content %}
+<div class="register-page">
+    <div class="register card shadow-sm">
+        <div class="card-body text-center">
+            <i class="fas fa-user-plus fa-3x mb-3 text-primary" aria-hidden="true"></i>
+            <h4 class="card-title">Sign Up for Team Manager</h4>
+            {% include 'partials/help_icon.html' with faq_key='register' %}
+            {% if form.errors %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <strong>Registration Failed:</strong> Please correct the errors below.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endif %}
+            <form method="POST" aria-label="Registration Form">
+                {% csrf_token %}
+                {% for field in form %}
+                    <div class="mb-3 text-start">
+                        <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}
+                            {% if field.help_text%}
+                                <span class="tooltip-trigger" title="{{ field.help_text }}"><i class="fa fa-info-circle"></i></span>
+                            {% endif %}
+                        </label>
+                        {% if field.field.widget.input_type == "password" %}
+                            <div class="input-group">
+                                <input type="password"
+                                    name="{{ field.name }}"
+                                    id="{{ field.id_for_label }}"
+                                    class="form-control"
+                                    {% if field.field.required %}required{% endif %}
+                                    {% if field.errors %}aria-invalid="true"{% endif %}>
+
+                                <button type="button"
+                                        class="btn btn-outline-secondary toggle-password"
+                                        data-target="{{ field.id_for_label }}">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        {% else %}
+                            <input type="{{ field.field.widget.input_type }}"
+                                name="{{ field.name }}"
+                                id="{{ field.id_for_label }}"
+                                class="form-control"
+                                value="{{ field.value|default:'' }}"
+                                {% if field.field.required %}required{% endif %}
+                                {% if field.errors %}aria-invalid="true"{% endif %}>
+                        {% endif %}
+
+                        {% if field.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ field.errors|join:", " }}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+                {% comment %} <p><input type="checkbox" id="terms-checkbox"> Click to accept our <a href="{% url 'policies' %}">Terms of Service</a></p> {% endcomment %}
+                <p>
+                    <input type="checkbox" id="terms-checkbox" required>
+                    I have read and accept our 
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#policiesModal" data-policy-tab="terms-use">
+                        Terms of Service, Privacy Policy, and other policies
+                    </a>
+                </p>
+                <button type="submit" class="btn btn-primary w-100 mb-3" id="signup-btn" disabled>Sign Up</button>
+                <p class="card-text text-muted">
+                    Already have an account? <a href="{% url 'login' %}" class="text-primary fw-medium">Log In</a>
+                </p>
+                <div class="mt-2">
+                    <a href="{% url 'home' %}" class="btn btn-outline-secondary">Back to Home</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Policies modal is included globally from base.html as 'public_pages/_policies_modal.html' -->
+
+<style scoped>
+    .register-page {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: calc(100vh - 100px); /* Match base.html's main-content height */
+        padding: 20px;
+        background: transparent; /* Inherit base.html's gradient */
+    }
+
+    .register {
+        width: 100%;
+        max-width: 500px; /* Slightly wider than login for more fields */
+        background: #ffffff;
+        border: none;
+        border-radius: 12px; /* Match base.html's rounded corners */
+        padding: 30px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .register:hover {
+        transform: translateY(-5px); /* Subtle lift effect */
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1); /* Enhanced shadow on hover */
+    }
+
+    .register .card-title {
+        font-weight: 600;
+        color: #2d3748; /* Match base.html's text color */
+        margin-bottom: 15px;
+    }
+
+    .register .card-text {
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+
+    .register .text-primary {
+        color: #319795 !important; /* Match base.html's primary color */
+        transition: color 0.2s ease;
+    }
+
+    .register .text-primary:hover {
+        color: #2c7a7b !important; /* Match base.html's btn-primary hover */
+    }
+
+    .register .btn-primary {
+        background-color: #319795;
+        border-color: #319795;
+        border-radius: 8px; /* Match base.html's button style */
+        padding: 10px;
+        font-weight: 500;
+        transition: background-color 0.2s ease;
+    }
+
+    .register .btn-primary:hover {
+        background-color: #2c7a7b;
+        border-color: #2c7a7b;
+    }
+
+    .register .btn-outline-secondary {
+        border-color: #e2e8f0;
+        color: #2d3748;
+        border-radius: 8px;
+        padding: 8px 20px;
+    }
+
+    .register .btn-outline-secondary:hover {
+        background-color: #e2e8f0;
+        color: #2d3748;
+    }
+
+    .register .form-control {
+        border-radius: 8px;
+        border: 1px solid #e2e8f0; /* Match base.html's border color */
+        padding: 10px;
+        font-size: 0.95rem;
+    }
+
+    .register .form-control:focus {
+        border-color: #319795;
+        box-shadow: 0 0 0 0.2rem rgba(49, 151, 149, 0.25);
+    }
+
+    .register .form-control[aria-invalid="true"] {
+        border-color: #dc3545;
+    }
+
+    .register .invalid-feedback {
+        font-size: 0.85rem;
+        color: #dc3545;
+    }
+
+    /* Focus styles for accessibility */
+    .register a:focus, .register button:focus, .register input:focus {
+        outline: 2px solid #319795;
+        outline-offset: 2px;
+        border-radius: 4px;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 576px) {
+        .register {
+            padding: 20px;
+            max-width: 90%;
+        }
+
+        .register .card-title {
+            font-size: 1.25rem; /* Smaller heading on mobile */
+        }
+
+        .register .fa-user-plus {
+            font-size: 2rem; /* Smaller icon on mobile */
+        }
+    }
+</style>
+
+<script>
+    const checkbox = document.getElementById('terms-checkbox');
+    const signupBtn = document.getElementById('signup-btn');
+
+    checkbox.addEventListener('change', function() {
+        signupBtn.disabled = !this.checked;
+    });
+</script>
+
+<script>
+    document.querySelectorAll('.toggle-password').forEach(button => {
+        button.addEventListener('click', function () {
+            const input = document.getElementById(this.dataset.target);
+            const icon = this.querySelector('i');
+
+            const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+            input.setAttribute('type', type);
+
+            icon.classList.toggle('fa-eye');
+            icon.classList.toggle('fa-eye-slash');
+        });
+    });
+</script>
+
+{% endblock %}

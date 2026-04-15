@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Mark Remittance as Completed</h4>
+                </div>
+                <div class="card-body">
+                    <!-- Remittance Details -->
+                    <div class="alert alert-info">
+                        <h5 class="alert-heading">Remittance Details</h5>
+                        <ul class="mb-0">
+                            <li><strong>Reference:</strong> {{ remittance.reference }}</li>
+                            <li><strong>Tenant:</strong> {{ remittance.tenant.name }}</li>
+                            <li><strong>Amount:</strong> {{ remittance.amount|floatformat:2 }} NGN</li>
+                            <li><strong>Created:</strong> {{ remittance.created_at|date:"Y-m-d" }}</li>
+                            <li><strong>Status:</strong> <span class="badge bg-warning">{{ remittance.get_status_display }}</span></li>
+                            {% if remittance.description %}
+                                <li><strong>Description:</strong> {{ remittance.description }}</li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                    
+                    <!-- Payment Information -->
+                    <div class="alert alert-warning">
+                        <h5 class="alert-heading">Payment Information</h5>
+                        <p class="mb-1"><strong>Admin:</strong> {{ remittance.tenant.admin.get_full_name|default:remittance.tenant.admin.username }} ({{ remittance.tenant.admin.email }})</p>
+                        <p class="mb-0">
+                            <strong>Contact for bank details:</strong> 
+                            <a href="mailto:{{ remittance.tenant.admin.email }}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-envelope me-1"></i>Email
+                            </a>
+                        </p>
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <!-- Remittance Date -->
+                        <div class="mb-3">
+                            <label for="remittance_date" class="form-label">Remittance Date</label>
+                            <input type="date" 
+                                   class="form-control" 
+                                   id="remittance_date" 
+                                   name="remittance_date" 
+                                   value="{{ today|date:'Y-m-d' }}"
+                                   required>
+                        </div>
+                        
+                        <!-- Bank Reference -->
+                        <div class="mb-3">
+                            <label for="bank_reference" class="form-label">Bank Reference (Optional)</label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="bank_reference" 
+                                   name="bank_reference" 
+                                   placeholder="e.g., NEFT/1234567890, Transfer ID, etc.">
+                            <div class="form-text">
+                                Leave blank if no bank reference available
+                            </div>
+                        </div>
+                        
+                        <!-- Payment Method -->
+                        <div class="mb-3">
+                            <label for="payment_method" class="form-label">Payment Method (Optional)</label>
+                            <select class="form-select" id="payment_method" name="payment_method">
+                                <option value="">Select payment method</option>
+                                <option value="bank_transfer">Bank Transfer</option>
+                                <option value="cash">Cash</option>
+                                <option value="cheque">Cheque</option>
+                                <option value="online_payment">Online Payment</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Additional Notes -->
+                        <div class="mb-4">
+                            <label for="notes" class="form-label">Additional Notes (Optional)</label>
+                            <textarea class="form-control" 
+                                      id="notes" 
+                                      name="notes" 
+                                      rows="3" 
+                                      placeholder="Any additional information about this payment"></textarea>
+                        </div>
+                        
+                        <!-- Confirmation -->
+                        <div class="alert alert-light border">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="confirm_payment" required>
+                                <label class="form-check-label" for="confirm_payment">
+                                    <strong>I confirm that the payment of {{ remittance.amount|floatformat:2 }} NGN has been made to {{ remittance.tenant.name }}</strong>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'admin_remittance_dashboard' %}" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-check-circle me-2"></i>Mark as Completed
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set max date to today
+    const today = new Date().toISOString().split('T')[0];
+    const dateInput = document.getElementById('remittance_date');
+    if (dateInput) {
+        dateInput.max = today;
+    }
+    
+    // Form validation
+    const form = document.querySelector('form');
+    const confirmCheckbox = document.getElementById('confirm_payment');
+    
+    if (form && confirmCheckbox) {
+        form.addEventListener('submit', function(e) {
+            if (!confirmCheckbox.checked) {
+                e.preventDefault();
+                alert('Please confirm that the payment has been made');
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

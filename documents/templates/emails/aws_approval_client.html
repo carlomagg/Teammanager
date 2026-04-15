@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AWS Approval - {{ company_name }}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: 'Helvetica Neue', Arial, sans-serif; color: #1e293b;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f8fafc; padding: 20px 0;">
+    <tr>
+      <td align="center">
+        <!-- Main Container -->
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);">
+          
+          <!-- Header - AWS Approval -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #319795 0%, #2c7a7b 100%); padding: 36px 40px; text-align: center; color: white;">
+              <h1 style="margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">
+                AWS Approval Confirmed
+              </h1>
+              <p style="margin: 10px 0 0; font-size: 17px; opacity: 0.95;">
+                Congratulations, <strong>{{ company_name }}</strong>!
+              </p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 40px 32px;">
+              <p style="margin: 0 0 16px; font-size: 16px; line-height: 1.7; color: #334155;">
+                Dear Sir/Madam,
+              </p>
+              <p style="margin: 0 0 20px; font-size: 16px; line-height: 1.75; color: #334155;">
+                We are <strong style="color: #319795;">thrilled to inform you</strong> that your projects have been <strong>officially approved by Amazon Web Services (AWS)</strong> under <em>AWS Cloud Growth Services</em>.
+              </p>
+              <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.75; color: #334155;">
+                This is a <strong>significant milestone</strong> — a testament to your business’s potential to scale and succeed on the AWS platform. We are excited for you to move forward to the next phase.
+              </p>
+
+              <!-- Highlight Box -->
+              <div style="background-color: #edfffeff; border: 1px solid #aafefdff; border-radius: 10px; padding: 20px; margin: 28px 0; text-align: center;">
+                <p style="margin: 0; font-size: 16px; color: #2c7a7b; font-weight: 600;">
+                  Please find your <strong>Official AWS Approval Letter</strong> attached.
+                </p>
+              </div>
+
+              <p style="margin: 24px 0 20px; font-size: 16px; line-height: 1.75; color: #334155;">
+                Should you have any questions or need clarification on next steps, please don’t hesitate to contact me directly.
+              </p>
+              <p style="margin: 0; font-size: 16px; line-height: 1.75; color: #334155;">
+                Once again, <strong>congratulations</strong> — we look forward to your continued success!
+              </p>
+            </td>
+          </tr>
+
+          <!-- Signature -->
+          <tr>
+            <td style="padding: 0 40px 40px;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td style="font-size: 16px; color: #1e293b; padding-bottom: 8px;">
+                    <strong>Best Regards,</strong><br>
+                    <strong style="color: #319795;">{{ creator_name }}</strong><br>
+                    <span style="color: #64748b;">{{ creator_title }} | Transnet Cloud</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="font-size: 15px; color: #64748b; line-height: 1.6; padding-top: 12px;">
+                    Mob: {{ phone_number }}<br>
+                    Email: <a href="mailto:{{ creator_email }}" style="color: #319795; text-decoration: none;">{{ creator_email }}</a><br>
+                    Address: No 35 Ajose Adeogun Street, Utako, Abuja<br>
+                    Website: <a href="https://www.transnetcloud.com" style="color: #319795; text-decoration: none;">www.transnetcloud.com</a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #f7fafc; padding: 24px 40px; text-align: center; font-size: 13px; color: #4a5568; border-top: 1px dashed #e2e8f0;">
+              <p style="margin: 0;">
+                © {{ "now"|date:"Y" }} Transnet Cloud. All rights reserved.<br>
+                This is an official AWS partner communication.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

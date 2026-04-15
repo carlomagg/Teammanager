@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Opportunities - CRM{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-briefcase"></i> Opportunities</h2>
+        <a href="{% url 'crm:opportunity_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Create Opportunity
+        </a>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5><i class="fas fa-filter"></i> Filters</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label for="category" class="form-label">Category</label>
+                    <select name="category" id="category" class="form-control">
+                        <option value="">All Categories</option>
+                        <option value="Lead" {% if category_filter == 'Lead' %}selected{% endif %}>Lead</option>
+                        <option value="Deal" {% if category_filter == 'Deal' %}selected{% endif %}>Deal</option>
+                        <option value="Customer" {% if category_filter == 'Customer' %}selected{% endif %}>Customer</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="stage" class="form-label">Stage</label>
+                    <select name="stage" id="stage" class="form-control">
+                        <option value="">All Stages</option>
+                        {% for stage in stages %}
+                            <option value="{{ stage.id }}" {% if stage_filter == stage.id|stringformat:"s" %}selected{% endif %}>
+                                {{ stage.category }} - {{ stage.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="search" class="form-label">Search</label>
+                    <input type="text" name="search" id="search" class="form-control" 
+                           placeholder="Search title, company..." value="{{ search }}">
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary me-2">
+                        <i class="fas fa-search"></i> Filter
+                    </button>
+                    <a href="{% url 'crm:opportunity_list' %}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Clear
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            {% if page_obj %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Company</th>
+                                <th>Category</th>
+                                <th>Stage</th>
+                                <th>Deal Size</th>
+                                <th>Estimated Value</th>
+                                <th>Assigned To</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for opportunity in page_obj %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'crm:opportunity_detail' opportunity.pk %}">
+                                            <strong>{{ opportunity.title }}</strong>
+                                        </a>
+                                    </td>
+                                    <td>{{ opportunity.company_name|default:"-" }}</td>
+                                    <td>
+                                        {% if opportunity.category == 'Lead' %}
+                                            <span class="badge bg-info">{{ opportunity.category }}</span>
+                                        {% elif opportunity.category == 'Deal' %}
+                                            <span class="badge bg-warning">{{ opportunity.category }}</span>
+                                        {% else %}
+                                            <span class="badge bg-success">{{ opportunity.category }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if opportunity.stage %}
+                                            <span class="badge bg-secondary">{{ opportunity.stage.name }}</span>
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if opportunity.deal_size %}
+                                            <span class="badge bg-primary">{{ opportunity.deal_size }}</span>
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if opportunity.estimated_amount %}
+                                            ₦{{ opportunity.estimated_amount|floatformat:2 }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if opportunity.assigned_to %}
+                                            {{ opportunity.assigned_to.get_full_name|default:opportunity.assigned_to.username }}
+                                        {% else %}
+                                            <span class="text-muted">Unassigned</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ opportunity.created_at|date:"M d, Y" }}</td>
+                                    <td>
+                                        <a href="{% url 'crm:opportunity_detail' opportunity.pk %}" 
+                                           class="btn btn-sm btn-info" title="View">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'crm:opportunity_update' opportunity.pk %}" 
+                                           class="btn btn-sm btn-warning" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'crm:opportunity_delete' opportunity.pk %}" 
+                                           class="btn btn-sm btn-danger" title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                {% if page_obj.has_other_pages %}
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=1{% if category_filter %}&category={{ category_filter }}{% endif %}{% if stage_filter %}&stage={{ stage_filter }}{% endif %}{% if search %}&search={{ search }}{% endif %}">First</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if stage_filter %}&stage={{ stage_filter }}{% endif %}{% if search %}&search={{ search }}{% endif %}">Previous</a>
+                                </li>
+                            {% endif %}
+
+                            <li class="page-item active">
+                                <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                            </li>
+
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if stage_filter %}&stage={{ stage_filter }}{% endif %}{% if search %}&search={{ search }}{% endif %}">Next</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if stage_filter %}&stage={{ stage_filter }}{% endif %}{% if search %}&search={{ search }}{% endif %}">Last</a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-briefcase fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">No opportunities found. Create your first opportunity to get started.</p>
+                    <a href="{% url 'crm:opportunity_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Create Opportunity
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

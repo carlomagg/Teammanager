@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+{% block title %}Conferences{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3"><i class="fas fa-chalkboard-teacher me-2"></i> Conferences</h1>
+        {% if user.is_authenticated and can_create %}
+            <a href="{% url 'create_conference' %}" class="btn btn-primary">
+                <i class="fas fa-plus-circle me-1"></i> Create Conference
+            </a>
+        {% endif %}
+        <div class="input-group w-50 w-md-25">
+            <span class="input-group-text bg-transparent border-end-0">
+                <i class="fas fa-search text-muted"></i>
+            </span>
+            <form method="get" class="input-group w-50 w-md-25">
+                <input
+                    type="text"
+                    name="search"
+                    class="form-control"
+                    placeholder="Search conferences..."
+                    value="{{ request.GET.search }}"
+                >
+            </form>
+        </div>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            {% if 'memo' not in message.tags %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+
+    <div class="card" style="position: relative;">
+        <div class="card-help" style="position: absolute; top: 10px; right: 12px; z-index: 10;">
+            {% include 'partials/help_icon.html' with faq_key='conference_list' placement='left' %}
+        </div>
+        <div class="card-body">
+            {% if conferences %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Title</th>
+                                <th>Start</th>
+                                <th>End</th>
+                                <th>Venue</th>
+                                <th>Type</th>
+                                {% if request.user.is_staff %}
+                                    <th>Tenant</th>
+                                {% endif %}
+                                <th>Organizer</th>
+                                <th>Registered</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for conf in conferences %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'conference_detail' conference_id=conf.id %}" class="text-decoration-none">
+                                            <strong>{{ conf.title }}</strong>
+                                        </a>
+                                        <div class="text-muted small">{{ conf.description|truncatechars:120 }}</div>
+                                    </td>
+                                    <td>{{ conf.start_date|date:"SHORT_DATETIME_FORMAT" }}</td>
+                                    <td>{{ conf.end_date|date:"SHORT_DATETIME_FORMAT" }}</td>
+                                    <td>{{ conf.venue|default:"—" }}</td>
+                                    <td>
+                                        {% if conf.conference_type == "virtual" %}
+                                            <span class="badge bg-info"><i class="fas fa-video me-1"></i> Virtual</span>
+                                        {% elif conf.conference_type == "physical"%}
+                                            <span class="badge bg-secondary"><i class="fas fa-map-marker-alt me-1"></i> In-person</span>
+                                        {% else %}
+                                            <span class="badge bg-primary"><i class="fas fa-map-marker-alt me-1"></i>/<i class="fas fa-video me-1"></i> Hybrid</span>
+                                        {% endif %}
+                                    </td>
+                                    {% if user.is_staff %}
+                                        <td>
+                                            {% if conf.tenant is None %}
+                                                {{ "Personal User" }}
+                                            {% else %}
+                                                {{ conf.tenant.name }}
+                                            {% endif %}
+                                        </td>
+                                    {% endif %}
+                                    <td>
+                                        {% if conf.organizer %}
+                                            {{ conf.organizer.username }}
+                                        {%else%}
+                                            - 
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ conf.participants_count|default:0 }}</td>
+                                    <td class="text-end">
+                                        <button 
+                                            type="button"
+                                            class="btn btn-sm btn-outline-teal text-teal border-teal"
+                                            onclick="copyConferenceLink(this)"
+                                            data-url="{% url 'conference_post' conf.id %}"
+                                            title="Copy link to clipboard">
+                                            <i class="fas fa-copy me-1"></i> Copy Link
+                                        </button>
+                                        <a href="{% url 'conference_detail' conference_id=conf.id %}" class="btn btn-sm btn-outline-primary" title="View">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        {% comment %} {% if user.is_authenticated and user == conf.organizer or user.is_staff %} {% endcomment %}
+                                        {% if can_create %}
+                                            <a href="{% url 'post_conference' conference_id=conf.id %}" class="btn btn-sm btn-outline-primary" title="Post this conference">
+                                                <i class="fas fa-share"></i>
+                                            </a>
+                                            {% if conf.is_posted %}
+                                                <a href="{% url 'withdraw_conference_post' conference_id=conf.id %}" class="btn btn-sm btn-outline-primary" title="Withdraw this conference post">
+                                                    <i class="fas fa-ban"></i>
+                                                </a>
+                                            {% endif %}
+                                            <a href="{% url 'edit_conference' conference_id=conf.id %}?next={{ request.get_full_path }}" class="btn btn-sm btn-outline-secondary" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            {% comment %} <a href="{% url 'delete_conference' conference_id=conf.id %}?next={{ request.get_full_path }}" class="btn btn-sm btn-outline-danger" title="Delete">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </a> {% endcomment %}
+                                            <form action="{% url 'delete_conference' conference_id=conf.id %}?next={{ request.get_full_path }}" method="POST" class="d-inline">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-danger btn-sm" title="Delete Conference" onclick="return confirm('Are you sure you want to delete {{ conf.title }}?');">
+                                                    <i class="fas fa-trash-alt me-1"></i> Delete
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% if conferences.has_other_pages %}
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center mt-3">
+                            {% if conferences.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ conferences.previous_page_number }}&search={{ request.GET.search }}" aria-label="Previous">
+                                        <span aria-hidden="true">«</span>
+                                    </a>
+                                </li>
+                            {% endif %}
+                            <!--First page-->
+                            <li class="page-item {% if conferences.number == 1 %}active{% endif %}">
+                                <a class="page-link" href="?page=1&search={{ request.GET.search }}">1</a>
+                            </li>
+                            {% if conferences.number != 1 and conferences.number != 2 %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">...</span>
+                                </li>
+                            {% endif %}
+                            {% if conferences.number != 1 %}
+                                <li class="page-item {% if conferences.number %}active{% endif %}">
+                                    <a class="page-link" href="?page={{ conferences.number }}&search={{ request.GET.search }}">{{ conferences.number }}</a>
+                                </li>
+                            {% endif %}
+                            {% if conferences.number != conferences.paginator.num_pages and conferences.number != conferences.paginator.num_pages|add:-1 %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">...</span>
+                                </li>
+                            {% endif %}
+                            <!-- Last page (only if not already shown) -->
+                            {% if conferences.number != conferences.paginator.num_pages %}
+                                <li class="page-item {% if conferences.number == conferences.paginator.num_pages %}active{% endif %}">
+                                    <a class="page-link" href="?page={{ conferences.paginator.num_pages }}&search={{ request.GET.search }}">{{ conferences.paginator.num_pages }}</a>
+                                </li>
+                            {% endif %}
+                            {% if conferences.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ conferences.next_page_number }}&search={{ request.GET.search }}" aria-label="Next">
+                                        <span aria-hidden="true">»</span>
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
+                </div>
+            {% else %}
+                <p class="text-muted">No conferences found.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Toast notification -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1050;">
+    <div id="copyToast" class="toast align-items-center text-white bg-teal border-0" role="alert">
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="fas fa-check me-2"></i> Link copied to clipboard!
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Add select2 class to selects (forms may render selects without the class)
+    document.querySelectorAll('select').forEach(function(s){ s.classList.add('select2'); });
+    // Initialize Select2 when DOM ready
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof $ !== 'undefined' && typeof $.fn.select2 !== 'undefined') {
+            $('.select2').select2({ theme: 'bootstrap-5', width: '100%' });
+        }
+    });
+    function copyConferenceLink(el) {
+        const path = el.dataset.url;
+        const fullUrl = window.location.origin + path;
+
+        navigator.clipboard.writeText(fullUrl).then(() => {
+            const toastEl = document.getElementById('copyToast');
+            if (toastEl) {
+                new bootstrap.Toast(toastEl).show();
+            } else {
+                alert("Link copied!");
+            }
+        }).catch(() => {
+            prompt("Copy this link:", fullUrl);
+        });
+    }
+</script>
+<style>
+    :root { --teal: #319795; --teal-dark: #2c7a7b; }
+    .btn-teal { background-color: var(--teal); border-color: var(--teal); }
+    .btn-teal:hover { background-color: var(--teal-dark); border-color: var(--teal-dark); }
+    .text-teal { color: var(--teal) !important; }
+    .bg-teal { background-color: var(--teal) !important; }
+    @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(40, 167, 69, 0); } 100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); } }
+</style>
+{% endblock %}

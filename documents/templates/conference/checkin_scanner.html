@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+  <style>
+    #reader { width: 100%; max-width: 640px; margin: 0 auto 1rem; }
+    #result { 
+      padding: 1.2rem; font-size: 1.4rem; text-align: center; border-radius: 8px; min-height: 80px;
+    }
+    .success { background: #e6ffe6; color: #006400; border: 1px solid #006400; }
+    .error   { background: #ffe6e6; color: #8b0000; border: 1px solid #8b0000; }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <h2>Check-in Scanner — {{ conference.title }}</h2>
+  <p>Scan the participant's access QR code from their card/badge.</p>
+
+  <div id="reader"></div>
+
+  <div id="debug" class="mt-3" style="display:none;"></div>
+
+  <div id="result" class="mt-3" style="
+    display:none;
+    padding: 1.25rem;
+    border-radius: 10px;
+    text-align: center;
+    font-size: 1.1rem;
+    "></div>
+
+
+
+  <p class="text-center mt-4">
+    <a href="{% url 'conference_checkin_dashboard' conference.id %}" class="btn btn-outline-primary">
+      → Manual check-in list
+    </a>
+  </p>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  if (typeof Html5Qrcode === "undefined") {
+    alert("QR scanner failed to load. Please refresh the page.");
+    return;
+  }
+
+  const conferenceId = "{{ conference.id }}";
+  const resultBox = document.getElementById("result");
+  const readerId = "reader";
+
+  const html5QrCode = new Html5Qrcode(readerId);
+
+  function showResult(success, title, message) {
+    resultBox.style.display = "block";
+    resultBox.style.background = success ? "#e6fff2" : "#ffecec";
+    resultBox.style.border = success ? "1px solid #198754" : "1px solid #dc3545";
+    resultBox.style.color = success ? "#198754" : "#dc3545";
+    resultBox.innerHTML = `
+      <div style="font-size:1.4rem;font-weight:600;">
+        ${success ? "✅" : "❌"} ${title}
+      </div>
+      <div style="margin-top:6px;">${message}</div>
+    `;
+  }
+
+  function resetScanner() {
+    resultBox.style.display = "none";
+    html5QrCode.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: 300 },
+      onScanSuccess,
+      () => {}
+    ).catch(() => {
+      showResult(false, "Camera Error", "Unable to access the camera.");
+    });
+  }
+
+  function onScanSuccess(decodedText) {
+    let url;
+
+    try {
+      url = new URL(decodedText);
+    } catch {
+      showResult(false, "Invalid QR Code", "This QR code is not valid.");
+      return;
+    }
+
+    const parts = url.pathname.split("/").filter(Boolean);
+
+    // Expected:
+    // /conference/participant/access/<conference_id>/<uuid>/
+    if (
+      parts.length !== 5 ||
+      parts[0] !== "conference" ||
+      parts[1] !== "participant" ||
+      parts[2] !== "access"
+    ) {
+      showResult(false, "Invalid QR Code", "This QR code is not recognized.");
+      return;
+    }
+
+    const scannedConferenceId = parts[3];
+    const token = parts[4];
+
+    if (scannedConferenceId !== conferenceId) {
+      showResult(false, "Wrong Conference", "This QR code is for a different conference.");
+      return;
+    }
+
+    if (!/^[0-9a-f-]{36}$/i.test(token)) {
+      showResult(false, "Invalid QR Code", "Invalid participant token.");
+      return;
+    }
+
+    // Stop camera to prevent double scans
+    html5QrCode.stop().catch(() => {});
+
+    const checkinUrl = `{% url 'process_checkin' '00000000-0000-0000-0000-000000000000' %}`
+      .replace("00000000-0000-0000-0000-000000000000", token);
+
+    fetch(checkinUrl, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": "{{ csrf_token }}",
+        "Content-Type": "application/json",
+        "X-Requested-With": "XMLHttpRequest",
+      },
+      body: JSON.stringify({ conference_id: conferenceId }),
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          showResult(true, "Check-in Successful", data.message);
+          setTimeout(resetScanner, 3500);
+        } else {
+          showResult(false, "Check-in Failed", data.message || "Unable to check in.");
+          setTimeout(resetScanner, 3500);
+        }
+      })
+      .catch(() => {
+        showResult(false, "Network Error", "Please try again.");
+        setTimeout(resetScanner, 3500);
+      });
+  }
+
+  // Start scanner initially
+  resetScanner();
+});
+</script>
+
+<script>
+const resultBox = document.getElementById("result");
+const debugBox  = document.getElementById("debug");
+
+// Toggle this when YOU are testing
+const DEBUG_MODE = false;
+
+function showResult({ title, message, success }) {
+  resultBox.style.display = "block";
+  resultBox.style.background = success ? "#e6fff2" : "#ffecec";
+  resultBox.style.border = success ? "1px solid #198754" : "1px solid #dc3545";
+  resultBox.style.color = success ? "#198754" : "#dc3545";
+
+  resultBox.innerHTML = `
+    <div style="font-size:1.4rem;font-weight:600">
+      ${success ? "✅" : "❌"} ${title}
+    </div>
+    <div class="mt-1">${message}</div>
+  `;
+}
+
+function debug(label, value) {
+  if (!DEBUG_MODE) return;
+  debugBox.style.display = "block";
+  debugBox.innerHTML += `<strong>${label}:</strong> ${value}<br>`;
+}
+
+</script>
+
+
+{% endblock %}

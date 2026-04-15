@@ -1,0 +1,18 @@
+{% for app in applications %}
+    <div class="form-check">
+        <input 
+            type="checkbox" 
+            name="applications" 
+            value="{{ app.id }}" 
+            class="form-check-input" 
+            id="applications_{{ app.id }}"
+            {% if app.id|add:'' in form.applications.value|default_if_none:'' %}checked{% endif %}
+        >
+        <label class="form-check-label" for="applications_{{ app.id }}">
+            {{ app.get_full_name }} 
+            <small class="text-muted">({{ app.email }})</small>
+        </label>
+    </div>
+{% empty %}
+    <p class="text-muted fst-italic">No accepted applications without interviews yet.</p>
+{% endfor %}

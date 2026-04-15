@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Send File - {{ tenant.name|default:"TeamManager" }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <!-- Header -->
+            <div class="text-center mb-4">
+                {% if tenant and tenant.company_profile and tenant.company_profile.photo %}
+                    <img src="{{ tenant.company_profile.photo.url }}" alt="{{ tenant.name }}" class="mb-3" style="height: 60px; width: auto;">
+                {% endif %}
+                <h2 class="fw-bold" style="color: #319795;">
+                    <i class="fas fa-cloud-upload-alt me-2"></i>Send File
+                </h2>
+                <p class="text-muted">Upload and send documents to {{ tenant.company_profile.company_name|default:tenant.name }}</p>
+            </div>
+
+            <!-- Upload Form Card -->
+            <div class="card shadow-sm border-0" style="border-radius: 12px;">
+                <div class="card-body p-4">
+                    <form method="post" enctype="multipart/form-data" id="uploadForm">
+                        {% csrf_token %}
+                        
+                        <!-- Name Field -->
+                        <div class="mb-3">
+                            <label for="{{ file_form.anon_name.id_for_label }}" class="form-label fw-medium">
+                                Your Name <span class="text-danger">*</span>
+                            </label>
+                            {{ file_form.anon_name }}
+                            {% if file_form.anon_name.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ file_form.anon_name.errors }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Enter your name so we know who sent the file
+                            </div>
+                        </div>
+
+                        <!-- File Field -->
+                        <div class="mb-4">
+                            <label for="{{ file_form.file.id_for_label }}" class="form-label fw-medium">
+                                Choose File <span class="text-danger">*</span>
+                            </label>
+                            {{ file_form.file }}
+                            {% if file_form.file.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ file_form.file.errors }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Maximum file size: 50MB. Supported formats: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG, ZIP
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg" style="background-color: #319795; border-color: #319795;">
+                                <i class="fas fa-upload me-2"></i>Upload File
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Success Message Area -->
+                    <div id="successMessage" class="alert alert-success mt-3 d-none" role="alert">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <strong>File uploaded successfully!</strong> Your file has been received.
+                    </div>
+
+                    <!-- Error Message Area -->
+                    <div id="errorMessage" class="alert alert-danger mt-3 d-none" role="alert">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        <span id="errorText">An error occurred. Please try again.</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info Box -->
+            <div class="alert alert-light mt-4 border" role="alert" style="border-radius: 12px;">
+                <div class="d-flex align-items-start">
+                    <i class="fas fa-shield-alt me-3 mt-1" style="color: #319795; font-size: 1.5rem;"></i>
+                    <div>
+                        <h6 class="fw-bold mb-2">Secure Upload</h6>
+                        <ul class="small mb-0">
+                            <li>Your files are uploaded securely and stored safely</li>
+                            <li>Files will be reviewed by the organization</li>
+                            <li>You'll receive confirmation once your file has been received</li>
+                            <li>All uploads are logged for security purposes</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Back Button -->
+            <div class="text-center mt-4">
+                <a href="{% url 'quick_services' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Quick Services
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('uploadForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const submitBtn = this.querySelector('button[type="submit"]');
+    const successMsg = document.getElementById('successMessage');
+    const errorMsg = document.getElementById('errorMessage');
+    
+    // Hide previous messages
+    successMsg.classList.add('d-none');
+    errorMsg.classList.add('d-none');
+    
+    // Disable submit button
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Uploading...';
+    
+    fetch(window.location.href, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            successMsg.classList.remove('d-none');
+            this.reset();
+            // Scroll to success message
+            successMsg.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Redirect after 2 seconds
+            setTimeout(() => {
+                window.location.href = "{% url 'quick_services' %}";
+            }, 2000);
+        } else {
+            errorMsg.classList.remove('d-none');
+            document.getElementById('errorText').textContent = 
+                data.errors ? JSON.stringify(data.errors) : 'An error occurred. Please try again.';
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-upload me-2"></i>Upload File';
+        }
+    })
+    .catch(error => {
+        errorMsg.classList.remove('d-none');
+        document.getElementById('errorText').textContent = 'An error occurred. Please try again.';
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-upload me-2"></i>Upload File';
+    });
+});
+</script>
+
+<style>
+    body.dark-mode .card {
+        background-color: #2d3748;
+        border-color: #4a5568 !important;
+    }
+    
+    body.dark-mode .alert-light {
+        background-color: #2d3748;
+        border-color: #4a5568 !important;
+        color: #e2e8f0;
+    }
+    
+    body.dark-mode .form-label {
+        color: #e2e8f0;
+    }
+    
+    body.dark-mode .form-control {
+        background-color: #1a202c;
+        border-color: #4a5568;
+        color: #e2e8f0;
+    }
+</style>
+{% endblock %}

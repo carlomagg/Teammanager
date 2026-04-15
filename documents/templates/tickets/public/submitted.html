@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}Ticket Submitted — {{ ticket.ticket_number }}{% endblock %}
+
+{% block content %}
+<div class="container py-5" style="max-width:560px;">
+  <div class="text-center">
+
+    <div class="mb-4">
+      <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-success bg-opacity-10"
+            style="width:80px;height:80px;">
+        <i class="fas fa-check-circle text-success" style="font-size:2.5rem;"></i>
+      </span>
+    </div>
+
+    <h3 class="fw-bold mb-1">Ticket Submitted!</h3>
+    <p class="text-muted mb-4">
+      We've received your request. Use your ticket number to track progress.
+    </p>
+
+    {# ── Ticket number badge ── #}
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-body py-4">
+        <div class="text-muted small mb-1">Your Ticket Number</div>
+        <div class="display-6 fw-bold text-primary mb-1">{{ ticket.ticket_number }}</div>
+        <div class="text-muted small">Save this number — you'll need it to check status</div>
+      </div>
+    </div>
+
+    {# ── Details ── #}
+    <dl class="row text-start mb-4 small">
+      <dt class="col-5 text-muted">Category</dt>
+      <dd class="col-7">{{ ticket.category.name|default:"—" }}</dd>
+
+      <dt class="col-5 text-muted">Status</dt>
+      <dd class="col-7"><span class="badge bg-info">{{ ticket.get_status_display }}</span></dd>
+
+      <dt class="col-5 text-muted">Submitted</dt>
+      <dd class="col-7">{{ ticket.created_at|date:"d M Y, H:i" }}</dd>
+    </dl>
+
+    <div class="d-flex gap-2 justify-content-center flex-wrap">
+      <a href="{% url 'ticket_status_lookup' %}" class="btn btn-outline-primary">
+        <i class="fas fa-search me-1"></i>Check Status
+      </a>
+      <a href="{% url 'ticket_submit_public' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-plus me-1"></i>New Ticket
+      </a>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

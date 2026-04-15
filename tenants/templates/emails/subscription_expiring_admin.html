@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #2c3e50, #3498db); color: white; padding: 20px; text-align: center; }
+        .content { padding: 20px; background: #f9f9f9; }
+        .warning { background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; }
+        .urgent { background: #f8d7da; border-left: 4px solid #dc3545; padding: 15px; margin: 20px 0; }
+        .button { display: inline-block; padding: 10px 20px; background: #3498db; color: white; text-decoration: none; border-radius: 5px; }
+        .footer { text-align: center; padding: 20px; font-size: 12px; color: #777; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background: #f0f0f0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>⚠️ Subscription Expiring Soon - Admin Alert</h2>
+        </div>
+        <div class="content">
+            {% if days_remaining <= 0 %}
+            <div class="urgent">
+                <h3>🚨 URGENT: Subscription Has Expired!</h3>
+                <p>The subscription for <strong>{{ tenant.name }}</strong> has expired as of {{ end_date|date:"F j, Y" }}.</p>
+            </div>
+            {% elif days_remaining == 1 %}
+            <div class="urgent">
+                <h3>⚠️ URGENT: Subscription Expires TOMORROW!</h3>
+                <p>The subscription for <strong>{{ tenant.name }}</strong> expires tomorrow, {{ end_date|date:"F j, Y" }}.</p>
+            </div>
+            {% else %}
+            <div class="warning">
+                <h3>⚠️ Subscription Expiring Soon</h3>
+                <p>The subscription for <strong>{{ tenant.name }}</strong> will expire in <strong>{{ days_remaining }} days</strong> on {{ end_date|date:"F j, Y" }}.</p>
+            </div>
+            {% endif %}
+
+            <h3>Subscription Details:</h3>
+            <table>
+                <tr>
+                    <th>Plan</th>
+                    <td>{{ plan_name }}</td>
+                </tr>
+                <tr>
+                    <th>Start Date</th>
+                    <td>{{ subscription.start_date|date:"F j, Y" }}</td>
+                </tr>
+                <tr>
+                    <th>End Date</th>
+                    <td>{{ subscription.end_date|date:"F j, Y" }}</td>
+                </tr>
+                <tr>
+                    <th>Days Remaining</th>
+                    <td><strong>{{ days_remaining }} days</strong></td>
+                </tr>
+                <tr>
+                    <th>Covered Users</th>
+                    <td>{{ user_count }} user(s)</td>
+                </tr>
+            </table>
+
+            <h3>Affected Users:</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in subscription.get_covered_users %}
+                    <tr>
+                        <td>{{ user.get_full_name|default:user.email }}</td>
+                        <td>{{ user.email }}</td>
+                        <td>
+                            {% if user.subscription_status == 'active' %}
+                            <span style="color: green;">Active</span>
+                            {% else %}
+                            <span style="color: red;">Inactive</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="{% url 'create_subscription' %}" class="button">Renew Subscription Now</a>
+            </div>
+
+            <div class="warning">
+                <strong>Action Required:</strong> Please renew the subscription to avoid service interruption for your team members.
+                {% if days_remaining <= 7 %}
+                <strong>Users will lose access if not renewed!</strong>
+                {% endif %}
+            </div>
+        </div>
+        <div class="footer">
+            <p>This is an automated notification. Please take action to ensure uninterrupted service.</p>
+            <p>&copy; {% now "Y" %} TeamManager. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

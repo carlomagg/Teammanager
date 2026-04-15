@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block title %}Edit Interview{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <h2><i class="fas fa-edit"></i> Edit Interview: {{ interview.vacancy.title }} for {{ interview.schedule_start }}</h2>
+    <form method="POST">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save</button>
+        <button type="button" onclick="history.back()" class="btn btn-secondary"><i class="fas fa-times"></i> Cancel</button>
+    </form>
+</div>
+{% endblock %}

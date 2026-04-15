@@ -1,0 +1,448 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load subscription_extras %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Manage Paid Subscriptions</h2>
+    
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Revenue</h5>
+                    <h3>₦{{ total_revenue|floatformat:2|intcomma }}</h3>
+                    <small>This month: ₦{{ month_revenue|floatformat:2|intcomma }}</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Active Paid</h5>
+                    <h3>{{ active_paid_count }}</h3>
+                    <small>Expiring soon: {{ expiring_soon_count }}</small>
+                    <br>
+                    <small>Total users covered: {{ total_users_covered|default:0 }}</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Pending/Trial</h5>
+                    <h3>{{ pending_paid_count|add:trial_paid_count }}</h3>
+                    <small>Pending: {{ pending_paid_count }} | Trial: {{ trial_paid_count }}</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-secondary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Expired/Cancelled</h5>
+                    <h3>{{ expired_paid_count|add:cancelled_paid_count }}</h3>
+                    <small>Expired: {{ expired_paid_count }} | Cancelled: {{ cancelled_paid_count }}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tabs Navigation -->
+    <ul class="nav nav-tabs mb-4" id="paidTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="active-tab" data-bs-toggle="tab" data-bs-target="#active" type="button" role="tab">
+                <i class="fas fa-check-circle me-2"></i>Active Paid
+                <span class="badge bg-success ms-2">{{ active_paid_count }}</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending" type="button" role="tab">
+                <i class="fas fa-clock me-2"></i>Pending Payment
+                <span class="badge bg-warning ms-2">{{ pending_paid_count }}</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="trial-tab" data-bs-toggle="tab" data-bs-target="#trial" type="button" role="tab">
+                <i class="fas fa-flask me-2"></i>In Trial
+                <span class="badge bg-info ms-2">{{ trial_paid_count }}</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="expiring-tab" data-bs-toggle="tab" data-bs-target="#expiring" type="button" role="tab">
+                <i class="fas fa-exclamation-triangle me-2"></i>Expiring Soon
+                <span class="badge bg-warning ms-2">{{ expiring_soon_count }}</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="expired-tab" data-bs-toggle="tab" data-bs-target="#expired" type="button" role="tab">
+                <i class="fas fa-hourglass-end me-2"></i>Expired
+                <span class="badge bg-secondary ms-2">{{ expired_paid_count }}</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="cancelled-tab" data-bs-toggle="tab" data-bs-target="#cancelled" type="button" role="tab">
+                <i class="fas fa-ban me-2"></i>Cancelled/Revoked
+                <span class="badge bg-danger ms-2">{{ cancelled_paid_count }}</span>
+            </button>
+        </li>
+    </ul>
+    
+    <!-- Tabs Content -->
+    <div class="tab-content" id="paidTabsContent">
+        
+        <!-- Tab 1: Active Paid Subscriptions -->
+        <div class="tab-pane fade show active" id="active" role="tabpanel">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Active Paid Subscriptions</h5>
+                    <span class="badge bg-success">{{ active_paid_count }} Active</span>
+                </div>
+                <div class="card-body">
+                    <!-- Search -->
+                    <div class="row mb-4">
+                        <div class="col-md-8">
+                            <form method="get" class="d-flex">
+                                <input type="hidden" name="tab" value="active">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white">
+                                        <i class="fas fa-search text-muted"></i>
+                                    </span>
+                                    <input type="text" 
+                                           name="search_active" 
+                                           class="form-control" 
+                                           placeholder="Search by name, email, plan, promo code, user scope..." 
+                                           value="{{ search_active_query }}">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-search me-2"></i>Search
+                                    </button>
+                                    {% if search_active_query %}
+                                    <a href="{% url 'manage_paid_subscriptions' %}?tab=active" class="btn btn-outline-secondary">
+                                        <i class="fas fa-times"></i> Clear
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </form>
+                        </div>
+                        <div class="col-md-4">
+                            <form method="get" class="d-flex">
+                                <input type="hidden" name="tab" value="active">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white">
+                                        <i class="fas fa-calendar me-2"></i>
+                                    </span>
+                                    <input type="date" name="date_from" class="form-control" placeholder="From" value="{{ date_from }}">
+                                    <input type="date" name="date_to" class="form-control" placeholder="To" value="{{ date_to }}">
+                                    <button type="submit" class="btn btn-outline-primary">Filter</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    {% include 'subscriptions/admin/_paid_subscription_table.html' with subscriptions=active_paid_subs show_actions=True %}
+                    {% include 'subscriptions/admin/_pagination.html' with page_obj=active_page_obj param_name='active' current_query=request.GET.urlencode %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tab 2: Pending Payment -->
+        <div class="tab-pane fade" id="pending" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Pending Payment Subscriptions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-8">
+                            <form method="get" class="d-flex">
+                                <input type="hidden" name="tab" value="pending">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white">
+                                        <i class="fas fa-search text-muted"></i>
+                                    </span>
+                                    <input type="text" 
+                                           name="search_pending" 
+                                           class="form-control" 
+                                           placeholder="Search pending subscriptions..." 
+                                           value="{{ search_pending_query }}">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-search me-2"></i>Search
+                                    </button>
+                                    {% if search_pending_query %}
+                                    <a href="{% url 'manage_paid_subscriptions' %}?tab=pending" class="btn btn-outline-secondary">
+                                        <i class="fas fa-times"></i> Clear
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    {% include 'subscriptions/admin/_paid_subscription_table.html' with subscriptions=pending_paid_subs show_actions=True %}
+                    {% include 'subscriptions/admin/_pagination.html' with page_obj=pending_page_obj param_name='pending' current_query=request.GET.urlencode %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tab 3: In Trial -->
+        <div class="tab-pane fade" id="trial" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Trial Subscriptions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-8">
+                            <form method="get" class="d-flex">
+                                <input type="hidden" name="tab" value="trial">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white">
+                                        <i class="fas fa-search text-muted"></i>
+                                    </span>
+                                    <input type="text" 
+                                           name="search_pending" 
+                                           class="form-control" 
+                                           placeholder="Search trial subscriptions..." 
+                                           value="{{ search_pending_query }}">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-search me-2"></i>Search
+                                    </button>
+                                    {% if search_pending_query %}
+                                    <a href="{% url 'manage_paid_subscriptions' %}?tab=trial" class="btn btn-outline-secondary">
+                                        <i class="fas fa-times"></i> Clear
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    {% include 'subscriptions/admin/_paid_subscription_table.html' with subscriptions=trial_paid_subs show_actions=True %}
+                    {% include 'subscriptions/admin/_pagination.html' with page_obj=trial_page_obj param_name='trial' current_query=request.GET.urlencode %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tab 4: Expiring Soon -->
+        <div class="tab-pane fade" id="expiring" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Subscriptions Expiring Soon (Next 14 Days)</h5>
+                </div>
+                <div class="card-body">
+                    {% include 'subscriptions/admin/_paid_subscription_table.html' with subscriptions=expiring_soon show_actions=True %}
+                    {% include 'subscriptions/admin/_pagination.html' with page_obj=expiring_page_obj param_name='expiring' current_query=request.GET.urlencode %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tab 5: Expired -->
+        <div class="tab-pane fade" id="expired" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Expired Subscriptions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-8">
+                            <form method="get" class="d-flex">
+                                <input type="hidden" name="tab" value="expired">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white">
+                                        <i class="fas fa-search text-muted"></i>
+                                    </span>
+                                    <input type="text" 
+                                           name="search_expired" 
+                                           class="form-control" 
+                                           placeholder="Search expired subscriptions..." 
+                                           value="{{ search_expired_query }}">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-search me-2"></i>Search
+                                    </button>
+                                    {% if search_expired_query %}
+                                    <a href="{% url 'manage_paid_subscriptions' %}?tab=expired" class="btn btn-outline-secondary">
+                                        <i class="fas fa-times"></i> Clear
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    {% include 'subscriptions/admin/_paid_subscription_table.html' with subscriptions=expired_paid_subs show_actions=False %}
+                    {% include 'subscriptions/admin/_pagination.html' with page_obj=expired_page_obj param_name='expired' current_query=request.GET.urlencode %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tab 6: Cancelled/Revoked -->
+        <div class="tab-pane fade" id="cancelled" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Cancelled & Revoked Subscriptions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-8">
+                            <form method="get" class="d-flex">
+                                <input type="hidden" name="tab" value="cancelled">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white">
+                                        <i class="fas fa-search text-muted"></i>
+                                    </span>
+                                    <input type="text" 
+                                           name="search_cancelled" 
+                                           class="form-control" 
+                                           placeholder="Search cancelled subscriptions..." 
+                                           value="{{ search_cancelled_query }}">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-search me-2"></i>Search
+                                    </button>
+                                    {% if search_cancelled_query %}
+                                    <a href="{% url 'manage_paid_subscriptions' %}?tab=cancelled" class="btn btn-outline-secondary">
+                                        <i class="fas fa-times"></i> Clear
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    {% include 'subscriptions/admin/_paid_subscription_table.html' with subscriptions=cancelled_paid_subs show_actions=False %}
+                    {% include 'subscriptions/admin/_pagination.html' with page_obj=cancelled_page_obj param_name='cancelled' current_query=request.GET.urlencode %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Select2 CSS and JS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<!-- Toastr for notifications -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    $('.select2').select2({
+        width: '100%',
+        placeholder: 'Search and select...',
+        allowClear: true
+    });
+    
+    // Activate the correct tab based on URL parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const tab = urlParams.get('tab') || 'active';
+    $(`#${tab}-tab`).tab('show');
+    
+    // Initialize tooltips
+    $('[data-toggle="tooltip"]').tooltip();
+});
+
+// Handle messages as toastr
+{% if messages %}
+    {% for message in messages %}
+        $(document).ready(function() {
+            {% if message.tags == 'success' %}
+                toastr.success('{{ message|escapejs }}');
+            {% elif message.tags == 'error' %}
+                toastr.error('{{ message|escapejs }}');
+            {% elif message.tags == 'warning' %}
+                toastr.warning('{{ message|escapejs }}');
+            {% else %}
+                toastr.info('{{ message|escapejs }}');
+            {% endif %}
+        });
+    {% endfor %}
+{% endif %}
+
+// Action functions
+function viewSubscription(subId) {
+    window.location.href = `/subscriptions/${subId}/`;
+}
+
+function cancelSubscription(subId) {
+    if (confirm('Are you sure you want to cancel this subscription?')) {
+        $.ajax({
+            url: `/subscriptions/${subId}/cancel/`,
+            method: 'POST',
+            data: {
+                csrfmiddlewaretoken: '{{ csrf_token }}'
+            },
+            success: function(response) {
+                if (response.success) {
+                    toastr.success('Subscription cancelled successfully');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    toastr.error(response.error || 'Failed to cancel subscription');
+                }
+            },
+            error: function() {
+                toastr.error('An error occurred. Please try again.');
+            }
+        });
+    }
+}
+
+function sendReminder(subId) {
+    toastr.info('Reminder sent to subscriber');
+}
+
+function viewCoveredUsers(subId) {
+    // This could open a modal showing the covered users
+    window.location.href = `/subscriptions/${subId}/users/`;
+}
+</script>
+
+<style>
+.select2-container--default .select2-selection--single {
+    height: 38px;
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+}
+.nav-tabs .nav-link {
+    color: #495057;
+    font-weight: 500;
+}
+.nav-tabs .nav-link.active {
+    color: #319795;
+    font-weight: 600;
+    border-bottom: 2px solid #319795;
+}
+.table td {
+    vertical-align: middle;
+}
+.stats-card {
+    transition: transform 0.2s;
+}
+.stats-card:hover {
+    transform: translateY(-5px);
+}
+.badge-user-scope {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+}
+.user-avatar-small {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+}
+.user-list-preview {
+    max-width: 200px;
+}
+.user-list-preview .user-avatar-small {
+    margin-right: -8px;
+    border: 2px solid white;
+}
+.user-list-preview .user-avatar-small:last-child {
+    margin-right: 0;
+}
+</style>
+{% endblock %}

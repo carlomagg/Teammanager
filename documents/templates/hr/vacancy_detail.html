@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block title %}Vacancy - {{ vacancy.title }}{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <h2><i class="fas fa-briefcase"></i> {{ vacancy.title }}</h2>
+    <p><strong><i class="fas fa-globe"></i> Location:</strong> 
+        {% if vacancy.city %}
+            {{ vacancy.city }},
+        {% endif %}
+        {% if vacancy.country %}
+            {{ vacancy.country.name }}
+        {% endif %}
+    </p>
+    <p><strong><i class="fas fa-file-alt"></i> Description:</strong> {{ vacancy.description|linebreaks }}</p>
+    <p><strong><i class="fas fa-tools"></i> Skills:</strong> {{ vacancy.skills|linebreaks }}</p>
+    <p><strong><i class="fas fa-check-circle"></i> Eligibility:</strong> {{ vacancy.eligibility|linebreaks }}</p>
+    <p><strong><i class="fas fa-dollar-sign"></i> Salary Range:</strong> 
+        {% if vacancy.min_salary and vacancy.max_salary %}
+            {{ vacancy.min_salary }} - {{ vacancy.max_salary }}
+        {% elif vacancy.min_salary %}
+            {{ vacancy.min_salary }}+
+        {% elif vacancy.max_salary %}
+            Up to {{ vacancy.max_salary }}
+        {% else %}
+            Not specified
+        {% endif %}
+    </p>
+    <p><strong><i class="fas fa-info-circle"></i> Status:</strong> {{ vacancy.get_status_display }}</p>
+    {% if vacancy.is_shared and vacancy.shareable_link %}
+        <p><strong><i class="fas fa-link"></i> Shareable Link:</strong> 
+            <a href="{{ vacancy.shareable_link }}" id="shareable-link">{{ vacancy.shareable_link }}</a>
+            <button class="btn btn-sm btn-info" onclick="navigator.clipboard.writeText(document.getElementById('shareable-link').href).then(() => alert('Link copied to clipboard!'));"><i class="fas fa-copy"></i> Copy Link</button>
+        </p>
+    {% endif %}
+    {% if is_hr or user.is_staff or user.is_personal %}
+        {% comment %} <a href="{% url 'vacancy_list' %}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back to Vacancies</a> {% endcomment %}
+        <button type="button" onclick="history.back()" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back</button>
+        <a href="{% url 'edit_vacancy' vacancy.id %}" class="btn btn-sm btn-primary"><i class="fas fa-edit"></i> Edit</a>
+    {% else %}
+        <button type="button" onclick="history.back()" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back</button>
+    {% endif %}
+</div>
+{% endblock %}

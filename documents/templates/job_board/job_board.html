@@ -1,0 +1,390 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load pagination_tags %}
+
+{% block title %}Job Board - Find Your Next Role{% endblock %}
+
+{% block meta_description %}
+    Browse available job oppotunities /open vacancies hosted on TeamManager.
+{% endblock %}
+
+{% block meta_keywords %}
+    Jobs, Vacancy, Work
+{% endblock %}
+
+{% block content %}
+
+<style>
+    /* Hero Section - Full Viewport Height */
+    .hero-section {
+        min-height: 60vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        {% comment %} background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); {% endcomment %}
+        position: relative;
+        padding: 2rem 0;
+    }
+
+    body.dark .hero-section {
+        {% comment %} background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%); {% endcomment %}
+    }
+
+    .hero-content {
+        text-align: center;
+        max-width: 900px;
+        padding: 0 1rem;
+    }
+
+    .hero-title {
+        font-size: 4.5rem;
+        font-weight: 800;
+        color: #319795;
+        margin-bottom: 1.5rem;
+        line-height: 1.1;
+    }
+
+    .hero-search {
+        max-width: 700px;
+        margin: 0 auto;
+    }
+
+    .hero-search .form-control {
+        height: 66px;
+        font-size: 1.2rem;
+        border-radius: 50px 0 0 50px;
+        border: 2px solid #dee2e6;
+        padding-left: 1.5rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    }
+
+    .hero-search .btn {
+        height: 66px;
+        border-radius: 0 50px 50px 0;
+        padding: 0 2.5rem;
+        font-size: 1.2rem;
+        font-weight: 600;
+    }
+
+    /* Main Content - Appears after scroll */
+    .main-content {
+        margin-top: -100px;
+        position: relative;
+        z-index: 10;
+    }
+
+    /* Sticky Sidebar */
+    .sticky-sidebar {
+        position: sticky;
+        top: 20px;
+        height: fit-content;
+    }
+
+    /* Compact Vacancy Cards */
+    .vacancy-card {
+        transition: all 0.3s ease;
+        border: none;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+        height: 100%;
+    }
+
+    .vacancy-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+    }
+
+    .vacancy-card .card-body {
+        padding: 1.5rem;
+    }
+
+    .vacancy-card h5 {
+        font-size: 1.25rem;
+        margin-bottom: 0.5rem;
+        color: #2c3e50;
+    }
+
+    .vacancy-card .company {
+        font-size: 0.95rem;
+        color: #5a6c7d;
+        font-weight: 500;
+        margin-bottom: 0.8rem;
+    }
+
+    .vacancy-card .description {
+        font-size: 0.9rem;
+        color: #6c757d;
+        line-height: 1.5;
+        margin-bottom: 1rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .vacancy-meta {
+        font-size: 0.85rem;
+        color: #495057;
+        margin-bottom: 0.5rem;
+    }
+
+    .skills-tags {
+        font-size: 0.8rem;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        margin: 0.8rem 0;
+    }
+
+    .skill-tag {
+        background: #e3f2fd;
+        color: #1976d2;
+        padding: 0.25rem 0.6rem;
+        border-radius: 20px;
+        font-weight: 500;
+    }
+
+    .vacancy-card .card-footer {
+        padding: 1rem 1.5rem;
+        background: #f8f9fa;
+        border-top: none;
+    }
+
+    .badge-status {
+        font-size: 0.75rem;
+        padding: 0.35em 0.65em;
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+        .hero-title {
+            font-size: 3rem;
+        }
+        .hero-search .form-control,
+        .hero-search .btn {
+            height: 56px;
+            font-size: 1rem;
+        }
+    }
+</style>
+
+<!-- HERO SECTION -->
+<div>
+    <section class="hero-section">
+        <div class="hero-content">
+            <h1 class="hero-title">Job Board</h1>
+            <p class="lead text-muted mb-4">Discover your next career opportunity</p>
+
+            <div class="hero-search">
+                <form method="get" class="d-flex" action="#results">
+                    <input type="text" 
+                        class="form-control" 
+                        name="search" 
+                        value="{{ filter_data.search }}" 
+                        placeholder="Search by job title, skills, company..." 
+                        autocomplete="off">
+                    <button type="submit" class="btn btn-primary">
+                        Search Jobs
+                    </button>
+                </form>
+            </div>
+
+            <div class="mt-4 text-muted">
+                <small>{{ total_count }} active job{% if total_count != 1 %}s{% endif %} available</small>
+            </div>
+        </div>
+    </section>
+
+    <!-- MAIN CONTENT (Filters + Job List) -->
+    <div id="results"></div>
+    {% comment %} <div class="container-fluid main-content pb-5"> {% endcomment %}
+        <div class="row">
+            <!-- Filters Sidebar – now clean, no count card inside -->
+            <div class="col-lg-3 col-md-4 mb-4">
+                <div class="sticky-sidebar">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-white border-bottom">
+                            <h5 class="mb-0 text-primary">
+                                Filters
+                                <!-- Optional: small count badge next to Filters -->
+                                <span class="badge bg-primary ms-2">{{ total_count }}</span>
+                            </h5>
+                        </div>
+                        <div class="card-body pt-3">
+                            <form method="get">
+                                <input type="hidden" name="search" value="{{ filter_data.search }}">
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold small text-muted">Location</label>
+                                    <input type="text" class="form-control form-control-sm" name="city" value="{{ filter_data.city }}" placeholder="City">
+                                </div>
+
+                                <div class="mb-3">
+                                    <select class="form-select form-select-sm" name="country">
+                                        <option value="">All Countries</option>
+                                        <option value="USA" {% if filter_data.country == 'USA' %}selected{% endif %}>USA</option>
+                                        <option value="Canada" {% if filter_data.country == 'Canada' %}selected{% endif %}>Canada</option>
+                                        <option value="UK" {% if filter_data.country == 'UK' %}selected{% endif %}>UK</option>
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold small text-muted">Work Mode</label>
+                                    <select class="form-select form-select-sm" name="work_mode">
+                                        <option value="">All</option>
+                                        <option value="Remote" {% if filter_data.work_mode == 'Remote' %}selected{% endif %}>Remote</option>
+                                        <option value="On-site" {% if filter_data.work_mode == 'On-site' %}selected{% endif %}>On-site</option>
+                                        <option value="Hybrid" {% if filter_data.work_mode == 'Hybrid' %}selected{% endif %}>Hybrid</option>
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold small text-muted">Status</label>
+                                    <select class="form-select form-select-sm" name="status">
+                                        <option value="">All</option>
+                                        <option value="active" {% if filter_data.status == 'active' %}selected{% endif %}>Open</option>
+                                        <option value="closed" {% if filter_data.status == 'closed' %}selected{% endif %}>Closed</option>
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold small text-muted">Salary Range</label>
+                                    <div class="row g-2">
+                                        <div class="col-6">
+                                            <input type="number" class="form-control form-control-sm" name="min_salary" value="{{ filter_data.min_salary }}" placeholder="Min">
+                                        </div>
+                                        <div class="col-6">
+                                            <input type="number" class="form-control form-control-sm" name="max_salary" value="{{ filter_data.max_salary }}" placeholder="Max">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold small text-muted">Sort By</label>
+                                    <select class="form-select form-select-sm" name="ordering" onchange="this.form.submit()">
+                                        <option value="-created_at" {% if filter_data.ordering == '-created_at' %}selected{% endif %}>Newest First</option>
+                                        <option value="created_at" {% if filter_data.ordering == 'created_at' %}selected{% endif %}>Oldest First</option>
+                                        <option value="-min_salary" {% if filter_data.ordering == '-min_salary' %}selected{% endif %}>Salary: High to Low</option>
+                                        <option value="min_salary" {% if filter_data.ordering == 'min_salary' %}selected{% endif %}>Salary: Low to High</option>
+                                    </select>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary w-100 mb-2">Apply Filters</button>
+                                <a href="{% url 'job_board' %}" class="btn btn-outline-secondary w-100">Clear All</a>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Job Listings Column – now perfectly aligned -->
+            <div class="col-lg-9 col-md-8">
+                <!-- Job Count + Results Header -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3 class="mb-0 text-primary">
+                        {{ total_count }} Active Job{{ total_count|pluralize }}
+                    </h3>
+                    {% if filter_data.search or filter_data.city or filter_data.work_mode %}
+                        <small class="text-muted">
+                            Filters applied • <a href="{% url 'job_board' %}">Clear all</a>
+                        </small>
+                    {% endif %}
+                </div>
+
+                <!-- Rest of your job cards (unchanged) -->
+                <div class="row g-4">
+                    {% for vacancy in page_obj %}
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card vacancy-card">
+                            <!-- ... your existing card content ... -->
+                            <div class="card-body">
+                                <h5>{{ vacancy.title }}</h5>
+                                <div class="company">{{ vacancy.tenant.name }}</div>
+                                <p class="description">{{ vacancy.description|truncatewords:25 }}</p>
+
+                                <div class="d-flex flex-wrap gap-2 skills-tags">
+                                    {% for skill in vacancy.skills.all|slice:":4" %}
+                                        <span class="skill-tag">{{ skill }}</span>
+                                    {% endfor %}
+                                    {% if vacancy.skills.all|length > 4 %}
+                                        <span class="skill-tag text-muted">+{{ vacancy.skills.all|length|add:"-4" }}</span>
+                                    {% endif %}
+                                </div>
+
+                                <div class="vacancy-meta">
+                                    Location: {{ vacancy.city|default:"Remote" }}, {{ vacancy.country }}
+                                </div>
+                                <div class="vacancy-meta">
+                                    Work Mode: <strong>{{ vacancy.work_mode }}</strong> • 
+                                    Status: <span class="badge bg-{% if vacancy.status == 'active' %}success{% else %}secondary{% endif %} badge-status">{{ vacancy.status }}</span>
+                                </div>
+                                <div class="vacancy-meta">
+                                    Salary: {{ vacancy.min_salary|floatformat:0 }} – {{ vacancy.max_salary|floatformat:0 }} {{vacancy.currency}}
+                                </div>
+                                <small class="text-muted d-block mt-2">
+                                    Posted {{ vacancy.created_at|date:"M d, Y" }}
+                                </small>
+                            </div>
+                            <div class="card-footer d-flex gap-2">
+                                <a href="{% url 'vacancy_post' vacancy.share_token %}" class="btn btn-primary btn-sm flex-fill">View Details</a>
+                                {% if vacancy.status == "active" %}
+                                    <a href="{% url 'apply_vacancy' vacancy.id %}" class="btn btn-outline-success btn-sm flex-fill">Apply Now</a>
+                                {% else %}
+                                    <button class="btn btn-outline-secondary btn-sm flex-fill" disabled>Closed</button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="col-12 text-center py-5">
+                        <h3 class="text-muted">No jobs found</h3>
+                        <p>Try adjusting your filters or search terms.</p>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Pagination (unchanged) -->
+                {% if page_obj.has_other_pages %}
+                <nav class="mt-5">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item"><a class="page-link" href="?{% url_replace request 'page' page_obj.previous_page_number %}">Previous</a></li>
+                        {% else %}
+                            <li class="page-item disabled"><span class="page-link">Previous</span></li>
+                        {% endif %}
+
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item"><a class="page-link" href="?{% url_replace request 'page' num %}">{{ num }}</a></li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if page_obj.has_next %}
+                            <li class="page-item"><a class="page-link" href="?{% url_replace request 'page' page_obj.next_page_number %}">Next</a></li>
+                        {% else %}
+                            <li class="page-item disabled"><span class="page-link">Next</span></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            </div>
+        </div>
+    {% comment %} </div> {% endcomment %}
+</div>
+
+<script>
+    // If there is a search term, scroll to results smoothly
+    document.addEventListener("DOMContentLoaded", function() {
+        const params = new URLSearchParams(window.location.search);
+        if (params.has("search")) {
+            const anchor = document.getElementById("results");
+            if (anchor) {
+                anchor.scrollIntoView({ behavior: "smooth" });
+            }
+        }
+    });
+</script>
+{% endblock %}

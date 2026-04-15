@@ -1,0 +1,444 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters%}
+
+{% block title %}Document List - TeamManager{% endblock %}
+{% block content %}
+{% comment %} <div class="main-content"> {% endcomment %}
+    <div class="document-list-page">
+        <div class="card shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4 class="card-title mb-0">
+                    <i class="fas fa-folder-open me-2 text-primary" aria-hidden="true"></i>
+                    Generated Documents ({{page_obj|page_obj_count}})
+                </h4>
+                <div>
+                    {% if user.tenant.slug == "raadaa" or user.tenant.slug == "transnet-cloud" %}
+                        <a href="{% url 'create_document' %}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus me-1"></i> Generate Template/Upload Document
+                        </a>
+                        <a href="{% url 'create_from_editor' %}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus me-1"></i> Create New Document
+                        </a>
+                    {% else %}
+                        <a href="{% url 'create_from_editor' %}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus me-1"></i> Create New Document
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body">
+                {% if messages %}
+                    <div class="notification-container">
+                        {% for message in messages %}
+                            {# Skip memo-specific flash messages; those are handled via the memo notification system #}
+                            {% if 'memo' not in message.tags %}
+                                <div class="alert 
+                                    {% if 'success' in message.tags %}alert-success
+                                    {% elif 'error' in message.tags or 'danger' in message.tags %}alert-danger
+                                    {% else %}alert-info{% endif %}
+                                    alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                <!-- Filter Form -->
+                <form method="GET" class="mb-4" aria-label="Document Filter Form">
+                    <div class="row g-2">
+                        <div class="col-md-2">
+                            <select name="company" class="form-select" aria-label="Filter by Company">
+                                <option value="">All Companies</option>
+                                {% for company in distinct_companies %}
+                                    <option value="{{ company }}" {% if filter_params.company == company %}selected{% endif %}>{{ company }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select name="type" class="form-select" aria-label="Filter by Type">
+                                <option value="">All Types</option>
+                                {% for type in distinct_type %}
+                                    <option value="{{ type }}" {% if filter_params.type == type %}selected{% endif %}>{{ type }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select name="status" class="form-select" aria-label="Filter by Status">
+                                <option value="">All Statuses</option>
+                                <option value="pending" {% if filter_params.status == "pending" %}selected{% endif %}>Pending</option>
+                                <option value="approved" {% if filter_params.status == "approved" %}selected{% endif %}>Approved</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <input type="date" name="created" class="form-control" value="{{ filter_params.created }}" aria-label="Filter by Creation Date">
+                        </div>
+                        <div class="col-md-2">
+                            <select name="created_by" class="form-select" aria-label="Filter by Created By">
+                                <option value="">All Creators</option>
+                                {% for username in distinct_created_by %}
+                                    <option value="{{ username }}" {% if filter_params.created_by == username %}selected{% endif %}>{{ username }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select name="approved_by" class="form-select" aria-label="Filter by Approved By">
+                                <option value="">All Approvers</option>
+                                {% for username in distinct_approved_by %}
+                                    <option value="{{ username }}" {% if filter_params.approved_by == username %}selected{% endif %}>{{ username }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        {% if user.tenant.slug == 'raadaa' or user.tenant.slug == "transnet-cloud" %}
+                            <div class="col-md-2">
+                                <select name="send_email" class="form-select" aria-label="Filter by Email Status">
+                                    <option value="">All Email Statuses</option>
+                                    <option value="sent" {% if filter_params.send_email == "sent" %}selected{% endif %}>Sent</option>
+                                    <option value="not_sent" {% if filter_params.send_email == "not_sent" %}selected{% endif %}>Not Sent</option>
+                                </select>
+                            </div>
+                        {% endif %}
+                        <div class="col-md-2 d-flex gap-2">
+                            <button type="submit" class="btn btn-primary flex-fill">Apply Filters</button>
+                            <a href="{% url 'document_list' %}" class="btn btn-outline-secondary flex-fill">Reset</a>
+                        </div>
+                    </div>
+                </form>
+                <!-- Document Table -->
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Company | Document</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                                <th>Created By</th>
+                                <th>Files</th>
+                                <th>Approved By</th>
+                                {% if user.tenant.slug == 'raadaa' or user.tenant.slug == "transnet-cloud" %}
+                                    <th>Email</th>
+                                {% endif %}
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for document in documents %}
+                            <tr>
+                                <td>{% if document.company_name == "N/A" %}
+                                        {% if documents.pdf_file %}
+                                            {{ document.pdf_file.name|get_file_name }} 
+                                        {% else %}
+                                            {{ document.word_file.name|get_file_name }}
+                                        {% endif %}
+                                    {% else %}
+                                        {{ document.company_name }} | {% if documents.pdf_file %}
+                                            {{ document.pdf_file.name|get_file_name }} 
+                                        {% else %}
+                                            {{ document.word_file.name|get_file_name }}
+                                        {% endif %}
+                                    {% endif %}
+                                </td>
+                                <td>{{ document.get_document_type_display }}</td>
+                                <td>
+                                    <span class="badge {% if document.status == 'approved' %}bg-success{% else %}bg-warning{% endif %}">
+                                        {{ document.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>{{ document.created_at|date:"Y-m-d H:i" }}</td>
+                                <td>
+                                    {% if document.created_by == user %}
+                                        You
+                                    {% else %}
+                                        {{ document.created_by.username|default:"N/A" }}
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if document.word_file %}
+                                        <a href="{{ document.word_file.url }}" class="btn btn-outline-primary btn-sm me-1" download>
+                                            <i class="fas fa-file-word me-1"></i> .docx
+                                        </a>
+                                    {% endif %}
+                                    {% if document.pdf_file %}
+                                        <button class="btn btn-outline-primary btn-sm me-1" data-media-url="{{ document.pdf_file.url }}" data-media-type="pdf" data-media-name="{{ document.company_name }}.pdf">
+                                            <i class="fas fa-eye me-1"></i> View PDF
+                                        </button>
+                                        <a href="{{ document.pdf_file.url }}" class="btn btn-outline-primary btn-sm" download>
+                                            <i class="fas fa-file-pdf me-1"></i> .pdf
+                                        </a>
+                                    {% else %}
+                                        <a href="{% url 'generate_pdf' document.id %}" class="btn btn-outline-success btn-sm">
+                                            <i class="fas fa-magic me-1"></i> Generate PDF
+                                        </a>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if document.status == "pending" %}
+                                        {% for role in user.roles.all %}
+                                            {% if role.name == "BDM" %}
+                                                <a href="{% url 'approve_document' document.id %}" class="btn btn-primary btn-sm">Approve</a>
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% elif document.status == "approved" %}
+                                        {% if document.approved_by == user %}
+                                            You
+                                        {% else %}
+                                            {{ document.approved_by.username|default:"N/A" }}
+                                        {% endif %}
+                                    {% endif %}
+                                </td>
+                                {% if user.tenant.slug == 'raadaa' or user.tenant.slug == "transnet-cloud" %}
+                                    <td>
+                                        {% if document.status == "approved" %}
+                                            {% if document.email_sent %}
+                                                <span class="text-success"><i class="fas fa-check-circle me-1"></i> Sent</span>
+                                            {% else %}
+                                                <a href="{% url 'send_approved_email' document.id %}" class="btn btn-primary btn-sm">Send Email</a>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="text-muted">Pending</span>
+                                        {% endif %}
+                                    </td>
+                                {% endif %}
+                                <td>
+                                    {% if document.document_source == 'editor' %}
+                                        {% if document.created_by == user or user.roles.filter.name == 'Admin' %}
+                                            {% with is_admin=user.roles.all|dictsort:"name" %}
+                                            {% endwith %}
+                                        {% endif %}
+                                        {% if document.created_by == user %}
+                                            <a href="{% url 'edit_editor_document' document.id %}" class="btn btn-outline-secondary btn-sm me-1">
+                                                <i class="fas fa-edit me-1"></i> Edit
+                                            </a>
+                                        {% else %}
+                                            {% for role in user.roles.all %}
+                                                {% if role.name == "Admin" %}
+                                                    <a href="{% url 'edit_editor_document' document.id %}" class="btn btn-outline-secondary btn-sm me-1">
+                                                        <i class="fas fa-edit me-1"></i> Edit
+                                                    </a>
+                                                {% endif %}
+                                            {% endfor %}
+                                        {% endif %}
+                                    {% endif %}
+                                    {% for role in user.roles.all %}
+                                        {% if role.name == "Admin" %}
+                                            {% if document.document_source == 'editor' and document.editor_title %}
+                                                <button type="button" class="btn btn-danger btn-sm" onclick="showDeleteModal({{ document.id }}, '{{ document.editor_title|escapejs }}')">
+                                            {% else %}
+                                                <button type="button" class="btn btn-danger btn-sm" onclick="showDeleteModal({{ document.id }}, '{{ document.get_document_type_display|escapejs }} - {{ document.company_name|escapejs }}')">
+                                            {% endif %}
+                                                <i class="fas fa-trash me-1"></i> Delete
+                                            </button>
+                                        {% endif %}
+                                    {% endfor %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="9" class="text-center text-muted">No documents found.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% if page_obj.has_other_pages %}
+                        <nav aria-label="Page navigation">
+                            <ul class="pagination justify-content-center mt-3">
+                                {% if page_obj.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in filter_params.items %}&{{ key }}={{ value }}{% endfor %}" aria-label="Previous">
+                                            <span aria-hidden="true">«</span>
+                                        </a>
+                                    </li>
+                                {% endif %}
+                                <!--First page-->
+                                <li class="page-item {% if page_obj.number == 1 %}active{% endif %}">
+                                    <a class="page-link" href="?page=1">1</a>
+                                </li>
+                                {% if page_obj.number != 1 and page_obj.number != 2 %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link">...</span>
+                                    </li>
+                                {% endif %}
+                                {% if page_obj.number != 1 %}
+                                    <li class="page-item {% if page_obj.number %}active{% endif %}">
+                                        <a class="page-link" href="?page={{ page_obj.number }}{% for key, value in filter_params.items %}&{{ key }}={{ value }}{% endfor %}">{{ page_obj.number }}</a>
+                                    </li>
+                                {% endif %}
+                                {% if page_obj.number != page_obj.paginator.num_pages and page_obj.number != page_obj.paginator.num_pages|add:-1 %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link">...</span>
+                                    </li>
+                                {% endif %}
+                                <!-- Last page (only if not already shown) -->
+                                {% if page_obj.number != page_obj.paginator.num_pages %}
+                                    <li class="page-item {% if page_obj.number == page_obj.paginator.num_pages %}active{% endif %}">
+                                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% for key, value in filter_params.items %}&{{ key }}={{ value }}{% endfor %}">{{ page_obj.paginator.num_pages }}</a>
+                                    </li>
+                                {% endif %}
+                                {% if page_obj.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in filter_params.items %}&{{ key }}={{ value }}{% endfor %}" aria-label="Next">
+                                            <span aria-hidden="true">»</span>
+                                        </a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% comment %} </div> {% endcomment %}
+
+<style scoped>
+    .document-list-page {
+        padding: 20px;
+    }
+
+    .document-list-page .card {
+        border: none;
+        border-radius: 12px;
+        background: #ffffff;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    .document-list-page .card-header {
+        background: #f8fafc;
+        border-bottom: 1px solid #e2e8f0;
+        border-radius: 12px 12px 0 0;
+        padding: 15px 20px;
+    }
+
+    .document-list-page .card-title {
+        font-weight: 600;
+        color: #2d3748;
+    }
+
+    .document-list-page .form-select, .document-list-page .form-control {
+        border-radius: 8px;
+        font-size: 0.95rem;
+    }
+
+    .document-list-page .form-select:focus, .document-list-page .form-control:focus {
+        border-color: #319795;
+        box-shadow: 0 0 0 0.2rem rgba(49, 151, 149, 0.25);
+    }
+
+    .document-list-page .notification-container {
+        max-width: 100%;
+        z-index: 1020;
+        position: relative;
+    }
+
+    .document-list-page .notification-container .alert {
+        border-radius: 8px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .document-list-page .btn-primary {
+        background-color: #319795;
+        border-color: #319795;
+        border-radius: 8px;
+        font-weight: 500;
+    }
+
+    .document-list-page .btn-primary:hover {
+        background-color: #2c7a7b;
+        border-color: #2c7a7b;
+    }
+
+    .document-list-page .btn-outline-primary, .document-list-page .btn-outline-secondary {
+        border-color: #e2e8f0;
+        color: #2d3748;
+        border-radius: 8px;
+    }
+
+    .document-list-page .btn-outline-primary:hover, .document-list-page .btn-outline-secondary:hover {
+        background-color: #e2e8f0;
+        color: #2d3748;
+    }
+
+    .document-list-page .btn-danger {
+        border-radius: 8px;
+    }
+
+    .document-list-page .table th, .document-list-page .table td {
+        vertical-align: middle;
+    }
+
+    .document-list-page .table th {
+        font-weight: 600;
+        color: #2d3748;
+    }
+
+    .document-list-page .badge {
+        font-size: 0.85rem;
+        padding: 6px 10px;
+    }
+
+    .document-list-page a:focus, .document-list-page button:focus, .document-list-page select:focus, .document-list-page input:focus {
+        outline: 2px solid #319795;
+        outline-offset: 2px;
+        border-radius: 4px;
+    }
+
+    @media (max-width: 768px) {
+        .document-list-page {
+            padding: 15px;
+        }
+
+        .document-list-page .card-body {
+            padding: 15px;
+        }
+
+        .document-list-page .form-select, .document-list-page .form-control {
+            font-size: 0.9rem;
+        }
+
+        .document-list-page .btn {
+            font-size: 0.9rem;
+            padding: 8px 12px;
+        }
+
+        .document-list-page .table-responsive {
+            font-size: 0.9rem;
+        }
+    }
+</style>
+
+<!-- Delete Document Modal -->
+<div class="modal fade" id="deleteDocumentModal" tabindex="-1" aria-labelledby="deleteDocumentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteDocumentModalLabel"><i class="fas fa-exclamation-triangle text-danger me-2"></i> Confirm Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the document <strong id="deleteDocumentName"></strong>?</p>
+                <p class="text-danger small mb-0"><i class="fas fa-info-circle me-1"></i> This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteDocumentForm" method="GET" action="">
+                    <button type="submit" class="btn btn-danger">Yes, Delete Document</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showDeleteModal(documentId, documentName) {
+        document.getElementById('deleteDocumentName').textContent = documentName;
+        const deleteUrl = `{% url 'delete_document' 0 %}`.replace('/0/', `/${documentId}/`);
+        document.getElementById('deleteDocumentForm').action = deleteUrl;
+        
+        var myModal = new bootstrap.Modal(document.getElementById('deleteDocumentModal'));
+        myModal.show();
+    }
+</script>
+{% endblock %}

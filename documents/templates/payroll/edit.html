@@ -1,0 +1,157 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Edit Payroll{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>Edit Payroll</h2>
+            <p class="text-muted">{{ payroll.period_start|date:"F Y" }}</p>
+        </div>
+        <div class="col-md-4 text-right">
+            <a href="{% url 'payroll_detail' payroll.pk %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back
+            </a>
+        </div>
+    </div>
+
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i>
+        <strong>Editing Payroll Items:</strong> Update gross amounts and custom field values. Net amounts will be calculated automatically.
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <strong>Total Employees:</strong> {{ summary.employee_count }}
+                </div>
+                <div class="col-md-4">
+                    <strong>Total Gross:</strong> ₦{{ summary.total_gross|floatformat:2 }}
+                </div>
+                <div class="col-md-4">
+                    <strong>Total Net:</strong> <span class="text-success">₦{{ summary.total_net|floatformat:2 }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th style="width: 200px;">Staff Name</th>
+                                <th style="width: 150px;">Bank Details</th>
+                                <th style="width: 120px;">Gross Amount</th>
+                                {% for field in custom_fields %}
+                                <th style="width: 120px;">
+                                    {{ field.label }}
+                                    <br><small class="text-muted">({{ field.get_operation_display }})</small>
+                                </th>
+                                {% endfor %}
+                                <th style="width: 120px;">Net Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in items %}
+                            <tr>
+                                <td>
+                                    <strong>{{ item.staff_name }}</strong>
+                                </td>
+                                <td>
+                                    <small>
+                                        {{ item.bank_name }}<br>
+                                        {{ item.account_number }}
+                                    </small>
+                                </td>
+                                <td>
+                                    <input type="number" 
+                                           name="gross_{{ item.id }}" 
+                                           value="{{ item.gross_amount }}" 
+                                           class="form-control form-control-sm gross-input"
+                                           step="0.01"
+                                           min="0"
+                                           data-item-id="{{ item.id }}">
+                                </td>
+                                {% for field in custom_fields %}
+                                <td>
+                                    <input type="number" 
+                                           name="custom_{{ field.name }}_{{ item.id }}" 
+                                           value="{{ item.custom_field_values|get_item_payroll:field.name|default:0 }}" 
+                                           class="form-control form-control-sm custom-field-input"
+                                           step="0.01"
+                                           min="0"
+                                           data-item-id="{{ item.id }}"
+                                           data-operation="{{ field.operation }}">
+                                </td>
+                                {% endfor %}
+                                <td>
+                                    <strong class="net-amount" data-item-id="{{ item.id }}">
+                                        ₦{{ item.net_amount|floatformat:2 }}
+                                    </strong>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-3">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Save Changes
+            </button>
+            <a href="{% url 'payroll_detail' payroll.pk %}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<script>
+// Auto-calculate net amount on client side for preview
+document.addEventListener('DOMContentLoaded', function() {
+    const inputs = document.querySelectorAll('.gross-input, .custom-field-input');
+    
+    inputs.forEach(input => {
+        input.addEventListener('input', function() {
+            const itemId = this.dataset.itemId;
+            calculateNet(itemId);
+        });
+    });
+    
+    function calculateNet(itemId) {
+        const grossInput = document.querySelector(`.gross-input[data-item-id="${itemId}"]`);
+        const customInputs = document.querySelectorAll(`.custom-field-input[data-item-id="${itemId}"]`);
+        const netDisplay = document.querySelector(`.net-amount[data-item-id="${itemId}"]`);
+        
+        let gross = parseFloat(grossInput.value) || 0;
+        let net = gross;
+        
+        customInputs.forEach(input => {
+            const value = parseFloat(input.value) || 0;
+            const operation = input.dataset.operation;
+            
+            if (operation === 'add') {
+                net += value;
+            } else if (operation === 'subtract') {
+                net -= value;
+            } else if (operation === 'set_net') {
+                net = value;
+            }
+        });
+        
+        netDisplay.textContent = '₦' + net.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+    }
+});
+</script>
+
+{% load custom_filters %}
+{% endblock %}

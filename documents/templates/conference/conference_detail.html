@@ -1,0 +1,612 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+{% block title %}{{ conference.title }}{% endblock %}
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-8">
+            <a href="{% url 'conference_list' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Back to List
+            </a>
+            <div class="card mb-3 shadow-sm">
+                <div class="card-body">
+                    <h2 class="card-title mb-1 text-primary">{{ conference.title }}</h2>
+                    {% if conference.theme %}
+                        <p class="mb-1"> <strong>Theme: </strong>{{ conference.theme }}</p>
+                    {% endif %}
+                    <p class="text-muted mb-2">{{ conference.tenant }}</p>
+                    <p class="mb-3">{{ conference.description|linebreaksbr }}</p>
+                    
+                    {% if conference.tags.exists %}
+                    <div class="mb-3">
+                        <div class="d-flex flex-wrap gap-1 align-items-center">
+                            <span class="small text-muted me-1"><i class="fas fa-tags"></i></span>
+                            {% for tag in conference.tags.all %}
+                                <a href="{% url 'conference_board_filters' %}?tag={{ tag.name|urlencode }}" 
+                                class="badge bg-light text-dark border text-decoration-none small">
+                                    {{ tag.name }}
+                                </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <p class="mb-1"><strong><i class="fas fa-calendar-alt me-1"></i> Start</strong></p>
+                            <p class="text-muted">{{ conference.start_date|date:"SHORT_DATETIME_FORMAT" }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-1"><strong><i class="fas fa-calendar-check me-1"></i> End</strong></p>
+                            <p class="text-muted">{{ conference.end_date|date:"SHORT_DATETIME_FORMAT" }}</p>
+                        </div>
+                    </div>
+
+                    <p class="mb-2"><strong><i class="fas fa-map-marker-alt me-1"></i> Venue:</strong> <span class="text-muted">{{ conference.venue|default:"Virtual / TBA" }}</span></p>
+                    <p class="mb-2"><strong><i class="fas fa-ticket-alt me-1"></i> Ticket Price:</strong> <span class="text-muted">{{ conference.ticket_price }}</span></p>
+                    <p class="mb-2"><strong><i class="fas fa-users me-1"></i> Registered:</strong> <span class="text-muted">{{ participants_count }}</span></p>
+
+                    <div class="mt-4 d-flex gap-2">
+                        {% if conference.registration_required %}
+                            <a href="{% url 'conference_register' conference_id=conference.id %}" class="btn btn-primary">
+                                <i class="fas fa-user-plus me-1"></i> Register
+                            </a>
+                        {% endif %}
+                        <button 
+                            type="button"
+                            class="btn btn-sm btn-outline-teal text-teal border-teal"
+                            onclick="copyConferenceLink(this)"
+                            data-url="{% url 'conference_post' conference.id %}"
+                            title="Copy link to clipboard">
+                            <i class="fas fa-copy me-1"></i> Copy Link
+                        </button>
+                        {% if user.is_authenticated and can_edit %}
+                            <a href="{% url 'post_conference' conference_id=conference.id %}" class="btn btn-sm btn-outline-primary" title="Post this conference">
+                                <i class="fas fa-share"></i> Post
+                            </a>
+                            {% if conference.is_posted %}
+                                <a href="{% url 'withdraw_conference_post' conference_id=conference.id %}" class="btn btn-sm btn-outline-primary" title="Withdraw this conference post">
+                                    <i class="fas fa-ban"></i> Withdraw Post
+                                </a>
+                            {% endif %}
+                            <a href="{% url 'edit_conference' conference_id=conference.id %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-edit me-1"></i> Edit
+                            </a>
+                            {% comment %} <a href="{% url 'delete_conference' conference_id=conference.id %}" class="btn btn-outline-danger">
+                                <i class="fas fa-trash-alt me-1"></i> Delete
+                            </a> {% endcomment %}
+                            <form action="{% url 'delete_conference' conference_id=conference.id %}?next={{ request.get_full_path }}" method="POST" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger btn-sm" title="Delete Conference" onclick="return confirm('Are you sure you want to delete {{ conf.title }}?');">
+                                    <i class="fas fa-trash-alt me-1"></i> Delete
+                                </button>
+                            </form>
+                        {% endif %}
+                        <a href={% url 'conference_checkin_dashboard' conference.id %} class="btn btn-primary">Manage Checkin</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══════════════════════════════════════════════════════════════ -->
+            <!-- CONFERENCE SPEAKERS SECTION -->
+            <!-- ══════════════════════════════════════════════════════════════ -->
+            {% if conference.speakers.exists %}
+            <div class="card mb-3 shadow-sm">
+                <div class="card-header bg-gradient-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-users me-2"></i>Featured Speakers
+                        <span class="badge bg-white text-primary ms-2">{{ conference.speakers.count }}</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        {% for speaker in conference.speakers.all %}
+                        <div class="col-md-6">
+                            <div class="speaker-card h-100 p-3 border rounded-3 hover-shadow">
+                                <div class="d-flex align-items-start">
+                                    <!-- Speaker Photo -->
+                                    <div class="flex-shrink-0 me-3">
+                                        {% if speaker.photo %}
+                                            <img src="{{ speaker.photo.url }}" 
+                                                 alt="{{ speaker.full_name_with_title }}" 
+                                                 class="speaker-photo rounded-circle"
+                                                 style="width: 70px; height: 70px; object-fit: cover; border: 3px solid #667eea;">
+                                        {% else %}
+                                            <div class="speaker-avatar-placeholder rounded-circle d-flex align-items-center justify-content-center"
+                                                 style="width: 70px; height: 70px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: 3px solid #667eea;">
+                                                <span class="text-white fw-bold" style="font-size: 1.5rem;">
+                                                    {{ speaker.first_name|first|upper }}{{ speaker.last_name|first|upper }}
+                                                </span>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <!-- Speaker Info -->
+                                    <div class="flex-grow-1">
+                                        <!-- Title -->
+                                        {% if speaker.title %}
+                                            <p class="mb-1 fw-bold text-primary small">
+                                                {% if speaker.title == 'mr' %}Mr.
+                                                {% elif speaker.title == 'mrs' %}Mrs.
+                                                {% elif speaker.title == 'ms' %}Ms.
+                                                {% elif speaker.title == 'dr' %}Dr.
+                                                {% elif speaker.title == 'prof' %}Prof.
+                                                {% endif %}
+                                            </p>
+                                        {% endif %}
+                                        
+                                        <!-- Full Name -->
+                                        <h6 class="mb-2 fw-bold text-dark">
+                                            {{ speaker.first_name }} 
+                                            {% if speaker.middle_name %}{{ speaker.middle_name }} {% endif %}
+                                            {{ speaker.last_name }}
+                                        </h6>
+                                        
+                                        <!-- Designation -->
+                                        {% if speaker.designation %}
+                                            <p class="mb-1 text-muted small">
+                                                <i class="fas fa-briefcase me-1"></i>{{ speaker.designation }}
+                                            </p>
+                                        {% endif %}
+                                        
+                                        <!-- Organization -->
+                                        {% if speaker.company %}
+                                            <p class="mb-0 text-muted small">
+                                                <i class="fas fa-building me-1"></i>{{ speaker.company }}
+                                            </p>
+                                        {% endif %}
+
+                                        <!-- Bio (if available) -->
+                                        {% if speaker.bio %}
+                                            <p class="mb-0 text-muted small mt-2">
+                                                {{ speaker.bio|truncatewords:20 }}
+                                            </p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- ══════════════════════════════════════════════════════════════ -->
+            <!-- CUSTOM REGISTRATION QUESTIONS SECTION -->
+            <!-- ══════════════════════════════════════════════════════════════ -->
+            {% if conference.custom_questions.exists %}
+            <div class="card mb-3 shadow-sm">
+                <div class="card-header bg-gradient-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-question-circle me-2"></i>Registration Questions
+                        <span class="badge bg-white text-info ms-2">{{ conference.custom_questions.count }}</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info border-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Note:</strong> Participants will be asked these questions during registration.
+                    </div>
+
+                    <div class="list-group list-group-flush">
+                        {% for question in conference.custom_questions.all %}
+                        <div class="list-group-item px-0">
+                            <div class="d-flex align-items-start">
+                                <span class="badge bg-primary me-3 mt-1">Q{{ forloop.counter }}</span>
+                                <div class="flex-grow-1">
+                                    <p class="mb-1 fw-500">{{ question.question }}</p>
+                                    <small class="text-muted">
+                                        {% if question.required %}
+                                            <i class="fas fa-asterisk text-danger me-1" style="font-size: 0.5rem;"></i>
+                                            <span class="badge bg-danger">Required</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Optional</span>
+                                        {% endif %}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if conference.price_tiers.exists %}
+            <div class="card mb-3 shadow-sm">
+                <div class="card-header bg-gradient-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-tags me-2"></i>Pricing Tiers
+                        <span class="badge bg-white text-primary ms-2">{{ conference.price_tiers.count }}</span>
+                    </h5>
+                    {% if can_edit %}
+                    <a href="{% url 'edit_conference' conference_id=conference.id %}"
+                    class="btn btn-sm btn-outline-light">
+                        <i class="fas fa-edit me-1"></i>Edit Tiers
+                    </a>
+                    {% endif %}
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0 align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-4">Tier</th>
+                                    <th>Price</th>
+                                    <th>Capacity</th>
+                                    <th>Filled</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for tier in conference.price_tiers.all %}
+                                {% with remaining=tier.slots_remaining used=tier|tier_count %}
+                                <tr>
+                                    <td class="ps-4">
+                                        <span class="fw-semibold">{{ tier.name }}</span>
+                                        {% if tier.description %}
+                                            <div class="small text-muted">{{ tier.description }}</div>
+                                        {% endif %}
+                                    </td>
+                                    <td class="fw-bold text-teal">
+                                        {{ conference.currency|default:"NGN" }} {{ tier.price|floatformat:2 }}
+                                    </td>
+                                    <td>{{ tier.capacity|default:"Unlimited" }}</td>
+                                    <td>
+                                        {# count participants in this tier with pending/accepted status #}
+                                        {{ tier.participants.count }}
+                                        {% if tier.capacity %}
+                                            / {{ tier.capacity }}
+                                            <div class="progress mt-1" style="height:4px;width:80px;">
+                                                {% widthratio tier.participants.count tier.capacity 100 as pct %}
+                                                <div class="progress-bar {% if pct > 80 %}bg-danger{% else %}bg-teal{% endif %}"
+                                                    style="width:{{ pct }}%"></div>
+                                            </div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if not tier.is_active %}
+                                            <span class="badge bg-secondary">Inactive</span>
+                                        {% elif remaining == 0 %}
+                                            <span class="badge bg-danger">Sold Out</span>
+                                        {% elif remaining is not None and remaining <= 5 %}
+                                            <span class="badge bg-warning text-dark">{{ remaining }} left</span>
+                                        {% else %}
+                                            <span class="badge bg-success">Available</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endwith %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- ══════════════════════════════════════════════════════════════ -->
+            <!-- FILE UPLOAD SECTION (for accepted participants) -->
+            <!-- ══════════════════════════════════════════════════════════════ -->
+            {% if conference.upload_folder and is_registered and current_participant.status == 'accepted' %}
+            <div class="card mb-3 shadow-sm border-success">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h5 class="text-teal mb-2">
+                                <i class="fas fa-cloud-upload-alt me-2"></i>Submit Your Files
+                            </h5>
+                            <p class="text-muted mb-0">
+                                Upload your presentation slides, posters, abstracts, or any conference-related materials.
+                                All files will be stored in the dedicated conference folder.
+                            </p>
+                        </div>
+                        <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                            <a href="{% url 'conference_participant_uploads' conference.id %}" 
+                               class="btn btn-teal btn-lg text-white w-100">
+                                <i class="fas fa-upload me-2"></i>Upload Files
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- ══════════════════════════════════════════════════════════════ -->
+            <!-- PARTICIPANTS SECTION -->
+            <!-- ══════════════════════════════════════════════════════════════ --> 
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <strong><i class="fas fa-user-friends me-1"></i> Participants</strong>
+                    <span class="text-muted small ms-2">({{ participants_count }})</span>
+                    {% comment %} {% if user.is_authenticated and user == conference.organizer %} {% endcomment %}
+                    {% if user.is_authenticated and can_edit %}
+                        <a href="{% url 'manage_conference_participants' conference.id %}" class="btn btn-sm btn-outline-primary">Manage All Participants</a>
+                    {% comment %} {% endif %} {% endcomment %}
+                    {% comment %} <a href="{% url 'send_conference_reminders_manual' conference_id=conference.id %}" class="btn btn-warning js-confirm-reminder-send">
+                        <i class="fas fa-bell me-1"></i> Remind All Participants Now
+                    </a> {% endcomment %}
+                    <a href="{% url 'send_conference_reminders_manual' conference.id %}" 
+                    class="btn btn-warning remind-all-btn"
+                    data-loading-text="Sending Reminders..."
+                    onclick="handleReminderClick(event, this)">
+                        <span class="spinner-border spinner-border-sm me-2 d-none" role="status" aria-hidden="true"></span>
+                        <i class="fas fa-bell me-1"></i>
+                        <span class="btn-text">Remind All Participants Now</span>
+                    </a>
+                    {% endif %}
+                    {% comment %} <button class="btn btn-warning" type="button" data-bs-toggle="modal" data-bs-target="#reminderModal{{ conference.id }}">
+                        <i class="fas fa-bell me-1"></i> Send Reminders to Participants
+                    </button> {% endcomment %}
+                </div>
+                <div class="card-body participants-list">
+                    {% if participants %}
+                        <ul class="list-group">
+                            {% for p in participants %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>{{ p.full_name }}</strong>
+                                        <div class="small text-muted">{{ p.email }}</div>
+                                    </div>
+                                    <div class="text-end">
+                                        {% if p.is_confirmed %}
+                                            <span class="badge bg-success me-2"><i class="fas fa-check me-1"></i> Confirmed</span>
+                                        {% elif p.reminder_sent %}
+                                            <span class="badge bg-warning text-dark me-2"><i class="fas fa-bell me-1"></i> Reminder Sent</span>
+                                        {% endif %}
+                                        {% if user.is_authenticated and user == conference.organizer %}
+                                            <a href="{% url 'manage_conference_participant' conference.id p.id %}" class="btn btn-sm btn-outline-primary">Manage</a>
+                                        {% endif %}
+                                    </div>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted">No participants yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm mb-3">
+                <div class="card-body">
+                    <h6 class="card-title"><i class="fas fa-info-circle me-1"></i> Quick Info</h6>
+                    <dl class="row">
+                        <dt class="col-5">Organizer</dt>
+                        <dd class="col-7">
+                            {% if conference.organizer.get_full_name %}
+                                {{ conference.organizer.get_full_name }}
+                            {% else %}
+                                {{ conference.username }}
+                            {% endif %}
+                            {% comment %} {{ conference.organizer.get_full_name|default:conference.organizer.username if conference.organizer else "—" }}</dd> {% endcomment %}
+
+                        <dt class="col-5">Registration</dt>
+                        <dd class="col-7">{{ conference.registration_required|yesno:"Required,Not required" }}</dd>
+
+                        <dt class="col-5">Max participants</dt>
+                        <dd class="col-7">Physical: {{ conference.max_participants_physical|default:"Unlimited" }}</dd>
+                        <dd class="col-7">Virtual: {{ conference.max_participants_virtual|default:"Unlimited" }}</dd>
+                    </dl>
+                </div>
+            </div>
+
+            <!-- File Upload Info (for sidebar) -->
+            {% if conference.upload_folder %}
+            <div class="card shadow-sm mb-3">
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <i class="fas fa-folder-open me-1"></i> Participant Files
+                    </h6>
+                    
+                    {% if is_registered and current_participant.status == 'accepted' %}
+                        <p class="small text-muted mb-3">
+                            Upload your slides, posters, or abstracts
+                        </p>
+                        <a href="{% url 'conference_participant_uploads' conference.id %}" 
+                           class="btn btn-outline-teal w-100 mb-2">
+                            <i class="fas fa-upload me-2"></i>Upload Files
+                        </a>
+                    {% else %}
+                        <div class="alert alert-info small mb-0">
+                            <i class="fas fa-info-circle me-2"></i>
+                            File upload available after registration approval
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Organizer manage folder link -->
+                    {% if user.is_authenticated and can_edit %}
+                        {% if user.is_personal %}
+                            <a href="{% url 'folder_view_personal' conference.upload_folder.id %}" 
+                            class="btn btn-sm btn-outline-secondary w-100" 
+                            target="_blank">
+                                <i class="fas fa-cog me-1"></i>Manage Folder
+                            </a>
+                        {% else %}
+                            <a href="{% url 'folder_view_public' conference.upload_folder.id %}" 
+                            class="btn btn-sm btn-outline-secondary w-100" 
+                            target="_blank">
+                                <i class="fas fa-cog me-1"></i>Manage Folder
+                            </a>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6 class="card-title"><i class="fas fa-bell me-1"></i> Notifications</h6>
+                    <p class="small text-muted">Attendees will receive confirmation emails and updates when details change.</p>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6 class="card-title"><i class="fas fa-comment me-1"></i> Feedbacks</h6>
+                    <a href="{% url 'conference_feedbacks' conference_id=conference.id %}" class="btn btn-primary">
+                        <i class="fas fa-comment-alt me-1"></i> View Participants Feedbacks
+                    </a>
+                    <a href="{% url 'conference_feedback_code' conference_id=conference.id %}" class="btn btn-outline-primary">
+                        <i class="fas fa-share me-1"></i> Share Feedback QR code
+                    </a>
+                    {% comment %} <p class="small text-muted">View</p> {% endcomment %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast notification -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1050;">
+    <div id="copyToast" class="toast align-items-center text-white bg-teal border-0" role="alert">
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="fas fa-check me-2"></i> Link copied to clipboard!
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast notification -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1050;">
+    <div id="reminderToast" class="toast align-items-center text-white bg-teal border-0" role="alert">
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="fas fa-check me-2"></i> All Participants Reminded! 🎉
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
+<!-- Reminder Option Dropdown -->
+
+
+<script>
+    function copyConferenceLink(el) {
+        const path = el.dataset.url;
+        const fullUrl = window.location.origin + path;
+
+        navigator.clipboard.writeText(fullUrl).then(() => {
+            const toastEl = document.getElementById('copyToast');
+            if (toastEl) {
+                new bootstrap.Toast(toastEl).show();
+            } else {
+                alert("Link copied!");
+            }
+        }).catch(() => {
+            prompt("Copy this link:", fullUrl);
+        });
+    }
+</script>
+
+<script>
+function handleReminderClick(event, button) {
+    // Prevent default navigation immediately
+    event.preventDefault();
+
+    // Prevent double-clicks
+    if (button.classList.contains('loading')) {
+        return;
+    }
+
+    // Add loading state
+    button.classList.add('loading');
+    const spinner = button.querySelector('.spinner-border');
+    const text = button.querySelector('.btn-text');
+
+    spinner.classList.remove('d-none');
+    text.textContent = button.getAttribute('data-loading-text');
+
+    // Make it look disabled (since <a> tags don't support disabled natively)
+    button.style.pointerEvents = 'none';
+    button.style.opacity = '0.65';
+
+    // Now proceed with navigation (full page POST via a hidden form)
+    // We'll create a temporary form to submit as POST (since your view expects POST)
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = button.href;
+
+    // Add CSRF token
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = 'csrfmiddlewaretoken';
+    csrfInput.value = '{{ csrf_token }}';  // Make sure csrf_token is in template context
+    form.appendChild(csrfInput);
+
+    document.body.appendChild(form);
+    form.submit();
+}
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.remind-all-btn.loading').forEach(btn => {
+        // Reset any stuck loading states
+        const spinner = btn.querySelector('.spinner-border');
+        const text = btn.querySelector('.btn-text');
+        spinner.classList.add('d-none');
+        text.textContent = 'Remind All Participants Now';
+        btn.classList.remove('loading');
+        btn.style.pointerEvents = '';
+        btn.style.opacity = '';
+    });
+});
+</script>
+
+<style>
+    :root { --teal: #319795; --teal-dark: #2c7a7b; }
+    .btn-teal { background-color: var(--teal); border-color: var(--teal); }
+    .btn-teal:hover { background-color: var(--teal-dark); border-color: var(--teal-dark); }
+    .text-teal { color: var(--teal) !important; }
+    .bg-teal { background-color: var(--teal) !important; }
+    .btn-outline-teal {
+        border-color: var(--teal);
+        color: var(--teal);
+    }
+
+    .btn-outline-teal:hover {
+        background-color: var(--teal);
+        border-color: var(--teal);
+        color: white;
+    }
+
+    /* Gradient Card Headers */
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #319795 0%, #2c7a7b 100%);
+    }
+
+    .bg-gradient-info {
+        background: linear-gradient(135deg, #319795 0%, #2c7a7b 100%);
+    }
+
+    /* Speaker Card Hover Effect */
+    .speaker-card {
+        transition: all 0.3s ease;
+    }
+
+    .hover-shadow:hover {
+        box-shadow: 0 8px 20px rgba(0,0,0,0.15) !important;
+        transform: translateY(-3px);
+    }
+
+    /* Custom Questions Styling */
+    .fw-500 {
+        font-weight: 500;
+    }
+
+
+    @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(40, 167, 69, 0); } 100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); } }
+    .participants-list {
+        height: 400px;
+        overflow-y: auto;
+    }
+</style>
+{% endblock %}

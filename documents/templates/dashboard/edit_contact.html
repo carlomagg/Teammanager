@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Contact - TeamManager{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-transparent">
+                    <h2 class="mb-0"><i class="fas fa-user-edit me-2"></i> Edit Contact</h2>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="editContactForm">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="{{ form.name.id_for_label }}" class="form-label">Name</label>
+                            {{ form.name }}
+                            {% if form.name.errors %}
+                                <div class="text-danger">{{ form.name.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <label for="{{ form.email.id_for_label }}" class="form-label">Email</label>
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                                <div class="text-danger">{{ form.email.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <label for="{{ form.phone.id_for_label }}" class="form-label">Phone</label>
+                            {{ form.phone }}
+                            {% if form.phone.errors %}
+                                <div class="text-danger">{{ form.phone.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <label for="{{ form.organization.id_for_label }}" class="form-label">Organization</label>
+                            {{ form.organization }}
+                            {% if form.organization.errors %}
+                                <div class="text-danger">{{ form.organization.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <label for="{{ form.designation.id_for_label }}" class="form-label">Designation</label>
+                            {{ form.designation }}
+                            {% if form.designation.errors %}
+                                <div class="text-danger">{{ form.designation.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <label for="{{ form.priority.id_for_label }}" class="form-label">Priority</label>
+                            {{ form.priority }}
+                            {% if form.priority.errors %}
+                                <div class="text-danger">{{ form.priority.errors }}</div>
+                            {% endif %}
+                        </div>
+                        {% if request.user.tenant %}
+                        <div class="mb-3 form-check">
+                            {{ form.is_public }}
+                            <label for="{{ form.is_public.id_for_label }}" class="form-check-label">Public Contact</label>
+                            {% if form.is_public.errors %}
+                                <div class="text-danger">{{ form.is_public.errors }}</div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                        <div class="d-flex justify-content-end">
+                            <a href="{% url 'contact_list' %}" class="btn btn-outline-secondary me-2">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Update Contact</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        border-radius: 12px;
+        transition: all 0.3s ease;
+    }
+    body.dark-mode .card {
+        background: #2d3748;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    .card-header {
+        cursor: default;
+        transition: background-color 0.2s ease;
+    }
+    body.dark-mode .card-header {
+        background: #3b4a6b !important;
+    }
+    .form-label {
+        font-weight: 500;
+        color: #2d3748;
+    }
+    body.dark-mode .form-label {
+        color: #e2e8f0;
+    }
+    .form-control, .form-select {
+        border-radius: 8px;
+        transition: border-color 0.2s ease;
+    }
+    body.dark-mode .form-control, body.dark-mode .form-select {
+        background: #3b4a6b;
+        color: #e2e8f0;
+        border-color: #4a5568;
+    }
+    .form-check-input {
+        margin-top: 0.3rem;
+    }
+    .btn-primary {
+        background: #319795;
+        border-color: #319795;
+        transition: background-color 0.2s ease;
+    }
+    .btn-primary:hover {
+        background: #2c7a7b;
+        border-color: #2c7a7b;
+    }
+    body.dark-mode .btn-primary {
+        background: #2c7a7b;
+        border-color: #2c7a7b;
+    }
+    .btn-outline-secondary {
+        border-radius: 8px;
+    }
+    @media (max-width: 576px) {
+        .card-body {
+            padding: 1rem;
+        }
+        h2 {
+            font-size: 1.5rem;
+        }
+        .form-label {
+            font-size: 0.9rem;
+        }
+        .btn {
+            font-size: 0.85rem;
+            padding: 6px 12px;
+        }
+    }
+</style>
+{% endblock %}

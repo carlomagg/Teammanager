@@ -1,0 +1,74 @@
+{% extends 'base.html'%}
+{% load custom_filters %}
+{% block title %}Email {{ email.subject }}{% endblock %}
+{% block content %}
+    <div class="container">
+        <a href="{% url 'email_list' %}" class="btn btn-primary btn-sm mt-3" data-bs-toggle="tooltip" title="Return to Email List">
+            <i class="fas fa-arrow-left me-1"></i> Back
+        </a>
+        <div class="card">
+            <div class="card-header">
+                <h1 class="h4 mb-0">{{ email.subject }}</h1>
+                <small class="text-muted d-block mt-1">From: 
+                    {{ email.sender }}
+                </small>
+                <small class="text-muted d-block mt-1">To: 
+                    {% for ema in email.get_to_emails %}
+                        {{ ema }}{% if not forloop.last %}, {% endif %}
+                    {% endfor %}
+                </small>
+                {% if email.cc_emails %}
+                    <small class="text-muted d-block"> Cc: 
+                        {% for ema in email.get_cc_emails %}
+                            {{ ema }}{% if not forloop.last %}, {% endif %}
+                        {% endfor %}
+                    </small>
+                {% endif %}
+                {% if email.bcc_emails %}
+                    <small class="text-muted d-block mt-1"> Bcc: 
+                        {% for ema in email.get_bcc_emails %}
+                            {{ ema }}{% if not forloop.last %}, {% endif %}
+                        {% endfor %}
+                    </small>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <p class="mb-0">{{ email.body|linebreaks }}</p>
+                <!-- Attachment Section -->
+                {% if email.attachments.all %}
+                <div class="card shadow-sm border-0 mb-4" style="border-radius: 12px;">
+                    <div class="card-body collapse show" id="documentsCollapse">
+                        <h5 class="card-title">Attachments</h5>
+                        <div class="row" id="documentList">
+                            {% for attachment in email.attachments.all %}
+                            <div class="col-12 col-sm-6 col-md-4 mb-3 document-card" data-document-id="{{ attachment.id }}">
+                                <div class="card h-100 shadow-sm" style="border-radius: 12px; transition: transform 0.2s ease;">
+                                    <div class="card-body position-relative">
+                                        <p class="card-text">
+                                            <a href="{{ attachment.file.url }}" 
+                                            data-media-url="{{ attachment.file.url }}" 
+                                            data-media-type="{% if attachment.file.name|get_file_extension%}pdf{% else %}image{% endif %}" 
+                                            data-media-name="{{ attachment.file.name }}"
+                                            class="text-primary text-decoration-none">
+                                                {{ attachment.file.name|truncatechars:20|default:"View Attachment" }}
+                                            </a>
+                                            {% if not email.sent %}
+                                            <input type="checkbox" name="delete_attachments" value="{{ attachment.id }}"> Delete
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <p class="text-muted">No attachments available.</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <p class="text-muted">No attachments available.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

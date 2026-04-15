@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% block title %}Company Account Created{% endblock %}
+
+{% block content %}
+<div class="login-page">
+    <div class="login card shadow-sm">
+        <div class="card-body text-center">
+            <i class="fas fa-envelope fa-3x mb-3 text-primary"></i>
+            <h4 class="card-title">Congratulations!</h4>
+            <p class="card-text text-muted">
+                Your company's account has been created. Click on the link below to sign into your personalized space.
+            </p>
+            <p class="card-text">
+                <a href="{{ login_url|default:'/accounts/login' }}" class="text-primary fw-medium">Log in</a>
+            </p>
+            <div class="mt-4">
+                <a href="{% url 'tenant_home' %}" class="btn btn-outline-primary">Back to Home</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .login-page {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: calc(100vh - 100px); /* Match base.html's main-content height */
+        padding: 20px;
+        background: transparent; /* Inherit base.html's gradient */
+    }
+
+    .login {
+        width: 100%;
+        max-width: 500px; /* Slightly smaller for better scaling */
+        background: #ffffff;
+        border: none; /* Remove default border */
+        border-radius: 12px; /* Match base.html's rounded corners */
+        padding: 30px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .login:hover {
+        transform: translateY(-5px); /* Subtle lift effect */
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1); /* Enhanced shadow on hover */
+    }
+
+    .login .card-title {
+        font-weight: 600;
+        color: #2d3748; /* Match base.html's text color */
+        margin-bottom: 15px;
+    }
+
+    .login .card-text {
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+
+    .login .text-primary {
+        color: #319795 !important; /* Match base.html's primary color */
+        transition: color 0.2s ease;
+    }
+
+    .login .text-primary:hover {
+        color: #2c7a7b !important; /* Match base.html's btn-primary hover */
+    }
+
+    .login .btn-outline-primary {
+        border-color: #319795;
+        color: #319795;
+        border-radius: 8px; /* Match base.html's button style */
+        padding: 8px 20px;
+        font-weight: 500;
+    }
+
+    .login .btn-outline-primary:hover {
+        background-color: #319795;
+        color: #ffffff;
+    }
+
+    /* Focus styles for accessibility */
+    .login a:focus, .login button:focus {
+        outline: 2px solid #319795;
+        outline-offset: 2px;
+        border-radius: 4px;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 576px) {
+        .login {
+            padding: 20px;
+            max-width: 90%;
+        }
+
+        .login .card-title {
+            font-size: 1.25rem; /* Smaller heading on mobile */
+        }
+
+        .login .fa-envelope {
+            font-size: 2rem; /* Smaller icon on mobile */
+        }
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Approve Payroll{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2>Approve Payroll</h2>
+            <p class="text-muted">{{ payroll.period_start|date:"F Y" }}</p>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>Payroll Summary</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <strong>Period:</strong><br>
+                    {{ payroll.period_start|date:"d M Y" }} - {{ payroll.period_end|date:"d M Y" }}
+                </div>
+                <div class="col-md-3">
+                    <strong>Employees:</strong><br>
+                    {{ payroll.items.count }}
+                </div>
+                <div class="col-md-3">
+                    <strong>Total Gross:</strong><br>
+                    ₦{{ payroll.items.all|sum_field:"gross_amount"|floatformat:2 }}
+                </div>
+                <div class="col-md-3">
+                    <strong>Total Net:</strong><br>
+                    <span class="text-success">₦{{ payroll.items.all|sum_field:"net_amount"|floatformat:2 }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h5>Approval Decision</h5>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label>Action</label>
+                    {% for choice in form.action %}
+                    <div class="form-check">
+                        {{ choice.tag }}
+                        <label class="form-check-label" for="{{ choice.id_for_label }}">
+                            {{ choice.choice_label }}
+                        </label>
+                    </div>
+                    {% endfor %}
+                    {% if form.action.errors %}
+                    <div class="text-danger">{{ form.action.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.comments.id_for_label }}">Comments</label>
+                    {{ form.comments }}
+                    {% if form.comments.errors %}
+                    <div class="text-danger">{{ form.comments.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-check"></i> Submit Decision
+                    </button>
+                    <a href="{% url 'payroll_detail' payroll.pk %}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Upload Document - {{ loan.reference_number }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Upload Supporting Document</h4>
+                    <p class="text-muted mb-0">{{ loan.reference_number }} - {{ loan.conference.title }}</p>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Supported Documents:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>Conference Budget</li>
+                            <li>Business Plan</li>
+                            <li>Financial Statements</li>
+                            <li>Guarantor ID</li>
+                            <li>Guarantor Letter</li>
+                            <li>Other supporting documents</li>
+                        </ul>
+                        <small class="text-muted">Accepted formats: PDF, DOC, DOCX, JPG, JPEG, PNG</small>
+                    </div>
+
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="form-group">
+                            <label for="{{ form.document_type.id_for_label }}">Document Type *</label>
+                            {{ form.document_type }}
+                            {% if form.document_type.errors %}
+                                <div class="text-danger">{{ form.document_type.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.file.id_for_label }}">File *</label>
+                            {{ form.file }}
+                            {% if form.file.errors %}
+                                <div class="text-danger">{{ form.file.errors }}</div>
+                            {% endif %}
+                            <small class="form-text text-muted">Maximum file size: 10MB</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.description.id_for_label }}">Description (Optional)</label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                                <div class="text-danger">{{ form.description.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-upload"></i> Upload Document
+                            </button>
+                            <a href="{% url 'conference_loan:loan_detail' loan.pk %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Existing Documents -->
+            {% if loan.documents.all %}
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5>Uploaded Documents</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for doc in loan.documents.all %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">{{ doc.get_document_type_display }}</h6>
+                                    <small class="text-muted">{{ doc.original_name }}</small>
+                                    <br>
+                                    <small class="text-muted">Uploaded: {{ doc.uploaded_at|date:"M d, Y H:i" }}</small>
+                                </div>
+                                <a href="{{ doc.file.url }}" class="btn btn-sm btn-outline-primary" target="_blank">
+                                    <i class="fas fa-download"></i> Download
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

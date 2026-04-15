@@ -1,0 +1,224 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+
+{% block title %}Apply Credit to Subscription{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <!-- Header -->
+            <div class="d-flex align-items-center mb-4">
+                <a href="{% url 'subscription_detail' subscription.id %}" class="btn btn-outline-secondary me-3">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+                <div>
+                    <h1 class="display-6 fw-bold" style="color: var(--primary-dark);">
+                        <i class="fas fa-gift me-2"></i>Apply Credit
+                    </h1>
+                    <p class="text-muted">Apply available credits to subscription #{{ subscription.id }}</p>
+                </div>
+            </div>
+
+            <!-- Credit Application Form -->
+            <div class="card">
+                <div class="card-header" style="background: linear-gradient(135deg, #48bb78 0%, #2f855a 100%); color: white;">
+                    <i class="fas fa-gift me-2"></i>Apply Credit
+                </div>
+                <div class="card-body">
+                    <!-- Subscription Summary -->
+                    <div class="bg-primary-soft p-3 rounded mb-4">
+                        <h6 class="mb-3">Subscription Summary</h6>
+                        <div class="row">
+                            <div class="col-6">
+                                <small class="text-muted">Plan</small>
+                                <p class="fw-bold mb-0">{{ subscription.plan.name }}</p>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Current Rate</small>
+                                <p class="fw-bold mb-0 text-primary-custom">₦{{ subscription.get_current_monthly_rate|floatformat:2 }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                            <i class="fas fa-exclamation-circle me-2"></i>{{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <!-- Credit Selection -->
+                        <div class="mb-4">
+                            <label for="{{ form.credit.id_for_label }}" class="form-label">
+                                <i class="fas fa-coins me-2"></i>Select Credit
+                            </label>
+                            {% render_field form.credit class="form-select" %}
+                            {% if form.credit.errors %}
+                            <div class="text-danger mt-1">
+                                {% for error in form.credit.errors %}{{ error }}{% endfor %}
+                            </div>
+                            {% endif %}
+                            
+                            <!-- Selected Credit Info -->
+                            <div id="creditInfo" class="mt-3 p-3 border rounded" style="display: none;">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <span class="badge bg-info" id="creditType"></span>
+                                        <p class="mb-0 mt-2" id="creditReason"></p>
+                                    </div>
+                                    <div class="text-end">
+                                        <small class="text-muted">Available</small>
+                                        <h4 class="text-success mb-0" id="creditAmount">₦0.00</h4>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Amount to Apply -->
+                        <div class="mb-4">
+                            <label for="{{ form.amount.id_for_label }}" class="form-label">
+                                <i class="fas fa-dollar-sign me-2"></i>Amount to Apply
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text">₦</span>
+                                {% render_field form.amount class="form-control" placeholder="0.00" %}
+                            </div>
+                            {% if form.amount.errors %}
+                            <div class="text-danger mt-1">
+                                {% for error in form.amount.errors %}{{ error }}{% endfor %}
+                            </div>
+                            {% endif %}
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                You can apply up to the available credit amount
+                            </small>
+                        </div>
+
+                        <!-- Preview -->
+                        <div class="alert alert-info">
+                            <h6 class="alert-heading"><i class="fas fa-calculator me-2"></i>Preview</h6>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Current Monthly Rate:</span>
+                                <span class="fw-bold">₦{{ subscription.get_current_monthly_rate|floatformat:2 }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Credit Applied:</span>
+                                <span class="fw-bold text-success" id="previewCredit">₦0.00</span>
+                            </div>
+                            <hr>
+                            <div class="d-flex justify-content-between">
+                                <span>New Effective Rate:</span>
+                                <span class="fw-bold text-primary-custom" id="previewNewRate">₦{{ subscription.get_current_monthly_rate|floatformat:2 }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-end">
+                            <a href="{% url 'subscription_detail' subscription.id %}" class="btn btn-outline-secondary me-2">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-check me-2"></i>Apply Credit
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Credits Available -->
+            <div class="card mt-4">
+                <div class="card-header light-header">
+                    <i class="fas fa-list me-2"></i>Available Credits
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for credit in subscription.credits.all %}
+                        {% if credit.remaining_amount > 0 %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="badge bg-info">{{ credit.get_credit_type_display }}</span>
+                                    <p class="mb-0 mt-2 small">{{ credit.reason|truncatechars:50 }}</p>
+                                </div>
+                                <div class="text-end">
+                                    <small class="text-muted">Available</small>
+                                    <h5 class="text-success mb-0">₦{{ credit.remaining_amount|floatformat:2 }}</h5>
+                                    <small class="text-muted">Expires: {{ credit.expires_at|date:"M d, Y"|default:"Never" }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% empty %}
+                        <div class="list-group-item text-center py-4">
+                            <i class="fas fa-gift fa-2x text-muted mb-2"></i>
+                            <p class="text-muted mb-0">No credits available</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    // Update credit info when selection changes
+    $('#{{ form.credit.id_for_label }}').change(function() {
+        const creditId = $(this).val();
+        if (creditId) {
+            // Get credit details (you might want to fetch via AJAX)
+            const selectedOption = $(this).find('option:selected');
+            const creditText = selectedOption.text();
+            const match = creditText.match(/\$([\d,]+\.\d{2})/);
+            
+            if (match) {
+                const amount = parseFloat(match[1].replace(',', ''));
+                $('#creditType').text(creditText.split(' - ')[0]);
+                $('#creditReason').text(selectedOption.data('reason') || '');
+                $('#creditAmount').text('$' + amount.toFixed(2));
+                $('#creditInfo').show();
+                
+                // Update preview
+                updatePreview(amount);
+            }
+        } else {
+            $('#creditInfo').hide();
+            updatePreview(0);
+        }
+    });
+    
+    // Update preview when amount changes
+    $('#{{ form.amount.id_for_label }}').on('input', function() {
+        const creditAmount = parseFloat($('#creditAmount').text().replace('$', '')) || 0;
+        const applyAmount = parseFloat($(this).val()) || 0;
+        updatePreview(Math.min(applyAmount, creditAmount));
+    });
+    
+    function updatePreview(creditAmount) {
+        const currentRate = {{ subscription.get_current_monthly_rate }};
+        const newRate = Math.max(currentRate - creditAmount, 0);
+        
+        $('#previewCredit').text('$' + creditAmount.toFixed(2));
+        $('#previewNewRate').text('$' + newRate.toFixed(2));
+    }
+    
+    // Validate amount doesn't exceed available credit
+    $('#{{ form.amount.id_for_label }}').on('blur', function() {
+        const creditAmount = parseFloat($('#creditAmount').text().replace('$', '')) || 0;
+        const applyAmount = parseFloat($(this).val()) || 0;
+        
+        if (applyAmount > creditAmount) {
+            alert('Amount cannot exceed available credit of $' + creditAmount.toFixed(2));
+            $(this).val(creditAmount.toFixed(2));
+            updatePreview(creditAmount);
+        }
+    });
+</script>
+{% endblock %}
+{% endblock %}
