@@ -1,9 +1,10 @@
 services:
   - type: web
-    name: Raadaa
+    name: teammanager
     env: docker
     dockerfilePath: ./Dockerfile
     plan: free
+    region: oregon
     startCommand: |
       python manage.py migrate &&
       gunicorn raadaa.wsgi:application --bind 0.0.0.0:8000 --timeout 120 --workers 2
@@ -12,9 +13,20 @@ services:
         value: raadaa.settings
       - key: DEBUG
         value: "False"
-      - key: ALLOWED_HOSTS
-        sync: false
       - key: SECRET_KEY
-        sync: false
-      - key: DATABASE_URL
-        sync: false
+        generateValue: true
+      - key: ALLOWED_HOSTS
+        value: "*"
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: PYTHONDONTWRITEBYTECODE
+        value: "1"
+  - type: pserv
+    name: teammanager-db
+    env: postgres
+    plan: free
+    region: oregon
+    database:
+      name: teammanager_db
+      databaseName: teammanager
+      user: teammanager
