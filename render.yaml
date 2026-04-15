@@ -11,6 +11,10 @@ services:
       - key: DJANGO_SETTINGS_MODULE
         value: raadaa.settings
       - key: DEBUG
-        value: "False"  # Keep True for debugging
+        value: "False"
       - key: ALLOWED_HOSTS
-        value: raadaa.onrender.com,www.raadaa.onrender.com,localhost
+        sync: false
+      - key: SECRET_KEY
+        sync: false
+      - key: DATABASE_URL
+        sync: false
